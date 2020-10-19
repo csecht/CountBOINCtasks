@@ -20,7 +20,7 @@
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
-__credits__ = ['']
+__credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks'
 __maintainer__ = 'cecht'
@@ -34,16 +34,16 @@ import sys
 
 from COUNTmodules import __version__, __status__
 
-LOGGER = logging.getLogger('taskx-utils')
+# LOGGER = logging.getLogger('count-tasks')
 
-# boinccmd = shutil.which("boinccmd")
-# if not boinccmd:
-#     print('Package [boinccmd] executable not found. Install for...\n'
-#           'Linux: sudo apt-get install boinc-client boinc-manager\n'
-#           'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
-#           'Exiting...')
-#     LOGGER.debug('boinccmd path: %s', boinccmd)
-#     sys.exit(1)
+boinccmd = shutil.which("boinccmd")
+if not boinccmd:
+    print('Package [boinccmd] executable not found. Install for...\n'
+          'Linux: sudo apt-get install boinc-client boinc-manager\n'
+          'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
+          'Exiting...')
+    # LOGGER.debug('boinccmd path: %s', boinccmd)
+    sys.exit(1)
 
 try:
     boinccmd = shutil.which("boinccmd")

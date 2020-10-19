@@ -1,62 +1,15 @@
-A utility for monitoring task data reported by the boinc-client.
-It may be useful for comparing task/workunit productivity between hosts or
-host configurations.
-
-Developed with Python 3.8, under Ubuntu 20.04.
-Intended for use on all operating systems, but so far only tested in the
-development environment. The latest Python package can be downloaded from
-https://www.python.org/downloads/
-
-To use (in Linux), open a terminal from within the count-tasks-main directory
-and call up the help menu:
-============================================
-$ ./count-tasks --help
-usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
-
-optional arguments:
-  -h, --help          show this help message and exit
-  --about             Author, copyright, and GNU license
-  --log               Generates or appends reports to a log file
-  --interval M        Specify Minutes between task counts (default: 60)
-  --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
-  --count_lim N       Specify number of count reports until program closes (default: 1008)
-============================================
-Note: optional arguments can accept abbreviations, e.g., --l --i 15 --sum 1h
-
-Running with the default settings, it will count reported completed tasks for
-currently running BOINC Projects on a repeating interval of 1 hour, with
-summaries every 24 hr.
-Basic statistics on task times are proved along with each count.
-The initial data that is immediately provided is for the most recently
-reported tasks.
-============================================
-$ ./count-tasks
-2020-Oct-18 20:21:52; Tasks reported in past hour: 8
-                      (task times total 02:20:55, mean 00:17:36, stdev 00:04:46)
-2020-Oct-18 21:21:55; Tasks reported in past 60m: 10
-                      (task times total 02:55:55, mean 00:17:35, stdev 00:03:14)
-2020-Oct-18 22:21:59; Tasks reported in past 60m: 9
-                      (task times total 02:25:25, mean 00:16:09, stdev 00:03:10)
-2020-Oct-18 23:22:03; Tasks reported in past 60m: 10
-                      (task times total 02:36:33, mean 00:15:39, stdev 00:00:03)
-2020-Oct-18 23:22:03; SUMMARY count for past 3h: 29
-                      (task times total 07:57:55, mean 00:16:28, stdev 00:02:38)
-============================================
-
-Running with the --log option will save the reports to a log file in the
-current folder. This file is appended to each time the program is launched.
-
-You can let count-tasks run in an open terminal window with negligible use of
-system resources. Stop it with ctrl-c or just let it run. With default
-settings, it will stop after 6 weeks (1008 1hr count cycles).
-
-NOTE: Summary counts may be less than the sum of individual counts because of
-persistence of reported tasks between count intervals. The command that
-provides this utility with tasks data:
-$ boinccmd --get_old_tasks
-retrieves tasks reported for the past hour, independent of the utility's count
-interval. To avoid missing any reported tasks, the --interval option has a
-60 minutes (60m) maximum, but that and shorter intervals can re-count tasks
-that carry over from one interval to the next or next several.
 
 
+A utility for monitoring task data reported by the boinc-client. It may be useful for comparing task/workunit productivity between hosts or host configurations.
+
+Developed with Python 3.8, under Ubuntu 20.04. Intended for use on all operating systems, but so far only tested in the development environment. The latest Python package can be downloaded from https://www.python.org/downloads/
+
+To use (in Linux), open a terminal from within the count-tasks-main directory and call up the help menu: $ ./count-tasks --help
+
+Running with the default settings, it will count reported completed tasks for currently running BOINC Projects on a repeating interval of 1 hour, with summaries every 24 hr. Basic statistics on task times are proved along with each count. The initial data that is immediately provided is for the most recently reported tasks.
+
+Running with the --log option will save the reports to a log file in the current folder. This file is appended to each time the program is launched or will be created if it doesn't exit.
+
+You can let count-tasks run in an open terminal window with negligible impact on system resources. Stop it with ctrl-c or just let it run. With default settings, it will stop after 6 weeks (1008 1hr count cycles).
+
+NOTE: Summary counts may be less than the sum of individual counts because of persistence of reported tasks between count intervals. The command that provides this utility with tasks data: $ boinccmd --get_old_tasks retrieves tasks reported for the past hour, independent of the utility's count interval. To avoid missing any reported tasks, the --interval option has a 60 minutes (60m) maximum, but that and shorter intervals can re-count tasks that carry over from one interval to the next or next several.
