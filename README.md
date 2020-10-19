@@ -45,7 +45,7 @@ $ ./count-tasks
                       (task times total 07:42:13, mean 00:24:19, stdev 00:02:15)
 2020-Oct-19 10:04:09; Tasks reported in past 60m: 8
                       (task times total 03:26:29, mean 00:25:48, stdev 00:00:07)
-27m                           |<-Time to next count
+27m                           |< ~time to next count
 ```
 A countdown timer displays, in a colored bar, the approximate time remaining
  until the next task count.
