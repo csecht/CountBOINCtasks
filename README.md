@@ -3,8 +3,8 @@
 ## count-tasks
 
 A utility for monitoring task data reported by the boinc-client. 
-It may be useful for comparing task or workunit productivity between 
-different hosts or host configurations.
+It may be useful for comparing task productivity between different computers 
+or configurations.
 
 Developed with Python 3.8, under Ubuntu 20.04. Intended for use on all 
 operating systems, but so far only tested in the development environment. 
@@ -29,11 +29,12 @@ optional arguments:
 
 Running with the default settings, it will count reported completed tasks
 for currently running BOINC Projects on a repeating interval of 1 hour, with 
-summaries every 24 hr. Basic statistics on task times are proved along with 
-each count. The initial data that is immediately provided is for the most 
-recently reported tasks.
+summaries every 24 hr. Basic statistics on task times are also provided 
+ with each count. The initial data that is immediately provided is for the most 
+recent tasks reported by boinc-client in the past hour. Repeating interval
+ count begin immediately after.
 
-Example, default execution:
+Example results, default settings:
 ```
 $ ./count-tasks
 2020-Oct-19 06:03:54; Tasks reported in past hour: 9
@@ -51,24 +52,26 @@ A countdown timer displays, in a colored bar, the approximate time remaining
  until the next task count.
  
 Running with the `--log` option will save the reports to a log file in the 
-current folder. This file is appended to each time the program is launched or 
-will be created if needed.
+working folder. This file is appended to or created when the utility is
+ launched.
 
-You can let count-tasks run in an open terminal window with negligible impact 
-on system resources. Stop it with *ctrl-c* or just let it run. With default 
-settings, it will stop after 6 weeks (1008 1hr count cycles).
+You can let `count-tasks` run in an open terminal window with negligible impact 
+on system resources. Stop it with *ctrl-c*. With default settings, it will
+ stop after 6 weeks (1008 1hr count cycles). A different count cycle limit
+  can be set with the `--count_lim` option.
 
 NOTE: Summary counts may be less than the sum of individual counts because of 
 persistence of reported tasks between count intervals. This can be expected
  when the `--interval` option is set to less than the default 60m. 
- The command that provides reported tasks data used by `count-tasks`: 
+ The command that provides reported task data to `count-tasks`, 
  ```
 $ boinccmd  --get_old_tasks 
 ```
 retrieves tasks reported for the past hour, independent of the utility's 
 count interval. To avoid missing any reported tasks, the `--interval` option 
-has a 60 minutes (60m) maximum, but that and shorter intervals can re-count 
-tasks that carry over from one interval to the next or next several.
+has a 60 minutes (60m) maximum count interval, but even that, as well as
+ shorter intervals, can re-count tasks which carry over between intervals
+ . Summary counts do not included duplicate tasks.
 
 ## Development Plans
 * Implement for Mac OS and Windows 10.
