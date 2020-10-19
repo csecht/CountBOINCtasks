@@ -4,7 +4,7 @@ A utility for monitoring task data reported by the boinc-client. It may be usefu
 
 Developed with Python 3.8, under Ubuntu 20.04. Intended for use on all operating systems, but so far only tested in the development environment. The latest Python package can be downloaded from https://www.python.org/downloads/
 
-To use (in Linux), open a terminal from within the count-tasks-main directory and call up the help menu: $ ./count-tasks --help
+To use (in Linux), open a terminal from within the countBOINCtasks-master directory and call up the help menu: $ ./count-tasks --help
 
 Running with the default settings, it will count reported completed tasks for currently running BOINC Projects on a repeating interval of 1 hour, with summaries every 24 hr. Basic statistics on task times are proved along with each count. The initial data that is immediately provided is for the most recently reported tasks.
 
