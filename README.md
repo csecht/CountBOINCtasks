@@ -25,7 +25,7 @@ optional arguments:
   --count_lim N       Specify number of count reports until program closes (default: 1008)
 
 ```
-(Options can accept abbreviations, e.g., ./count-tasks --l --int 15 --sum 1h)
+(Options can accept abbreviations, e.g., `./count-tasks --l --int 15 --sum 1h`)
 
 Running with the default settings, it will count reported completed tasks
 for currently running BOINC Projects on a repeating interval of 1 hour, with 
