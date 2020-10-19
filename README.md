@@ -1,6 +1,6 @@
-#countBOINCtasks
+# countBOINCtasks
 
-##count-tasks
+## count-tasks
 
 A utility for monitoring task data reported by the boinc-client. 
 It may be useful for comparing task/workunit productivity between hosts or host 
