@@ -69,3 +69,6 @@ retrieves tasks reported for the past hour, independent of the utility's
 count interval. To avoid missing any reported tasks, the `--interval` option 
 has a 60 minutes (60m) maximum, but that and shorter intervals can re-count 
 tasks that carry over from one interval to the next or next several.
+
+## Development Plans
+* Implement for Mac OS and Windows 10.
