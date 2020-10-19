@@ -172,7 +172,7 @@ def sleep_timer(interval: int) -> print:
         length = len(remain_bar)
         print(f'\r{erase}{whitexx_on_red}'
               f'{fmt_sec(remain_s)}{remain_bar}'
-              f'{reset}|<-Time to next count', end='')
+              f'{reset}|< ~time to next count', end='')
         if length == 1:
             print(f'\r{erase}{whitexx_on_grn}'
                   f'{fmt_sec(remain_s)}{remain_bar}'

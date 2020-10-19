@@ -1,6 +1,6 @@
-#countBOINCtasks
+# countBOINCtasks
 
-##count-tasks
+## count-tasks
 
 A utility for monitoring task data reported by the boinc-client. 
 It may be useful for comparing task or workunit productivity between 
@@ -25,7 +25,7 @@ optional arguments:
   --count_lim N       Specify number of count reports until program closes (default: 1008)
 
 ```
-(Options can accept abbreviations, e.g., ./count-tasks --l --int 15 --sum 1h)
+(Options can accept abbreviations, e.g., `./count-tasks --l --int 15 --sum 1h`)
 
 Running with the default settings, it will count reported completed tasks
 for currently running BOINC Projects on a repeating interval of 1 hour, with 
@@ -45,7 +45,7 @@ $ ./count-tasks
                       (task times total 07:42:13, mean 00:24:19, stdev 00:02:15)
 2020-Oct-19 10:04:09; Tasks reported in past 60m: 8
                       (task times total 03:26:29, mean 00:25:48, stdev 00:00:07)
-27m                           |<-Time to next count
+27m                           |< ~time to next count
 ```
 A countdown timer displays, in a colored bar, the approximate time remaining
  until the next task count.
