@@ -3,8 +3,8 @@
 ##count-tasks
 
 A utility for monitoring task data reported by the boinc-client. 
-It may be useful for comparing task/workunit productivity between hosts or host 
-configurations.
+It may be useful for comparing task or workunit productivity between 
+different hosts or host configurations.
 
 Developed with Python 3.8, under Ubuntu 20.04. Intended for use on all 
 operating systems, but so far only tested in the development environment. 
