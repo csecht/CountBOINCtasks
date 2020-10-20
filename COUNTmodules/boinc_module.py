@@ -23,18 +23,15 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks'
+__version__ = '0.1.0'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
+__status__ = 'Development Status :: 3 - Alpha'
 
-import logging
 import shlex
 import shutil
 import subprocess
 import sys
-
-from COUNTmodules import __version__, __status__
-
-# LOGGER = logging.getLogger('count-tasks')
 
 boinccmd = shutil.which("boinccmd")
 if not boinccmd:
@@ -47,22 +44,25 @@ if not boinccmd:
 
 try:
     boinccmd = shutil.which("boinccmd")
-except OSError as e:
+except OSError as err:
     print('Package [boinccmd] executable not found. Install for...\n'
           'Linux: sudo apt-get install boinc-client boinc-manager\n'
           'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
           'Exiting...')
-    print(e)
+    print(err)
     sys.exit(1)
 
 
 class BoincCommand:
-    """Execute boinc-client commands and parse data."""
+    """
+    Execute boinc-client commands and parse data.
+    """
+
+    EINSTEIN = "http://einstein.phys.uwm.edu/"
+    MILKYWAY = "http://milkyway.cs.rpi.edu_milkyway/"
 
     def __init__(self):
         self.boinc = boinccmd
-        self.einstein = "http://einstein.phys.uwm.edu/"
-        self.milkyway = "http://milkyway.cs.rpi.edu_milkyway/"
         self.projectcmd = ('suspend', 'resume', 'get_app_config')
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
@@ -85,7 +85,7 @@ class BoincCommand:
         """
         # Project commands require the Project URL, others commands don't
         if command in self.projectcmd:
-            cmd_str = f'{self.boinc} --project {self.einstein} {command}'
+            cmd_str = f'{self.boinc} --project {self.EINSTEIN} {command}'
             subprocess.check_output(shlex.split(cmd_str), shell=False)
         elif command == 'read_cc_config':
             cmd_str = f'{self.boinc} --{command}'
@@ -94,7 +94,7 @@ class BoincCommand:
             print(f'Unrecognized command: {command}')
         # LOGGER.debug('bnccmd parameter: %s', command)
 
-    def tasks(self, tag: str = None) -> tuple:
+    def tasks(self, tag: str = None) -> list:
         """
         Get current boinc-client tasks, parse task data.
 
@@ -103,26 +103,39 @@ class BoincCommand:
         :return: All tasks or select task data, as tuple.
         """
 
-        if tag in self.tasktags:
+        # if tag in self.tasktags:
+        #     cmd_str = f'{self.boinc} --get_tasks'
+        #     tag_str = f'{" " * 3}{tag}: '
+        #     output = subprocess.check_output(shlex.split(cmd_str),
+        #                                      shell=False).decode().split('\n')
+        #     data = []
+        #     # Need only data specified by the task's tag.
+        #     for i in output:
+        #         if i.__contains__(tag_str):
+        #             i = i.replace(tag_str, '')
+        #             data.append(i)
+        #     return data
+        if tag is None:
             cmd_str = f'{self.boinc} --get_tasks'
-            tag_str = f'{" " * 3}{tag}: '
             output = subprocess.check_output(shlex.split(cmd_str),
                                              shell=False).decode().split('\n')
-            data = []
-            # Need only data specified by the task's tag.
-            for i in output:
-                if i.__contains__(tag_str):
-                    i = i.replace(tag_str, '')
-                    data.append(i)
-            return tuple(data)
-        elif tag is None:
-            cmd_str = f'{self.boinc} --get_tasks'
-            output = subprocess.check_output(shlex.split(cmd_str),
-                                             shell=False).decode().split('\n')
-            return tuple(output)
-        else:
-            print(f'Unrecognized data tag: {tag}')
-        # LOGGER.debug('task parameters: %s', tag)
+            return output
+        try:
+            if tag in self.tasktags:
+                cmd_str = f'{self.boinc} --get_tasks'
+                tag_str = f'{" " * 3}{tag}: '
+                output = subprocess.check_output(shlex.split(cmd_str),
+                                                 shell=False).decode().split('\n')
+                data = []
+                # Need only data specified by the task's tag.
+                for i in output:
+                    if i.__contains__(tag_str):
+                        i = i.replace(tag_str, '')
+                        data.append(i)
+                return data
+        except ValueError as excp:
+            msg = f'Unrecognized data tag: {tag}'
+            raise ValueError(msg) from excp
 
     def reported(self, tag: str = None) -> list:
         """
@@ -139,8 +152,7 @@ class BoincCommand:
                                              shell=False).decode().split('\n')
             if tag == 'task':
                 tag_str = 'task '
-            else:
-                tag_str = f'{" " * 3}{tag}: '
+            tag_str = f'{" " * 3}{tag}: '
             data = []
             # Need only data specified by the task's tag.
             for i in output:
@@ -153,14 +165,13 @@ class BoincCommand:
                         i = float(i)
                     data.append(i)
             return data
-        elif tag is None:
+        if tag is None:
             cmd_str = f'{self.boinc} --get_old_tasks'
             output = subprocess.check_output(shlex.split(cmd_str),
                                              shell=False).decode().split('\n')
             return output
-        else:
-            print(f'Unrecognized data tag: {tag}')
-        # LOGGER.debug('reported task parameters: %s', tag)
+
+        print(f'Unrecognized data tag: {tag}')
 
 
 def about() -> None:

@@ -20,11 +20,13 @@
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
-__credits__ = ['']
+__credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
+__version__ = '0.1.0'
 __program_name__ = 'count-tasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
+__status__ = 'Development Status :: 3 - Alpha'
 
 import argparse
 import logging
@@ -34,28 +36,27 @@ import sys
 import time as t
 from datetime import datetime
 
-from COUNTmodules import BOINCmodule
-from COUNTmodules import __version__, __status__
+from COUNTmodules import boinc_module
 
-BC = BOINCmodule.BoincCommand()
+BC = boinc_module.BoincCommand()
 util = os.path.basename(__file__)
 logging.basicConfig(filename=f'{util}_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
-def check_args(parameter) -> str:
+def check_args(parameter):
     """
     Check select command line arguments for errors.
 
-    :param parameter: Check --summary and --count_lim for "0" and format
-    errors.
-    :return: The same add_argument string.
+    :param parameter: Check --summary parameter for errors.
+    :return: If no errors, the parameter string.
     """
+
     if parameter == "0":
         msg = "Parameter value cannot be zero."
         raise argparse.ArgumentTypeError(msg)
     # Evaluate the --summary parameter, expect e.g., 15m, 2h, 1d, etc.
-    elif parameter != "0":
+    if parameter != "0":
         valid_units = ['m', 'h', 'd']
         val = (parameter[:-1])
         unit = parameter[-1]
@@ -64,10 +65,10 @@ def check_args(parameter) -> str:
             raise argparse.ArgumentTypeError(msg)
         try:
             int(val)
-        except ValueError:
+        except ValueError as err:
             msg = "TIME must be an integer"
-            raise argparse.ArgumentTypeError(msg)
-        return parameter
+            raise argparse.ArgumentTypeError(msg) from err
+    return parameter
 
 
 def get_min(time_string: str) -> int:
@@ -80,17 +81,12 @@ def get_min(time_string: str) -> int:
     t_min = dict(m=1, h=60, d=3600)
     val = int(time_string[:-1])
     unit = time_string[-1]
-    # if val > 0 and unit in t_min:
-    #     return t_min[unit] * val
-    # elif val <= 0:
-    #     print(f'Invalid time: {val} '
-    #           f' - Integer must be non-zero and positive')
-    # elif unit not in t_min:
-    #     raise KeyError(f'Invalid time unit: {unit} -  Use: m, h, or d')
+
     try:
         return t_min[unit] * val
-    except KeyError:
-        print(f'Invalid time unit: {unit} -  Use: m, h, or d')
+    except KeyError as err:
+        msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
+        raise KeyError(msg) from err
 
 
 def fmt_sec(secs: int) -> str:
@@ -102,17 +98,17 @@ def fmt_sec(secs: int) -> str:
     # https://stackoverflow.com/questions/3160699/python-progress-bar
     # /3162864
 
-    m, s = divmod(secs, 60)
-    h, m = divmod(m, 60)
-    day, h = divmod(h, 24)
+    _m, _s = divmod(secs, 60)
+    _h, _m = divmod(_m, 60)
+    day, _h = divmod(_h, 24)
     if secs >= 86400:
         return f'{day:1d}d'  # option add {h:01d}h'
-    elif 86400 > secs >= 3600:
-        return f'{h:01d}h'  # option add :{m:01d}m
-    elif 3600 > secs >= 60:
-        return f'{m:01d}m'  # option add :{s:01d}s
-    elif secs < 60:
-        return f'{s:01d}s'
+    if 86400 > secs >= 3600:
+        return f'{_h:01d}h'  # option add :{m:01d}m
+    if 3600 > secs >= 60:
+        return f'{_m:01d}m'  # option add :{s:01d}s
+
+    return f'{_s:01d}s'
 
 
 def fmt_stdsec(secs: int) -> str:
@@ -124,13 +120,13 @@ def fmt_stdsec(secs: int) -> str:
     # https://stackoverflow.com/questions/3160699/python-progress-bar
     # /3162864
 
-    m, s = divmod(secs, 60)
-    h, m = divmod(m, 60)
-    day, h = divmod(h, 24)
+    _m, _s = divmod(secs, 60)
+    _h, _m = divmod(_m, 60)
+    day, _h = divmod(_h, 24)
     if secs >= 86400:
-        return f'{day:1d}d {h:02d}:{m:02d}:{s:02d}'
-    elif secs < 86400:
-        return f'{h:02d}:{m:02d}:{s:02d}'
+        return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
+
+    return f'{_h:02d}:{_m:02d}:{_s:02d}'
 
 
 def sleep_timer(interval: int) -> print:
@@ -142,7 +138,7 @@ def sleep_timer(interval: int) -> print:
 
     # Initial timer bar length; 60 fits well with most clock times.
     bar_len = 60
-    bar = ' ' * bar_len
+    prettybar = ' ' * bar_len
     # Need to assign for-loop decrement time & total sleep time as seconds.
     # Need bar segment sleep time, in sec.; is a factor of bar length.
     total_s = interval * 60
@@ -168,7 +164,7 @@ def sleep_timer(interval: int) -> print:
 
     # Not +1 in range because need only to sleep to END of interval.
     for i in range(bar_len):
-        remain_bar = bar[i:]
+        remain_bar = prettybar[i:]
         length = len(remain_bar)
         print(f'\r{erase}{whitexx_on_red}'
               f'{fmt_sec(remain_s)}{remain_bar}'
@@ -199,12 +195,12 @@ def get_stats(count: int, taskt: iter) -> dict:
     total = fmt_stdsec(int(sum(set(taskt))))
     if count > 1:
         mean = fmt_stdsec(int(stat.mean(set(taskt))))
-        sd = fmt_stdsec(int(stat.stdev(set(taskt))))
-        return {'tt_sum': total, 'tt_mean': mean, 'tt_sd': sd}
-    elif count == 1:
+        stdev = fmt_stdsec(int(stat.stdev(set(taskt))))
+        return {'tt_sum': total, 'tt_mean': mean, 'tt_sd': stdev}
+    if count == 1:
         return {'tt_sum': total, 'tt_mean': total, 'tt_sd': 'na'}
-    elif count == 0:
-        return {'tt_sum': '00:00:00', 'tt_mean': 'na', 'tt_sd': 'na'}
+
+    return {'tt_sum': '00:00:00', 'tt_mean': 'na', 'tt_sd': 'na'}
 
 
 def main() -> None:
@@ -238,7 +234,6 @@ def main() -> None:
                         help='Specify number of count reports until program'
                              ' closes (default: %(default)d)',
                         default=1008,
-                        type=check_args,
                         metavar="N")
     args = parser.parse_args()
 # NOTE: args.interval and args.summary command line formats are different
@@ -254,8 +249,8 @@ def main() -> None:
     sumry_m = get_min(args.summary)
     sumry_factor = int(sumry_m / interval_m)
     if interval_m >= sumry_m:
-        msg = f'Invalid parameters: --summary time must be greater than' \
-              f' --interval time. '
+        msg = "Invalid parameters: --summary time must be greater than  " \
+              "--interval time."
         raise ValueError(msg)
 
     # About me
@@ -288,16 +283,14 @@ def main() -> None:
              f'\n{indent}(task times total {tt_sum}, ' \
              f'mean {tt_mean}, stdev {tt_sd})'
     # sys.stdout.write(f'{report}\n'
+    # sys.stdout.flush()
     print(report)
-    # print(f'TASKS_START: {tasks_start}')
     if args.log:
-        logging.info(f'{time_start}; Task counter starting with\n'
-                     f'{indent}count interval: {interval_m}m\n'
-                     f'{indent}summary interval: {sumry_interval}\n'
-                     f'{indent}max count reports: {count_limit}\n'
-                     f'{report}')
-
-    tasks_start.clear()
+        logging.info("%s; Task counter starting with\n%scount interval: "
+                     "%sm\n%ssummary interval: %s\n%smax count reports: "
+                     "%s\n%s",
+                     time_start, indent, interval_m, indent, sumry_interval,
+                     indent, count_limit, report)
 
     # Repeated intervals: counts, times, stats, and summaries.
     for i in range(count_limit):
@@ -309,15 +302,21 @@ def main() -> None:
         #   may persist between count intervals of less than 1h.
         tasks_prev = tasks_now  # task_now is from previous loop.
         tasks_now = BC.reported('elapsed time')
-        for x in tasks_prev:
+        for task in tasks_start:
             try:
-                tasks_now.remove(x)
+                tasks_now.remove(task)
             except ValueError:
                 pass
+        tasks_start.clear()
+
+        for task in tasks_prev:
+            try:
+                tasks_now.remove(task)
+            except ValueError:
+                pass
+
         count_now = len(set(tasks_now))
         tasks_smry.extend(tasks_now)
-        # print(f'\r\x1b[2Ki:{i}, TASKS_NOW: {tasks_now}')
-        # print(f'i:{i}, TASKS_SMRY: {tasks_smry}')
 
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
@@ -327,9 +326,9 @@ def main() -> None:
             report = f'{time_now}; ' \
                      f'No tasks reported in past {tic_nnt} {interval_m}m ' \
                      f'interval(s).'
-            # sys.stdout.write(f'\r{report}\n')
             print(f'\r{report}')
-            if args.log: logging.info(report)
+            if args.log:
+                logging.info(report)
 
         elif count_now > 0:
             tic_nnt -= tic_nnt
@@ -338,24 +337,19 @@ def main() -> None:
                      f'Tasks reported in past {interval_m}m: {count_now}' \
                      f'\n{indent}(task times total {tt_sum}, ' \
                      f'mean {tt_mean}, stdev {tt_sd})'
-            # sys.stdout.write(f'\r{report}\n')
             print(f'\r{report}')
-            if args.log: logging.info(report)
+            if args.log:
+                logging.info(report)
 
         # Report: Summary intervals
         # NOTE: Sum of interval counts may exceed the summary count when the
         # count interval is less than 60m. This could happen because the
         # <<boinc-client --get_old_tasks>> command returns tasks reported over
-        # the past hour, thus this count can re-count some tasks between
-        # counting intervals.
+        # the past hour.
         if (i + 1) % sumry_factor == 0:
-            # Need only unique tasks.
-            # print(f'RAW tasks_smry count: {len(tasks_smry)}')
-            # print(f'TASKS_SMRY at summary interval: {tasks_smry}')
+            # Get only unique tasks for counting and stats.
             tasksmry_uniq = set(tasks_smry)
             cntsmry_uniq = len(tasksmry_uniq)
-            # print(f'UNIQUE set(tasks_smry) count: {cntsmry_uniq}')
-            # print(f'TASKSSMRY_UNIQ at summary interval: {tasksmry_uniq}')
 
             tt_sum, tt_mean, tt_sd = get_stats(cntsmry_uniq,
                                                tasksmry_uniq).values()
@@ -364,9 +358,9 @@ def main() -> None:
                      f'{cntsmry_uniq}' \
                      f'\n{indent}(task times total {tt_sum},' \
                      f' mean {tt_mean}, stdev {tt_sd})'
-            # sys.stdout.write(f'\r{report}\n')
             print(f'\r{report}')
-            if args.log: logging.info(report)
+            if args.log:
+                logging.info(report)
 
             # Need to reset task_smry list for the next summary.
             tasks_smry.clear()
@@ -392,12 +386,3 @@ if __name__ == '__main__':
                           'maintainer, along with the traceback,\n'
                           'the Python version, and the hardware/OS platform '
                           'and version.')
-
-# Use the colorama package to make ANSI
-# VT100 \033[ escape sequences work on Windows.
-# https:// pypi.org/project/colorama/
-# "\033[F" – move cursor to the beginning of the previous line
-# "\033[A" – move cursor up one line
-# For multiplatform  support, may need to print with:
-# sys.stdout.write("yadayada")
-# TODO: Test terminal display on all OS.
