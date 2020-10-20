@@ -92,7 +92,7 @@ class BoincCommand:
             subprocess.check_output(shlex.split(cmd_str), shell=False)
         else:
             print(f'Unrecognized command: {command}')
-        LOGGER.debug('bnccmd parameter: %s', command)
+        # LOGGER.debug('bnccmd parameter: %s', command)
 
     def tasks(self, tag: str = None) -> tuple:
         """
@@ -122,7 +122,7 @@ class BoincCommand:
             return tuple(output)
         else:
             print(f'Unrecognized data tag: {tag}')
-        LOGGER.debug('task parameters: %s', tag)
+        # LOGGER.debug('task parameters: %s', tag)
 
     def reported(self, tag: str = None) -> list:
         """
@@ -160,7 +160,7 @@ class BoincCommand:
             return output
         else:
             print(f'Unrecognized data tag: {tag}')
-        LOGGER.debug('reported task parameters: %s', tag)
+        # LOGGER.debug('reported task parameters: %s', tag)
 
 
 def about() -> None:
