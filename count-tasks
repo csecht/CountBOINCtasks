@@ -181,7 +181,7 @@ def sleep_timer(interval: int) -> print:
         # t.sleep(.5)  # DEBUG
         t.sleep(barseg_s)
 
-    # sys.stdout.write()  # May be needed instead of print for  #
+    # sys.stdout.write()  # May be needed instead of print for
     # sys.stdout.flush()  #  Windows console?
 
 
@@ -210,37 +210,28 @@ def main() -> None:
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--about',
-                        help='Author, copyright, and GNU license',
-                        action='store_true',
-                        default=False)
+    parser.add_argument('--about', help='Author, copyright, and GNU license',
+                        action='store_true', default=False)
     parser.add_argument('--log',
                         help='Generates or appends reports to a log file',
-                        action='store_true',
-                        default=False)
+                        action='store_true', default=False)
     parser.add_argument('--interval',
                         help='Specify Minutes between task counts'
-                             ' (default: %(default)d)',
-                        default=60,
-                        choices=range(5, 65, 5),
-                        type=int,
-                        metavar="M")
+                             ' (default: %(default)d)', default=60,
+                        choices=range(5, 65, 5), type=int, metavar="M")
     parser.add_argument('--summary',
                         help='Specify time between count summaries, '
                              'e.g., 12h, 7d (default: %(default)s)',
-                        default='1d',
-                        type=check_args,
-                        metavar='TIMEunit')
+                        default='1d', type=check_args, metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
-                             ' closes (default: %(default)d)',
-                        default=1008,
+                             ' closes (default: %(default)d)', default=1008,
                         metavar="N")
     args = parser.parse_args()
-# NOTE: args.interval and args.summary command line formats are different
+    # NOTE: args.interval and args.summary command line formats are different
     # because summary times can be min, hr, or days, while interval times
     # are always minutes (60m maximum).
-# NOTE: Boinc only returns tasks reported in past hour.
+    # NOTE: Boinc only returns tasks reported in past hour.
     #  Report interval can be longer than count interval, but we need to count
     #  tasks reported at least once per hour.
     count_limit = int(args.count_lim)
@@ -290,11 +281,12 @@ def main() -> None:
 %scount interval: %sm
 %ssummary interval: %s
 %smax count reports: %s
-%s""" % (time_start,
-indent, interval_m,
-indent, sumry_interval,
-indent, count_limit,
-report))
+%s""",               time_start,
+                     indent, interval_m,
+                     indent, sumry_interval,
+                     indent,
+                     count_limit,
+                     report)
 
     # Repeated intervals: counts, times, stats, and summaries.
     for i in range(count_limit):
