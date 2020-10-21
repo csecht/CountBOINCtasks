@@ -74,7 +74,7 @@ class BoincCommand:
                          'CPU time at last checkpoint', 'fraction done',
                          'swap size', 'working set size')
         self.oldtags = ('task', 'project URL', 'app name', 'exit status',
-                        'elapsed time', 'completed time', 'reported time')
+                        'elapsed time', 'completed time', 'get_reported time')
 
     def run(self, command: str):
         """
@@ -94,7 +94,7 @@ class BoincCommand:
             print(f'Unrecognized command: {command}')
         # LOGGER.debug('bnccmd parameter: %s', command)
 
-    def tasks(self, tag: str) -> list:
+    def get_tasks(self, tag: str) -> list:
         """
         Get data from current boinc-client tasks.
 
@@ -117,13 +117,13 @@ class BoincCommand:
             print(f'Unrecognized data tag: {tag}')
         return data
 
-    def reported(self, tag: str) -> list:
+    def get_reported(self, tag: str) -> list:
         """
-        Get data from reported boinc-client tasks.
+        Get data from get_reported boinc-client tasks.
 
-        :param tag: Used: 'task' returns reported task names.
+        :param tag: Used: 'task' returns get_reported task names.
                           'elapsed time' returns task times, sec.000000.
-        :return: List of specified data from reported tasks.
+        :return: List of specified data from get_reported tasks.
         """
         data = []
         cmd_str = f'{self.boinc} --get_old_tasks'

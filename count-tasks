@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-"""count-tasks counts reported boinc-client tasks at set intervals.
+"""
+count-tasks counts reported boinc-client tasks at set intervals.
 
     Copyright (C) 2020 C. Echt
 
@@ -200,7 +201,7 @@ def main() -> None:
     # NOTE: args.interval and args.summary command line formats are different
     # because summary times can be min, hr, or days, while interval times
     # are always minutes (60m maximum).
-    # NOTE: Boinc only returns tasks reported in past hour.
+    # NOTE: Boinc only returns tasks that were reported in past hour.
     #  Report interval can be longer than count interval, but we need to count
     #  tasks reported at least once per hour.
     parser = argparse.ArgumentParser()
@@ -246,10 +247,10 @@ def main() -> None:
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
-    #   In future, may want to inspect saved task names, BC.reported('tasks').
+    #   In future, may want to inspect saved task names, BC.get_reported('tasks').
     time_fmt = '%Y-%b-%d %H:%M:%S'
     time_start = datetime.now().strftime(time_fmt)
-    tasks_start = BC.reported('elapsed time')
+    tasks_start = BC.get_reported('elapsed time')
     tasks_now = []
     tasks_smry = []
     count_start = len(tasks_start)
@@ -285,7 +286,7 @@ def main() -> None:
         # Need to count unique tasks in each loop because some tasks
         #   may persist between count intervals of less than 1h.
         tasks_prev = tasks_now  # task_now is from previous loop.
-        tasks_now = BC.reported('elapsed time')
+        tasks_now = BC.get_reported('elapsed time')
         for task in tasks_start:
             try:
                 tasks_now.remove(task)
