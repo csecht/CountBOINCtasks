@@ -31,6 +31,7 @@ __status__ = 'Development Status :: 3 - Alpha'
 import argparse
 import logging
 import os
+import platform
 import statistics as stat
 import sys
 import time as t
@@ -239,7 +240,6 @@ def main() -> None:
 # NOTE: args.interval and args.summary command line formats are different
     # because summary times can be min, hr, or days, while interval times
     # are always minutes (60m maximum).
-
 # NOTE: Boinc only returns tasks reported in past hour.
     #  Report interval can be longer than count interval, but we need to count
     #  tasks reported at least once per hour.
@@ -286,11 +286,15 @@ def main() -> None:
     # sys.stdout.flush()
     print(report)
     if args.log:
-        logging.info("%s; Task counter starting with\n%scount interval: "
-                     "%sm\n%ssummary interval: %s\n%smax count reports: "
-                     "%s\n%s",
-                     time_start, indent, interval_m, indent, sumry_interval,
-                     indent, count_limit, report)
+        logging.info("""%s; Task counter is starting with
+%scount interval: %sm
+%ssummary interval: %s
+%smax count reports: %s
+%s""" % (time_start,
+indent, interval_m,
+indent, sumry_interval,
+indent, count_limit,
+report))
 
     # Repeated intervals: counts, times, stats, and summaries.
     for i in range(count_limit):
