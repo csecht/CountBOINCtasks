@@ -34,13 +34,13 @@ import subprocess
 import sys
 
 boinccmd = shutil.which("boinccmd")
-if not boinccmd:
-    print('Package [boinccmd] executable not found. Install for...\n'
-          'Linux: sudo apt-get install boinc-client boinc-manager\n'
-          'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
-          'Exiting...')
-    # LOGGER.debug('boinccmd path: %s', boinccmd)
-    sys.exit(1)
+# if not boinccmd:
+#     print('Package [boinccmd] executable not found. Install for...\n'
+#           'Linux: sudo apt-get install boinc-client boinc-manager\n'
+#           'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
+#           'Exiting...')
+#     # LOGGER.debug('boinccmd path: %s', boinccmd)
+#     sys.exit(1)
 
 try:
     boinccmd = shutil.which("boinccmd")
@@ -94,67 +94,48 @@ class BoincCommand:
             print(f'Unrecognized command: {command}')
         # LOGGER.debug('bnccmd parameter: %s', command)
 
-    def tasks(self, tag: str = None) -> list:
+    def tasks(self, tag: str) -> list:
         """
-        Get current boinc-client tasks, parse task data.
+        Get data from current boinc-client tasks.
 
         :param tag: Used: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
-        :return: All tasks or select task data, as tuple.
+        :return: List of specified data from current tasks.
         """
-
-        # if tag in self.tasktags:
-        #     cmd_str = f'{self.boinc} --get_tasks'
-        #     tag_str = f'{" " * 3}{tag}: '
-        #     output = subprocess.check_output(shlex.split(cmd_str),
-        #                                      shell=False).decode().split('\n')
-        #     data = []
-        #     # Need only data specified by the task's tag.
-        #     for i in output:
-        #         if i.__contains__(tag_str):
-        #             i = i.replace(tag_str, '')
-        #             data.append(i)
-        #     return data
-        if tag is None:
-            cmd_str = f'{self.boinc} --get_tasks'
-            output = subprocess.check_output(shlex.split(cmd_str),
-                                             shell=False).decode().split('\n')
-            return output
+        data = []
+        cmd_str = f'{self.boinc} --get_tasks'
+        tag_str = f'{" " * 3}{tag}: '
+        output = subprocess.check_output(shlex.split(cmd_str),
+                                         shell=False).decode().split('\n')
         try:
-            if tag in self.tasktags:
-                cmd_str = f'{self.boinc} --get_tasks'
-                tag_str = f'{" " * 3}{tag}: '
-                output = subprocess.check_output(shlex.split(cmd_str),
-                                                 shell=False).decode().split('\n')
-                data = []
-                # Need only data specified by the task's tag.
-                for i in output:
-                    if i.__contains__(tag_str):
-                        i = i.replace(tag_str, '')
-                        data.append(i)
-                return data
-        except ValueError as excp:
-            msg = f'Unrecognized data tag: {tag}'
-            raise ValueError(msg) from excp
+            for i in output:
+                if i.__contains__(tag_str):
+                    i = i.replace(tag_str, '')
+                    data.append(i)
+            return data
+        except ValueError:
+            print(f'Unrecognized data tag: {tag}')
+        return data
 
-    def reported(self, tag: str = None) -> list:
+    def reported(self, tag: str) -> list:
         """
-        Get reported boinc-client tasks, parse reported data.
+        Get data from reported boinc-client tasks.
 
         :param tag: Used: 'task' returns reported task names.
                           'elapsed time' returns task times, sec.000000.
-        :return: All reported or current task data, as list.
+        :return: List of specified data from reported tasks.
         """
-
-        if tag in self.oldtags:
-            cmd_str = f'{self.boinc} --get_old_tasks'
-            output = subprocess.check_output(shlex.split(cmd_str),
-                                             shell=False).decode().split('\n')
-            if tag == 'task':
-                tag_str = 'task '
+        data = []
+        cmd_str = f'{self.boinc} --get_old_tasks'
+        output = subprocess.check_output(shlex.split(cmd_str),
+                                         shell=False).decode().split('\n')
+        # Need to modify search tag to match pattern in boinc output.
+        if tag == 'task':
+            tag_str = 'task '
+        else:
             tag_str = f'{" " * 3}{tag}: '
-            data = []
-            # Need only data specified by the task's tag.
+
+        try:
             for i in output:
                 if i.__contains__(tag_str):
                     i = i.replace(tag_str, '')
@@ -165,13 +146,9 @@ class BoincCommand:
                         i = float(i)
                     data.append(i)
             return data
-        if tag is None:
-            cmd_str = f'{self.boinc} --get_old_tasks'
-            output = subprocess.check_output(shlex.split(cmd_str),
-                                             shell=False).decode().split('\n')
-            return output
-
-        print(f'Unrecognized data tag: {tag}')
+        except ValueError:
+            print(f'Unrecognized data tag: {tag}')
+        return data
 
 
 def about() -> None:
