@@ -133,7 +133,7 @@ def fmt_stdsec(secs: int) -> str:
 def sleep_timer(interval: int) -> print:
     """Sleep script between count intervals and display countdown timer.
 
-    :param interval: Minutes between task counts; range[1-60]
+    :param interval: Minutes between task counts; range[5-60, by 5's]
     :return: A terminal/console graphic that displays time remaining.
     """
 
@@ -144,23 +144,12 @@ def sleep_timer(interval: int) -> print:
     # Need bar segment sleep time, in sec.; is a factor of bar length.
     total_s = interval * 60
     barseg_s = round(total_s / bar_len)
-    # Remaining seconds for looping sleep, ending with sleep of barseg_s
-    # remain_s = total_s - barseg_s
     remain_s = total_s
 
-    # https://jonasjacek.github.io/colors/ Names and codes of 256 colors.
-    # https://pypi.org/project/colored/ Terminal formatting
-    # https://notes.burke.libbey.me/ansi-escape-codes/  Escape primer
     # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
-    # \x1b[231m is Grey100; needed to override terminal default white.
-    #   xx ;5m does not blink in PyCharm terminal emulator.
-    # You can use the colorama package to make ANSI VT100 \x1b[ escape
-    #    sequences work on Windows.
-    #    https:// pypi.org/project/colorama/
     whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
     whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
     reset = '\x1b[0m'  # No color, reset to system default.
-    # erase = '\x1b[0K'  # Clear line from cursor right.
     erase = '\x1b[2K'  # Clear entire line.
 
     # Not +1 in range because need only to sleep to END of interval.
@@ -208,7 +197,12 @@ def main() -> None:
     """
     Main flow for count-tasks utility. Counts and times reported tasks.
     """
-
+    # NOTE: args.interval and args.summary command line formats are different
+    # because summary times can be min, hr, or days, while interval times
+    # are always minutes (60m maximum).
+    # NOTE: Boinc only returns tasks reported in past hour.
+    #  Report interval can be longer than count interval, but we need to count
+    #  tasks reported at least once per hour.
     parser = argparse.ArgumentParser()
     parser.add_argument('--about', help='Author, copyright, and GNU license',
                         action='store_true', default=False)
@@ -228,12 +222,7 @@ def main() -> None:
                              ' closes (default: %(default)d)', default=1008,
                         metavar="N")
     args = parser.parse_args()
-    # NOTE: args.interval and args.summary command line formats are different
-    # because summary times can be min, hr, or days, while interval times
-    # are always minutes (60m maximum).
-    # NOTE: Boinc only returns tasks reported in past hour.
-    #  Report interval can be longer than count interval, but we need to count
-    #  tasks reported at least once per hour.
+
     count_limit = int(args.count_lim)
     interval_m = int(args.interval)
     sumry_interval = args.summary  # Used only for printing and logging.
@@ -284,8 +273,7 @@ def main() -> None:
 %s""",               time_start,
                      indent, interval_m,
                      indent, sumry_interval,
-                     indent,
-                     count_limit,
+                     indent, count_limit,
                      report)
 
     # Repeated intervals: counts, times, stats, and summaries.
@@ -340,8 +328,8 @@ def main() -> None:
         # Report: Summary intervals
         # NOTE: Sum of interval counts may exceed the summary count when the
         # count interval is less than 60m. This could happen because the
-        # <<boinc-client --get_old_tasks>> command returns tasks reported over
-        # the past hour.
+        # <<boinc-client --get_old_tasks>> command returns tasks reported
+        # during the past hour.
         if (i + 1) % sumry_factor == 0:
             # Get only unique tasks for counting and stats.
             tasksmry_uniq = set(tasks_smry)
