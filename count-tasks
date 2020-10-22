@@ -63,7 +63,7 @@ def check_args(parameter):
         val = (parameter[:-1])
         unit = parameter[-1]
         if str(unit) not in valid_units:
-            msg = "TIME unit must be m (minute), h (hour), or d (day)."
+            msg = f"TIME unit must be m, h, or d, not {unit}"
             raise argparse.ArgumentTypeError(msg)
         try:
             int(val)
@@ -202,8 +202,7 @@ def main() -> None:
     # because summary times can be min, hr, or days, while interval times
     # are always minutes (60m maximum).
     # NOTE: Boinc only returns tasks that were reported in past hour.
-    #  Report interval can be longer than count interval, but we need to count
-    #  tasks reported at least once per hour.
+    #   Therefore, we need to count tasks at least once per hour.
     parser = argparse.ArgumentParser()
     parser.add_argument('--about', help='Author, copyright, and GNU license',
                         action='store_true', default=False)
@@ -251,17 +250,19 @@ def main() -> None:
     time_fmt = '%Y-%b-%d %H:%M:%S'
     time_start = datetime.now().strftime(time_fmt)
     tasks_start = BC.get_reported('elapsed time')
-    tasks_now = []
+    tasks_now = tasks_start[:]
+    tasks_prev = tasks_now[:]
     tasks_smry = []
     count_start = len(tasks_start)
-    tic_nnt = 0  # Used in repeated interval stdout and log (No New Tasks).
+    tic_nnt = 0  # Used to track when No New Tasks have been reported.
+    erase = '\x1b[2K'  # Clear the terminal line for a clean print.
 
     # Report: Starting information
     tt_sum, tt_mean, tt_sd = get_stats(count_start, tasks_start).values()
     indent = ' ' * 22
     report = f'{time_start}; ' \
              f'Tasks reported in past hour: {count_start}' \
-             f'\n{indent}(task times total {tt_sum}, ' \
+             f'\n{indent}(Task Times: total {tt_sum}, ' \
              f'mean {tt_mean}, stdev {tt_sd})'
     # sys.stdout.write(f'{report}\n'
     # sys.stdout.flush()
@@ -277,28 +278,33 @@ def main() -> None:
                      indent, count_limit,
                      report)
 
-    # Repeated intervals: counts, times, stats, and summaries.
+    # Repeated intervals: counts, time stats, and summaries.
+    # Synopsis:
+    # Only need to update _prev if tasks were reported in prior interval;
+    #   otherwise, _prev remains as it was from prior intervals.
+    # Only need to remove previous tasks from _now when new tasks have
+    #   been reported.
+    # Do not include start tasks in interval or summary counts.
+        # For each interval, need to count unique tasks because some tasks
+        #   may persist between counts when interval is less than 1h.
+        #   set() may not be necessary if list updates are working as intended,
+        #     but better to err toward thoroughness.
     for i in range(count_limit):
         sleep_timer(interval_m)
         # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
         time_now = datetime.now().strftime(time_fmt)
 
-        # Need to count unique tasks in each loop because some tasks
-        #   may persist between count intervals of less than 1h.
-        tasks_prev = tasks_now  # task_now is from previous loop.
-        tasks_now = BC.get_reported('elapsed time')
-        for task in tasks_start:
-            try:
-                tasks_now.remove(task)
-            except ValueError:
-                pass
-        tasks_start.clear()
+        if len(tasks_now) > 0:
+            tasks_prev = tasks_now[:]
 
-        for task in tasks_prev:
-            try:
-                tasks_now.remove(task)
-            except ValueError:
-                pass
+        tasks_now = BC.get_reported('elapsed time')
+
+        if len(tasks_now) > 0:
+            tasks_now = [task for task in tasks_now if task not in tasks_prev]
+
+        if len(tasks_start) > 0:
+            tasks_now = [task for task in tasks_now if task not in tasks_start]
+            tasks_start.clear()
 
         count_now = len(set(tasks_now))
         tasks_smry.extend(tasks_now)
@@ -311,7 +317,7 @@ def main() -> None:
             report = f'{time_now}; ' \
                      f'No tasks reported in past {tic_nnt} {interval_m}m ' \
                      f'interval(s).'
-            print(f'\r{report}')
+            print(f'\r{erase}{report}')
             if args.log:
                 logging.info(report)
 
@@ -320,19 +326,15 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd = get_stats(count_now, tasks_now).values()
             report = f'{time_now}; ' \
                      f'Tasks reported in past {interval_m}m: {count_now}' \
-                     f'\n{indent}(task times total {tt_sum}, ' \
+                     f'\n{indent}(Task Times: total {tt_sum}, ' \
                      f'mean {tt_mean}, stdev {tt_sd})'
-            print(f'\r{report}')
+            print(f'\r{erase}{report}')
             if args.log:
                 logging.info(report)
 
         # Report: Summary intervals
-        # NOTE: Sum of interval counts may exceed the summary count when the
-        # count interval is less than 60m. This could happen because the
-        # <<boinc-client --get_old_tasks>> command returns tasks reported
-        # during the past hour.
         if (i + 1) % sumry_factor == 0:
-            # Get only unique tasks for counting and stats.
+            # Need unique tasks for stats and counting.
             tasksmry_uniq = set(tasks_smry)
             cntsmry_uniq = len(tasksmry_uniq)
 
@@ -341,9 +343,9 @@ def main() -> None:
             report = f'{time_now}; ' \
                      f'>>> SUMMARY count for past {sumry_interval}: ' \
                      f'{cntsmry_uniq}' \
-                     f'\n{indent}(task times total {tt_sum},' \
+                     f'\n{indent}(Task Times: total {tt_sum},' \
                      f' mean {tt_mean}, stdev {tt_sd})'
-            print(f'\r{report}')
+            print(f'\r{erase}{report}')
             if args.log:
                 logging.info(report)
 
