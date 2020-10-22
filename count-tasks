@@ -177,11 +177,11 @@ def sleep_timer(interval: int) -> print:
 
 def get_stats(count: int, taskt: iter) -> dict:
     """
-    Sum and run statistics from times, as seconds, integers or floats.
+    Sum and run statistics from times, as seconds (integers or floats).
 
     :param count: The number of elements in taskt.
     :param taskt: A list, tuple or set of numerical times.
-    :return: Dict keys: tt_sum, tt_mean, tt_sd. Values format: 00:00:00
+    :return: Dict keys: tt_sum, tt_mean, tt_sd; values as: 00:00:00.
     """
     total = fmt_stdsec(int(sum(set(taskt))))
     if count > 1:
@@ -285,10 +285,10 @@ def main() -> None:
     # Only need to remove previous tasks from _now when new tasks have
     #   been reported.
     # Do not include start tasks in interval or summary counts.
-        # For each interval, need to count unique tasks because some tasks
-        #   may persist between counts when interval is less than 1h.
-        #   set() may not be necessary if list updates are working as intended,
-        #     but better to err toward thoroughness.
+    # For each interval, need to count unique tasks because some tasks
+    #   may persist between counts when interval is less than 1h.
+    #   set() may not be necessary if list updates are working as intended,
+    #     but better to err toward thoroughness.
     for i in range(count_limit):
         sleep_timer(interval_m)
         # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
