@@ -151,24 +151,24 @@ def sleep_timer(interval: int) -> print:
     whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
     whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
     reset = '\x1b[0m'  # No color, reset to system default.
-    erase = '\x1b[2K'  # Clear entire line.
+    del_line = '\x1b[2K'  # Clear entire line.
 
     subprocess.call('', shell=True)
     # Not +1 in range because need only to sleep to END of interval.
     for i in range(bar_len):
         remain_bar = prettybar[i:]
         length = len(remain_bar)
-        print(f'\r{erase}{whitexx_on_red}'
+        print(f'\r{del_line}{whitexx_on_red}'
               f'{fmt_sec(remain_s)}{remain_bar}'
               f'{reset}|< ~time to next count', end='')
         if length == 1:
-            print(f'\r{erase}{whitexx_on_grn}'
+            print(f'\r{del_line}{whitexx_on_grn}'
                   f'{fmt_sec(remain_s)}{remain_bar}'
                   f'{reset}|< ~time to next count', end='')
         remain_s = (remain_s - barseg_s)
         # Need to clear the line for main() report printing.
         if length == 0:
-            print(f'\r{erase}')
+            print(f'\r{del_line}')
         # t.sleep(.5)  # DEBUG
         t.sleep(barseg_s)
 
@@ -231,6 +231,8 @@ def main() -> None:
               "--interval time."
         raise ValueError(msg)
 
+    print(f'Summary factor: {sumry_factor}')
+
     # About me
     if args.about:
         print(__doc__)
@@ -253,7 +255,7 @@ def main() -> None:
     tasks_smry = []
     count_start = len(tasks_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
-    erase = '\x1b[2K'  # Clear the terminal line for a clean print.
+    del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
 
     # Report: Starting information
     tt_sum, tt_mean, tt_sd = get_stats(count_start, tasks_start).values()
@@ -315,7 +317,7 @@ def main() -> None:
             report = f'{time_now}; ' \
                      f'No tasks reported in past {tic_nnt} {interval_m}m ' \
                      f'interval(s).'
-            print(f'\r{erase}{report}')
+            print(f'\r{del_line}{report}')
             if args.log:
                 logging.info(report)
 
@@ -326,7 +328,7 @@ def main() -> None:
                      f'Tasks reported in past {interval_m}m: {count_now}' \
                      f'\n{indent}(Task Times: total {tt_sum}, ' \
                      f'mean {tt_mean}, stdev {tt_sd})'
-            print(f'\r{erase}{report}')
+            print(f'\r{del_line}{report}')
             if args.log:
                 logging.info(report)
 
@@ -343,7 +345,7 @@ def main() -> None:
                      f'{cntsmry_uniq}' \
                      f'\n{indent}(Task Times: total {tt_sum},' \
                      f' mean {tt_mean}, stdev {tt_sd})'
-            print(f'\r{erase}{report}')
+            print(f'\r{del_line}{report}')
             if args.log:
                 logging.info(report)
 
