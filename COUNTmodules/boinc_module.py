@@ -140,9 +140,14 @@ class BoincCommand:
         """
 
         bcmd_path = os.path.join(self.boinccmd)
-        output = subprocess.run(f'{bcmd_path} --get_old_tasks',
-                                capture_output=True, text=True,
-                                shell=True).stdout.split('\n')
+        output = []
+        if sys.platform == 'linux':
+            output = subprocess.run(f'{bcmd_path} --get_old_tasks',
+                                    capture_output=True, text=True,
+                                    shell=True).stdout.split('\n')
+        if sys.platform[:3] == 'win':
+            output = subprocess.check_output([bcmd_path, '--get_old_tasks'],
+                                             shell=True).decode('utf-8').split('\n')
         data = []
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
