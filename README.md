@@ -7,11 +7,12 @@ It may be useful for comparing task productivity between different computers
 or configurations.
 
 Developed with Python 3.8, under Ubuntu 20.04. Intended for use on all 
-operating systems, but so far only tested in the development environment. 
+operating systems, but so far only tested in the development environment and
+ in Windows 10. 
 The latest Python package can be downloaded from https://www.python.org/downloads/
 
-To use (in Linux), open a terminal from within the countBOINCtasks-master 
-directory and call up the help menu: 
+To use (in Linux), open a terminal from within the countBOINCtasks
+-master directory and call up the help menu: 
 ```
 ~/countBOINCtasks-master$ ./count-tasks --help
 usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
@@ -73,5 +74,8 @@ has a 60 minutes (60m) maximum count interval, but even that, as well as
  shorter intervals, can re-count tasks which carry over between intervals
  . Summary counts do not included duplicate tasks.
 
+## Known Issues
+* As of 23 Oct 2020, ver 0.2.0, in Windows systems, only runs with default
+ settings. Hope to have options working soon.
 ## Development Plans
 * Implement for Mac OS and Windows 10.
