@@ -231,8 +231,6 @@ def main() -> None:
               "--interval time."
         raise ValueError(msg)
 
-    print(f'Summary factor: {sumry_factor}')
-
     # About me
     if args.about:
         print(__doc__)
@@ -264,8 +262,6 @@ def main() -> None:
              f'Tasks reported in past hour: {count_start}' \
              f'\n{indent}(Task Times: total {tt_sum}, ' \
              f'mean {tt_mean}, stdev {tt_sd})'
-    # sys.stdout.write(f'{report}\n'
-    # sys.stdout.flush()
     print(report)
     if args.log:
         logging.info("""%s; Task counter is starting with

@@ -78,12 +78,14 @@ class BoincCommand:
         # Project commands require the Project URL, others commands don't
         if command in self.projectcmd:
             bcmd_path = os.path.join(self.boinccmd)
-            subprocess.check_output([bcmd_path, '--project', self.EINSTEIN, command],
-                                    shell=True)
+            subprocess.run(f'{bcmd_path} --project {self.EINSTEIN} '
+                           f'{command}', capture_output=True, text=True,
+                           shell=True).stdout.split('\n')
         elif command == 'read_cc_config':
             command_fmt = f'--{command}'
             bcmd_path = os.path.join(self.boinccmd)
-            subprocess.check_output([bcmd_path, command_fmt], shell=False)
+            subprocess.run(f'{bcmd_path} {command_fmt}',
+                           capture_output=True, text=True, shell=True)
         else:
             print(f'Unrecognized command: {command}')
         # if command in self.projectcmd:
@@ -106,9 +108,10 @@ class BoincCommand:
         valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
                      'active_task_state']
         data = []
-        cmd_str = os.path.join(self.boinccmd)
-        output = subprocess.check_output([cmd_str, '--get_tasks'],
-                                         shell=True).decode('utf-8').split('\n')
+        bcmd_path = os.path.join(self.boinccmd)
+        output = subprocess.run(f'{bcmd_path} --get_tasks',
+                                capture_output=True, text=True,
+                                shell=True).stdout.split('\n')
         # The boinccmd stdout format for each tag:
         tag_str = f'{" " * 3}{tag}: '
         if tag in valid_tag:
@@ -136,9 +139,10 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = os.path.join(self.boinccmd)
-        output = subprocess.check_output([cmd_str, '--get_old_tasks'],
-                                         shell=True).decode('utf-8').split('\n')
+        bcmd_path = os.path.join(self.boinccmd)
+        output = subprocess.run(f'{bcmd_path} --get_old_tasks',
+                                capture_output=True, text=True,
+                                shell=True).stdout.split('\n')
         data = []
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
