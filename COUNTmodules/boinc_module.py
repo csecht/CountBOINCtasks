@@ -22,34 +22,25 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__program_name__ = 'count-tasks'
-__version__ = '0.1.0'
+__program_name__ = 'count-tasks.py'
+__version__ = '0.2.0'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
 
-import shlex
+import os
 import shutil
 import subprocess
 import sys
 
-boinccmd = shutil.which("boinccmd")
-# if not boinccmd:
-#     print('Package [boinccmd] executable not found. Install for...\n'
-#           'Linux: sudo apt-get install boinc-client boinc-manager\n'
-#           'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
-#           'Exiting...')
-#     # LOGGER.debug('boinccmd path: %s', boinccmd)
-#     sys.exit(1)
-
-try:
-    boinccmd = shutil.which("boinccmd")
-except OSError as err:
-    print('Package [boinccmd] executable not found. Install for...\n'
-          'Linux: sudo apt-get install boinc-client boinc-manager\n'
-          'Win: see https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
-          'Exiting...')
-    print(err)
+if sys.platform[:3] == 'win':
+    boinccmd = shutil.which('boinccmd', path='C:\\Program Files\\BOINC')
+elif sys.platform == 'linux':
+    boinccmd = shutil.which('boinccmd')
+elif sys.platform == 'darwin':
+    boinccmd = shutil.which('boinccmd', path='Library/Application\\ Support/BOINC')
+else:
+    print('[boinccmd] executable not found in its expected default path. Exiting...')
     sys.exit(1)
 
 
@@ -62,7 +53,7 @@ class BoincCommand:
     MILKYWAY = "http://milkyway.cs.rpi.edu_milkyway/"
 
     def __init__(self):
-        self.boinc = boinccmd
+        self.boinccmd = boinccmd
         self.projectcmd = ('suspend', 'resume', 'get_app_config')
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
@@ -83,16 +74,26 @@ class BoincCommand:
         :param command: In use: 'suspend', 'resume', 'read_cc_config'.
         :return: Change in boinc-client action.
         """
+
         # Project commands require the Project URL, others commands don't
         if command in self.projectcmd:
-            cmd_str = f'{self.boinc} --project {self.EINSTEIN} {command}'
-            subprocess.check_output(shlex.split(cmd_str), shell=False)
+            bcmd_path = os.path.join(self.boinccmd)
+            subprocess.check_output([bcmd_path, '--project', self.EINSTEIN, command],
+                                    shell=True)
         elif command == 'read_cc_config':
-            cmd_str = f'{self.boinc} --{command}'
-            subprocess.check_output(shlex.split(cmd_str), shell=False)
+            command_fmt = f'--{command}'
+            bcmd_path = os.path.join(self.boinccmd)
+            subprocess.check_output([bcmd_path, command_fmt], shell=False)
         else:
             print(f'Unrecognized command: {command}')
-        # LOGGER.debug('bnccmd parameter: %s', command)
+        # if command in self.projectcmd:
+        #     bcmd_path = f'{self.boinccmd} --project {self.EINSTEIN} {command}'
+        #     subprocess.check_output(shlex.split(bcmd_path), shell=False)
+        # elif command == 'read_cc_config':
+        #     bcmd_path = f'{self.boinccmd} --{command}'
+        #     subprocess.check_output(shlex.split(bcmd_path), shell=False)
+        # else:
+        #     print(f'Unrecognized command: {command}')
 
     def get_tasks(self, tag: str) -> list:
         """
@@ -102,20 +103,29 @@ class BoincCommand:
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
         """
+        valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
+                     'active_task_state']
         data = []
-        cmd_str = f'{self.boinc} --get_tasks'
+        cmd_str = os.path.join(self.boinccmd)
+        output = subprocess.check_output([cmd_str, '--get_tasks'],
+                                         shell=True).decode('utf-8').split('\n')
+        # The boinccmd stdout format for each tag:
         tag_str = f'{" " * 3}{tag}: '
-        output = subprocess.check_output(shlex.split(cmd_str),
-                                         shell=False).decode().split('\n')
-        try:
-            for i in output:
-                if i.__contains__(tag_str):
-                    i = i.replace(tag_str, '')
-                    data.append(i)
+        if tag in valid_tag:
+            data = [dat.replace(tag_str, '') for dat in output if tag in dat]
             return data
-        except ValueError:
-            print(f'Unrecognized data tag: {tag}')
+        print(f'Unrecognized data tag: {tag}')
         return data
+
+        # try:
+        #     for i in output:
+        #         if i.__contains__(tag_str):
+        #             i = i.replace(tag_str, '')
+        #             data.append(i)
+        #     return data
+        # except ValueError:
+        #     print(f'Unrecognized data tag: {tag}')
+        # return data
 
     def get_reported(self, tag: str) -> list:
         """
@@ -125,10 +135,10 @@ class BoincCommand:
                           'elapsed time' returns task times, sec.000000.
         :return: List of specified data from reported tasks.
         """
-        cmd_str = f'{self.boinc} --get_old_tasks'
-        output = subprocess.check_output(shlex.split(cmd_str),
-                                         shell=False).decode().split('\n')
-        # Need to modify search tag to match pattern in boinc output.
+
+        cmd_str = os.path.join(self.boinccmd)
+        output = subprocess.check_output([cmd_str, '--get_old_tasks'],
+                                         shell=True).decode('utf-8').split('\n')
         data = []
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '

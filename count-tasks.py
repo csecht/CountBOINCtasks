@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-count-tasks counts reported boinc-client tasks at set intervals.
+count-tasks.py counts reported boinc-client tasks at set intervals.
 
     Copyright (C) 2020 C. Echt
 
@@ -23,8 +23,8 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.0'
-__program_name__ = 'count-tasks'
+__version__ = '0.2.0'
+__program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
@@ -32,8 +32,8 @@ __status__ = 'Development Status :: 3 - Alpha'
 import argparse
 import logging
 import os
-import platform
 import statistics as stat
+import subprocess
 import sys
 import time as t
 from datetime import datetime
@@ -80,7 +80,7 @@ def get_min(time_string: str) -> int:
 
     :return: Time value as integer minutes.
     """
-    t_min = dict(m=1, h=60, d=3600)
+    t_min = dict(m=1, h=60, d=1440)
     val = int(time_string[:-1])
     unit = time_string[-1]
 
@@ -153,6 +153,7 @@ def sleep_timer(interval: int) -> print:
     reset = '\x1b[0m'  # No color, reset to system default.
     erase = '\x1b[2K'  # Clear entire line.
 
+    subprocess.call('', shell=True)
     # Not +1 in range because need only to sleep to END of interval.
     for i in range(bar_len):
         remain_bar = prettybar[i:]
@@ -170,9 +171,6 @@ def sleep_timer(interval: int) -> print:
             print(f'\r{erase}')
         # t.sleep(.5)  # DEBUG
         t.sleep(barseg_s)
-
-    # sys.stdout.write()  # May be needed instead of print for
-    # sys.stdout.flush()  #  Windows console?
 
 
 def get_stats(count: int, taskt: iter) -> dict:
@@ -196,7 +194,7 @@ def get_stats(count: int, taskt: iter) -> dict:
 
 def main() -> None:
     """
-    Main flow for count-tasks utility. Counts and times reported tasks.
+    Main flow for count-tasks.py utility. Counts and times reported tasks.
     """
     # NOTE: args.interval and args.summary command line formats are different
     # because summary times can be min, hr, or days, while interval times

@@ -1,5 +1,6 @@
 /venv/
 /count-tasks_log.txt
+/count-tasks.py_log.txt
 
 # https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
