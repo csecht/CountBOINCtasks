@@ -119,35 +119,29 @@ class BoincCommand:
 
     def get_reported(self, tag: str) -> list:
         """
-        Get data from get_reported boinc-client tasks.
+        Get data from reported boinc-client tasks.
 
-        :param tag: Used: 'task' returns get_reported task names.
+        :param tag: Used: 'task' returns reported task names.
                           'elapsed time' returns task times, sec.000000.
-        :return: List of specified data from get_reported tasks.
+        :return: List of specified data from reported tasks.
         """
-        data = []
         cmd_str = f'{self.boinc} --get_old_tasks'
         output = subprocess.check_output(shlex.split(cmd_str),
                                          shell=False).decode().split('\n')
         # Need to modify search tag to match pattern in boinc output.
+        data = [line for line in output if tag in line]
+        if tag == 'elapsed time':
+            tag_str = f'{" " * 3}{tag}: '
+            data = [dat.replace(tag_str, '') for dat in data]
+            data = [float(seconds.replace(' sec', '')) for seconds in data]
+            return data
         if tag == 'task':
             tag_str = 'task '
-        else:
-            tag_str = f'{" " * 3}{tag}: '
-
-        try:
-            for i in output:
-                if i.__contains__(tag_str):
-                    i = i.replace(tag_str, '')
-                    if tag == 'task':
-                        i = i.rstrip(':')
-                    if tag == 'elapsed time':
-                        i = i.replace(' sec', "")
-                        i = float(i)
-                    data.append(i)
+            data = [dat.replace(tag_str, '') for dat in data]
+            data = [name.rstrip(':') for name in data]
             return data
-        except ValueError:
-            print(f'Unrecognized data tag: {tag}')
+
+        print(f'Unrecognized data tag: {tag}')
         return data
 
 

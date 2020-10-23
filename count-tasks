@@ -132,7 +132,7 @@ def fmt_stdsec(secs: int) -> str:
 
 
 def sleep_timer(interval: int) -> print:
-    """Sleep script between count intervals and display countdown timer.
+    """Sleep main() between count intervals and display countdown timer.
 
     :param interval: Minutes between task counts; range[5-60, by 5's]
     :return: A terminal/console graphic that displays time remaining.
