@@ -129,15 +129,15 @@ class BoincCommand:
         output = subprocess.check_output(shlex.split(cmd_str),
                                          shell=False).decode().split('\n')
         # Need to modify search tag to match pattern in boinc output.
-        data = [line for line in output if tag in line]
+        data = []
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
-            data = [dat.replace(tag_str, '') for dat in data]
+            data = [dat.replace(tag_str, '') for dat in output if tag in dat]
             data = [float(seconds.replace(' sec', '')) for seconds in data]
             return data
         if tag == 'task':
             tag_str = 'task '
-            data = [dat.replace(tag_str, '') for dat in data]
+            data = [dat.replace(tag_str, '') for dat in output if tag in dat]
             data = [name.rstrip(':') for name in data]
             return data
 
