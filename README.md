@@ -6,13 +6,18 @@ A utility for monitoring task data reported by the boinc-client.
 It may be useful for comparing task productivity between different computers 
 or configurations.
 
-Developed with Python 3.8, under Ubuntu 20.04 and Windows 10. Intended for
- use on all operating systems, but so far only tested in the development
- environment. 
+Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and Mac OS. You may 
+ need to download or update to Python 3.8 or 3.9.
 The latest Python package can be downloaded from https://www.python.org/downloads/
 
-To use (in Linux), open a terminal from within the countBOINCtasks
--master directory and call up the help menu: 
+### Usage:  
+Download the .zip package and from within the countBOINCtasks-master
+ folder, open a terminal or Command Prompt and call up the help menu.   
+<ul>
+<li>Linux or Mac OS: ./count-tasks.py --help</li> 
+<li>Windows: python count-tasks.py --help</li>  
+</ul>
+
 ```
 ~/countBOINCtasks-master$ ./count-tasks --help
 usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
@@ -26,18 +31,18 @@ optional arguments:
   --count_lim N       Specify number of count reports until program closes (default: 1008)
 
 ```
-(Options can accept abbreviations, e.g., `./count-tasks --l --int 15 --sum 1h`)
+(Options can be abbreviated, e.g., `./count-tasks --l --i 15 --s 1h --c 12`)
 
-Running with the default settings, it will count reported completed tasks
-for currently running BOINC Projects on a repeating interval of 1 hour, with 
-summaries every 24 hr. Basic statistics on task times are also provided 
- with each count. The initial data that is immediately provided is for the most 
-recent tasks reported by boinc-client in the past hour. Repeating interval
- count begin immediately after.
+Running with the default settings (no optional arguments), will count
+  tasks that have been reported to the BOINC Project server on a
+  repeating interval of 1 hour, with summaries provided every 24 hr. Basic
+   statistics on task times are also provided with each count. The initial
+    data that is immediately provided upon launch is for the most recent tasks
+     reported by boinc-client in the past hour. Repeating interval count begin
+      immediately after that first report.
 
 Example results, default settings:
 ```
-$ ./count-tasks
 2020-Oct-19 06:03:54; Tasks reported in past hour: 9
                       (task times total 02:19:47, mean 00:15:31, stdev 00:00:05)
 2020-Oct-19 07:03:58; Tasks reported in past 60m: 8
@@ -65,14 +70,12 @@ NOTE: Summary counts may be less than the sum of individual counts because of
 persistence of reported tasks between count intervals. This can be expected
  when the `--interval` option is set to less than the default 60m. 
  The command that provides reported task data to `count-tasks`, 
- ```
-$ boinccmd  --get_old_tasks 
-```
-retrieves tasks reported for the past hour, independent of the utility's 
-count interval. To avoid missing any reported tasks, the `--interval` option 
-has a 60 minutes (60m) maximum count interval, but even that, as well as
- shorter intervals, can re-count tasks which carry over between intervals
- . Summary counts do not included duplicate tasks.
+ `boinccmd  --get_old_tasks` retrieves tasks reported for the past hour
+ , independent of the utility's  count interval. To avoid missing any
+  reported tasks, the `--interval` option  has a 60 minutes (60m) maximum
+   count interval, but even that, as well as shorter intervals, can re-count
+    tasks which carry over between intervals. Summary counts do not included 
+    duplicate tasks.
 
 ## Development Plans
-* Implement for Mac OS.
+* Improve Python code

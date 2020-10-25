@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
@@ -31,6 +31,26 @@ __status__ = 'Development Status :: 3 - Alpha'
 import shlex
 import subprocess
 import sys
+
+
+def bccmd_path() -> str:
+    """
+    Sets explicit path to default location of boinccmd.
+    :return: Platform-specific path.
+    """
+    boinccmd = ''
+    if sys.platform[:3] == 'win':
+        boinccmd = r"\Program Files\BOINC\\boinccmd"
+        return boinccmd
+    if sys.platform == 'linux':
+        boinccmd = "/usr/bin/boinccmd"
+        return boinccmd
+    if sys.platform == 'darwin':
+        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd"
+        return boinccmd
+    print(
+        '[boinccmd] platform is not recognized as win, linux, or darwin.')
+    return boinccmd
 
 
 class BoincCommand:
@@ -55,26 +75,6 @@ class BoincCommand:
         self.oldtags = ('task', 'project URL', 'app name', 'exit status',
                         'elapsed time', 'completed time', 'get_reported time')
 
-    def bccmd_path(self) -> str:
-        """
-        Sets explicit path to default location of boinccmd.
-        :return: Platform-specific path.
-        """
-        boinccmd = ''
-        if sys.platform[:3] == 'win':
-            boinccmd = r"\Program Files\BOINC\\boinccmd"
-            return boinccmd
-        if sys.platform == 'linux':
-            boinccmd = "/usr/bin/boinccmd"
-            return boinccmd
-        if sys.platform == 'darwin':
-            boinccmd = r'$HOME/Library/Application\ Support/BOINC/boinccmd'
-            return boinccmd
-
-        print(
-            '[boinccmd] executable not found in its expected default path.')
-        return boinccmd
-
     # def run(self, command: str):
     #     """
     #     Format command for system execution of boinc-client action.
@@ -97,7 +97,8 @@ class BoincCommand:
     #     else:
     #         print(f'Unrecognized command: {command}')
 
-    def get_tasks(self, tag: str) -> list:
+    @staticmethod
+    def get_tasks(tag: str) -> list:
         """
         Get data from current boinc-client tasks.
 
@@ -108,7 +109,7 @@ class BoincCommand:
         valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
                      'active_task_state']
         output = []
-        cmd_str = self.bccmd_path() + ' --get_tasks'
+        cmd_str = bccmd_path() + ' --get_tasks'
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
                                     capture_output=True,
@@ -128,7 +129,8 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    def get_reported(self, tag: str) -> list:
+    @staticmethod
+    def get_reported(tag: str) -> list:
         """
         Get data from reported boinc-client tasks.
 
@@ -137,7 +139,7 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = self.bccmd_path() + ' --get_old_tasks'
+        cmd_str = bccmd_path() + ' --get_old_tasks'
         output = []
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
@@ -149,10 +151,9 @@ class BoincCommand:
                                     capture_output=True,
                                     text=True,
                                     check=True).stdout.split('\n')
-        # if sys.platform == 'darwin':
-        #     output = subprocess.run(shlex.split(cmd_str)cmd_str,
-        #                             capture_output=True,
-        #                             text=True).stdout.split('\n')
+        if sys.platform == 'darwin':
+            output = subprocess.check_output(cmd_str,
+                                        shell=True).decode('utf-8').split('\n')
 
         data = []
         if tag == 'elapsed time':
