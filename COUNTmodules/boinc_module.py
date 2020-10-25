@@ -28,7 +28,6 @@ __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
 
-import os
 import shlex
 import subprocess
 import sys
@@ -57,15 +56,19 @@ class BoincCommand:
                         'elapsed time', 'completed time', 'get_reported time')
 
     def bccmd_path(self) -> str:
+        """
+        Sets explicit path to default location of boinccmd.
+        :return: Platform-specific path.
+        """
         boinccmd = ''
         if sys.platform[:3] == 'win':
-            boinccmd = "\Program Files\BOINC\\boinccmd"
+            boinccmd = r"\Program Files\BOINC\\boinccmd"
             return boinccmd
         if sys.platform == 'linux':
             boinccmd = "/usr/bin/boinccmd"
             return boinccmd
         if sys.platform == 'darwin':
-            boinccmd = '$HOME/Library/Application\ Support/BOINC/boinccmd'
+            boinccmd = r'$HOME/Library/Application\ Support/BOINC/boinccmd'
             return boinccmd
 
         print(
@@ -109,11 +112,13 @@ class BoincCommand:
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
                                     capture_output=True,
-                                    text=True).stdout.split('\n')
+                                    text=True,
+                                    check=True).stdout.split('\n')
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     capture_output=True,
-                                    text=True).stdout.split('\n')
+                                    text=True,
+                                    check=True).stdout.split('\n')
 
         data = []
         tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
@@ -137,11 +142,13 @@ class BoincCommand:
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
                                     capture_output=True,
-                                    text=True).stdout.split('\n')
+                                    text=True,
+                                    check=True).stdout.split('\n')
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     capture_output=True,
-                                    text=True).stdout.split('\n')
+                                    text=True,
+                                    check=True).stdout.split('\n')
         # if sys.platform == 'darwin':
         #     output = subprocess.run(shlex.split(cmd_str)cmd_str,
         #                             capture_output=True,
