@@ -23,25 +23,15 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
 
 import os
-import shutil
+import shlex
 import subprocess
 import sys
-
-if sys.platform[:3] == 'win':
-    boinccmd = shutil.which('boinccmd', path='C:\\Program Files\\BOINC')
-elif sys.platform == 'linux':
-    boinccmd = shutil.which('boinccmd')
-elif sys.platform == 'darwin':
-    boinccmd = shutil.which('boinccmd', path='Library/Application\\ Support/BOINC')
-else:
-    print('[boinccmd] executable not found in its expected default path. Exiting...')
-    sys.exit(1)
 
 
 class BoincCommand:
@@ -53,7 +43,6 @@ class BoincCommand:
     MILKYWAY = "http://milkyway.cs.rpi.edu_milkyway/"
 
     def __init__(self):
-        self.boinccmd = boinccmd
         self.projectcmd = ('suspend', 'resume', 'get_app_config')
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
@@ -67,35 +56,43 @@ class BoincCommand:
         self.oldtags = ('task', 'project URL', 'app name', 'exit status',
                         'elapsed time', 'completed time', 'get_reported time')
 
-    def run(self, command: str):
-        """
-        Format command for system execution of boinc-client action.
+    def bccmd_path(self) -> str:
+        boinccmd = ''
+        if sys.platform[:3] == 'win':
+            boinccmd = "\Program Files\BOINC\\boinccmd"
+            return boinccmd
+        if sys.platform == 'linux':
+            boinccmd = "/usr/bin/boinccmd"
+            return boinccmd
+        if sys.platform == 'darwin':
+            boinccmd = '$HOME/Library/Application\ Support/BOINC/boinccmd'
+            return boinccmd
 
-        :param command: In use: 'suspend', 'resume', 'read_cc_config'.
-        :return: Change in boinc-client action.
-        """
+        print(
+            '[boinccmd] executable not found in its expected default path.')
+        return boinccmd
 
-        # Project commands require the Project URL, others commands don't
-        if command in self.projectcmd:
-            bcmd_path = os.path.join(self.boinccmd)
-            subprocess.run(f'{bcmd_path} --project {self.EINSTEIN} '
-                           f'{command}', capture_output=True, text=True,
-                           shell=True).stdout.split('\n')
-        elif command == 'read_cc_config':
-            command_fmt = f'--{command}'
-            bcmd_path = os.path.join(self.boinccmd)
-            subprocess.run(f'{bcmd_path} {command_fmt}',
-                           capture_output=True, text=True, shell=True)
-        else:
-            print(f'Unrecognized command: {command}')
-        # if command in self.projectcmd:
-        #     bcmd_path = f'{self.boinccmd} --project {self.EINSTEIN} {command}'
-        #     subprocess.check_output(shlex.split(bcmd_path), shell=False)
-        # elif command == 'read_cc_config':
-        #     bcmd_path = f'{self.boinccmd} --{command}'
-        #     subprocess.check_output(shlex.split(bcmd_path), shell=False)
-        # else:
-        #     print(f'Unrecognized command: {command}')
+    # def run(self, command: str):
+    #     """
+    #     Format command for system execution of boinc-client action.
+    #
+    #     :param command: In use: 'suspend', 'resume', 'read_cc_config'.
+    #     :return: Change in boinc-client action.
+    #     """
+    #
+    #     # Project commands require the Project URL, others commands don't
+    #     if command in self.projectcmd:
+    #         bcmd_path = os.path.join(self.boinccmd)
+    #         subprocess.run(f'{bcmd_path} --project {self.EINSTEIN} '
+    #                        f'{command}', capture_output=True, text=True,
+    #                        shell=True).stdout.split('\n')
+    #     elif command == 'read_cc_config':
+    #         command_fmt = f'--{command}'
+    #         bcmd_path = os.path.join(self.boinccmd)
+    #         subprocess.run(f'{bcmd_path} {command_fmt}',
+    #                        capture_output=True, text=True, shell=True)
+    #     else:
+    #         print(f'Unrecognized command: {command}')
 
     def get_tasks(self, tag: str) -> list:
         """
@@ -107,28 +104,24 @@ class BoincCommand:
         """
         valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
                      'active_task_state']
+        output = []
+        cmd_str = self.bccmd_path() + ' --get_tasks'
+        if sys.platform == 'linux':
+            output = subprocess.run(shlex.split(cmd_str),
+                                    capture_output=True,
+                                    text=True).stdout.split('\n')
+        if sys.platform[:3] == 'win':
+            output = subprocess.run(cmd_str,
+                                    capture_output=True,
+                                    text=True).stdout.split('\n')
+
         data = []
-        bcmd_path = os.path.join(self.boinccmd)
-        output = subprocess.run(f'{bcmd_path} --get_tasks',
-                                capture_output=True, text=True,
-                                shell=True).stdout.split('\n')
-        # The boinccmd stdout format for each tag:
-        tag_str = f'{" " * 3}{tag}: '
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
         if tag in valid_tag:
             data = [dat.replace(tag_str, '') for dat in output if tag in dat]
             return data
         print(f'Unrecognized data tag: {tag}')
         return data
-
-        # try:
-        #     for i in output:
-        #         if i.__contains__(tag_str):
-        #             i = i.replace(tag_str, '')
-        #             data.append(i)
-        #     return data
-        # except ValueError:
-        #     print(f'Unrecognized data tag: {tag}')
-        # return data
 
     def get_reported(self, tag: str) -> list:
         """
@@ -139,16 +132,20 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        bcmd_path = os.path.join(self.boinccmd)
+        cmd_str = self.bccmd_path() + ' --get_old_tasks'
         output = []
         if sys.platform == 'linux':
-            output = subprocess.run(f'{bcmd_path} --get_old_tasks',
-                                    capture_output=True, text=True,
-                                    shell=True).stdout.split('\n')
+            output = subprocess.run(shlex.split(cmd_str),
+                                    capture_output=True,
+                                    text=True).stdout.split('\n')
         if sys.platform[:3] == 'win':
-            output = subprocess.check_output(
-                [bcmd_path, '--get_old_tasks'],
-                shell=True).decode('utf-8').split('\n')
+            output = subprocess.run(cmd_str,
+                                    capture_output=True,
+                                    text=True).stdout.split('\n')
+        # if sys.platform == 'darwin':
+        #     output = subprocess.run(shlex.split(cmd_str)cmd_str,
+        #                             capture_output=True,
+        #                             text=True).stdout.split('\n')
 
         data = []
         if tag == 'elapsed time':
