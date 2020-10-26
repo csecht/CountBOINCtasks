@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
@@ -128,7 +128,9 @@ class BoincCommand:
                                     capture_output=True,
                                     text=True,
                                     check=True).stdout.split('\n')
-
+        if sys.platform == 'darwin':
+            output = subprocess.check_output(cmd_str,
+                                        shell=True).decode('utf-8').split('\n')
         data = []
         tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
         if tag in valid_tag:
