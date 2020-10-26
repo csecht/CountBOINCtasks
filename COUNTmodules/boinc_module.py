@@ -23,13 +23,14 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
 
 import shlex
 import subprocess
+from subprocess import PIPE
 import sys
 
 
@@ -110,11 +111,18 @@ class BoincCommand:
                      'active_task_state']
         output = []
         cmd_str = bccmd_path() + ' --get_tasks'
+        # Use this for Linux, Python3.6 and up.
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
-                                    capture_output=True,
-                                    text=True,
+                                    stdout=PIPE,
+                                    encoding='utf8',
                                     check=True).stdout.split('\n')
+        # Use this for Linux, Python 3.8 and up. Unknown re: 3.7.
+        # if sys.platform == 'linux':
+        #     output = subprocess.run(shlex.split(cmd_str),
+        #                             capture_output=True,
+        #                             text=True,
+        #                             check=True).stdout.split('\n')
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     capture_output=True,
@@ -141,11 +149,18 @@ class BoincCommand:
 
         cmd_str = bccmd_path() + ' --get_old_tasks'
         output = []
+        # Use this for Linux, Python3.6 and up.
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
-                                    capture_output=True,
-                                    text=True,
+                                    stdout=PIPE,
+                                    encoding='utf8',
                                     check=True).stdout.split('\n')
+        # Use this for Linux, Python 3.8 and up. Unknown re: 3.7.
+        # if sys.platform == 'linux':
+        #     output = subprocess.run(shlex.split(cmd_str),
+        #                             capture_output=True,
+        #                             text=True,
+        #                             check=True).stdout.split('\n')
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     capture_output=True,
