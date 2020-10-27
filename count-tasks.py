@@ -196,11 +196,11 @@ def main() -> None:
     """
     Main flow for count-tasks.py utility. Counts and times reported tasks.
     """
-    # NOTE: args.interval and args.summary command line formats are different
-    # because summary times can be min, hr, or days, while interval times
-    # are always minutes (60m maximum).
+    # NOTE: --interval and --summary argument formats are different
+    #   because summary times can be min, hr, or days, while interval times
+    #   are always minutes (60m maximum).
     # NOTE: Boinc only returns tasks that were reported in past hour.
-    #   Therefore, we need to count tasks at least once per hour.
+    #   Hence an --interval range limit to count tasks at least once per hour.
     parser = argparse.ArgumentParser()
     parser.add_argument('--about', help='Author, copyright, and GNU license',
                         action='store_true', default=False)

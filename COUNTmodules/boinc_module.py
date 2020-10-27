@@ -34,23 +34,23 @@ from subprocess import PIPE
 import sys
 
 
-def bccmd_path() -> str:
+def bccmd_path(cmdarg: str) -> str:
     """
-    Sets explicit path to default location of boinccmd.
-    :return: Platform-specific path.
+    Sets path to default location of boinccmd, with command arguments.
+    :return: Platform-specific path for executing boinccmd command.
     """
     boinccmd = ''
     if sys.platform[:3] == 'win':
-        boinccmd = r"\Program Files\BOINC\\boinccmd"
+        boinccmd = r"\Program Files\BOINC\\boinccmd " + cmdarg
         return boinccmd
     if sys.platform == 'linux':
-        boinccmd = "/usr/bin/boinccmd"
+        boinccmd = "/usr/bin/boinccmd " + cmdarg
         return boinccmd
     if sys.platform == 'darwin':
-        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd"
+        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd " + cmdarg
         return boinccmd
     print(
-        '[boinccmd] platform is not recognized as win, linux, or darwin.')
+        'Platform is not recognized as win, linux, or darwin (Mac OS).')
     return boinccmd
 
 
@@ -110,24 +110,31 @@ class BoincCommand:
         valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
                      'active_task_state']
         output = []
-        cmd_str = bccmd_path() + ' --get_tasks'
-        # Use this for Linux, Python3.6 and up.
+        cmd_str = bccmd_path('--get_tasks')
+        # Use this for Windows, Python 3.6 and up.
+        if sys.platform[:3] == 'win':
+            output = subprocess.run(cmd_str,
+                                    stdout=PIPE,
+                                    encoding='utf8',
+                                    check=True).stdout.split('\n')
+        # Use this for Windows, Python 3.8 and 3.9.
+        # if sys.platform[:3] == 'win':
+        #     output = subprocess.run(cmd_str,
+        #                             capture_output=True,
+        #                             text=True,
+        #                             check=True).stdout.split('\n')
+        # Use this for Linux, Python 3.6 and up.
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
                                     stdout=PIPE,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
-        # Use this for Linux, Python 3.8 and up. Unknown re: 3.7.
+        # Use this for Linux, Python 3.8 and up.
         # if sys.platform == 'linux':
         #     output = subprocess.run(shlex.split(cmd_str),
         #                             capture_output=True,
         #                             text=True,
         #                             check=True).stdout.split('\n')
-        if sys.platform[:3] == 'win':
-            output = subprocess.run(cmd_str,
-                                    capture_output=True,
-                                    text=True,
-                                    check=True).stdout.split('\n')
         if sys.platform == 'darwin':
             output = subprocess.check_output(cmd_str,
                                         shell=True).decode('utf-8').split('\n')
@@ -139,6 +146,8 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
+# TODO: Consider combining/generalizing get_tasks() and get_reported().
+    # TODO: Add exceptions for failure to execute boinccmd, eg, File not found.
     @staticmethod
     def get_reported(tag: str) -> list:
         """
@@ -149,31 +158,32 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = bccmd_path() + ' --get_old_tasks'
+        cmd_str = bccmd_path('--get_old_tasks')
         output = []
-        # Use this for Linux, Python3.6 and up.
-        if sys.platform == 'linux':
-            output = subprocess.run(shlex.split(cmd_str),
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
-        # Use this for Linux, Python 3.8 and up. Unknown re: 3.7.
-        # if sys.platform == 'linux':
-        #     output = subprocess.run(shlex.split(cmd_str),
-        #                             capture_output=True,
-        #                             text=True,
-        #                             check=True).stdout.split('\n')
-        # Use this for Windows, Python 3.8 and up. Unknown re: 3.7.
-        # if sys.platform[:3] == 'win':
-        #     output = subprocess.run(cmd_str,
-        #                             capture_output=True,
-        #                             text=True,
-        #                             check=True).stdout.split('\n')
+        # Use this for Windows, Python 3.6 and up.
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     stdout=PIPE,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
+        # Use this for Windows, Python 3.8 and 3.9.
+        # if sys.platform[:3] == 'win':
+        #     output = subprocess.run(cmd_str,
+        #                             capture_output=True,
+        #                             text=True,
+        #                             check=True).stdout.split('\n')
+        # Use this for Linux, Python 3.6 and up.
+        if sys.platform == 'linux':
+            output = subprocess.run(shlex.split(cmd_str),
+                                    stdout=PIPE,
+                                    encoding='utf8',
+                                    check=True).stdout.split('\n')
+        # Use this for Linux, Python 3.8 and up.
+        # if sys.platform == 'linux':
+        #     output = subprocess.run(shlex.split(cmd_str),
+        #                             capture_output=True,
+        #                             text=True,
+        #                             check=True).stdout.split('\n')
         if sys.platform == 'darwin':
             output = subprocess.check_output(cmd_str,
                                         shell=True).decode('utf-8').split('\n')
