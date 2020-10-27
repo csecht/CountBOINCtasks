@@ -31,7 +31,6 @@ __status__ = 'Development Status :: 3 - Alpha'
 
 import argparse
 import logging
-import os
 import statistics as stat
 import subprocess
 import sys
@@ -153,7 +152,7 @@ def sleep_timer(interval: int) -> print:
     reset = '\x1b[0m'  # No color, reset to system default.
     del_line = '\x1b[2K'  # Clear entire line.
 
-    subprocess.call('', shell=True)
+    subprocess.call('', shell=True)  # Req. for Win Cmd Prompt text formatting.
     # Not +1 in range because need only to sleep to END of interval.
     for i in range(bar_len):
         remain_bar = prettybar[i:]
@@ -277,12 +276,12 @@ def main() -> None:
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
     # Only need to update _prev if tasks were reported in prior interval;
-    #   otherwise, _prev remains as it was from prior intervals.
+    #   otherwise, _prev remains as it was from earlier intervals.
     # Only need to remove previous tasks from _now when new tasks have
     #   been reported.
     # Do not include start tasks in interval or summary counts.
     # For each interval, need to count unique tasks because some tasks
-    #   may persist between counts when interval is less than 1h.
+    #   may persist between counts when --interval is less than 1h.
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
     for i in range(count_limit):
@@ -321,8 +320,8 @@ def main() -> None:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd = get_stats(count_now, tasks_now).values()
             report = f'{time_now}; ' \
-                     f'Tasks reported in past {interval_m}m: {count_now}' \
-                     f'\n{indent}(Task Times: total {tt_sum}, ' \
+                     f'Tasks reported in past {interval_m}m: {count_now}\n' \
+                     f'{indent}(Task Times: total {tt_sum}, ' \
                      f'mean {tt_mean}, stdev {tt_sd})'
             print(f'\r{del_line}{report}')
             if args.log:

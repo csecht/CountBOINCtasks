@@ -30,8 +30,8 @@ __status__ = 'Development Status :: 3 - Alpha'
 
 import shlex
 import subprocess
-from subprocess import PIPE
 import sys
+from subprocess import PIPE
 
 
 def bccmd_path(cmdarg: str) -> str:
@@ -124,8 +124,8 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-# TODO: Consider combining/generalizing get_tasks() and get_reported().
-     # TODO: Add exceptions for failure to execute boinccmd, eg, File not
+    # TODO: Consider combining/generalizing get_tasks() and get_reported().
+    # TODO: Add exceptions for failure to execute boinccmd, eg, File not
     #  found.
     @staticmethod
     def get_reported(tag: str) -> list:
@@ -145,7 +145,7 @@ class BoincCommand:
                                     stdout=PIPE,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
-        # Use this for Windows, Python 3.8 and 3.9.
+        # Use this for Windows, Python 3.8 and up.
         # if sys.platform[:3] == 'win':
         #     output = subprocess.run(cmd_str,
         #                             capture_output=True,
