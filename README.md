@@ -8,14 +8,14 @@ It may be useful for comparing task productivity between different computers or 
 Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and Mac OS. You may need to download or update to Python 3.8 or 3.9. The latest Python package can be downloaded from https://www.python.org/downloads/
 
 ### Usage:  
-Download the .zip package. From within the countBOINCtasks-master folder, open a terminal or Command Prompt and call up the help menu.   
+Download the .zip package from the Code download button and extract to your favorite folder. From within the resutling countBOINCtasks-master folder, open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
 <ul>
 <li>Linux or Mac OS: ./count-tasks.py --help</li> 
 <li>Windows: python count-tasks.py --help</li>  
 </ul>
 
 ```
-~/countBOINCtasks-master$ ./count-tasks --help
+~/countBOINCtasks-master$ ./count-tasks.py --help
 usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
 
 optional arguments:
@@ -27,11 +27,12 @@ optional arguments:
   --count_lim N       Specify number of count reports until program closes (default: 1008)
 
 ```
-(Options can be abbreviated, e.g., `./count-tasks --l --i 15 --s 1h --c 12`)
+Options can be abbreviated, e.g., `./count-tasks --l --i 15 --s 1h --c 12`
 
 Running with the default settings (no optional arguments), will count tasks that have been reported to the BOINC Project server on a repeating interval of 1 hour, with summaries provided every 24 hr. Basic statistics on task times are also provided with each count. The initial data that is immediately provided upon launch is for the most recent tasks reported by boinc-client in the past hour. Repeating interval count begin immediately after that first report.
 
 Example results, default settings:
+
 ```
 2020-Oct-19 06:03:54; Tasks reported in past hour: 9
                       (task times total 02:19:47, mean 00:15:31, stdev 00:00:05)
@@ -44,11 +45,12 @@ Example results, default settings:
                       (task times total 03:26:29, mean 00:25:48, stdev 00:00:07)
 27m                           |< ~time to next count
 ```
+
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
  
 Running with the `--log` option will save the reports to a log file in the working folder. This file is appended to or created when the utility is launched.
 
-You can let `count-tasks` run in an open terminal window with negligible impact on system resources. Stop it with *ctrl-c*. With default settings, it will stop after 6 weeks (1008 1hr count cycles). A different count cycle limit can be set with the `--count_lim` option.
+You can let `count-tasks.py` run in an open terminal window with negligible impact on system resources. Stop it with *Ctrl-C* or let it stop automatically.  With default settings, it will stop after 6 weeks (1008 1hr count cycles). A different count cycle limit can be set with the `--count_lim` option.
 
 NOTE: Summary counts may be less than the sum of individual counts because of persistence of reported tasks between count intervals. This can be expected when the `--interval`option is set to less than the default 60 (minutes). The command that provides reported task data to `count-tasks`, `boinccmd  --get_old_tasks` retrieves tasks reported for the past hour, independent of the utility's  count interval. To avoid missing any reported tasks, the `--interval` option  has a 60 minutes maximum count interval, but even that, as well as shorter intervals, can re-count tasks which carry over between intervals. Summary counts do not included duplicate tasks.
 
