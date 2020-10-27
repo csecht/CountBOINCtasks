@@ -76,28 +76,6 @@ class BoincCommand:
         self.oldtags = ('task', 'project URL', 'app name', 'exit status',
                         'elapsed time', 'completed time', 'get_reported time')
 
-    # def run(self, command: str):
-    #     """
-    #     Format command for system execution of boinc-client action.
-    #
-    #     :param command: In use: 'suspend', 'resume', 'read_cc_config'.
-    #     :return: Change in boinc-client action.
-    #     """
-    #
-    #     # Project commands require the Project URL, others commands don't
-    #     if command in self.projectcmd:
-    #         bcmd_path = os.path.join(self.boinccmd)
-    #         subprocess.run(f'{bcmd_path} --project {self.EINSTEIN} '
-    #                        f'{command}', capture_output=True, text=True,
-    #                        shell=True).stdout.split('\n')
-    #     elif command == 'read_cc_config':
-    #         command_fmt = f'--{command}'
-    #         bcmd_path = os.path.join(self.boinccmd)
-    #         subprocess.run(f'{bcmd_path} {command_fmt}',
-    #                        capture_output=True, text=True, shell=True)
-    #     else:
-    #         print(f'Unrecognized command: {command}')
-
     @staticmethod
     def get_tasks(tag: str) -> list:
         """
@@ -147,7 +125,8 @@ class BoincCommand:
         return data
 
 # TODO: Consider combining/generalizing get_tasks() and get_reported().
-    # TODO: Add exceptions for failure to execute boinccmd, eg, File not found.
+     # TODO: Add exceptions for failure to execute boinccmd, eg, File not
+    #  found.
     @staticmethod
     def get_reported(tag: str) -> list:
         """
