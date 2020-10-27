@@ -23,7 +23,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.3.0'
+__version__ = '0.3.3'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -41,8 +41,8 @@ from datetime import datetime
 from COUNTmodules import boinc_module
 
 BC = boinc_module.BoincCommand()
-util = os.path.basename(__file__)
-logging.basicConfig(filename=f'{util}_log.txt', level=logging.INFO,
+# util = os.path.basename(__file__)
+logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
@@ -244,7 +244,7 @@ def main() -> None:
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
-    #   In future, may want to inspect saved task names, BC.get_reported('tasks').
+    #   In future, may want to inspect task names: BC.get_reported('tasks').
     time_fmt = '%Y-%b-%d %H:%M:%S'
     time_start = datetime.now().strftime(time_fmt)
     tasks_start = BC.get_reported('elapsed time')
@@ -358,14 +358,4 @@ if __name__ == '__main__':
     except OSError as error:
         sys.stdout.write(f'{error}')
         logging.info(msg=f'\n{error}\n')
-    except SystemError:
-        sys.stdout.write('Error in main(). Internal error in the Python\n'
-                         'interpreter. Please report this to the Python '
-                         'maintainer, along with the traceback,\n'
-                         'the Python version, and the hardware/OS platform '
-                         'and version.')
-        logging.exception('Error in main(). Internal error in the Python\n'
-                          'interpreter. Please report this to the Python '
-                          'maintainer, along with the traceback,\n'
-                          'the Python version, and the hardware/OS platform '
-                          'and version.')
+
