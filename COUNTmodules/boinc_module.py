@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
@@ -34,24 +34,28 @@ import sys
 from subprocess import PIPE
 
 
-def bccmd_path(cmdarg: str) -> str:
+def bccmd_path(cmd_arg: str) -> str:
     """
     Sets path to default location of boinccmd, with command arguments.
+
+    :param: boinccmd command (argument)
     :return: Platform-specific path for executing boinccmd command.
     """
     boinccmd = ''
     if sys.platform[:3] == 'win':
-        boinccmd = r"\Program Files\BOINC\\boinccmd " + cmdarg
+        boinccmd = r"\Program Files\BOINC\\boinccmd " + cmd_arg
         return boinccmd
     if sys.platform == 'linux':
-        boinccmd = "/usr/bin/boinccmd " + cmdarg
+        boinccmd = "/usr/bin/boinccmd " + cmd_arg
         return boinccmd
     if sys.platform == 'darwin':
-        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd " + cmdarg
+        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd " + cmd_arg
         return boinccmd
     print(
         'Platform is not recognized as win, linux, or darwin (Mac OS).')
     return boinccmd
+    # TODO: Add exceptions for failure find boinccmd, eg, File not
+    #  found.
 
 
 class BoincCommand:
@@ -77,23 +81,17 @@ class BoincCommand:
                         'elapsed time', 'completed time', 'get_reported time')
 
     @staticmethod
-    def get_tasks(tag: str) -> list:
+    def run_boinc(cmd_str: str):
         """
-        Get data from current boinc-client tasks.
+        Run a boinc-client command line for the current system platform.
 
-        :param tag: Used: 'name', 'state', 'scheduler
-                    state', 'fraction done', 'active_task_state'
-        :return: List of specified data from current tasks.
+        :param cmd_str: Complete boinccmd command line, with arguments.
+        :return: Execution of boinc-client command specified in cmd_str.
         """
-        valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
-                     'active_task_state']
+
         output = []
-        cmd_str = bccmd_path('--get_tasks')
-        # Use this for Windows, Python 3.6 and up.
         if sys.platform[:3] == 'win':
-            output = subprocess.run(cmd_str,
-                                    stdout=PIPE,
-                                    encoding='utf8',
+            output = subprocess.run(cmd_str, stdout=PIPE, encoding='utf8',
                                     check=True).stdout.split('\n')
         # Use this for Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
@@ -103,10 +101,9 @@ class BoincCommand:
         #                             check=True).stdout.split('\n')
         # Use this for Linux, Python 3.6 and up.
         if sys.platform == 'linux':
-            output = subprocess.run(shlex.split(cmd_str),
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
+            output = subprocess.run(shlex.split(cmd_str), stdout=PIPE,
+                                    encoding='utf8', check=True).stdout.split(
+                '\n')
         # Use this for Linux, Python 3.8 and up.
         # if sys.platform == 'linux':
         #     output = subprocess.run(shlex.split(cmd_str),
@@ -114,8 +111,42 @@ class BoincCommand:
         #                             text=True,
         #                             check=True).stdout.split('\n')
         if sys.platform == 'darwin':
-            output = subprocess.check_output(cmd_str,
-                                        shell=True).decode('utf-8').split('\n')
+            output = subprocess.check_output(cmd_str, shell=True).decode(
+                'utf-8').split('\n')
+
+        return output
+
+    def einstein_action(self, command: str):
+        """Execute a boinc-client action for Einstein@Home.
+
+        :param command: In use: 'suspend', 'resume', 'read_cc_config'.
+        :return: Change in boinc-client action.
+        """
+        # Project commands require the Project URL, others commands don't
+        boinccmd = bccmd_path('')
+        cmd_str = ''
+        if command in self.projectcmd:
+            cmd_str = f'{boinccmd} --project {self.EINSTEIN} {command}'
+        elif command == 'read_cc_config':
+            cmd_str = f'{boinccmd} --{command}'
+        else:
+            print(f'Unrecognized command: {command}')
+
+        return self.run_boinc(cmd_str)
+
+    def get_tasks(self, tag: str) -> list:
+        """
+        Get data from current boinc-client tasks.
+
+        :param tag: Used: 'name', 'state', 'scheduler
+                    state', 'fraction done', 'active_task_state'
+        :return: List of specified data from current tasks.
+        """
+        valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
+                     'active_task_state']
+        cmd_str = bccmd_path('--get_tasks')
+        output = self.run_boinc(cmd_str)
+
         data = []
         tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
         if tag in valid_tag:
@@ -124,48 +155,17 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    # TODO: Consider combining/generalizing get_tasks() and get_reported().
-    # TODO: Add exceptions for failure to execute boinccmd, eg, File not
-    #  found.
-    @staticmethod
-    def get_reported(tag: str) -> list:
+    def get_reported(self, tag: str) -> list:
         """
         Get data from reported boinc-client tasks.
 
-        :param tag: Used: 'task' returns reported task names.
-                          'elapsed time' returns task times, sec.000000.
+        :param tag: 'task' returns reported task names.
+                    'elapsed time' returns task times, sec.000000.
         :return: List of specified data from reported tasks.
         """
 
         cmd_str = bccmd_path('--get_old_tasks')
-        output = []
-        # Use this for Windows, Python 3.6 and up.
-        if sys.platform[:3] == 'win':
-            output = subprocess.run(cmd_str,
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
-        # Use this for Windows, Python 3.8 and up.
-        # if sys.platform[:3] == 'win':
-        #     output = subprocess.run(cmd_str,
-        #                             capture_output=True,
-        #                             text=True,
-        #                             check=True).stdout.split('\n')
-        # Use this for Linux, Python 3.6 and up.
-        if sys.platform == 'linux':
-            output = subprocess.run(shlex.split(cmd_str),
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
-        # Use this for Linux, Python 3.8 and up.
-        # if sys.platform == 'linux':
-        #     output = subprocess.run(shlex.split(cmd_str),
-        #                             capture_output=True,
-        #                             text=True,
-        #                             check=True).stdout.split('\n')
-        if sys.platform == 'darwin':
-            output = subprocess.check_output(cmd_str,
-                                        shell=True).decode('utf-8').split('\n')
+        output = self.run_boinc(cmd_str)
 
         data = []
         if tag == 'elapsed time':
