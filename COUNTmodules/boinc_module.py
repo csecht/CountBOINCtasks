@@ -91,7 +91,9 @@ class BoincCommand:
 
         output = []
         if sys.platform[:3] == 'win':
-            output = subprocess.run(cmd_str, stdout=PIPE, encoding='utf8',
+            output = subprocess.run(cmd_str,
+                                    stdout=PIPE,
+                                    encoding='utf8',
                                     check=True).stdout.split('\n')
         # Use this for Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
@@ -101,9 +103,10 @@ class BoincCommand:
         #                             check=True).stdout.split('\n')
         # Use this for Linux, Python 3.6 and up.
         if sys.platform == 'linux':
-            output = subprocess.run(shlex.split(cmd_str), stdout=PIPE,
-                                    encoding='utf8', check=True).stdout.split(
-                '\n')
+            output = subprocess.run(shlex.split(cmd_str),
+                                    stdout=PIPE,
+                                    encoding='utf8',
+                                    check=True).stdout.split('\n')
         # Use this for Linux, Python 3.8 and up.
         # if sys.platform == 'linux':
         #     output = subprocess.run(shlex.split(cmd_str),
@@ -111,8 +114,9 @@ class BoincCommand:
         #                             text=True,
         #                             check=True).stdout.split('\n')
         if sys.platform == 'darwin':
-            output = subprocess.check_output(cmd_str, shell=True).decode(
-                'utf-8').split('\n')
+            output = subprocess.check_output(cmd_str,
+                                             shell=True).decode(
+                                                        'utf-8').split('\n')
 
         return output
 
