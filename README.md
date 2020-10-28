@@ -10,8 +10,8 @@ Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and Mac OS. You may ne
 ### Usage:  
 Download the .zip package from the Code download button and extract to your favorite folder. From within the resutling countBOINCtasks-master folder, open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
 <ul>
-<li>Linux or Mac OS: ./count-tasks.py --help</li> 
-<li>Windows: python count-tasks.py --help</li>  
+<li>Linux or Mac OS: ./count-tasks.py --help</li>
+<li>Windows: python count-tasks.py --help</li>
 </ul>
 
 ```
@@ -54,5 +54,8 @@ You can let `count-tasks.py` run in an open terminal window with negligible impa
 
 NOTE: Summary counts may be less than the sum of individual counts because of persistence of reported tasks between count intervals. This can be expected when the `--interval`option is set to less than the default 60 (minutes). The command that provides reported task data to `count-tasks`, `boinccmd  --get_old_tasks` retrieves tasks reported for the past hour, independent of the utility's  count interval. To avoid missing any reported tasks, the `--interval` option  has a 60 minutes maximum count interval, but even that, as well as shorter intervals, can re-count tasks which carry over between intervals. Summary counts do not included duplicate tasks.
 
+TIP: To get the most recent task count and time stats, then immediately
+ exit the utility, run:  
+ `count-tasks.py --c 0`
 ## Development Plans
 * Improve Python code
