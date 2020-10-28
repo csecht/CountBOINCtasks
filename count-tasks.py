@@ -23,7 +23,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -253,6 +253,7 @@ def main() -> None:
     count_start = len(tasks_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
+    up_one = '\x1b[A'   # Move cursor up one line, for NNT reporting.
 
     # Report: Starting information
     tt_sum, tt_mean, tt_sd = get_stats(count_start, tasks_start).values()
@@ -307,15 +308,18 @@ def main() -> None:
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
         # long-running tasks (b/c the longest allowed count interval is 60m).
+        # Overwrite successive NNT reports for a tidy terminal window.
         if count_now == 0:
             tic_nnt += 1
             report = f'{time_now}; ' \
                      f'No tasks reported in past {tic_nnt} {interval_m}m ' \
                      f'interval(s).'
-            print(f'\r{del_line}{report}')
+            if tic_nnt == 1:
+                print(f'\r{del_line}{report}')
+            if tic_nnt > 1:
+                print(f'\r{up_one}{del_line}{report}')
             if args.log:
                 logging.info(report)
-
         elif count_now > 0:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd = get_stats(count_now, tasks_now).values()
