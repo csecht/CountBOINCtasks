@@ -44,6 +44,8 @@ BC = boinc_module.BoincCommand()
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
+# TODO: Consider putting time functions into a new module, do_time.py
+
 
 def check_args(parameter):
     """
@@ -131,7 +133,7 @@ def fmt_stdsec(secs: int) -> str:
 
 
 def sleep_timer(interval: int) -> print:
-    """Sleep main() between count intervals and display countdown timer.
+    """Set sleep intervals and display countdown timer.
 
     :param interval: Minutes between task counts; range[5-60, by 5's]
     :return: A terminal/console graphic that displays time remaining.
@@ -202,21 +204,29 @@ def main() -> None:
     #   Hence an --interval range limit to count tasks at least once per hour.
     parser = argparse.ArgumentParser()
     parser.add_argument('--about', help='Author, copyright, and GNU license',
-                        action='store_true', default=False)
+                        action='store_true',
+                        default=False)
     parser.add_argument('--log',
-                        help='Generates or appends reports to a log file',
-                        action='store_true', default=False)
+                        help='Generate or append reports to a log file',
+                        action='store_true',
+                        default=False)
     parser.add_argument('--interval',
-                        help='Specify Minutes between task counts'
-                             ' (default: %(default)d)', default=60,
-                        choices=range(5, 65, 5), type=int, metavar="M")
+                        help='Specify minutes between task counts'
+                             ' (default: %(default)d)',
+                        default=60,
+                        choices=range(5, 65, 5),
+                        type=int,
+                        metavar="M")
     parser.add_argument('--summary',
                         help='Specify time between count summaries, '
                              'e.g., 12h, 7d (default: %(default)s)',
-                        default='1d', type=check_args, metavar='TIMEunit')
+                        default='1d',
+                        type=check_args,
+                        metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
-                             ' closes (default: %(default)d)', default=1008,
+                             ' quits (default: %(default)d)',
+                        default=1008,
                         metavar="N")
     args = parser.parse_args()
 
@@ -361,4 +371,3 @@ if __name__ == '__main__':
     except OSError as error:
         sys.stdout.write(f'{error}')
         logging.info(msg=f'\n{error}\n')
-
