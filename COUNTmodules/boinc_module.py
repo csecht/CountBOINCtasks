@@ -28,6 +28,7 @@ __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
 
+import os
 import shlex
 import subprocess
 import sys
@@ -41,20 +42,30 @@ def bccmd_path(cmd_arg: str) -> str:
     :param: boinccmd command (argument)
     :return: Platform-specific path for executing boinccmd command.
     """
-    # TODO: Add exceptions for failure to find boinccmd, eg, File not
-    #  found.
-    boinccmd = ''
+
+    boinccmd = 'boinccmd'
     if sys.platform[:3] == 'win':
-        boinccmd = r"\Program Files\BOINC\\boinccmd " + cmd_arg
-        return boinccmd
+        path = r'\Program Files\BOINC\\boinccmd'
+        if os.path.exists(path):
+            boinccmd = f'{path} {cmd_arg}'
+            return boinccmd
+        else:
+            raise OSError(f'Bad path for boinccmd: {path}')
     if sys.platform == 'linux':
-        boinccmd = "/usr/bin/boinccmd " + cmd_arg
-        return boinccmd
+        path = '/usr/bin/boinccmd'
+        if os.path.exists(path):
+            boinccmd = f'{path} {cmd_arg}'
+            return boinccmd
+        else:
+            raise OSError(f'Bad path for boinccmd: {path}')
     if sys.platform == 'darwin':
-        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd " + cmd_arg
-        return boinccmd
-    print(
-        'Platform is not recognized as win, linux, or darwin (Mac OS).')
+        path = r'$HOME/Library/Application\ Support/BOINC/boinccmd'
+        if os.path.exists(path):
+            boinccmd = f'{path} {cmd_arg}'
+            return boinccmd
+        else:
+            raise OSError(f'Bad path for boinccmd: {path}')
+    print('Platform is not recognized as win, linux, or darwin (Mac OS).')
     return boinccmd
 
 
