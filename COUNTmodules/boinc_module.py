@@ -37,35 +37,29 @@ from subprocess import PIPE
 
 def bccmd_path(cmd_arg: str) -> str:
     """
-    Sets path to default location of boinccmd, with command arguments.
+    Passes boinccmd argument to the default OS path for boinc-client.
 
-    :param: boinccmd command (argument)
+    :param cmd_arg: A boinccmd --argument or --command.
     :return: Platform-specific path for executing boinccmd command.
     """
 
-    boinccmd = 'boinccmd'
-    if sys.platform[:3] == 'win':
-        path = r'\Program Files\BOINC\\boinccmd'
-        if os.path.exists(path):
-            boinccmd = f'{path} {cmd_arg}'
+    # Need to accommodate win32 and win36 alternatives, so [:3] for all OS.
+    my_os = sys.platform[:3]
+    boinc_paths = {
+        'win': r'\Program Files\BOINC\\boinccmd',
+        'lin': '/usr/bin/boinccmd',
+        'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
+    }
+    boinccmd = 'boinc-client executable stub'
+
+    if my_os in boinc_paths:
+        if os.path.exists(boinc_paths[my_os]):
+            boinccmd = f'{boinc_paths[my_os]} {cmd_arg}'
             return boinccmd
-        else:
-            raise OSError(f'Bad path for boinccmd: {path}')
-    if sys.platform == 'linux':
-        path = '/usr/bin/boinccmd'
-        if os.path.exists(path):
-            boinccmd = f'{path} {cmd_arg}'
-            return boinccmd
-        else:
-            raise OSError(f'Bad path for boinccmd: {path}')
-    if sys.platform == 'darwin':
-        path = r'$HOME/Library/Application\ Support/BOINC/boinccmd'
-        if os.path.exists(path):
-            boinccmd = f'{path} {cmd_arg}'
-            return boinccmd
-        else:
-            raise OSError(f'Bad path for boinccmd: {path}')
-    print('Platform is not recognized as win, linux, or darwin (Mac OS).')
+        raise OSError(f'Bad path for boinccmd: {boinc_paths[my_os]}')
+    if my_os not in boinc_paths:
+        raise KeyError(f"Platform <{my_os}> is not recognized. "
+                       f"Expecting win32, win64, linux, or darwin (Mac OS).")
     return boinccmd
 
 
@@ -100,7 +94,7 @@ class BoincCommand:
         :return: Execution of boinc-client command specified in cmd_str.
         """
         # TODO: Add exceptions for when subprocess output is null.
-        output = ['boinccmd_failed']
+        output = ['boinccmd_results_stub']
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     stdout=PIPE,
