@@ -41,6 +41,8 @@ def bccmd_path(cmd_arg: str) -> str:
     :param: boinccmd command (argument)
     :return: Platform-specific path for executing boinccmd command.
     """
+    # TODO: Add exceptions for failure to find boinccmd, eg, File not
+    #  found.
     boinccmd = ''
     if sys.platform[:3] == 'win':
         boinccmd = r"\Program Files\BOINC\\boinccmd " + cmd_arg
@@ -54,8 +56,6 @@ def bccmd_path(cmd_arg: str) -> str:
     print(
         'Platform is not recognized as win, linux, or darwin (Mac OS).')
     return boinccmd
-    # TODO: Add exceptions for failure find boinccmd, eg, File not
-    #  found.
 
 
 class BoincCommand:
@@ -88,8 +88,8 @@ class BoincCommand:
         :param cmd_str: Complete boinccmd command line, with arguments.
         :return: Execution of boinc-client command specified in cmd_str.
         """
-
-        output = []
+        # TODO: Add exceptions for when subprocess output is null.
+        output = ['boinccmd_failed']
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     stdout=PIPE,
@@ -126,6 +126,7 @@ class BoincCommand:
         :param command: In use: 'suspend', 'resume', 'read_cc_config'.
         :return: Change in boinc-client action.
         """
+        # TODO: Generalize for any boinc Project.
         # Project commands require the Project URL, others commands don't
         boinccmd = bccmd_path('')
         cmd_str = ''
@@ -164,7 +165,7 @@ class BoincCommand:
         Get data from reported boinc-client tasks.
 
         :param tag: 'task' returns reported task names.
-                    'elapsed time' returns task times, sec.000000.
+                    'elapsed time' returns final task times, sec.000000.
         :return: List of specified data from reported tasks.
         """
 
