@@ -35,41 +35,12 @@ import sys
 from subprocess import PIPE
 
 
-def bccmd_path(cmd_arg: str) -> str:
-    """
-    Passes boinccmd argument to the default OS path for the boinc-client.
-
-    :param cmd_arg: A boinccmd --argument (a.k.a --command).
-    :return: Platform-specific path for executing boinccmd command.
-    """
-
-    # Need to accommodate win32 and win36, so slice [:3] for all platforms.
-    my_os = sys.platform[:3]
-    boinc_path = {
-        'win': r'\Program Files\BOINC\\boinccmd.exe',
-        'lin': '/usr/bin/boinccmd',
-        'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
-    }
-    if my_os in boinc_path:
-        if os.path.exists(boinc_path[my_os]):
-            boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
-            return boinccmd
-        raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
-    raise KeyError(f"Platform <{my_os}> is not recognized.\n"
-                   f"Expecting win (win32 or win64), lin (linux), or dar "
-                   f"(darwin == Mac OS).")
-
-
 class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
 
-    EINSTEIN = "http://einstein.phys.uwm.edu/"
-    MILKYWAY = "http://milkyway.cs.rpi.edu_milkyway/"
-
     def __init__(self):
-        self.projectcmd = ('suspend', 'resume', 'get_app_config')
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
                          'scheduler state',  'active_task_state',
@@ -79,8 +50,33 @@ class BoincCommand:
                          'remaining', 'slot', 'PID', 'current CPU time',
                          'CPU time at last checkpoint', 'fraction done',
                          'swap size', 'working set size')
-        self.oldtags = ('task', 'project URL', 'app name', 'exit status',
-                        'elapsed time', 'completed time', 'get_reported time')
+        self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
+                             'elapsed time', 'completed time',
+                             'get_reported time')
+
+    @staticmethod
+    def bccmd_path(cmd_arg: str) -> str:
+        """
+        Passes boinccmd argument to the default OS path for the boinc-client.
+
+        :param cmd_arg: A boinccmd --argument (a.k.a --command).
+        :return: Platform-specific path for executing boinccmd command.
+        """
+
+        # Need to accommodate win32 and win36, so slice [:3] for all platforms.
+        my_os = sys.platform[:3]
+        boinc_path = {
+            'win': r'\Program Files\BOINC\\boinccmd.exe',
+            'lin': '/usr/bin/boinccmd',
+            'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'}
+        if my_os in boinc_path:
+            if os.path.exists(boinc_path[my_os]):
+                boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
+                return boinccmd
+            raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
+        raise KeyError(f"Platform <{my_os}> is not recognized.\n"
+                       f"Expecting win (win32 or win64), lin (linux), or dar "
+                       f"(darwin == Mac OS).")
 
     @staticmethod
     def run_boinc(cmd_str: str):
@@ -122,25 +118,6 @@ class BoincCommand:
 
         return output
 
-    def einstein_action(self, command: str):
-        """Execute a boinc-client action for Einstein@Home.
-
-        :param command: In use: 'suspend', 'resume', 'read_cc_config'.
-        :return: Change in boinc-client action.
-        """
-        # TODO: Generalize for any boinc Project.
-        # Project commands require the Project URL, others commands don't
-        boinccmd = bccmd_path('')
-        cmd_str = ''
-        if command in self.projectcmd:
-            cmd_str = f'{boinccmd} --project {self.EINSTEIN} {command}'
-        elif command == 'read_cc_config':
-            cmd_str = f'{boinccmd} --{command}'
-        else:
-            print(f'Unrecognized command: {command}')
-
-        return self.run_boinc(cmd_str)
-
     def get_tasks(self, tag: str) -> list:
         """
         Get data from current boinc-client tasks.
@@ -151,7 +128,7 @@ class BoincCommand:
         """
         valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
                      'active_task_state']
-        cmd_str = bccmd_path('--get_tasks')
+        cmd_str = self.bccmd_path('--get_tasks')
         output = self.run_boinc(cmd_str)
 
         data = []
@@ -171,7 +148,7 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = bccmd_path('--get_old_tasks')
+        cmd_str = self.bccmd_path('--get_old_tasks')
         output = self.run_boinc(cmd_str)
 
         data = []
