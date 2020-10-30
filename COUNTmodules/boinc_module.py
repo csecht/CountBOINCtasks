@@ -86,7 +86,7 @@ class BoincCommand:
         :param cmd_str: Complete boinccmd command line, with arguments.
         :return: Execution of boinc-client command specified in cmd_str.
         """
-        # TODO: Add exceptions for when subprocess output is null.
+        # TODO: Add exceptions subprocess failure.
         output = ['boinccmd_results_stub']
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
@@ -122,18 +122,20 @@ class BoincCommand:
         """
         Get data from current boinc-client tasks.
 
-        :param tag: Used: 'name', 'state', 'scheduler
+        :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
         """
-        valid_tag = ['name', 'state', 'scheduler, state', 'fraction done',
-                     'active_task_state']
+        # NOTE: This method not currently used by count-tasks.
+        # taskXDF_tag = ['name', 'state', 'scheduler, state', 'fraction done',
+        #              'active_task_state']
         cmd_str = self.bccmd_path('--get_tasks')
         output = self.run_boinc(cmd_str)
 
         data = []
         tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
-        if tag in valid_tag:
+        # if tag in taskXDF_tag:
+        if tag in self.tasktags:
             data = [dat.replace(tag_str, '') for dat in output if tag in dat]
             return data
         print(f'Unrecognized data tag: {tag}')
