@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.3.5'
+__version__ = '0.3.5.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 3 - Alpha'
@@ -42,25 +42,39 @@ def bccmd_path(cmd_arg: str) -> str:
     :param cmd_arg: A boinccmd --argument or --command.
     :return: Platform-specific path for executing boinccmd command.
     """
-
-    # Need to accommodate win32 and win36 alternatives, so [:3] for all OS.
-    my_os = sys.platform[:3]
-    boinc_path = {
-        'win': r'\Program Files\BOINC\\boinccmd',
-        'lin': '/usr/bin/boinccmd',
-        'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
-    }
-    boinccmd = 'boinccmd executable stub'
-
-    if my_os in boinc_path:
-        if os.path.exists(boinc_path[my_os]):
-            boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
-            return boinccmd
-        raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
-    if my_os not in boinc_path:
-        raise KeyError(f"Platform <{my_os}> is not recognized. "
-                       f"Expecting win32, win64, linux, or darwin (Mac OS).")
+    boinccmd = ''
+    if sys.platform[:3] == 'win':
+        boinccmd = r"\Program Files\BOINC\\boinccmd " + cmd_arg
+        return boinccmd
+    if sys.platform == 'linux':
+        boinccmd = "/usr/bin/boinccmd " + cmd_arg
+        return boinccmd
+    if sys.platform == 'darwin':
+        boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd " + cmd_arg
+        return boinccmd
+    print(
+        'Platform is not recognized as win, linux, or darwin (Mac OS).')
     return boinccmd
+
+    # TODO: FIX this, Windows bug, raises "bad path" msg.
+    # # Need to accommodate win32 and win36 alternatives, so [:3] for all OS.
+    # my_os = sys.platform[:3]
+    # boinc_path = {
+    #     'win': r'\Program Files\BOINC\\boinccmd',
+    #     'lin': '/usr/bin/boinccmd',
+    #     'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
+    # }
+    # boinccmd = 'boinccmd executable stub'
+    #
+    # if my_os in boinc_path:
+    #     if os.path.exists(boinc_path[my_os]):
+    #         boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
+    #         return boinccmd
+    #     raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
+    # if my_os not in boinc_path:
+    #     raise KeyError(f"Platform <{my_os}> is not recognized. "
+    #                    f"Expecting win32, win64, linux, or darwin (Mac OS).")
+    # return boinccmd
 
 
 class BoincCommand:
