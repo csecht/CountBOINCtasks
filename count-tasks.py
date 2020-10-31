@@ -206,8 +206,8 @@ def main() -> None:
                         type=int,
                         metavar="M")
     parser.add_argument('--summary',
-                        help='Specify time between count summaries, '
-                             'e.g., 12h, 7d (default: %(default)s)',
+                        help='Specify time between count summaries,'
+                             ' e.g., 12h, 7d (default: %(default)s)',
                         default='1d',
                         type=check_args,
                         metavar='TIMEunit')
@@ -215,17 +215,18 @@ def main() -> None:
                         help='Specify number of count reports until program'
                              ' quits (default: %(default)d)',
                         default=1008,
+                        type=int,
                         metavar="N")
     args = parser.parse_args()
 
-    count_limit = int(args.count_lim)
+    # count_limit = int(args.count_lim)
     interval_m = int(args.interval)
-    sumry_interval = args.summary  # Used only for printing and logging.
+    # sumry_interval = args.summary  # Used only for printing and logging.
     sumry_m = get_min(args.summary)
     sumry_factor = int(sumry_m / interval_m)
     if interval_m >= sumry_m:
-        msg = "Invalid parameters: --summary time must be greater than  " \
-              "--interval time."
+        msg = "Invalid parameters: --summary time must be greater than" \
+              " --interval time."
         raise ValueError(msg)
 
     # About me
@@ -251,7 +252,7 @@ def main() -> None:
     count_start = len(tasks_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
-    up_one = '\x1b[A'   # Move cursor up one line, for NNT reporting.
+    # up_one = '\x1b[A'   # Move cursor up one line, for NNT reporting.
 
     # Report: Starting information
     tt_sum, tt_mean, tt_sd = get_stats(count_start, tasks_start).values()
@@ -267,9 +268,9 @@ def main() -> None:
 %ssummary interval: %s
 %smax count reports: %s
 %s""",               time_start,
-                     indent, interval_m,
-                     indent, sumry_interval,
-                     indent, count_limit,
+                     indent, args.interval,
+                     indent, args.summary,
+                     indent, args.count_lim,
                      report)
 
     # Repeated intervals: counts, time stats, and summaries.
@@ -283,7 +284,7 @@ def main() -> None:
     #   may persist between counts when --interval is less than 1h.
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
-    for i in range(count_limit):
+    for i in range(args.count_lim):
         sleep_timer(interval_m)
         # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
         time_now = datetime.now().strftime(time_fmt)
@@ -306,7 +307,7 @@ def main() -> None:
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
         # long-running tasks (b/c the longest allowed count interval is 60m).
-        # Overwrite successive NNT reports for a tidy terminal window.
+        # Overwrite successive NNT reports for a tidy terminal window: \x1b[A.
         if count_now == 0:
             tic_nnt += 1
             report = f'{time_now}; ' \
@@ -315,7 +316,7 @@ def main() -> None:
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
-                print(f'\r{up_one}{del_line}{report}')
+                print(f'\r\x1b[A{del_line}{report}')
             if args.log:
                 logging.info(report)
         elif count_now > 0:
@@ -338,7 +339,7 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd = get_stats(cntsmry_uniq,
                                                tasksmry_uniq).values()
             report = f'{time_now}; ' \
-                     f'>>> SUMMARY count for past {sumry_interval}: ' \
+                     f'>>> SUMMARY count for past {args.summary}: ' \
                      f'{cntsmry_uniq}' \
                      f'\n{indent}(Task Times: total {tt_sum},' \
                      f' mean {tt_mean}, stdev {tt_sd})'
