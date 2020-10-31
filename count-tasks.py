@@ -167,7 +167,7 @@ def get_stats(count: int, taskt: iter) -> dict:
     Sum and run statistics from times, as seconds (integers or floats).
 
     :param count: The number of elements in taskt.
-    :param taskt: A list, tuple or set of numerical times.
+    :param taskt: A list, tuple or set of times (seconds).
     :return: Dict keys: tt_sum, tt_mean, tt_sd; values as: 00:00:00.
     """
     total = fmt_sec(int(sum(set(taskt))), 'std')
@@ -304,7 +304,7 @@ def main() -> None:
 
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
-        # long-running tasks (b/c the longest allowed count interval is 60m).
+        # long-running tasks (b/c 60 m is longest allowed count interval).
         # Overwrite successive NNT reports for a tidy terminal window: \x1b[A.
         if count_now == 0:
             tic_nnt += 1
