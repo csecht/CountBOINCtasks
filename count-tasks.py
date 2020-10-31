@@ -195,7 +195,8 @@ def main() -> None:
                         action='store_true',
                         default=False)
     parser.add_argument('--log',
-                        help='Generate or append reports to a log file',
+                        help='Create log file of results or append to '
+                             'existing log',
                         action='store_true',
                         default=False)
     parser.add_argument('--interval',
@@ -219,11 +220,9 @@ def main() -> None:
                         metavar="N")
     args = parser.parse_args()
 
-    # count_limit = int(args.count_lim)
     interval_m = int(args.interval)
-    # sumry_interval = args.summary  # Used only for printing and logging.
     sumry_m = get_min(args.summary)
-    sumry_factor = int(sumry_m / interval_m)
+    sumry_factor = sumry_m // interval_m
     if interval_m >= sumry_m:
         msg = "Invalid parameters: --summary time must be greater than" \
               " --interval time."
@@ -252,7 +251,6 @@ def main() -> None:
     count_start = len(tasks_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
-    # up_one = '\x1b[A'   # Move cursor up one line, for NNT reporting.
 
     # Report: Starting information
     tt_sum, tt_mean, tt_sd = get_stats(count_start, tasks_start).values()
@@ -264,7 +262,7 @@ def main() -> None:
     print(report)
     if args.log:
         logging.info("""%s; Task counter is starting with
-%scount interval: %sm
+%scount interval (minutes): %s
 %ssummary interval: %s
 %smax count reports: %s
 %s""",               time_start,
