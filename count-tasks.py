@@ -16,18 +16,18 @@ count-tasks.py counts reported boinc-client tasks at set intervals.
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program. If not, see <https://www.gnu.org/licenses/>.
+    along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.3.4'
+__version__ = '0.4.0'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
-__status__ = 'Development Status :: 3 - Alpha'
+__status__ = 'Development Status :: 4 - Beta'
 
 import argparse
 import logging
@@ -43,8 +43,6 @@ BC = boinc_module.BoincCommand()
 # util = os.path.basename(__file__)
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
-
-# TODO: Consider putting time functions into a new module, do_time.py
 
 
 def check_args(parameter):
@@ -78,7 +76,6 @@ def get_min(time_string: str) -> int:
     """Convert time string to minutes.
 
     :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
-
     :return: Time value as integer minutes.
     """
     t_min = dict(m=1, h=60, d=1440)
@@ -92,44 +89,33 @@ def get_min(time_string: str) -> int:
         raise KeyError(msg) from err
 
 
-def fmt_sec(secs: int) -> str:
-    """Convert seconds to easy-to-read time for concise display.
+def fmt_sec(secs: int, fmt: str) -> str:
+    """Convert seconds to the specified format for display.
 
-    :param secs: Any seconds value, except 0.
-    :return: Time in minimal friendly units: s, m, h, or d:h.
+    :param secs: Time in seconds, any integer except 0.
+    :param fmt: Either 'std' or 'short'
+    :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
     """
-    # https://stackoverflow.com/questions/3160699/python-progress-bar
-    # /3162864
+    # Time conversion concept from Niko
+    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
 
     _m, _s = divmod(secs, 60)
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
-    if secs >= 86400:
-        return f'{day:1d}d'  # option add {h:01d}h'
-    if 86400 > secs >= 3600:
-        return f'{_h:01d}h'  # option add :{m:01d}m
-    if 3600 > secs >= 60:
-        return f'{_m:01d}m'  # option add :{s:01d}s
-
-    return f'{_s:01d}s'
-
-
-def fmt_stdsec(secs: int) -> str:
-    """Convert seconds to standard format time for display.
-
-    :param secs: Any seconds time value, except 0.
-    :return: Time in standard format: 00:00:00 or d 00:00:00
-    """
-    # https://stackoverflow.com/questions/3160699/python-progress-bar
-    # /3162864
-
-    _m, _s = divmod(secs, 60)
-    _h, _m = divmod(_m, 60)
-    day, _h = divmod(_h, 24)
-    if secs >= 86400:
-        return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
-
-    return f'{_h:02d}:{_m:02d}:{_s:02d}'
+    msg = f'fmt_secs error: sec {secs}, fmt {fmt}'
+    if fmt == 'short':
+        if secs >= 86400:
+            return f'{day:1d}d'  # option, add {h:01d}h'
+        if 86400 > secs >= 3600:
+            return f'{_h:01d}h'  # option, add :{m:01d}m
+        if 3600 > secs >= 60:
+            return f'{_m:01d}m'  # option, add :{s:01d}s
+        return f'{_s:01d}s'
+    if fmt == 'std':
+        if secs >= 86400:
+            return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
+        return f'{_h:02d}:{_m:02d}:{_s:02d}'
+    return msg
 
 
 def sleep_timer(interval: int) -> print:
@@ -138,6 +124,8 @@ def sleep_timer(interval: int) -> print:
     :param interval: Minutes between task counts; range[5-60, by 5's]
     :return: A terminal/console graphic that displays time remaining.
     """
+    # Idea for development from
+    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
 
     # Initial timer bar length; 60 fits well with most clock times.
     bar_len = 60
@@ -159,13 +147,13 @@ def sleep_timer(interval: int) -> print:
     for i in range(bar_len):
         remain_bar = prettybar[i:]
         length = len(remain_bar)
-        print(f'\r{del_line}{whitexx_on_red}'
-              f'{fmt_sec(remain_s)}{remain_bar}'
-              f'{reset}|< ~time to next count', end='')
+        print(f"\r{del_line}{whitexx_on_red}"
+              f"{fmt_sec(remain_s, 'short')}{remain_bar}"
+              f"{reset}|< ~time to next count", end='')
         if length == 1:
-            print(f'\r{del_line}{whitexx_on_grn}'
-                  f'{fmt_sec(remain_s)}{remain_bar}'
-                  f'{reset}|< ~time to next count', end='')
+            print(f"\r{del_line}{whitexx_on_grn}"
+                  f"{fmt_sec(remain_s, 'short')}{remain_bar}"
+                  f"{reset}|< ~time to next count", end='')
         remain_s = (remain_s - barseg_s)
         # Need to clear the line for main() report printing.
         if length == 0:
@@ -182,10 +170,10 @@ def get_stats(count: int, taskt: iter) -> dict:
     :param taskt: A list, tuple or set of numerical times.
     :return: Dict keys: tt_sum, tt_mean, tt_sd; values as: 00:00:00.
     """
-    total = fmt_stdsec(int(sum(set(taskt))))
+    total = fmt_sec(int(sum(set(taskt))), 'std')
     if count > 1:
-        mean = fmt_stdsec(int(stat.mean(set(taskt))))
-        stdev = fmt_stdsec(int(stat.stdev(set(taskt))))
+        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
+        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
         return {'tt_sum': total, 'tt_mean': mean, 'tt_sd': stdev}
     if count == 1:
         return {'tt_sum': total, 'tt_mean': total, 'tt_sd': 'na'}

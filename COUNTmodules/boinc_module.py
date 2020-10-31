@@ -15,7 +15,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program. If not, see <https://www.gnu.org/licenses/>.
+    along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
 __author__ = 'cecht, BOINC ID: 990821'
@@ -23,10 +23,10 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.3.5.2'
+__version__ = '0.4.0'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
-__status__ = 'Development Status :: 3 - Alpha'
+__status__ = 'Development Status :: 4 - Beta'
 
 import os
 import shlex
@@ -57,7 +57,7 @@ class BoincCommand:
     @staticmethod
     def bccmd_path(cmd_arg: str) -> str:
         """
-        Passes boinccmd argument to the default OS path for the boinc-client.
+        Passes boinccmd argument to the default OS path of the boinc-client.
 
         :param cmd_arg: A boinccmd --argument (a.k.a --command).
         :return: Platform-specific path for executing boinccmd command.
@@ -79,38 +79,40 @@ class BoincCommand:
                        f"(darwin == Mac OS).")
 
     @staticmethod
-    def run_boinc(cmd_str: str):
+    def run_boinc(cmd_str: str) -> list:
         """
         Run a boinc-client command line for the current system platform.
 
         :param cmd_str: Complete boinccmd command line, with arguments.
-        :return: Execution of boinc-client command specified in cmd_str.
+        :return: Data from boinc-client command specified in cmd_str.
         """
-        # TODO: Add exceptions subprocess failure.
+        # TODO: Add exceptions for subprocess failure.
         output = ['boinccmd_results_stub']
+        # Works with Windows, Python 3.6 and up.
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
                                     stdout=PIPE,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
-        # Use this for Windows, Python 3.8 and 3.9.
+        # Works with Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
         #     output = subprocess.run(cmd_str,
         #                             capture_output=True,
         #                             text=True,
         #                             check=True).stdout.split('\n')
-        # Use this for Linux, Python 3.6 and up.
+        # Works with Linux, Python 3.6 and up.
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
                                     stdout=PIPE,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
-        # Use this for Linux, Python 3.8 and up.
+        # Works with Linux, Python 3.8 and up.
         # if sys.platform == 'linux':
         #     output = subprocess.run(shlex.split(cmd_str),
         #                             capture_output=True,
         #                             text=True,
         #                             check=True).stdout.split('\n')
+        # Only tested with Mac OS, Python 3.8
         if sys.platform == 'darwin':
             output = subprocess.check_output(cmd_str,
                                              shell=True).decode(
