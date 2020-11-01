@@ -31,6 +31,7 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import argparse
 import logging
+import re
 import statistics as stat
 import subprocess
 import sys
@@ -142,7 +143,10 @@ def sleep_timer(interval: int) -> print:
     reset = '\x1b[0m'  # No color, reset to system default.
     del_line = '\x1b[2K'  # Clear entire line.
 
-    subprocess.call('', shell=True)  # Req. for Win Cmd Prompt text formatting.
+    # Needed for Windows Cmd Prompt ANSI text formatting.
+    if sys.platform[:3] == 'win':
+        subprocess.call('', shell=True)
+
     # Not +1 in range because need only to sleep to END of interval.
     for i in range(bar_len):
         remain_bar = prettybar[i:]
@@ -172,11 +176,11 @@ def get_stats(count: int, taskt: iter) -> dict:
     00:00:00.
     """
     total = fmt_sec(int(sum(set(taskt))), 'std')
-    mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
-    stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
-    lo = fmt_sec(int(min(taskt)), 'std')
-    hi = fmt_sec(int(max(taskt)), 'std')
     if count > 1:
+        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
+        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
+        lo = fmt_sec(int(min(taskt)), 'std')
+        hi = fmt_sec(int(max(taskt)), 'std')
         return {
             'tt_sum':   total,
             'tt_mean':  mean,
@@ -274,20 +278,27 @@ def main() -> None:
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
     indent = ' ' * 22
     bigindent = ' ' * 34
-    # green = '\x1b[32;1m'  # 34 is Green3, 32 is DeepSkyBlue3
-    # reset = '\x1b[0m'  # No color, reset to system default.
-    # os.system("color")  # Needed for Windows terminal color
+    blue = '\x1b[34;1m'  # [34 DeepSkyBlue3
+    green = '\x1b[32;1m'  # [32 Green3
+    nc = '\x1b[0m'  # No color, reset to system default.
+    # regex from https://stackoverflow.com/questions/14693701/
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
+    # Needed for Windows Cmd Prompt ANSI text formatting.
+    if sys.platform[:3] == 'win':
+        subprocess.call('', shell=True)
 
     # Report: Starting information
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_stats(count_start,
                                                      tasks_start).values()
     report = f'{time_start}; ' \
-             f'Tasks reported in past hour: {count_start}\n' \
-             f'{indent}Task Times: mean {tt_mean}, ' \
-             f'range {tt_lo} - {tt_hi},\n' \
+             f'Tasks reported in the past hour: {blue}{count_start}{nc}\n' \
+             f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+             f' range [{tt_lo} - {tt_hi}],\n' \
              f'{bigindent}stdev {tt_sd}, total {tt_sum}'
     print(report)
     if args.log:
+        report = ansi_escape.sub('', report)
         logging.info("""%s; Task counter is starting with
 %scount interval (minutes): %s
 %ssummary interval: %s
@@ -336,8 +347,8 @@ def main() -> None:
         if count_now == 0:
             tic_nnt += 1
             report = f'{time_now}; ' \
-                     f'No tasks reported in past {tic_nnt} {interval_m}m ' \
-                     f'interval(s).'
+                     f'No tasks reported in the past {tic_nnt} {interval_m}m' \
+                     f' interval(s).'
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
@@ -349,30 +360,33 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_stats(count_now, tasks_now).values()
             report = f'{time_now}; ' \
-                     f'Tasks reported in past {interval_m}m: {count_now}\n' \
-                     f'{indent}Task Times: mean {tt_mean}, ' \
-                     f'range {tt_lo} - {tt_hi},\n' \
+                     f'Tasks reported in the past {interval_m}m:' \
+                     f' {blue}{count_now}{nc}\n' \
+                     f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+                     f' range [{tt_lo} - {tt_hi}],\n' \
                      f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
             if args.log:
+                report = ansi_escape.sub('', report)
                 logging.info(report)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
             # Need unique tasks for stats and counting.
-            tasksmry_uniq = set(tasks_smry)
-            cntsmry_uniq = len(tasksmry_uniq)
+            tasks_uniq = set(tasks_smry)
+            count_uniq = len(tasks_uniq)
 
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                get_stats(cntsmry_uniq, tasksmry_uniq).values()
+                get_stats(count_uniq, tasks_uniq).values()
             report = f'{time_now}; ' \
-                     f'>>> SUMMARY count for past {args.summary}: ' \
-                     f'{cntsmry_uniq}\n' \
-                     f'{indent}Task Times: mean {tt_mean}, ' \
-                     f'range {tt_lo} - {tt_hi},\n' \
+                     f'{green}>>> SUMMARY{nc} count for past {args.summary}:' \
+                     f' {blue}{count_uniq}{nc}\n' \
+                     f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+                     f' range [{tt_lo} - {tt_hi}],\n' \
                      f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
             if args.log:
+                report = ansi_escape.sub('', report)
                 logging.info(report)
 
             # Need to reset task_smry list for the next summary.
