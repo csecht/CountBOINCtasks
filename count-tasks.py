@@ -77,7 +77,7 @@ def get_min(time_string: str) -> int:
     """Convert time string to minutes.
 
     :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
-    :return: Time value as integer minutes.
+    :return: Time as integer minutes.
     """
     t_min = dict(m=1, h=60, d=1440)
     val = int(time_string[:-1])
@@ -382,17 +382,17 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_stats(count_uniq, tasks_uniq).values()
             report = f'{time_now}; ' \
-                     f'{orng}>>> SUMMARY{nc} count for past {args.summary}:' \
-                     f' {blue}{count_uniq}{nc}\n' \
-                     f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
-                     f' range [{tt_lo} - {tt_hi}],\n' \
-                     f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+                 f'{orng}>>> SUMMARY{nc} count for the past {args.summary}:' \
+                 f' {blue}{count_uniq}{nc}\n' \
+                 f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+                 f' range [{tt_lo} - {tt_hi}],\n' \
+                 f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
             if args.log:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
-            # Need to reset task_smry list for the next summary.
+            # Need to reset task_smry list for the next summary interval.
             tasks_smry.clear()
 
 
