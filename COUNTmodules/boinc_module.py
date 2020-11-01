@@ -62,6 +62,12 @@ class BoincCommand:
         :param cmd_arg: A boinccmd --argument (a.k.a --command).
         :return: Platform-specific path for executing boinccmd command.
         """
+        # This temporary hack is needed for MacOS to recognize the path. No
+        # idea why os.path.exists() does not recognize it.
+        if sys.platform == 'darwin':
+            boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd "\
+                       + cmd_arg
+            return boinccmd
 
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
