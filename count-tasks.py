@@ -168,17 +168,38 @@ def get_stats(count: int, taskt: iter) -> dict:
 
     :param count: The number of elements in taskt.
     :param taskt: A list, tuple or set of times (seconds).
-    :return: Dict keys: tt_sum, tt_mean, tt_sd; values as: 00:00:00.
+    :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; values as:
+    00:00:00.
     """
     total = fmt_sec(int(sum(set(taskt))), 'std')
+    mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
+    stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
+    lo = fmt_sec(int(min(taskt)), 'std')
+    hi = fmt_sec(int(max(taskt)), 'std')
     if count > 1:
-        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
-        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
-        return {'tt_sum': total, 'tt_mean': mean, 'tt_sd': stdev}
+        return {
+            'tt_sum':   total,
+            'tt_mean':  mean,
+            'tt_sd':    stdev,
+            'tt_min':   lo,
+            'tt_max':   hi
+        }
     if count == 1:
-        return {'tt_sum': total, 'tt_mean': total, 'tt_sd': 'na'}
+        return {
+            'tt_sum':   total,
+            'tt_mean':  total,
+            'tt_sd':    'na',
+            'tt_min':   'na',
+            'tt_max':   'na'
+        }
 
-    return {'tt_sum': '00:00:00', 'tt_mean': 'na', 'tt_sd': 'na'}
+    return {
+        'tt_sum':   '00:00:00',
+        'tt_mean':  'na',
+        'tt_sd':    'na',
+        'tt_min':   'na',
+        'tt_max':   'na'
+        }
 
 
 def main() -> None:
@@ -251,14 +272,20 @@ def main() -> None:
     count_start = len(tasks_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
+    indent = ' ' * 22
+    bigindent = ' ' * 34
+    # green = '\x1b[32;1m'  # 34 is Green3, 32 is DeepSkyBlue3
+    # reset = '\x1b[0m'  # No color, reset to system default.
+    # os.system("color")  # Needed for Windows terminal color
 
     # Report: Starting information
-    tt_sum, tt_mean, tt_sd = get_stats(count_start, tasks_start).values()
-    indent = ' ' * 22
+    tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_stats(count_start,
+                                                     tasks_start).values()
     report = f'{time_start}; ' \
-             f'Tasks reported in past hour: {count_start}' \
-             f'\n{indent}(Task Times: total {tt_sum}, ' \
-             f'mean {tt_mean}, stdev {tt_sd})'
+             f'Tasks reported in past hour: {count_start}\n' \
+             f'{indent}Task Times: mean {tt_mean}, ' \
+             f'range {tt_lo} - {tt_hi},\n' \
+             f'{bigindent}stdev {tt_sd}, total {tt_sum}'
     print(report)
     if args.log:
         logging.info("""%s; Task counter is starting with
@@ -319,11 +346,13 @@ def main() -> None:
                 logging.info(report)
         elif count_now > 0:
             tic_nnt -= tic_nnt
-            tt_sum, tt_mean, tt_sd = get_stats(count_now, tasks_now).values()
+            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                get_stats(count_now, tasks_now).values()
             report = f'{time_now}; ' \
                      f'Tasks reported in past {interval_m}m: {count_now}\n' \
-                     f'{indent}(Task Times: total {tt_sum}, ' \
-                     f'mean {tt_mean}, stdev {tt_sd})'
+                     f'{indent}Task Times: mean {tt_mean}, ' \
+                     f'range {tt_lo} - {tt_hi},\n' \
+                     f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
             if args.log:
                 logging.info(report)
@@ -334,13 +363,14 @@ def main() -> None:
             tasksmry_uniq = set(tasks_smry)
             cntsmry_uniq = len(tasksmry_uniq)
 
-            tt_sum, tt_mean, tt_sd = get_stats(cntsmry_uniq,
-                                               tasksmry_uniq).values()
+            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                get_stats(cntsmry_uniq, tasksmry_uniq).values()
             report = f'{time_now}; ' \
                      f'>>> SUMMARY count for past {args.summary}: ' \
-                     f'{cntsmry_uniq}' \
-                     f'\n{indent}(Task Times: total {tt_sum},' \
-                     f' mean {tt_mean}, stdev {tt_sd})'
+                     f'{cntsmry_uniq}\n' \
+                     f'{indent}Task Times: mean {tt_mean}, ' \
+                     f'range {tt_lo} - {tt_hi},\n' \
+                     f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
             if args.log:
                 logging.info(report)
