@@ -143,7 +143,8 @@ def sleep_timer(interval: int) -> print:
     reset = '\x1b[0m'  # No color, reset to system default.
     del_line = '\x1b[2K'  # Clear entire line.
 
-    # Needed for Windows Cmd Prompt ANSI text formatting.
+    # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
+    # because there is no external input.
     if sys.platform[:3] == 'win':
         subprocess.call('', shell=True)
 
@@ -275,16 +276,18 @@ def main() -> None:
     tasks_smry = []
     count_start = len(tasks_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
-    del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
+
+    # Terminal and log print formatting:
     indent = ' ' * 22
     bigindent = ' ' * 34
-    blue = '\x1b[1;38;5;33m'  # [34 DeepSkyBlue3
-    orng = '\x1b[1;38;5;202m'  # [32 Green3
+    del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
+    blue = '\x1b[1;38;5;33m'
+    orng = '\x1b[1;38;5;202m'  # [32m Green3
     nc = '\x1b[0m'  # No color, reset to system default.
     # regex from https://stackoverflow.com/questions/14693701/
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-
-    # Needed for Windows Cmd Prompt ANSI text formatting.
+    # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
+    # because any command string is constructed from internal input only.
     if sys.platform[:3] == 'win':
         subprocess.call('', shell=True)
 
