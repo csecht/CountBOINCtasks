@@ -278,8 +278,8 @@ def main() -> None:
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
     indent = ' ' * 22
     bigindent = ' ' * 34
-    blue = '\x1b[34;1m'  # [34 DeepSkyBlue3
-    green = '\x1b[32;1m'  # [32 Green3
+    blue = '\x1b[1;38;5;33m'  # [34 DeepSkyBlue3
+    orng = '\x1b[1;38;5;202m'  # [32 Green3
     nc = '\x1b[0m'  # No color, reset to system default.
     # regex from https://stackoverflow.com/questions/14693701/
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -379,7 +379,7 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_stats(count_uniq, tasks_uniq).values()
             report = f'{time_now}; ' \
-                     f'{green}>>> SUMMARY{nc} count for past {args.summary}:' \
+                     f'{orng}>>> SUMMARY{nc} count for past {args.summary}:' \
                      f' {blue}{count_uniq}{nc}\n' \
                      f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
                      f' range [{tt_lo} - {tt_hi}],\n' \
