@@ -23,12 +23,11 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
 
-import os
 import shlex
 import subprocess
 import sys
@@ -55,103 +54,30 @@ class BoincCommand:
                              'get_reported time')
 
     @staticmethod
-    # def bccmd_path(cmd_arg: str) -> str:
-    #     """
-    #     Passes boinccmd argument to the default OS path of the boinc-client.
-    #
-    #     :param cmd_arg: A boinccmd --argument (a.k.a --command).
-    #     :return: Platform-specific path for executing boinccmd command.
-    #     """
-    #     # This temporary hack is needed for MacOS to recognize the path. No
-    #     # idea why os.path.exists() does not recognize it.
-    #     if sys.platform == 'darwin':
-    #         boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd "\
-    #                    + cmd_arg
-    #         return boinccmd
-    #
-    #     # Need to accommodate win32 and win36, so slice [:3] for all platforms.
-    #     my_os = sys.platform[:3]
-    #     boinc_path = {
-    #         'win': r'\Program Files\BOINC\\boinccmd.exe',
-    #         'lin': '/usr/bin/boinccmd',
-    #         'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'}
-    #     if my_os in boinc_path:
-    #         if os.path.exists(boinc_path[my_os]):
-    #             boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
-    #             return boinccmd
-    #         raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
-    #     raise KeyError(f"Platform <{my_os}> is not recognized.\n"
-    #                    f"Expecting win (win32 or win64), lin (linux), or dar "
-    #                    f"(darwin == Mac OS).")
     def bccmd_path() -> str:
         """
-        Get default OS path of the boinc-client.
+        Set default OS-specific path for BOINC's boinccmd executable.
 
-        :return: Platform-specific path for executing boinccmd command.
+        :return: Correct path for executing boinccmd commands.
         """
-        # TODO: Get all paths to execute with subprocess.run in run_boinc.
-        # This temporary hack is needed for MacOS to recognize the path. No
-        # idea why os.path.exists() does not recognize it.
-        if sys.platform == 'darwin':
-            boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd"
-            return boinccmd
-
+        # TODO: Add path exceptions. Problem: for darwin, path.exists
+        #  differs from path for subprocess.run execution.
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
         boinc_path = {
             'win': r'\Program Files\BOINC\\boinccmd.exe',
             'lin': '/usr/bin/boinccmd',
-            'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'}
+            # This dar path doesn't "exist", but is a valid command line.
+            'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
+        }
         if my_os in boinc_path:
-            if os.path.exists(boinc_path[my_os]):
-                boinccmd = boinc_path[my_os]
-                return boinccmd
-            raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
+            boinccmd = boinc_path[my_os]
+            return boinccmd
         raise KeyError(f"Platform <{my_os}> is not recognized.\n"
                        f"Expecting win (win32 or win64), lin (linux), or dar "
                        f"(darwin == Mac OS).")
 
     @staticmethod
-    # def run_boinc(cmd_str: str) -> list:
-    #     """
-    #     Run a boinc-client command line for the current system platform.
-    #
-    #     :param cmd_str: Complete boinccmd command line, with arguments.
-    #     :return: Data from boinc-client command specified in cmd_str.
-    #     """
-    #     # TODO: Add exceptions for subprocess failure.
-    #     output = ['boinccmd_results_stub']
-    #     # Works with Windows, Python 3.6 and up.
-    #     if sys.platform[:3] == 'win':
-    #         output = subprocess.run(cmd_str,
-    #                                 stdout=PIPE,
-    #                                 encoding='utf8',
-    #                                 check=True).stdout.split('\n')
-    #     # Works with Windows, Python 3.8 and 3.9.
-    #     # if sys.platform[:3] == 'win':
-    #     #     output = subprocess.run(cmd_str,
-    #     #                             capture_output=True,
-    #     #                             text=True,
-    #     #                             check=True).stdout.split('\n')
-    #     # Works with Linux, Python 3.6 and up.
-    #     if sys.platform == 'linux':
-    #         output = subprocess.run(shlex.split(cmd_str),
-    #                                 stdout=PIPE,
-    #                                 encoding='utf8',
-    #                                 check=True).stdout.split('\n')
-    #     # Works with Linux, Python 3.8 and up.
-    #     # if sys.platform == 'linux':
-    #     #     output = subprocess.run(shlex.split(cmd_str),
-    #     #                             capture_output=True,
-    #     #                             text=True,
-    #     #                             check=True).stdout.split('\n')
-    #     # Only tested with Mac OS, Python 3.8
-    #     if sys.platform == 'darwin':
-    #         output = subprocess.check_output(cmd_str,
-    #                                          shell=True).decode(
-    #                                                     'utf-8').split('\n')
-    #
-    #     return output
     def run_boinc(cmd_str: str) -> list:
         """
         Run a boinc-client command line for the current system platform.
@@ -190,7 +116,6 @@ class BoincCommand:
             output = subprocess.check_output(cmd_str,
                                              shell=True).decode(
                                                         'utf-8').split('\n')
-
         return output
 
     def get_tasks(self, tag: str) -> list:
