@@ -79,10 +79,11 @@ def get_min(time_string: str) -> int:
     :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
     :return: Time as integer minutes.
     """
-    t_min = dict(m=1, h=60, d=1440)
+    t_min = {'m': 1,
+             'h': 60,
+             'd': 1440}
     val = int(time_string[:-1])
     unit = time_string[-1]
-
     try:
         return t_min[unit] * val
     except KeyError as err:
@@ -296,7 +297,7 @@ def main() -> None:
                                                      tasks_start).values()
     report = f'{time_start}; ' \
              f'Tasks reported in the past hour: {blue}{count_start}{nc}\n' \
-             f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+             f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
              f' range [{tt_lo} - {tt_hi}],\n' \
              f'{bigindent}stdev {tt_sd}, total {tt_sum}'
     print(report)
@@ -365,7 +366,7 @@ def main() -> None:
             report = f'{time_now}; ' \
                      f'Tasks reported in the past {interval_m}m:' \
                      f' {blue}{count_now}{nc}\n' \
-                     f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+                     f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
                      f' range [{tt_lo} - {tt_hi}],\n' \
                      f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
@@ -384,7 +385,7 @@ def main() -> None:
             report = f'{time_now}; ' \
                  f'{orng}>>> SUMMARY{nc} count for the past {args.summary}:' \
                  f' {blue}{count_uniq}{nc}\n' \
-                 f'{indent}Task Times: {blue}mean {tt_mean}{nc},' \
+                 f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
                  f' range [{tt_lo} - {tt_hi}],\n' \
                  f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
