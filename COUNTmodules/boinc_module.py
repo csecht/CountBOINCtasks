@@ -55,18 +55,45 @@ class BoincCommand:
                              'get_reported time')
 
     @staticmethod
-    def bccmd_path(cmd_arg: str) -> str:
+    # def bccmd_path(cmd_arg: str) -> str:
+    #     """
+    #     Passes boinccmd argument to the default OS path of the boinc-client.
+    #
+    #     :param cmd_arg: A boinccmd --argument (a.k.a --command).
+    #     :return: Platform-specific path for executing boinccmd command.
+    #     """
+    #     # This temporary hack is needed for MacOS to recognize the path. No
+    #     # idea why os.path.exists() does not recognize it.
+    #     if sys.platform == 'darwin':
+    #         boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd "\
+    #                    + cmd_arg
+    #         return boinccmd
+    #
+    #     # Need to accommodate win32 and win36, so slice [:3] for all platforms.
+    #     my_os = sys.platform[:3]
+    #     boinc_path = {
+    #         'win': r'\Program Files\BOINC\\boinccmd.exe',
+    #         'lin': '/usr/bin/boinccmd',
+    #         'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'}
+    #     if my_os in boinc_path:
+    #         if os.path.exists(boinc_path[my_os]):
+    #             boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
+    #             return boinccmd
+    #         raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
+    #     raise KeyError(f"Platform <{my_os}> is not recognized.\n"
+    #                    f"Expecting win (win32 or win64), lin (linux), or dar "
+    #                    f"(darwin == Mac OS).")
+    def bccmd_path() -> str:
         """
-        Passes boinccmd argument to the default OS path of the boinc-client.
+        Get default OS path of the boinc-client.
 
-        :param cmd_arg: A boinccmd --argument (a.k.a --command).
         :return: Platform-specific path for executing boinccmd command.
         """
+        # TODO: Get all paths to execute with subprocess.run in run_boinc.
         # This temporary hack is needed for MacOS to recognize the path. No
         # idea why os.path.exists() does not recognize it.
         if sys.platform == 'darwin':
-            boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd "\
-                       + cmd_arg
+            boinccmd = r"$HOME/Library/Application\ Support/BOINC/boinccmd"
             return boinccmd
 
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
@@ -77,7 +104,7 @@ class BoincCommand:
             'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'}
         if my_os in boinc_path:
             if os.path.exists(boinc_path[my_os]):
-                boinccmd = f'{boinc_path[my_os]} {cmd_arg}'
+                boinccmd = boinc_path[my_os]
                 return boinccmd
             raise OSError(f'Bad path for boinccmd: {boinc_path[my_os]}')
         raise KeyError(f"Platform <{my_os}> is not recognized.\n"
@@ -85,6 +112,46 @@ class BoincCommand:
                        f"(darwin == Mac OS).")
 
     @staticmethod
+    # def run_boinc(cmd_str: str) -> list:
+    #     """
+    #     Run a boinc-client command line for the current system platform.
+    #
+    #     :param cmd_str: Complete boinccmd command line, with arguments.
+    #     :return: Data from boinc-client command specified in cmd_str.
+    #     """
+    #     # TODO: Add exceptions for subprocess failure.
+    #     output = ['boinccmd_results_stub']
+    #     # Works with Windows, Python 3.6 and up.
+    #     if sys.platform[:3] == 'win':
+    #         output = subprocess.run(cmd_str,
+    #                                 stdout=PIPE,
+    #                                 encoding='utf8',
+    #                                 check=True).stdout.split('\n')
+    #     # Works with Windows, Python 3.8 and 3.9.
+    #     # if sys.platform[:3] == 'win':
+    #     #     output = subprocess.run(cmd_str,
+    #     #                             capture_output=True,
+    #     #                             text=True,
+    #     #                             check=True).stdout.split('\n')
+    #     # Works with Linux, Python 3.6 and up.
+    #     if sys.platform == 'linux':
+    #         output = subprocess.run(shlex.split(cmd_str),
+    #                                 stdout=PIPE,
+    #                                 encoding='utf8',
+    #                                 check=True).stdout.split('\n')
+    #     # Works with Linux, Python 3.8 and up.
+    #     # if sys.platform == 'linux':
+    #     #     output = subprocess.run(shlex.split(cmd_str),
+    #     #                             capture_output=True,
+    #     #                             text=True,
+    #     #                             check=True).stdout.split('\n')
+    #     # Only tested with Mac OS, Python 3.8
+    #     if sys.platform == 'darwin':
+    #         output = subprocess.check_output(cmd_str,
+    #                                          shell=True).decode(
+    #                                                     'utf-8').split('\n')
+    #
+    #     return output
     def run_boinc(cmd_str: str) -> list:
         """
         Run a boinc-client command line for the current system platform.
@@ -109,7 +176,7 @@ class BoincCommand:
         # Works with Linux, Python 3.6 and up.
         if sys.platform == 'linux':
             output = subprocess.run(shlex.split(cmd_str),
-                                    stdout=PIPE,
+                                    capture_output=True,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
         # Works with Linux, Python 3.8 and up.
@@ -137,7 +204,7 @@ class BoincCommand:
         # NOTE: This method not currently used by count-tasks.
         # taskXDF_tag = ['name', 'state', 'scheduler, state', 'fraction done',
         #              'active_task_state']
-        cmd_str = self.bccmd_path('--get_tasks')
+        cmd_str = self.bccmd_path() + ' --get_tasks'
         output = self.run_boinc(cmd_str)
 
         data = []
@@ -158,7 +225,7 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = self.bccmd_path('--get_old_tasks')
+        cmd_str = self.bccmd_path() + ' --get_old_tasks'
         output = self.run_boinc(cmd_str)
 
         data = []
