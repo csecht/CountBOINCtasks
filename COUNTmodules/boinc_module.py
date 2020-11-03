@@ -62,14 +62,16 @@ class BoincCommand:
         """
         # TODO: Add path exceptions. Problem: for darwin, path.exists
         #  differs from path for subprocess.run execution.
+        # TODO: Add ability to set custom paths for boinccmd.
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
         boinc_path = {
             'win': r'\Program Files\BOINC\\boinccmd.exe',
             'lin': '/usr/bin/boinccmd',
-            # This dar path doesn't "exist", but is a valid command line.
+            # This dar path doesn't "exist", but is a valid shell command.
             'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
         }
+
         if my_os in boinc_path:
             boinccmd = boinc_path[my_os]
             return boinccmd
@@ -100,22 +102,12 @@ class BoincCommand:
         #                             text=True,
         #                             check=True).stdout.split('\n')
         # Works with Linux, Python 3.6 and up.
-        if sys.platform == 'linux':
-            output = subprocess.run(shlex.split(cmd_str),
+        if sys.platform == 'linux' or sys.platform == 'darwin':
+            output = subprocess.run(cmd_str,
+                                    shell=True,
                                     capture_output=True,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
-        # Works with Linux, Python 3.8 and up.
-        # if sys.platform == 'linux':
-        #     output = subprocess.run(shlex.split(cmd_str),
-        #                             capture_output=True,
-        #                             text=True,
-        #                             check=True).stdout.split('\n')
-        # Only tested with Mac OS, Python 3.8
-        if sys.platform == 'darwin':
-            output = subprocess.check_output(cmd_str,
-                                             shell=True).decode(
-                                                        'utf-8').split('\n')
         return output
 
     def get_tasks(self, tag: str) -> list:
