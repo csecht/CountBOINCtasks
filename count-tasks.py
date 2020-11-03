@@ -280,7 +280,7 @@ def main() -> None:
 
     # Terminal and log print formatting:
     indent = ' ' * 22
-    bigindent = ' ' * 34
+    bigindent = ' ' * 49
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
     blue = '\x1b[1;38;5;33m'
     orng = '\x1b[1;38;5;202m'  # [32m Green3
