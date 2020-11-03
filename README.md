@@ -44,16 +44,16 @@ Example report results, using option --summary 2h:
 ```
 2020-Nov-01 11:17:33; Tasks reported in the past hour: 18
                       Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
-                                  stdev 00:00:13, total 07:39:23
+                                                 stdev 00:00:13, total 07:39:23
 2020-Nov-01 12:17:36; Tasks reported in the past 60m: 13
                       Task Times: mean 00:25:28, range [00:25:05 - 00:25:51],
-                                  stdev 00:00:11, total 05:31:15
+                                                 stdev 00:00:11, total 05:31:15
 2020-Nov-01 13:17:40; Tasks reported in the past 60m: 8
                       Task Times: mean 00:26:25, range [00:25:20 - 00:26:51],
-                                  stdev 00:00:39, total 03:31:25
+                                                 stdev 00:00:39, total 03:31:25
 2020-Nov-01 13:17:40; >>> SUMMARY count for past 2h: 21
                       Task Times: mean 00:26:17, range [00:25:05 - 00:26:51],
-                                  stdev 00:00:40, total 09:02:40
+                                                 stdev 00:00:40, total 09:02:40
 10m          |< ~time to next count
 ```
 
@@ -79,6 +79,11 @@ NOTE: Summary counts may be less than the sum of individual counts because
 TIP: To get the only the most recent task count and time metrics without
  running count intervals, run:  
  `count-tasks.py --c 0`
+```
+2020-Nov-01 11:17:33; Tasks reported in the past hour: 18
+                      Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
+                                                 stdev 00:00:13, total 07:39:23
+```
  
 ### Development Plans
 * Improve Python code
