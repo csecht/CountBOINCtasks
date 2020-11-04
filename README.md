@@ -16,6 +16,11 @@ Download the .zip package from the Code download button and extract to your favo
 <li>Windows: python count-tasks.py --help</li>
 </ul>
 
+Default settings assume a default location of the BOINC folder from the
+ BOINC installer. If you have put the BOINC folder in a different location,
+  then there will be a command line option to enter that custom path to run
+   boinc-client's boimccmd (or boinccmd.exe) executable. This custom path
+    option is not yet available for Mac OS (as of ver. 0.4.2).
 ```
 ~/countBOINCtasks-master$ ./count-tasks.py --help
 usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
@@ -63,7 +68,11 @@ Running with the `--log` option will save the reports to a log file in the
  working folder. This file is appended to or created when the program is
   launched.
 
-You can let `count-tasks.py` run in an open terminal window with negligible impact on system resources. Stop it with *Ctrl-C* or let it stop automatically.  With default settings, it will stop after 6 weeks (1008 1hr count cycles). A different count cycle limit can be set with the `--count_lim` option.
+You can let `count-tasks.py` run in an open terminal window with negligible
+ impact on system resources. Stop it with *Ctrl-C* or let it stop
+  automatically.  With default settings, it will stop after 6 weeks (1008
+   1hr count cycles). A different count cycle limit can be set with the
+    `--count_lim` option.
 
 NOTE: Summary counts may be less than the sum of individual counts because
  of persistence of reported tasks between count intervals. This can be
@@ -87,3 +96,5 @@ TIP: To get the only the most recent task count and time metrics without
  
 ### Development Plans
 * Improve Python code
+* Improve handling of default and custom paths to execute boinccmd
+* Add configuration file option

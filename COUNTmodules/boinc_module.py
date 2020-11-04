@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -64,11 +64,11 @@ class BoincCommand:
 
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
-        # Using home() does not form valid command path,
+        # Using home() does not form valid Windows command path.
         # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
-        win_path = str(Path(r'\Program Files\BOINC\\boinccmd.exe'))
-        lin_path = str(Path('/usr/bin/boinccmd'))
-        dar_path = str(Path(r'$HOME/Library/Application\ Support/BOINC/boinccmd'))
+        win_path = Path(r'\Program Files\BOINC\\boinccmd.exe')
+        lin_path = Path(r'/usr/bin/boinccmd')
+        dar_path = Path(r'$HOME/Library/Application\ Support/BOINC/boinccmd')
 
         default_path = {
             'win': win_path,
@@ -76,7 +76,7 @@ class BoincCommand:
             'dar': dar_path
         }
         if my_os == 'win' or my_os == 'lin':
-            if os.path.isfile(default_path[my_os]) is False:
+            if Path.is_file(default_path[my_os]) is False:
                 custom_cmd = input(
                     f'\nboinccmd is not in its default path: '
                     f'{default_path[my_os]}\n'
@@ -91,68 +91,17 @@ class BoincCommand:
                 raise OSError(f'Oops. {custom_cmd} cannot be used to execute '
                               f'boinccmd.\n'
                               f'Try again. Exiting now...\n')
-            boinccmd = default_path[my_os]
+            boinccmd = str(default_path[my_os])
             return boinccmd
 
         # No current support for non-default Mac BOINC path.
-        if my_os in default_path:
-            boinccmd = default_path[my_os]
+        if my_os == 'dar':
+            boinccmd = str(default_path[my_os])
             return boinccmd
 
         raise KeyError(f"Platform <{my_os}> is not recognized.\n"
                        f"Expecting win (win32 or win64), lin (linux), or dar "
                        f"(darwin == Mac OS).")
-    # def bccmd_path() -> str:
-    #     """
-    #     Set default OS-specific path for BOINC's boinccmd executable.
-    #
-    #     :return: Correct path for executing boinccmd commands.
-    #     """
-    #
-    #     # Need to accommodate win32 and win36, so slice [:3] for all platforms.
-    #     my_os = sys.platform[:3]
-    #     # Using home() does not form valid command path.
-    #     # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
-    #     win_path = str(Path(r'\Program Files\BOINC\\boinccmd.exe'))
-    #     lin_path = str(Path('/usr/bin/boinccmd'))
-    #     dar_path = str(Path('/Library/Application Support/BOINC/boinccmd'))
-    #     # dar_path = r'$HOME/Library/Application\ Support/BOINC/boinccmd'
-    #
-    #     default_path = {
-    #         'win': win_path,
-    #         'lin': lin_path,
-    #         # This dar path doesn't "exist", but is a valid shell command.
-    #         'dar': dar_path
-    #     }
-    #     if my_os == 'win' or my_os == 'lin':
-    #         if os.path.isfile(default_path[my_os]) is False:
-    #             custom_cmd = input(
-    #                 f'\nboinccmd is not in its default path: '
-    #                 f'{default_path[my_os]}\n'
-    #                 f'Enter your custom path to execute boinccmd: ')
-    #             if os.path.isfile(custom_cmd) is False:
-    #                 raise OSError(f'Oops. {custom_cmd} is a bad path.\n'
-    #                               f'Try again. Exiting now...\n')
-    #             # Need to force boinccmd as the executable.
-    #             cmd_tail = os.path.split(custom_cmd)[1]
-    #             if cmd_tail == 'boinccmd' or cmd_tail == 'boinccmd.exe':
-    #                 return custom_cmd
-    #             raise OSError(f'Oops. {custom_cmd} cannot be used to execute '
-    #                           f'boinccmd.\n'
-    #                           f'Try again. Exiting now...\n')
-    #         boinccmd = default_path[my_os]
-    #         return boinccmd
-    #
-    #     if my_os == 'dar':
-    #         if os.path.isfile(default_path[my_os]) is False:
-    #             raise OSError(f'\nboinccmd is not in its default path: '
-    #                           f'{default_path[my_os]}\n'
-    #                           f'Perhaps Reinstall BOINC. Exiting now...')
-    #         boinccmd = default_path[my_os]
-    #         return boinccmd
-    #     raise KeyError(f"Platform <{my_os}> is not recognized.\n"
-    #                    f"Expecting win (win32 or win64), lin (linux), or dar "
-    #                    f"(darwin == Mac OS).")
 
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
@@ -199,7 +148,7 @@ class BoincCommand:
         cmd_str = self.bccmd_path() + ' --get_tasks'
         output = self.run_boinc(cmd_str)
 
-        data = []
+        data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
         # if tag in taskXDF_tag:
         if tag in self.tasktags:
@@ -220,7 +169,7 @@ class BoincCommand:
         cmd_str = self.bccmd_path() + ' --get_old_tasks'
         output = self.run_boinc(cmd_str)
 
-        data = []
+        data = ['stub_boinc_data']
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
             data = [dat.replace(tag_str, '') for dat in output if tag in dat]
