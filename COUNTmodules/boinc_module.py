@@ -28,9 +28,10 @@ __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
 
-import shlex
+import os
 import subprocess
 import sys
+from pathlib import Path
 from subprocess import PIPE
 
 
@@ -60,24 +61,98 @@ class BoincCommand:
 
         :return: Correct path for executing boinccmd commands.
         """
-        # TODO: Add path exceptions. Problem: for darwin, path.exists
-        #  differs from path for subprocess.run execution.
-        # TODO: Add ability to set custom paths for boinccmd.
+
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
-        boinc_path = {
-            'win': r'\Program Files\BOINC\\boinccmd.exe',
-            'lin': '/usr/bin/boinccmd',
-            # This dar path doesn't "exist", but is a valid shell command.
-            'dar': r'$HOME/Library/Application\ Support/BOINC/boinccmd'
-        }
+        # Using home() does not form valid command path,
+        # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
+        win_path = str(Path(r'\Program Files\BOINC\\boinccmd.exe'))
+        lin_path = str(Path('/usr/bin/boinccmd'))
+        dar_path = str(Path(r'$HOME/Library/Application\ Support/BOINC/boinccmd'))
 
-        if my_os in boinc_path:
-            boinccmd = boinc_path[my_os]
+        default_path = {
+            'win': win_path,
+            'lin': lin_path,
+            'dar': dar_path
+        }
+        if my_os == 'win' or my_os == 'lin':
+            if os.path.isfile(default_path[my_os]) is False:
+                custom_cmd = input(
+                    f'\nboinccmd is not in its default path: '
+                    f'{default_path[my_os]}\n'
+                    f'Enter your custom path to execute boinccmd: ')
+                if os.path.isfile(custom_cmd) is False:
+                    raise OSError(f'Oops. {custom_cmd} is a bad path.\n'
+                                  f'Try again. Exiting now...\n')
+                # Need to force boinccmd as the executable.
+                cmd_tail = os.path.split(custom_cmd)[1]
+                if cmd_tail == 'boinccmd' or cmd_tail == 'boinccmd.exe':
+                    return custom_cmd
+                raise OSError(f'Oops. {custom_cmd} cannot be used to execute '
+                              f'boinccmd.\n'
+                              f'Try again. Exiting now...\n')
+            boinccmd = default_path[my_os]
             return boinccmd
+
+        # No current support for non-default Mac BOINC path.
+        if my_os in default_path:
+            boinccmd = default_path[my_os]
+            return boinccmd
+
         raise KeyError(f"Platform <{my_os}> is not recognized.\n"
                        f"Expecting win (win32 or win64), lin (linux), or dar "
                        f"(darwin == Mac OS).")
+    # def bccmd_path() -> str:
+    #     """
+    #     Set default OS-specific path for BOINC's boinccmd executable.
+    #
+    #     :return: Correct path for executing boinccmd commands.
+    #     """
+    #
+    #     # Need to accommodate win32 and win36, so slice [:3] for all platforms.
+    #     my_os = sys.platform[:3]
+    #     # Using home() does not form valid command path.
+    #     # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
+    #     win_path = str(Path(r'\Program Files\BOINC\\boinccmd.exe'))
+    #     lin_path = str(Path('/usr/bin/boinccmd'))
+    #     dar_path = str(Path('/Library/Application Support/BOINC/boinccmd'))
+    #     # dar_path = r'$HOME/Library/Application\ Support/BOINC/boinccmd'
+    #
+    #     default_path = {
+    #         'win': win_path,
+    #         'lin': lin_path,
+    #         # This dar path doesn't "exist", but is a valid shell command.
+    #         'dar': dar_path
+    #     }
+    #     if my_os == 'win' or my_os == 'lin':
+    #         if os.path.isfile(default_path[my_os]) is False:
+    #             custom_cmd = input(
+    #                 f'\nboinccmd is not in its default path: '
+    #                 f'{default_path[my_os]}\n'
+    #                 f'Enter your custom path to execute boinccmd: ')
+    #             if os.path.isfile(custom_cmd) is False:
+    #                 raise OSError(f'Oops. {custom_cmd} is a bad path.\n'
+    #                               f'Try again. Exiting now...\n')
+    #             # Need to force boinccmd as the executable.
+    #             cmd_tail = os.path.split(custom_cmd)[1]
+    #             if cmd_tail == 'boinccmd' or cmd_tail == 'boinccmd.exe':
+    #                 return custom_cmd
+    #             raise OSError(f'Oops. {custom_cmd} cannot be used to execute '
+    #                           f'boinccmd.\n'
+    #                           f'Try again. Exiting now...\n')
+    #         boinccmd = default_path[my_os]
+    #         return boinccmd
+    #
+    #     if my_os == 'dar':
+    #         if os.path.isfile(default_path[my_os]) is False:
+    #             raise OSError(f'\nboinccmd is not in its default path: '
+    #                           f'{default_path[my_os]}\n'
+    #                           f'Perhaps Reinstall BOINC. Exiting now...')
+    #         boinccmd = default_path[my_os]
+    #         return boinccmd
+    #     raise KeyError(f"Platform <{my_os}> is not recognized.\n"
+    #                    f"Expecting win (win32 or win64), lin (linux), or dar "
+    #                    f"(darwin == Mac OS).")
 
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
