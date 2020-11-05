@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.3'
+__version__ = '0.4.3.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -67,7 +67,8 @@ class BoincCommand:
         # Using home() does not form valid Windows command path.
         # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
         win_path = Path(r'\Program Files\BOINC\\boinccmd.exe')
-        lin_path = Path(r'/usr/bin/boinccmd')
+        # lin_path = Path(r'/usr/bin/boinccmd')
+        lin_path = Path(r'/usr/bin/debug_stub')
         dar_path = Path(r'$HOME/Library/Application\ Support/BOINC/boinccmd')
 
         default_path = {
@@ -77,25 +78,34 @@ class BoincCommand:
         }
         if my_os == 'win' or my_os == 'lin':
             if Path.is_file(default_path[my_os]) is False:
-                custom_cmd = input(
+                custom_path = input(
                     f'\nboinccmd is not in its default path: '
                     f'{default_path[my_os]}\n'
                     f'Enter your custom path to execute boinccmd: ')
-                if os.path.isfile(custom_cmd) is False:
-                    raise OSError(f'Oops. {custom_cmd} is a bad path.\n'
+                if os.path.isfile(custom_path) is False:
+                    raise OSError(f'Oops. {custom_path} will not work.\n'
+                                  f'Be sure to include /boinccmd or '
+                                  f'\\boinccmd.exe.\n'
                                   f'Try again. Exiting now...\n')
-                # Need to force boinccmd as the executable.
-                cmd_tail = os.path.split(custom_cmd)[1]
-                if cmd_tail == 'boinccmd' or cmd_tail == 'boinccmd.exe':
-                    return custom_cmd
-                raise OSError(f'Oops. {custom_cmd} cannot be used to execute '
-                              f'boinccmd.\n'
-                              f'Try again. Exiting now...\n')
+                cmd_tail = os.path.split(custom_path)[1]
+                if my_os == 'win' and cmd_tail != 'boinccmd.exe':
+                    raise OSError(f'The entered command path, {custom_path}, '
+                                  f'must end with \\boinccmd.exe.\n'
+                                  f'Try again. Exiting now...\n')
+                if my_os == 'lin' or my_os == 'dar' and cmd_tail != 'boinccmd':
+                    raise OSError(f'The entered command path, {custom_path}, '
+                                  f'must end with /boinccmd.\n'
+                                  f'Try again. Exiting now...\n')
+                return custom_path
             boinccmd = str(default_path[my_os])
             return boinccmd
 
         # No current support for non-default Mac BOINC path.
         if my_os == 'dar':
+            if Path.is_file(default_path[my_os]) is False:
+                raise OSError(f'BOINC is not in its expected default path.\n'
+                              f'Custom paths not yet supported.\n'
+                              f'Try reinstalling BOINC? Exiting...\n')
             boinccmd = str(default_path[my_os])
             return boinccmd
 
