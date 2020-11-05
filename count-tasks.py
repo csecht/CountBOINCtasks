@@ -21,7 +21,8 @@ count-tasks.py counts reported boinc-client tasks at set intervals.
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
-__credits__ = ['Inspired by rickslab-gpu-utils']
+__credits__ = ['Inspired by rickslab-gpu-utils',
+               'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __version__ = '0.4.4'
 __program_name__ = 'count-tasks.py'
@@ -261,6 +262,7 @@ def main() -> None:
         print(__doc__)
         print('Author: ', __author__)
         print('Copyright: ', __copyright__)
+        print('Credits: ', *[f'\n      {item}' for item in __credits__])
         print('License: ', __license__)
         print('Version: ', __version__)
         print('Maintainer: ', __maintainer__)

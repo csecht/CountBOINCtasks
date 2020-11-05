@@ -20,7 +20,8 @@
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
-__credits__ = ['Inspired by rickslab-gpu-utils']
+__credits__ = ['Inspired by rickslab-gpu-utils',
+               'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
 __version__ = '0.4.4'
