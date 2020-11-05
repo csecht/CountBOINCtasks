@@ -67,8 +67,7 @@ class BoincCommand:
         # Using home() does not form valid Windows command path.
         # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
         win_path = Path(r'\Program Files\BOINC\\boinccmd.exe')
-        # lin_path = Path(r'/usr/bin/boinccmd')
-        lin_path = Path(r'/usr/bin/debug_stub')
+        lin_path = Path(r'/usr/bin/boinccmd')
         dar_path = Path(r'$HOME/Library/Application\ Support/BOINC/boinccmd')
 
         default_path = {
