@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -113,9 +113,15 @@ class BoincCommand:
         """
         # TODO: Add exceptions for subprocess failure.
         output = ['boinccmd_results_stub']
-        # Works with Windows, Python 3.6 and up.
+        # Works with Python 3.6 and up.
         if sys.platform[:3] == 'win':
             output = subprocess.run(cmd_str,
+                                    stdout=PIPE,
+                                    encoding='utf8',
+                                    check=True).stdout.split('\n')
+        if sys.platform == 'linux' or sys.platform == 'darwin':
+            output = subprocess.run(cmd_str,
+                                    shell=True,
                                     stdout=PIPE,
                                     encoding='utf8',
                                     check=True).stdout.split('\n')
@@ -125,13 +131,13 @@ class BoincCommand:
         #                             capture_output=True,
         #                             text=True,
         #                             check=True).stdout.split('\n')
-        # Works with Linux, Python 3.6 and up.
-        if sys.platform == 'linux' or sys.platform == 'darwin':
-            output = subprocess.run(cmd_str,
-                                    shell=True,
-                                    capture_output=True,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
+        # Works with Linux, Python 3.7 and up.
+        # if sys.platform == 'linux' or sys.platform == 'darwin':
+        #     output = subprocess.run(cmd_str,
+        #                             shell=True,
+        #                             capture_output=True,
+        #                             encoding='utf8',
+        #                             check=True).stdout.split('\n')
         return output
 
     def get_tasks(self, tag: str) -> list:
