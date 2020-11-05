@@ -23,7 +23,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.4.2'
+__version__ = '0.4.4'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -41,7 +41,8 @@ from datetime import datetime
 from COUNTmodules import boinc_module
 
 BC = boinc_module.BoincCommand()
-# util = os.path.basename(__file__)
+boincpath = BC.set_boincpath()
+
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
@@ -269,9 +270,10 @@ def main() -> None:
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
     #   In future, may want to inspect task names: BC.get_reported('tasks').
+
     time_fmt = '%Y-%b-%d %H:%M:%S'
     time_start = datetime.now().strftime(time_fmt)
-    tasks_start = BC.get_reported('elapsed time')
+    tasks_start = BC.get_reported(boincpath, 'elapsed time')
     tasks_now = tasks_start[:]
     tasks_prev = tasks_now[:]
     tasks_smry = []
@@ -332,7 +334,7 @@ def main() -> None:
         if len(tasks_now) > 0:
             tasks_prev = tasks_now[:]
 
-        tasks_now = BC.get_reported('elapsed time')
+        tasks_now = BC.get_reported(boincpath, 'elapsed time')
 
         if len(tasks_now) > 0:
             tasks_now = [task for task in tasks_now if task not in tasks_prev]

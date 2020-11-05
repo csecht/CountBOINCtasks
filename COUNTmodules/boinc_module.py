@@ -23,7 +23,7 @@ __copyright__ = 'Copyright (C) 2020 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.3.1'
+__version__ = '0.4.4'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -55,7 +55,7 @@ class BoincCommand:
                              'get_reported time')
 
     @staticmethod
-    def bccmd_path() -> str:
+    def set_boincpath() -> str:
         """
         Set default OS-specific path for BOINC's boinccmd executable.
 
@@ -75,7 +75,8 @@ class BoincCommand:
             'lin': lin_path,
             'dar': dar_path
         }
-        if my_os == 'win' or my_os == 'lin':
+        # if my_os == 'win' or my_os == 'lin':
+        if my_os in ('win', 'lin'):
             if Path.is_file(default_path[my_os]) is False:
                 custom_path = input(
                     f'\nboinccmd is not in its default path: '
@@ -87,13 +88,13 @@ class BoincCommand:
                                   f'\\boinccmd.exe.\n'
                                   f'Try again. Exiting now...\n')
                 cmd_tail = os.path.split(custom_path)[1]
-                if my_os == 'win' and cmd_tail != 'boinccmd.exe':
-                    raise OSError(f'The entered command path, {custom_path}, '
-                                  f'must end with \\boinccmd.exe.\n'
+                if cmd_tail != 'boinccmd.exe' and my_os == 'win':
+                    raise OSError(f'The entered command path, {custom_path},'
+                                  f' must end with \\boinccmd.exe.\n'
                                   f'Try again. Exiting now...\n')
-                if my_os == 'lin' or my_os == 'dar' and cmd_tail != 'boinccmd':
-                    raise OSError(f'The entered command path, {custom_path}, '
-                                  f'must end with /boinccmd.\n'
+                if cmd_tail != 'boinccmd' and (my_os in ('win', 'lin')):
+                    raise OSError(f'The entered command path, {custom_path},'
+                                  f' must end with /boinccmd.\n'
                                   f'Try again. Exiting now...\n')
                 return custom_path
             boinccmd = str(default_path[my_os])
@@ -102,9 +103,9 @@ class BoincCommand:
         # No current support for non-default Mac BOINC path.
         if my_os == 'dar':
             if Path.is_file(default_path[my_os]) is False:
-                raise OSError(f'BOINC is not in its expected default path.\n'
-                              f'Custom paths not yet supported.\n'
-                              f'Try reinstalling BOINC? Exiting...\n')
+                raise OSError('BOINC is not in its expected default path.\n'
+                              'Custom paths not yet supported.\n'
+                              'Try reinstalling BOINC? Exiting...\n')
             boinccmd = str(default_path[my_os])
             return boinccmd
 
@@ -149,10 +150,11 @@ class BoincCommand:
         #                             check=True).stdout.split('\n')
         return output
 
-    def get_tasks(self, tag: str) -> list:
+    def get_tasks(self, boincpath: str, tag: str) -> list:
         """
         Get data from current boinc-client tasks.
 
+        :param boincpath: Command line path to execute boinccmd.
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
@@ -160,11 +162,11 @@ class BoincCommand:
         # NOTE: This method not currently used by count-tasks.
         # taskXDF_tag = ['name', 'state', 'scheduler, state', 'fraction done',
         #              'active_task_state']
-        cmd_str = self.bccmd_path() + ' --get_tasks'
+        cmd_str = boincpath + ' --get_tasks'
         output = self.run_boinc(cmd_str)
 
         data = ['stub_boinc_data']
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd stdout format for a tag
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd return format for a data tag.
         # if tag in taskXDF_tag:
         if tag in self.tasktags:
             data = [dat.replace(tag_str, '') for dat in output if tag in dat]
@@ -172,16 +174,17 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    def get_reported(self, tag: str) -> list:
+    def get_reported(self, boincpath: str, tag: str) -> list:
         """
         Get data from reported boinc-client tasks.
 
+        :param boincpath: Command line path to execute boinccmd.
         :param tag: 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = self.bccmd_path() + ' --get_old_tasks'
+        cmd_str = boincpath + ' --get_old_tasks'
         output = self.run_boinc(cmd_str)
 
         data = ['stub_boinc_data']
