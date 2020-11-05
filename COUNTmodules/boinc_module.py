@@ -58,9 +58,9 @@ class BoincCommand:
     @staticmethod
     def set_boincpath() -> str:
         """
-        Set default OS-specific path for BOINC's boinccmd executable.
+        Define an OS-specific path for BOINC's boinccmd executable.
 
-        :return: Correct path for executing boinccmd commands.
+        :return: Correct path string for executing boinccmd commands.
         """
 
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
@@ -93,7 +93,7 @@ class BoincCommand:
                     raise OSError(f'The entered command path, {custom_path},'
                                   f' must end with \\boinccmd.exe.\n'
                                   f'Try again. Exiting now...\n')
-                if cmd_tail != 'boinccmd' and (my_os in ('win', 'lin')):
+                if cmd_tail != 'boinccmd' and (my_os in ('lin', 'dar')):
                     raise OSError(f'The entered command path, {custom_path},'
                                   f' must end with /boinccmd.\n'
                                   f'Try again. Exiting now...\n')
