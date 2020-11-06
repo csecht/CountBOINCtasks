@@ -19,8 +19,10 @@ Download the .zip package from the Code download button and extract to your favo
 Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
   then there will be a command line option to enter that custom path to run
-   boinc-client's boimccmd (or boinccmd.exe) executable. This custom path
-    option is not yet available for Mac OS (as of ver. 0.4.2).
+   boinc-client's boimccmd (or boinccmd.exe) executable. A custom command
+    path can also be added to the countCFG.txt configuration file to avoid
+     entering the path on the command line. These custom path options have
+      not yet been tested for Mac OS (as of ver. 0.4.5).
 ```
 ~/countBOINCtasks-master$ ./count-tasks.py --help
 usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]

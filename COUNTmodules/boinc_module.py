@@ -24,7 +24,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.4'
+__version__ = '0.4.5'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -62,6 +62,16 @@ class BoincCommand:
 
         :return: Correct path string for executing boinccmd commands.
         """
+        # Need to check if the configuration file has a custom path set.
+        # .split to remove the tag, .join to re-form the path with any spaces.
+        if os.path.isfile('countCFG.txt'):
+            with open('countCFG.txt', 'r') as cfg:
+                for line in cfg:
+                    if '#' not in line and 'custom_path' in line:
+                        parts = line.split()
+                        del parts[0]
+                        custom_path = " ".join(parts)
+                        return custom_path
 
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
@@ -76,7 +86,7 @@ class BoincCommand:
             'lin': lin_path,
             'dar': dar_path
         }
-        # if my_os == 'win' or my_os == 'lin':
+
         if my_os in ('win', 'lin'):
             if Path.is_file(default_path[my_os]) is False:
                 custom_path = input(
