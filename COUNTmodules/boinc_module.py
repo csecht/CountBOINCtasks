@@ -92,7 +92,8 @@ class BoincCommand:
                 custom_path = input(
                     f'\nboinccmd is not in its default path: '
                     f'{default_path[my_os]}\n'
-                    f'Enter your custom path to execute boinccmd: ')
+                    f'You may set your custom path in countCFG.txt, or\n'
+                    f'Enter your custom path here to execute boinccmd: ')
                 if os.path.isfile(custom_path) is False:
                     raise OSError(f'Oops. {custom_path} will not work.\n'
                                   f'Be sure to include /boinccmd or '

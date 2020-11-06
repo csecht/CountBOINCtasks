@@ -50,10 +50,10 @@ logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
 
 def check_args(parameter):
     """
-    Check select command line arguments for errors.
+    Check command line arguments for errors.
 
-    :param parameter: Check --summary parameter for errors.
-    :return: If no errors, the parameter string.
+    :param parameter: Used for the --summary parameter.
+    :return: If no errors, return the parameter string.
     """
 
     if parameter == "0":
@@ -123,7 +123,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
 
 
 def sleep_timer(interval: int) -> print:
-    """Set sleep intervals and display countdown timer.
+    """Provide sleep intervals and display countdown timer.
 
     :param interval: Minutes between task counts; range[5-60, by 5's]
     :return: A terminal/console graphic that displays time remaining.
