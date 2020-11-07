@@ -271,15 +271,15 @@ def main() -> None:
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
-    #   In future, may want to inspect task names: BC.get_reported('tasks').
-
+    #   In future, may want to inspect task names with
+    #   tnames = BC.get_reported(boincpath, 'tasks').
     time_fmt = '%Y-%b-%d %H:%M:%S'
     time_start = datetime.now().strftime(time_fmt)
-    tasks_start = BC.get_reported(boincpath, 'elapsed time')
-    tasks_now = tasks_start[:]
-    tasks_prev = tasks_now[:]
-    tasks_smry = []
-    count_start = len(tasks_start)
+    ttimes_start = BC.get_reported(boincpath, 'elapsed time')
+    ttimes_now = ttimes_start[:]
+    ttimes_prev = ttimes_now[:]
+    ttimes_smry = []
+    count_start = len(ttimes_start)
     tic_nnt = 0  # Used to track when No New Tasks have been reported.
 
     # Terminal and log print formatting:
@@ -296,16 +296,16 @@ def main() -> None:
     if sys.platform[:3] == 'win':
         subprocess.call('', shell=True)
 
-    # Report: Starting information
+    # Report: Starting information of task times and task count.
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_stats(count_start,
-                                                     tasks_start).values()
+                                                     ttimes_start).values()
     report = f'{time_start}; ' \
              f'Tasks reported in the past hour: {blue}{count_start}{nc}\n' \
              f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
              f' range [{tt_lo} - {tt_hi}],\n' \
              f'{bigindent}stdev {tt_sd}, total {tt_sum}'
     print(report)
-    if args.log:
+    if args.log is True:
         report = ansi_escape.sub('', report)
         logging.info("""%s; Task counter is starting with
 %scount interval (minutes): %s
@@ -333,20 +333,20 @@ def main() -> None:
         # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
         time_now = datetime.now().strftime(time_fmt)
 
-        if len(tasks_now) > 0:
-            tasks_prev = tasks_now[:]
+        if len(ttimes_now) > 0:
+            ttimes_prev = ttimes_now[:]
 
-        tasks_now = BC.get_reported(boincpath, 'elapsed time')
+        ttimes_now = BC.get_reported(boincpath, 'elapsed time')
 
-        if len(tasks_now) > 0:
-            tasks_now = [task for task in tasks_now if task not in tasks_prev]
+        if len(ttimes_now) > 0:
+            ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
 
-        if len(tasks_start) > 0:
-            tasks_now = [task for task in tasks_now if task not in tasks_start]
-            tasks_start.clear()
+        if len(ttimes_start) > 0:
+            ttimes_now = [task for task in ttimes_now if task not in ttimes_start]
+            ttimes_start.clear()
 
-        count_now = len(set(tasks_now))
-        tasks_smry.extend(tasks_now)
+        count_now = len(set(ttimes_now))
+        ttimes_smry.extend(ttimes_now)
 
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
@@ -361,12 +361,12 @@ def main() -> None:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
                 print(f'\r\x1b[A{del_line}{report}')
-            if args.log:
+            if args.log is True:
                 logging.info(report)
         elif count_now > 0:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                get_stats(count_now, tasks_now).values()
+                get_stats(count_now, ttimes_now).values()
             report = f'{time_now}; ' \
                      f'Tasks reported in the past {interval_m}m:' \
                      f' {blue}{count_now}{nc}\n' \
@@ -374,31 +374,31 @@ def main() -> None:
                      f' range [{tt_lo} - {tt_hi}],\n' \
                      f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
-            if args.log:
+            if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
             # Need unique tasks for stats and counting.
-            tasks_uniq = set(tasks_smry)
-            count_uniq = len(tasks_uniq)
+            ttimes_uniq = set(ttimes_smry)
+            count_uniq = len(ttimes_uniq)
 
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                get_stats(count_uniq, tasks_uniq).values()
+                get_stats(count_uniq, ttimes_uniq).values()
             report = f'{time_now}; ' \
-                 f'{orng}>>> SUMMARY{nc} count for the past {args.summary}:' \
-                 f' {blue}{count_uniq}{nc}\n' \
-                 f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
-                 f' range [{tt_lo} - {tt_hi}],\n' \
-                 f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+                f'{orng}>>> SUMMARY{nc} count for the past {args.summary}:' \
+                f' {blue}{count_uniq}{nc}\n' \
+                f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
+                f' range [{tt_lo} - {tt_hi}],\n' \
+                f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
-            if args.log:
+            if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
             # Need to reset task_smry list for the next summary interval.
-            tasks_smry.clear()
+            ttimes_smry.clear()
 
 
 if __name__ == '__main__':
