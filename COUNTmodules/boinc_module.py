@@ -54,6 +54,8 @@ class BoincCommand:
         self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
                              'elapsed time', 'completed time',
                              'get_reported time')
+        self.taskXDFtags = ('name', 'state', 'scheduler, state', 'fraction '
+                            'done', 'active_task_state')
 
     @staticmethod
     def set_boincpath() -> str:
@@ -171,15 +173,13 @@ class BoincCommand:
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
         """
-        # NOTE: This method not currently used by count-tasks.
-        # taskXDF_tag = ['name', 'state', 'scheduler, state', 'fraction done',
-        #              'active_task_state']
+
         cmd_str = boincpath + ' --get_tasks'
         output = self.run_boinc(cmd_str)
 
         data = ['stub_boinc_data']
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd return format for a data tag.
-        # if tag in taskXDF_tag:
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+        # if tag in self.taskXDFtags:  # Not currently used by count-tasks.
         if tag in self.tasktags:
             data = [dat.replace(tag_str, '') for dat in output if tag in dat]
             return data

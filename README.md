@@ -98,5 +98,4 @@ TIP: To get the only the most recent task count and time metrics without
  
 ### Development Plans
 * Improve Python code
-* Improve handling of default and custom paths to execute boinccmd
-* Add configuration file option
+* Add GUI

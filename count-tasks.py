@@ -175,7 +175,7 @@ def get_stats(count: int, taskt: iter) -> dict:
     Sum and run statistics from times, as seconds (integers or floats).
 
     :param count: The number of elements in taskt.
-    :param taskt: A list, tuple or set of times (seconds).
+    :param taskt: A list, tuple, or set of times, in seconds.
     :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; values as:
     00:00:00.
     """
