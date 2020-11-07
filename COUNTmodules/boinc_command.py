@@ -25,7 +25,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.5'
+__version__ = '0.4.5.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -55,8 +55,8 @@ class BoincCommand:
         self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
                              'elapsed time', 'completed time',
                              'get_reported time')
-        self.taskXDFtags = ('name', 'state', 'scheduler, state', 'fraction '
-                            'done', 'active_task_state')
+        self.taskXDFtags = ('name', 'state', 'scheduler state',
+                            'fraction done', 'active_task_state')
 
     @staticmethod
     def set_boincpath() -> str:
@@ -115,12 +115,11 @@ class BoincCommand:
             boinccmd = str(default_path[my_os])
             return boinccmd
 
-        # No current support for non-default Mac BOINC path.
+        # No current support for custom Mac BOINC path.
+        # Cannot get a custom path from input to be recognized, even though
+        #  the same string works on the terminal command line.
+        # A custom path should work in the CFG file.
         if my_os == 'dar':
-            if Path.is_file(default_path[my_os]) is False:
-                raise OSError('BOINC is not in its expected default path.\n'
-                              'Custom paths not yet supported.\n'
-                              'Try reinstalling BOINC? Exiting...\n')
             boinccmd = str(default_path[my_os])
             return boinccmd
 
@@ -200,6 +199,7 @@ class BoincCommand:
         cmd_str = boincpath + ' --get_old_tasks'
         output = self.run_boinc(cmd_str)
 
+        # Need to get only data from tagged data lines.
         data = ['stub_boinc_data']
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '

@@ -96,6 +96,10 @@ TIP: To get the only the most recent task count and time metrics without
                                                  stdev 00:00:13, total 07:39:23
 ```
  
+### Known Issues
+* version 0.4.5.1, No option to enter a custom path from keyboard input on
+ Mac OS. Custom paths should work from the countDFG.txt configuration file.
+ 
 ### Development Plans
 * Improve Python code
 * Add GUI

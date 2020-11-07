@@ -14,5 +14,5 @@
 ## Linux:   /usr/bin/boinccmd
 ## Mac OS:  $HOME/Library/Application\ Support/BOINC/boinccmd
 
-#custom_path /usr/bin/boinccmd
+#custom_path $HOME/Library/Application\ Support/BOINC/boinccmd
 
