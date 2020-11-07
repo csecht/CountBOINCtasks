@@ -39,9 +39,9 @@ import sys
 import time as t
 from datetime import datetime
 
-from COUNTmodules import boinc_module
+from COUNTmodules import boinc_command
 
-BC = boinc_module.BoincCommand()
+BC = boinc_command.BoincCommand()
 boincpath = BC.set_boincpath()
 
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""BOINCmodule - executing BOINC commands and parsing task data.
+"""
+Executes BOINC commands and parsing task data through boinccmd.
 .. note: Not all boinc-client commands are supported.
 
     Copyright (C) 2020  C. Echt
