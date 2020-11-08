@@ -21,8 +21,7 @@ Default settings assume a default location of the BOINC folder from the
   then there will be a command line option to enter that custom path to run
    boinc-client's boimccmd (or boinccmd.exe) executable. A custom command
     path can also be added to the countCFG.txt configuration file to avoid
-     entering the path on the command line. These custom path options have
-      not yet been tested for Mac OS (as of ver. 0.4.5).
+     entering the path on the command line.
 ```
 ~/countBOINCtasks-master$ ./count-tasks.py --help
 usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
@@ -95,10 +94,6 @@ TIP: To get the only the most recent task count and time metrics without
                       Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
                                                  stdev 00:00:13, total 07:39:23
 ```
- 
-### Known Issues
-* version 0.4.5.1, No option to enter a custom path from keyboard input on
- Mac OS. Custom paths should work from the countDFG.txt configuration file.
  
 ### Development Plans
 * Improve Python code

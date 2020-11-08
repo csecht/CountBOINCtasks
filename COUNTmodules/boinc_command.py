@@ -25,7 +25,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.5.1'
+__version__ = '0.4.6'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -41,7 +41,7 @@ class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
-
+    # These __init__ tag tuples are not currently used.
     def __init__(self):
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
@@ -55,7 +55,7 @@ class BoincCommand:
         self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
                              'elapsed time', 'completed time',
                              'get_reported time')
-        self.taskXDFtags = ('name', 'state', 'scheduler state',
+        self.taskxdftags = ('name', 'state', 'scheduler state',
                             'fraction done', 'active_task_state')
 
     @staticmethod
@@ -82,7 +82,7 @@ class BoincCommand:
         # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
         win_path = Path(r'\Program Files\BOINC\\boinccmd.exe')
         lin_path = Path(r'/usr/bin/boinccmd')
-        dar_path = Path(r'$HOME/Library/Application\ Support/BOINC/boinccmd')
+        dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
 
         default_path = {
             'win': win_path,
@@ -90,7 +90,7 @@ class BoincCommand:
             'dar': dar_path
         }
 
-        if my_os in ('win', 'lin'):
+        if my_os in default_path:
             if Path.is_file(default_path[my_os]) is False:
                 custom_path = input(
                     f'\nboinccmd is not in its default path: '
@@ -114,15 +114,6 @@ class BoincCommand:
                 return custom_path
             boinccmd = str(default_path[my_os])
             return boinccmd
-
-        # No current support for custom Mac BOINC path.
-        # Cannot get a custom path from input to be recognized, even though
-        #  the same string works on the terminal command line.
-        # A custom path should work in the CFG file.
-        if my_os == 'dar':
-            boinccmd = str(default_path[my_os])
-            return boinccmd
-
         raise KeyError(f"Platform <{my_os}> is not recognized.\n"
                        f"Expecting win (win32 or win64), lin (linux), or dar "
                        f"(darwin == Mac OS).")
@@ -164,6 +155,7 @@ class BoincCommand:
         #                             check=True).stdout.split('\n')
         return output
 
+    # This method is not currently used.
     def get_tasks(self, boincpath: str, tag: str) -> list:
         """
         Get data from current boinc-client tasks.
@@ -174,7 +166,9 @@ class BoincCommand:
         :return: List of specified data from current tasks.
         """
 
-        cmd_str = boincpath + ' --get_tasks'
+        # This path string format is required for MacOS folder names that
+        # have spaces.
+        cmd_str = f'"{boincpath}"' + ' --get_tasks'
         output = self.run_boinc(cmd_str)
 
         data = ['stub_boinc_data']
@@ -196,7 +190,9 @@ class BoincCommand:
         :return: List of specified data from reported tasks.
         """
 
-        cmd_str = boincpath + ' --get_old_tasks'
+        # This path string format is required for MacOS folder names that
+        # have spaces.
+        cmd_str = f'"{boincpath}"' + ' --get_old_tasks'
         output = self.run_boinc(cmd_str)
 
         # Need to get only data from tagged data lines.
