@@ -19,7 +19,7 @@ Download the .zip package from the Code download button and extract to your favo
 Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
   then there will be a command line option to enter that custom path to run
-   boinc-client's boimccmd (or boinccmd.exe) executable. A custom command
+   boinc-client's boinccmd (or boinccmd.exe) executable. A custom command
     path can also be added to the countCFG.txt configuration file to avoid
      entering the path on the command line.
 ```
