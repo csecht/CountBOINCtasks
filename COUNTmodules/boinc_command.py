@@ -55,7 +55,7 @@ class BoincCommand:
         self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
                              'elapsed time', 'completed time',
                              'get_reported time')
-        self.taskxdftags = ('name', 'state', 'scheduler state',
+        self.gettasktags = ('name', 'state', 'scheduler state',
                             'fraction done', 'active_task_state')
 
     @staticmethod
@@ -65,7 +65,7 @@ class BoincCommand:
 
         :return: Correct path string for executing boinccmd commands.
         """
-        # Need to check if the configuration file has a custom path set.
+        # Need to first check for custom path in the configuration file.
         # .split to remove the tag, .join to re-form the path with any spaces.
         if os.path.isfile('countCFG.txt'):
             with open('countCFG.txt', 'r') as cfg:
@@ -78,16 +78,14 @@ class BoincCommand:
 
         # Need to accommodate win32 and win36, so slice [:3] for all platforms.
         my_os = sys.platform[:3]
-        # Using home() does not form valid Windows command path.
-        # win_path = str(Path.home().joinpath('Program Files', 'BOINC', 'boinccmd.exe'))
-        win_path = Path(r'\Program Files\BOINC\\boinccmd.exe')
-        lin_path = Path(r'/usr/bin/boinccmd')
-        dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
 
+        win_path = Path('/Program Files/BOINC/boinccmd.exe')
+        lin_path = Path('/usr/bin/boinccmd')
+        dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
         default_path = {
-            'win': win_path,
-            'lin': lin_path,
-            'dar': dar_path
+                        'win': win_path,
+                        'lin': lin_path,
+                        'dar': dar_path
         }
 
         if my_os in default_path:
@@ -116,12 +114,12 @@ class BoincCommand:
             return boinccmd
         raise KeyError(f"Platform <{my_os}> is not recognized.\n"
                        f"Expecting win (win32 or win64), lin (linux), or dar "
-                       f"(darwin == Mac OS).")
+                       f"(darwin =>Mac OS).")
 
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
         """
-        Run a boinc-client command line for the current system platform.
+        Run a boinc-client command line.
 
         :param cmd_str: Complete boinccmd command line, with arguments.
         :return: Data from boinc-client command specified in cmd_str.
@@ -143,7 +141,7 @@ class BoincCommand:
         #                             check=True).stdout.split('\n')
         #     return output
         # Works with Linux, Python 3.7 and up.
-        # if sys.platform == 'linux' or sys.platform == 'darwin':
+        # if sys.platform in ('linux', 'darwin'):
         #     output = subprocess.run(cmd_str,
         #                             shell=True,
         #                             capture_output=True,
@@ -156,7 +154,7 @@ class BoincCommand:
         """
         Get data from current boinc-client tasks.
 
-        :param boincpath: Command line path to execute boinccmd.
+        :param boincpath: boinccmd path, defined by set_boincpath().
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
@@ -180,7 +178,7 @@ class BoincCommand:
         """
         Get data from reported boinc-client tasks.
 
-        :param boincpath: Command line path to execute boinccmd.
+        :param boincpath: boinccmd path, defined by set_boincpath().
         :param tag: 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
         :return: List of specified data from reported tasks.
