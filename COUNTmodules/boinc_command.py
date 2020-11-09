@@ -97,17 +97,14 @@ class BoincCommand:
                     f'Enter your custom path here to execute boinccmd: ')
                 if os.path.isfile(custom_path) is False:
                     raise OSError(f'Oops. {custom_path} will not work.\n'
-                                  f'Be sure to include /boinccmd or '
-                                  f'\\boinccmd.exe.\n'
+                                  f'Be sure to include \\boinccmd or '
+                                  f'/boinccmd.exe, depending on your system.\n'
                                   f'Try again. Exiting now...\n')
                 cmd_tail = os.path.split(custom_path)[1]
-                if cmd_tail != 'boinccmd.exe' and my_os == 'win':
+                if cmd_tail not in ('\\boinccmd.exe', 'boinccmd.exe'):
                     raise OSError(f'The entered command path, {custom_path},'
-                                  f' must end with \\boinccmd.exe.\n'
-                                  f'Try again. Exiting now...\n')
-                if cmd_tail != 'boinccmd' and (my_os in ('lin', 'dar')):
-                    raise OSError(f'The entered command path, {custom_path},'
-                                  f' must end with /boinccmd.\n'
+                                  f' must end with \\boinccmd.exe or '
+                                  f'/boinccmd, depending on your system.\n'
                                   f'Try again. Exiting now...\n')
                 return custom_path
             boinccmd = str(default_path[my_os])
