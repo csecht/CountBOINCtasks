@@ -116,7 +116,7 @@ class BoincCommand:
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
         """
-        Run a boinc-client command line.
+        Execute a boinc-client command line.
 
         :param cmd_str: Complete boinccmd command line, with arguments.
         :return: Data from boinc-client command specified in cmd_str.
@@ -130,7 +130,7 @@ class BoincCommand:
                                     check = True).stdout.split('\n')
             return output
         except subprocess.CalledProcessError as cpe:
-            msg = 'If the boinccmd usage stdout is displayed, then '\
+            msg = 'If boinccmd usage stdout is displayed, then '\
                    'boinccmd has an error in its command line argument.'
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
@@ -157,7 +157,7 @@ class BoincCommand:
         """
         Get data from current boinc-client tasks.
 
-        :param boincpath: boinccmd path, defined by set_boincpath().
+        :param boincpath: command path, as defined by set_boincpath().
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
@@ -172,7 +172,7 @@ class BoincCommand:
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
         # if tag in self.taskXDFtags:  # Not currently used by count-tasks.
         if tag in self.tasktags:
-            data = [dat.replace(tag_str, '') for dat in output if tag in dat]
+            data = [line.replace(tag_str, '') for line in output if tag in line]
             return data
         print(f'Unrecognized data tag: {tag}')
         return data
@@ -181,7 +181,7 @@ class BoincCommand:
         """
         Get data from reported boinc-client tasks.
 
-        :param boincpath: boinccmd path, defined by set_boincpath().
+        :param boincpath: command path, as defined by set_boincpath().
         :param tag: 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
         :return: List of specified data from reported tasks.
@@ -192,16 +192,16 @@ class BoincCommand:
         cmd_str = f'"{boincpath}"' + ' --get_old_tasks'
         output = self.run_boinc(cmd_str)
 
-        # Need to get only data from tagged data lines.
+        # Need only data from tagged lines of boinccmd output.
         data = ['stub_boinc_data']
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
-            data = [dat.replace(tag_str, '') for dat in output if tag in dat]
-            data = [float(seconds.replace(' sec', '')) for seconds in data]
+            data = [line.replace(tag_str, '') for line in output if tag in line]
+            data = [float(e_time.replace(' sec', '')) for e_time in data]
             return data
         if tag == 'task':
             tag_str = 'task '
-            data = [dat.replace(tag_str, '') for dat in output if tag in dat]
+            data = [line.replace(tag_str, '') for line in output if tag in line]
             data = [name.rstrip(':') for name in data]
             return data
 
