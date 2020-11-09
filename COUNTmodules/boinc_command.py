@@ -25,7 +25,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.6'
+__version__ = '0.4.6.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -127,25 +127,21 @@ class BoincCommand:
         :return: Data from boinc-client command specified in cmd_str.
         """
         # TODO: Add exceptions for subprocess failure.
-        output = ['boinccmd_results_stub']
-        # Works with Python 3.6 and up.
-        if sys.platform[:3] == 'win':
-            output = subprocess.run(cmd_str,
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
-        if sys.platform == 'linux' or sys.platform == 'darwin':
-            output = subprocess.run(cmd_str,
-                                    shell=True,
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
+        # Works with Python 3.6 and up. shell=True not necessary in Windows.
+        output = subprocess.run(cmd_str,
+                                shell=True,
+                                stdout=PIPE,
+                                encoding='utf8',
+                                check=True).stdout.split('\n')
+        return output
+
         # Works with Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
         #     output = subprocess.run(cmd_str,
         #                             capture_output=True,
         #                             text=True,
         #                             check=True).stdout.split('\n')
+        #     return output
         # Works with Linux, Python 3.7 and up.
         # if sys.platform == 'linux' or sys.platform == 'darwin':
         #     output = subprocess.run(cmd_str,
@@ -153,9 +149,9 @@ class BoincCommand:
         #                             capture_output=True,
         #                             encoding='utf8',
         #                             check=True).stdout.split('\n')
-        return output
+        #     return output
 
-    # This method is not currently used.
+    # This method is not used by count_tasks.py.
     def get_tasks(self, boincpath: str, tag: str) -> list:
         """
         Get data from current boinc-client tasks.
