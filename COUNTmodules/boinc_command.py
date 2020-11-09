@@ -121,14 +121,24 @@ class BoincCommand:
         :param cmd_str: Complete boinccmd command line, with arguments.
         :return: Data from boinc-client command specified in cmd_str.
         """
-        # TODO: Add exceptions for subprocess failure.
         # Works with Python 3.6 and up. shell=True not necessary in Windows.
-        output = subprocess.run(cmd_str,
-                                shell=True,
-                                stdout=PIPE,
-                                encoding='utf8',
-                                check=True).stdout.split('\n')
-        return output
+        # output = subprocess.run(cmd_str,
+        # output = subprocess.run(cmd_str + 'stub',
+        #                         shell=True,
+        #                         stdout=PIPE,
+        #                         encoding='utf8',
+        #                         check=True).stdout.split('\n')
+        # return output
+        try:
+            output = subprocess.run(cmd_str + 'stub', shell = True,
+                                    stdout = PIPE, encoding = 'utf8',
+                                    check = True).stdout.split('\n')
+            return output
+        except subprocess.CalledProcessError as cpe:
+            msg = 'The boinccmd command has an error in its command argument.'
+            print(f'\n{msg}\n{cpe}')
+            sys.exit(1)
+        # TODO: Are more subprocess exceptions needed?.
 
         # Works with Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
