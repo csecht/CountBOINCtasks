@@ -122,20 +122,16 @@ class BoincCommand:
         :return: Data from boinc-client command specified in cmd_str.
         """
         # Works with Python 3.6 and up. shell=True not necessary in Windows.
-        # output = subprocess.run(cmd_str,
-        # output = subprocess.run(cmd_str + 'stub',
-        #                         shell=True,
-        #                         stdout=PIPE,
-        #                         encoding='utf8',
-        #                         check=True).stdout.split('\n')
-        # return output
         try:
-            output = subprocess.run(cmd_str + 'stub', shell = True,
-                                    stdout = PIPE, encoding = 'utf8',
+            output = subprocess.run(cmd_str,
+                                    shell = True,
+                                    stdout = PIPE,
+                                    encoding = 'utf8',
                                     check = True).stdout.split('\n')
             return output
         except subprocess.CalledProcessError as cpe:
-            msg = 'The boinccmd command has an error in its command argument.'
+            msg = 'If the boinccmd usage stdout is displayed, then '\
+                   'boinccmd has an error in its command line argument.'
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
         # TODO: Are more subprocess exceptions needed?.
