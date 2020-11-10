@@ -94,7 +94,7 @@ def get_min(time_string: str) -> int:
 
 
 def fmt_sec(secs: int, fmt: str) -> str:
-    """Convert seconds to the specified format for display.
+    """Convert seconds to the specified time format for display.
 
     :param secs: Time in seconds, any integer except 0.
     :param fmt: Either 'std' or 'short'
@@ -106,7 +106,8 @@ def fmt_sec(secs: int, fmt: str) -> str:
     _m, _s = divmod(secs, 60)
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
-    msg = f'fmt_secs error: sec {secs}, fmt {fmt}'
+    msg = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
+          f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
     if fmt == 'short':
         if secs >= 86400:
             return f'{day:1d}d'  # option, add {h:01d}h'
@@ -170,7 +171,7 @@ def sleep_timer(interval: int) -> print:
         t.sleep(barseg_s)
 
 
-def get_stats(count: int, taskt: iter) -> dict:
+def get_timestats(count: int, taskt: iter) -> dict:
     """
     Sum and run statistics from times, as seconds (integers or floats).
 
@@ -297,8 +298,8 @@ def main() -> None:
         subprocess.call('', shell=True)
 
     # Report: Starting information of task times and task count.
-    tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_stats(count_start,
-                                                     ttimes_start).values()
+    tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
+                                                         ttimes_start).values()
     report = f'{time_start}; ' \
              f'Tasks reported in the past hour: {blue}{count_start}{nc}\n' \
              f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
@@ -355,8 +356,8 @@ def main() -> None:
         if count_now == 0:
             tic_nnt += 1
             report = f'{time_now}; ' \
-                     f'No tasks reported in the past {tic_nnt} {interval_m}m' \
-                     f' interval(s).'
+                f'No tasks reported in the past {tic_nnt} {interval_m}m' \
+                f' interval(s).'
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
@@ -366,13 +367,13 @@ def main() -> None:
         elif count_now > 0:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                get_stats(count_now, ttimes_now).values()
+                get_timestats(count_now, ttimes_now).values()
             report = f'{time_now}; ' \
-                     f'Tasks reported in the past {interval_m}m:' \
-                     f' {blue}{count_now}{nc}\n' \
-                     f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
-                     f' range [{tt_lo} - {tt_hi}],\n' \
-                     f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+                f'Tasks reported in the past {interval_m}m:' \
+                f' {blue}{count_now}{nc}\n' \
+                f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
+                f' range [{tt_lo} - {tt_hi}],\n' \
+                f'{bigindent}stdev {tt_sd}, total {tt_sum}'
             print(f'\r{del_line}{report}')
             if args.log is True:
                 report = ansi_escape.sub('', report)
@@ -385,7 +386,7 @@ def main() -> None:
             count_uniq = len(ttimes_uniq)
 
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                get_stats(count_uniq, ttimes_uniq).values()
+                get_timestats(count_uniq, ttimes_uniq).values()
             report = f'{time_now}; ' \
                 f'{orng}>>> SUMMARY{nc} count for the past {args.summary}:' \
                 f' {blue}{count_uniq}{nc}\n' \
@@ -397,7 +398,7 @@ def main() -> None:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
-            # Need to reset task_smry list for the next summary interval.
+            # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
 
 
