@@ -80,7 +80,7 @@ def set_boincpath() -> str:
                               f'Try again. Exiting now...\n')
             cmd_tail = os.path.split(custom_path)[1]
             if cmd_tail not in ('\\boinccmd.exe', 'boinccmd.exe'):
-                raise OSError(f'The entered command path, {custom_path},'
+                raise OSError(f'The entered action path, {custom_path},'
                               f' must end with \\boinccmd.exe or '
                               f'/boinccmd, depending on your system.\n'
                               f'Try again. Exiting now...\n')
@@ -96,7 +96,44 @@ class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
-    # These __init__ tag tuples are not currently used.
+    # Project urls are not currently used.
+    project_url = {
+        'AMICABLE': 'https://sech.me/boinc/Amicable/',
+        'ASTEROID': 'http://asteroidsathome.net/boinc/',
+        'TACC': 'https://boinc.tacc.utexas.edu/',
+        'CITIZEN': 'https://csgrid.org/csg/',
+        'CLIMATE': 'https://www.cpdn.org/',
+        'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
+        'COSMOL': 'http://www.cosmologyathome.org/',
+        'EINSTEIN': 'https://einsteinathome.org/',
+        'GERASIM': 'http://gerasim.boinc.ru/',
+        'GPUGRID': 'https://www.gpugrid.net/',
+        'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
+        'ITHENA': 'https://root.ithena.net/usr/',
+        'LHC': 'https://lhcathome.cern.ch/lhcathome/',
+        'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
+        'MIND': 'https://mindmodeling.org/',
+        'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
+        'MLC': 'https://www.mlcathome.org/mlcathome/',
+        'MOO': 'http://moowrap.net/',
+        'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
+        'NFS': 'https://escatter11.fullerton.edu/nfs/',
+        'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
+        'ODLK': 'https://boinc.progger.info/odlk/',
+        'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
+        'PRIME': 'http://www.primegrid.com/',
+        'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
+        'RADIOACT': 'http://radioactiveathome.org/boinc/',
+        'RAKE': 'https://rake.boincfast.ru/rakesearch/',
+        'RNA': 'http://www.rnaworld.de/rnaworld/',
+        'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
+        'SRBASE': 'http://srbase.my-firewall.org/sr5/',
+        'UNIVERSE': 'https://universeathome.pl/universe/',
+        'WOLRD': 'https://universeathome.pl/universe/',
+        'YOYO': 'http://www.rechenkraft.net/yoyo/'
+    }
+
+    # __init__ tag tuples are not currently used.
     def __init__(self):
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
@@ -112,14 +149,15 @@ class BoincCommand:
                              'get_reported time')
         self.gettasktags = ('name', 'state', 'scheduler state',
                             'fraction done', 'active_task_state')
+        self.projectcmd = ('suspend', 'resume')
 
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
         """
-        Execute a boinc-client command line.
+        Execute a boinc-client action line.
 
-        :param cmd_str: Complete boinccmd command line, with arguments.
-        :return: Data from boinc-client command specified in cmd_str.
+        :param cmd_str: Complete boinccmd action line, with arguments.
+        :return: Data from boinc-client action specified in cmd_str.
         """
         # Works with Python 3.6 and up. shell=True not necessary in Windows.
         try:
@@ -131,7 +169,7 @@ class BoincCommand:
             return output
         except subprocess.CalledProcessError as cpe:
             msg = 'If boinccmd usage stdout is displayed, then '\
-                   'boinccmd has an error in its command line argument.'
+                   'boinccmd has an error in its action line argument.'
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
         # TODO: Are more subprocess exceptions needed?.
@@ -152,31 +190,6 @@ class BoincCommand:
         #                             check=True).stdout.split('\n')
         #     return output
 
-    # This method is not used by count_tasks.py.
-    def get_tasks(self, tag: str) -> list:
-        """
-        Get data from current boinc-client tasks.
-        :param tag: Used by taskXDF: 'name', 'state', 'scheduler
-                    state', 'fraction done', 'active_task_state'
-        :return: List of specified data from current tasks.
-        """
-
-        boincpath = set_boincpath()
-        # This path string format is required for MacOS folder names that
-        # have spaces.
-        cmd_str = f'"{boincpath}"' + ' --get_tasks'
-        output = self.run_boinc(cmd_str)
-
-        data = ['stub_boinc_data']
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
-        # if tag in self.taskXDFtags:  # Not currently used by count-tasks.
-        if tag in self.tasktags:
-            data = [line.replace(tag_str, '') for line in output if tag in line]
-            return data
-        print(f'Unrecognized data tag: {tag}')
-        return data
-
-    # def get_reported(self, boincpath: str, tag: str) -> list:
     def get_reported(self, tag: str) -> list:
         """
         Get data from reported boinc-client tasks.
@@ -206,6 +219,47 @@ class BoincCommand:
 
         print(f'Unrecognized data tag: {tag}')
         return data
+
+    # Methods below not currently used by count_tasks.py.
+    def get_tasks(self, tag: str) -> list:
+        """
+        Get data from current boinc-client tasks.
+        :param tag: Used by taskXDF: 'name', 'state', 'scheduler
+                    state', 'fraction done', 'active_task_state'
+        :return: List of specified data from current tasks.
+        """
+
+        boincpath = set_boincpath()
+        # This path string format is required for MacOS folder names that
+        # have spaces.
+        cmd_str = f'"{boincpath}"' + ' --get_tasks'
+        output = self.run_boinc(cmd_str)
+
+        data = ['stub_boinc_data']
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+        # if tag in self.taskXDFtags:  # Not currently used by count-tasks.
+        if tag in self.tasktags:
+            data = [line.replace(tag_str, '') for line in output if tag in line]
+            return data
+        print(f'Unrecognized data tag: {tag}')
+        return data
+
+    def project_action(self, project: str, action: str):
+        """Execute a boinc-client action for a specified Project.
+
+        :param project: A project_url dict key for a BOINC 'PROJECT'
+        :param action: Use: 'suspend' or 'resume'.
+        :return: Execution of specified boinc-client action.
+        """
+        # Project commands require the Project URL, others commands don't
+        boincpath = set_boincpath()
+        if action in self.projectcmd:
+            cmd_str = f'"{boincpath}"' + \
+                      f' --project {self.project_url[{project}]} {action}'
+            return self.run_boinc(cmd_str)
+        msg = f"Unrecognized action: {action}. Expecting one of these: " \
+              f"{self.projectcmd}"
+        return msg
 
 
 def about() -> None:
