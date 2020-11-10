@@ -42,7 +42,6 @@ from datetime import datetime
 from COUNTmodules import boinc_command
 
 BC = boinc_command.BoincCommand()
-boincpath = BC.set_boincpath()
 
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
@@ -184,14 +183,14 @@ def get_timestats(count: int, taskt: iter) -> dict:
     if count > 1:
         mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
         stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
-        lo = fmt_sec(int(min(taskt)), 'std')
-        hi = fmt_sec(int(max(taskt)), 'std')
+        low = fmt_sec(int(min(taskt)), 'std')
+        high = fmt_sec(int(max(taskt)), 'std')
         return {
             'tt_sum':   total,
             'tt_mean':  mean,
             'tt_sd':    stdev,
-            'tt_min':   lo,
-            'tt_max':   hi
+            'tt_min':   low,
+            'tt_max':   high
         }
     if count == 1:
         return {
@@ -276,7 +275,7 @@ def main() -> None:
     #   tnames = BC.get_reported(boincpath, 'tasks').
     time_fmt = '%Y-%b-%d %H:%M:%S'
     time_start = datetime.now().strftime(time_fmt)
-    ttimes_start = BC.get_reported(boincpath, 'elapsed time')
+    ttimes_start = BC.get_reported('elapsed time')
     ttimes_now = ttimes_start[:]
     ttimes_prev = ttimes_now[:]
     ttimes_smry = []
@@ -337,7 +336,7 @@ def main() -> None:
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
 
-        ttimes_now = BC.get_reported(boincpath, 'elapsed time')
+        ttimes_now = BC.get_reported('elapsed time')
 
         if len(ttimes_now) > 0:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]

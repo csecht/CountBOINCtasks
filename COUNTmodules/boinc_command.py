@@ -37,6 +37,61 @@ from pathlib import Path
 from subprocess import PIPE
 
 
+def set_boincpath() -> str:
+    """
+    Define an OS-specific path for BOINC's boinccmd executable.
+
+    :return: Correct path string for executing boinccmd commands.
+    """
+    # Need to first check for custom path in the configuration file.
+    # .split to remove the tag, .join to re-form the path with any spaces.
+    if os.path.isfile('countCFG.txt'):
+        with open('countCFG.txt', 'r') as cfg:
+            for line in cfg:
+                if '#' not in line and 'custom_path' in line:
+                    parts = line.split()
+                    del parts[0]
+                    custom_path = " ".join(parts)
+                    return custom_path
+
+    # Need to accommodate win32 and win36, so slice [:3] for all platforms.
+    my_os = sys.platform[:3]
+
+    win_path = Path('/Program Files/BOINC/boinccmd.exe')
+    lin_path = Path('/usr/bin/boinccmd')
+    dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
+    default_path = {
+                    'win': win_path,
+                    'lin': lin_path,
+                    'dar': dar_path
+    }
+
+    if my_os in default_path:
+        if Path.is_file(default_path[my_os]) is False:
+            custom_path = input(
+                f'\nboinccmd is not in its default path: '
+                f'{default_path[my_os]}\n'
+                f'You may set your custom path in countCFG.txt, or\n'
+                f'Enter your custom path here to execute boinccmd: ')
+            if os.path.isfile(custom_path) is False:
+                raise OSError(f'Oops. {custom_path} will not work.\n'
+                              f'Be sure to include \\boinccmd or '
+                              f'/boinccmd.exe, depending on your system.\n'
+                              f'Try again. Exiting now...\n')
+            cmd_tail = os.path.split(custom_path)[1]
+            if cmd_tail not in ('\\boinccmd.exe', 'boinccmd.exe'):
+                raise OSError(f'The entered command path, {custom_path},'
+                              f' must end with \\boinccmd.exe or '
+                              f'/boinccmd, depending on your system.\n'
+                              f'Try again. Exiting now...\n')
+            return custom_path
+        boinccmd = str(default_path[my_os])
+        return boinccmd
+    raise KeyError(f"Platform <{my_os}> is not recognized.\n"
+                   f"Expecting win (win32 or win64), lin (linux), or dar "
+                   f"(darwin =>Mac OS).")
+
+
 class BoincCommand:
     """
     Execute boinc-client commands and parse data.
@@ -57,61 +112,6 @@ class BoincCommand:
                              'get_reported time')
         self.gettasktags = ('name', 'state', 'scheduler state',
                             'fraction done', 'active_task_state')
-
-    @staticmethod
-    def set_boincpath() -> str:
-        """
-        Define an OS-specific path for BOINC's boinccmd executable.
-
-        :return: Correct path string for executing boinccmd commands.
-        """
-        # Need to first check for custom path in the configuration file.
-        # .split to remove the tag, .join to re-form the path with any spaces.
-        if os.path.isfile('countCFG.txt'):
-            with open('countCFG.txt', 'r') as cfg:
-                for line in cfg:
-                    if '#' not in line and 'custom_path' in line:
-                        parts = line.split()
-                        del parts[0]
-                        custom_path = " ".join(parts)
-                        return custom_path
-
-        # Need to accommodate win32 and win36, so slice [:3] for all platforms.
-        my_os = sys.platform[:3]
-
-        win_path = Path('/Program Files/BOINC/boinccmd.exe')
-        lin_path = Path('/usr/bin/boinccmd')
-        dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
-        default_path = {
-                        'win': win_path,
-                        'lin': lin_path,
-                        'dar': dar_path
-        }
-
-        if my_os in default_path:
-            if Path.is_file(default_path[my_os]) is False:
-                custom_path = input(
-                    f'\nboinccmd is not in its default path: '
-                    f'{default_path[my_os]}\n'
-                    f'You may set your custom path in countCFG.txt, or\n'
-                    f'Enter your custom path here to execute boinccmd: ')
-                if os.path.isfile(custom_path) is False:
-                    raise OSError(f'Oops. {custom_path} will not work.\n'
-                                  f'Be sure to include \\boinccmd or '
-                                  f'/boinccmd.exe, depending on your system.\n'
-                                  f'Try again. Exiting now...\n')
-                cmd_tail = os.path.split(custom_path)[1]
-                if cmd_tail not in ('\\boinccmd.exe', 'boinccmd.exe'):
-                    raise OSError(f'The entered command path, {custom_path},'
-                                  f' must end with \\boinccmd.exe or '
-                                  f'/boinccmd, depending on your system.\n'
-                                  f'Try again. Exiting now...\n')
-                return custom_path
-            boinccmd = str(default_path[my_os])
-            return boinccmd
-        raise KeyError(f"Platform <{my_os}> is not recognized.\n"
-                       f"Expecting win (win32 or win64), lin (linux), or dar "
-                       f"(darwin =>Mac OS).")
 
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
@@ -153,16 +153,15 @@ class BoincCommand:
         #     return output
 
     # This method is not used by count_tasks.py.
-    def get_tasks(self, boincpath: str, tag: str) -> list:
+    def get_tasks(self, tag: str) -> list:
         """
         Get data from current boinc-client tasks.
-
-        :param boincpath: command path, as defined by set_boincpath().
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
         :return: List of specified data from current tasks.
         """
 
+        boincpath = set_boincpath()
         # This path string format is required for MacOS folder names that
         # have spaces.
         cmd_str = f'"{boincpath}"' + ' --get_tasks'
@@ -177,16 +176,16 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    def get_reported(self, boincpath: str, tag: str) -> list:
+    # def get_reported(self, boincpath: str, tag: str) -> list:
+    def get_reported(self, tag: str) -> list:
         """
         Get data from reported boinc-client tasks.
-
-        :param boincpath: command path, as defined by set_boincpath().
         :param tag: 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
         :return: List of specified data from reported tasks.
         """
 
+        boincpath = set_boincpath()
         # This path string format is required for MacOS folder names that
         # have spaces.
         cmd_str = f'"{boincpath}"' + ' --get_old_tasks'
