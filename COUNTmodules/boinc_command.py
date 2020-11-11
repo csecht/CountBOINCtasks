@@ -25,7 +25,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__ = '0.4.6.1'
+__version__ = '0.4.6.2'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -96,7 +96,7 @@ class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
-    # Project urls are not currently used.
+    # Project urls are not currently used by count-tasks.
     project_url = {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
@@ -133,8 +133,10 @@ class BoincCommand:
         'YOYO': 'http://www.rechenkraft.net/yoyo/'
     }
 
-    # __init__ tag tuples are not currently used.
     def __init__(self):
+        # Folder names with spaces require this boincpath formatting.
+        self.boincpath = f'"{set_boincpath()}"'
+        # tag and project tuples are not currently used by count-tasks.
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
                          'scheduler state',  'active_task_state',
@@ -154,10 +156,10 @@ class BoincCommand:
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
         """
-        Execute a boinc-client action line.
+        Execute a boinc-client command line.
 
-        :param cmd_str: Complete boinccmd action line, with arguments.
-        :return: Data from boinc-client action specified in cmd_str.
+        :param cmd_str: A boinccmd action, command with arguments.
+        :return: Data from boinc-client specified in cmd_path.
         """
         # Works with Python 3.6 and up. shell=True not necessary in Windows.
         try:
@@ -176,33 +178,30 @@ class BoincCommand:
 
         # Works with Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
-        #     output = subprocess.run(cmd_str,
+        #     output = subprocess.run(cmd_path,
         #                             capture_output=True,
         #                             text=True,
         #                             check=True).stdout.split('\n')
         #     return output
         # Works with Linux, Python 3.7 and up.
         # if sys.platform in ('linux', 'darwin'):
-        #     output = subprocess.run(cmd_str,
+        #     output = subprocess.run(cmd_path,
         #                             shell=True,
         #                             capture_output=True,
         #                             encoding='utf8',
         #                             check=True).stdout.split('\n')
         #     return output
 
-    def get_reported(self, tag: str) -> list:
+    def get_reported(self, tag: str, cmd=' --get_old_tasks') -> list:
         """
         Get data from reported boinc-client tasks.
+        :param cmd: The boinccmd command for tasks returned to boinc server.
         :param tag: 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
-        :return: List of specified data from reported tasks.
+        :return: List of specified data parsed from cmd.
         """
 
-        boincpath = set_boincpath()
-        # This path string format is required for MacOS folder names that
-        # have spaces.
-        cmd_str = f'"{boincpath}"' + ' --get_old_tasks'
-        output = self.run_boinc(cmd_str)
+        output = self.run_boinc(self.boincpath + cmd)
 
         # Need only data from tagged lines of boinccmd output.
         data = ['stub_boinc_data']
@@ -221,19 +220,16 @@ class BoincCommand:
         return data
 
     # Methods below not currently used by count_tasks.py.
-    def get_tasks(self, tag: str) -> list:
+    def get_tasks(self, tag: str, cmd=' --get_tasks') -> list:
         """
         Get data from current boinc-client tasks.
+        :param cmd: The boinccmd command to get queued tasks information.
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
-        :return: List of specified data from current tasks.
+        :return: List of specified data parsed from cmd.
         """
 
-        boincpath = set_boincpath()
-        # This path string format is required for MacOS folder names that
-        # have spaces.
-        cmd_str = f'"{boincpath}"' + ' --get_tasks'
-        output = self.run_boinc(cmd_str)
+        output = self.run_boinc(self.boincpath + cmd)
 
         data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
@@ -245,16 +241,16 @@ class BoincCommand:
         return data
 
     def project_action(self, project: str, action: str):
-        """Execute a boinc-client action for a specified Project.
+        """
+        Execute a boinc-client action for a specified Project.
 
         :param project: A project_url dict key for a BOINC 'PROJECT'
         :param action: Use: 'suspend' or 'resume'.
         :return: Execution of specified boinc-client action.
         """
         # Project commands require the Project URL, others commands don't
-        boincpath = set_boincpath()
         if action in self.projectcmd:
-            cmd_str = f'"{boincpath}"' + \
+            cmd_str = self.boincpath + \
                       f' --project {self.project_url[{project}]} {action}'
             return self.run_boinc(cmd_str)
         msg = f"Unrecognized action: {action}. Expecting one of these: " \
