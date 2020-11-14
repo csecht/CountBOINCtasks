@@ -71,8 +71,8 @@ def set_boincpath() -> str:
             custom_path = input(
                 f'\nboinccmd is not in its default path: '
                 f'{default_path[my_os]}\n'
-                f'You may set your custom path in countCFG.txt, or\n'
-                f'Enter your custom path here to execute boinccmd: ')
+                f'You may set your custom path in countCFG.txt, or you can\n'
+                f'   enter your custom path here to execute boinccmd: ')
             if os.path.isfile(custom_path) is False:
                 raise OSError(f'Oops. {custom_path} will not work.\n'
                               f'Be sure to include \\boinccmd or '
@@ -85,7 +85,8 @@ def set_boincpath() -> str:
                               f'/boinccmd, depending on your system.\n'
                               f'Try again. Exiting now...\n')
             return custom_path
-        boinccmd = str(default_path[my_os])
+        # MacOS paths need double-quotes if folder names have spaces.
+        boinccmd = f'"{default_path[my_os]}"'
         return boinccmd
     raise KeyError(f"Platform <{my_os}> is not recognized.\n"
                    f"Expecting win (win32 or win64), lin (linux), or dar "
@@ -134,8 +135,7 @@ class BoincCommand:
     }
 
     def __init__(self):
-        # Folder names with spaces require this boincpath formatting.
-        self.boincpath = f'"{set_boincpath()}"'
+        self.boincpath = set_boincpath()
         # tag and project tuples are not currently used by count-tasks.
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
@@ -170,8 +170,8 @@ class BoincCommand:
                                     check = True).stdout.split('\n')
             return output
         except subprocess.CalledProcessError as cpe:
-            msg = 'If boinccmd usage stdout is displayed, then '\
-                   'boinccmd has an error in its action line argument.'
+            msg = 'If the boinccmd usage message is displayed, then '\
+                   'boinccmd has an error in its command argument.'
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
         # TODO: Are more subprocess exceptions needed?.
