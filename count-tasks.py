@@ -299,8 +299,8 @@ def main() -> None:
     # Report: Starting information of task times and task count.
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
-    report = f'{time_start}; ' \
-             f'Tasks reported in the past hour: {blue}{count_start}{nc}\n' \
+    report = f'{time_start}; Number of tasks in the most recent report:' \
+             f' {blue}{count_start}{nc}\n' \
              f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
              f' range [{tt_lo} - {tt_hi}],\n' \
              f'{bigindent}stdev {tt_sd}, total {tt_sum}'
