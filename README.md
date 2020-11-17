@@ -48,7 +48,7 @@ Running the default settings (no optional arguments), will count the
 Example report results, using option --summary 2h:
 
 ```
-2020-Nov-01 11:17:33; Tasks reported in the past hour: 18
+2020-Nov-01 11:17:33; Number of tasks in the most recent report: 18
                       Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
                                                  stdev 00:00:13, total 07:39:23
 2020-Nov-01 12:17:36; Tasks reported in the past 60m: 13
@@ -60,7 +60,7 @@ Example report results, using option --summary 2h:
 2020-Nov-01 13:17:40; >>> SUMMARY count for past 2h: 21
                       Task Times: mean 00:26:17, range [00:25:05 - 00:26:51],
                                                  stdev 00:00:40, total 09:02:40
-10m          |< ~time to next count
+10m ||||||||||< ~time to next count
 ```
 
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
@@ -90,7 +90,7 @@ TIP: To get the only the most recent task count and time metrics without
  running count intervals, run:  
  `count-tasks.py --c 0`
 ```
-2020-Nov-01 11:17:33; Tasks reported in the past hour: 18
+2020-Nov-01 11:17:33; Number of tasks in the most recent report: 18
                       Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
                                                  stdev 00:00:13, total 07:39:23
 ```
