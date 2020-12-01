@@ -1,7 +1,6 @@
 /venv/
 count-tasks_log.txt
 count-tasks.py_log.txt
-COUNTmodules/count_gui.py
 
 .gitignore
 
@@ -28,6 +27,3 @@ COUNTmodules/count_gui.py
 .idea/**/dbnavigator.xml
 /COUNTmodules/count_gui.py
 
-/about.png
-/COUNTmodules/count_gui.py
-/COUNTmodules/count_gui3.py
