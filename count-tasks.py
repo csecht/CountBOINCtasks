@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-count-tasks.py counts reported boinc-client tasks at set intervals.
+count_now-tasks.py counts reported boinc-client tasks at set intervals.
 
     Copyright (C) 2020 C. Echt
 
@@ -39,15 +39,16 @@ import sys
 import time as t
 from datetime import datetime
 
-from COUNTmodules import boinc_command
+from COUNTmodules import boinc_command  #, count_gui
 
 BC = boinc_command.BoincCommand()
+# GUI = count_gui.CountGui()
 
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
-def check_args(parameter):
+def check_args(parameter) -> None:
     """
     Check command line arguments for errors.
 
@@ -218,9 +219,11 @@ def main() -> None:
     #   because summary times can be min, hr, or days, while interval times
     #   are always minutes (60m maximum).
     # NOTE: Boinc only returns tasks that were reported in past hour.
-    #   Hence an --interval range limit to count tasks at least once per hour.
+    #   Hence an --interval range limit to count tasks at least once per
+    #   hour.
     parser = argparse.ArgumentParser()
-    parser.add_argument('--about', help='Author, copyright, and GNU license',
+    parser.add_argument('--about',
+                        help='Author, copyright, and GNU license',
                         action='store_true',
                         default=False)
     parser.add_argument('--log',
@@ -228,6 +231,10 @@ def main() -> None:
                              'existing log',
                         action='store_true',
                         default=False)
+    # parser.add_argument('--gui',
+    #                     help= 'Show data in graphics window.'
+    #                     action='store_true',
+    #                     default=False)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
@@ -243,12 +250,13 @@ def main() -> None:
                         metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
-                             ' quits (default: %(default)d)',
+                             ' exits (default: %(default)d)',
                         default=1008,
                         type=int,
                         metavar="N")
     args = parser.parse_args()
 
+    count_lim = int(args.count_lim)
     interval_m = int(args.interval)
     sumry_m = get_min(args.summary)
     sumry_factor = sumry_m // interval_m
@@ -268,6 +276,10 @@ def main() -> None:
         print('Maintainer: ', __maintainer__)
         print('Status: ', __status__)
         sys.exit(0)
+
+    # Used in GUI module
+    count_intvl = f'{args.interval}m'
+    sumry_intvl = args.summary
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
@@ -296,26 +308,41 @@ def main() -> None:
     if sys.platform[:3] == 'win':
         subprocess.call('', shell=True)
 
-    # Report: Starting information of task times and task count.
+    # Report: Starting information of task times and task counts.
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
     report = f'{time_start}; Number of tasks in the most recent report:' \
              f' {blue}{count_start}{nc}\n' \
              f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
              f' range [{tt_lo} - {tt_hi}],\n' \
-             f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+             f'{bigindent}stdev {tt_sd}, total {tt_sum}\n' \
+             f'{indent}Counts remaining until exit: {count_lim}'
+    # TODO: Consider repressing terminal print if --gui option used.
     print(report)
     if args.log is True:
         report = ansi_escape.sub('', report)
         logging.info("""%s; Task counter is starting with
 %scount interval (minutes): %s
 %ssummary interval: %s
-%smax count reports: %s
+%smax count cycles: %s
 %s""",               time_start,
                      indent, args.interval,
                      indent, args.summary,
                      indent, args.count_lim,
                      report)
+    # TODO: add report data to pass to GUI module. Example?:
+    # args.qui = True
+    # if args.gui is True:
+    #     startdata = {"time_start": time_start,
+    #                  "count_intvl": count_intvl,
+    #                  'sumry_intvl': sumry_intvl,
+    #                  'count_start': count_start,
+    #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+    #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+    #                  'count_lim': count_lim}
+    #     GUI.set_startdata(**startdata)
+        # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
+        # Need to push data to count_gui or pull data from within count_gui??
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -323,15 +350,16 @@ def main() -> None:
     #   otherwise, _prev remains as it was from earlier intervals.
     # Only need to remove previous tasks from _now when new tasks have
     #   been reported.
-    # Do not include start tasks in interval or summary counts.
+    # Do not include starting tasks in interval or summary counts.
     # For each interval, need to count unique tasks because some tasks
     #   may persist between counts when --interval is less than 1h.
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
-    for i in range(args.count_lim):
+    for i in range(count_lim):
         sleep_timer(interval_m)
         # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
         time_now = datetime.now().strftime(time_fmt)
+        count_remain = count_lim - (i + 1)
 
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
@@ -356,7 +384,8 @@ def main() -> None:
             tic_nnt += 1
             report = f'{time_now}; ' \
                 f'No tasks reported in the past {tic_nnt} {interval_m}m' \
-                f' interval(s).'
+                f' interval(s).\nCounts remaining until exit: {count_lim}'
+
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
@@ -372,11 +401,22 @@ def main() -> None:
                 f' {blue}{count_now}{nc}\n' \
                 f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
                 f' range [{tt_lo} - {tt_hi}],\n' \
-                f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+                f'{bigindent}stdev {tt_sd}, total {tt_sum}\n' \
+                f'{indent}Counts remaining until exit: {count_remain}'
+
             print(f'\r{del_line}{report}')
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
+
+            # if args.gui is True:
+            #     intvldata = {"time_now": time_now,
+            #                  'count_now': count_now,
+            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+            #                  'count_remain': count_remain
+            #                  }
+            #     GUI.set_intvldata(**intvldata)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
@@ -396,6 +436,14 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
+
+            # if args.gui is True:
+            #     sumrydata = {"time_now": time_now,
+            #                  'count_uniq': count_uniq,
+            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+            #                  }
+            #     GUI.set_sumrydata(**sumrydata)
 
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()

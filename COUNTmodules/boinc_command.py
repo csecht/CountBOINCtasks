@@ -19,22 +19,22 @@ Executes BOINC commands and parsing task data through boinccmd.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
-__author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020 C. Echt'
-__credits__ = ['Inspired by rickslab-gpu-utils',
-               'Keith Myers - Testing, debug']
-__license__ = 'GNU General Public License'
-__program_name__ = 'count-tasks.py'
-__version__ = '0.4.6.2'
-__maintainer__ = 'cecht'
-__docformat__ = 'reStructuredText'
-__status__ = 'Development Status :: 4 - Beta'
-
 import os
 import subprocess
 import sys
 from pathlib import Path
 from subprocess import PIPE
+
+__author__ = 'cecht, BOINC ID: 990821'
+__copyright__ = 'Copyright (C) 2020 C. Echt'
+__credits__ = ['Inspired by rickslab-gpu-utils',
+               'Keith Myers - Testing, debug']
+__license__ = 'GNU General Public License'
+__program_name__ = 'count_now-tasks.py'
+__version__ = '0.4.6.2'
+__maintainer__ = 'cecht'
+__docformat__ = 'reStructuredText'
+__status__ = 'Development Status :: 4 - Beta'
 
 
 def set_boincpath() -> str:
@@ -97,7 +97,7 @@ class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
-    # Project urls are not currently used by count-tasks.
+    # Project urls are not currently used by count_now-tasks.
     project_url = {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
@@ -136,7 +136,7 @@ class BoincCommand:
 
     def __init__(self):
         self.boincpath = set_boincpath()
-        # tag and project tuples are not currently used by count-tasks.
+        # tag and project tuples are not currently used by count_now-tasks.
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
                          'scheduler state',  'active_task_state',
@@ -144,7 +144,7 @@ class BoincCommand:
                          'final elapsed time', 'final elapsed time',
                          'exit status', 'signal', 'estimated CPU time '
                          'remaining', 'slot', 'PID', 'current CPU time',
-                         'CPU time at last checkpoint', 'fraction done',
+                         'CPU time at time_now checkpoint', 'fraction done',
                          'swap size', 'working set size')
         self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
                              'elapsed time', 'completed time',
@@ -233,7 +233,7 @@ class BoincCommand:
 
         data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
-        # if tag in self.taskXDFtags:  # Not currently used by count-tasks.
+        # if tag in self.taskXDFtags:  # Not currently used by count_now-tasks.
         if tag in self.tasktags:
             data = [line.replace(tag_str, '') for line in output if tag in line]
             return data
@@ -260,7 +260,7 @@ class BoincCommand:
 
 def about() -> None:
     """
-    Print details about this module.
+    Print details about_gui this module.
     """
     print(__doc__)
     print('Author: ', __author__)

@@ -10,7 +10,9 @@ Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and Mac OS 10.13. You
   packages can be downloaded from https://www.python.org/downloads/.
 
 ### Usage:  
-Download the .zip package from the Code download button and extract to your favorite folder. From within the resutling countBOINCtasks-master folder, open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
+Download the .zip package from the Code download button and extract to your
+ favorite folder. From within the resulting countBOINCtasks-master folder
+ , open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
 <ul>
 <li>Linux or Mac OS: ./count-tasks.py --help</li>
 <li>Windows: python count-tasks.py --help</li>
@@ -24,11 +26,11 @@ Default settings assume a default location of the BOINC folder from the
      entering the path on the command line.
 ```
 ~/countBOINCtasks-master$ ./count-tasks.py --help
-usage: count-tasks [-h] [--about] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
+usage: count-tasks [-h] [--about_gui] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
 
 optional arguments:
   -h, --help          show this help message and exit
-  --about             Author, copyright, and GNU license
+  --about_gui             Author, copyright, and GNU license
   --log               Generates or appends reports to a log file
   --interval M        Specify Minutes between task counts (default: 60)
   --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
