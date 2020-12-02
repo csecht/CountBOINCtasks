@@ -67,7 +67,7 @@ class CountGui(tk.Frame):
 
     def __init__(self):
         # parameters that you want to send through the Frame class.
-        super(CountGui, self).__init__()
+        super().__init__()
         # self.dataframe = None
         self.row_fg = None
         self.data_bg = None
@@ -172,6 +172,38 @@ class CountGui(tk.Frame):
         # Needed for data readability in smallest resized dataframe.
         mainwin.minsize(444, 370)
 
+        # Set up frame to display data
+        self.dataframe = tk.LabelFrame(borderwidth=2, relief='sunken',
+                                       background=self.data_bg)
+        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
+                            padx=5, sticky=tk.NSEW)
+        framerows = (2, 3, 4, 5, 6, 7, 8)
+        for row in framerows:
+            self.dataframe.rowconfigure(row, weight=1)
+
+        self.dataframe.columnconfigure(1, weight=1)
+        self.dataframe.columnconfigure(2, weight=1)
+
+        # Fill in headers for data rows.
+        row_header = {
+                    'Counting since':     2,
+                    'Count interval':     3,
+                    '# tasks reported':   4,
+                    'Task times:  mean':  5,
+                    'stdev':              6,
+                    'range':              7,
+                    'total':              8,
+                    'Last count was':     10,
+                    '# counts remaining:': 11,
+                    'Next count in':      12
+                     }
+        for key, value in row_header.items():
+            tk.Label(text=f'{key}',
+                     bg=self.mainwin_bg,
+                     fg=self.row_fg
+                     ).grid(row=value, column=0,
+                            padx=(5, 0), sticky=tk.E)
+
     def mainwin_widgets(self) -> None:
         """
         Layout menus, buttons, separators, row labels in main window.
@@ -213,10 +245,14 @@ class CountGui(tk.Frame):
         tk.Button(text='Last summary',
                   command=self.config_sumrydata).grid(row=0, column=2,
                                                       padx=2, pady=5)
-        # Button used only to test progressbar
-        tk.Button(text="Start",
-                  command=increment).grid(row=12, column=2,
+        # Start button used only to test progressbar
+        tk.Button(text="Start bar", font='default, 8',
+                  command=increment).grid(row=12, column=1,
                                           padx=5, sticky=tk.E)
+
+        tk.Button(text="Quit", font='default, 8',
+                  command=quit).grid(row=12, column=2,
+                                     padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -229,38 +265,6 @@ class CountGui(tk.Frame):
                   padx=5, pady=(2, 5), sticky=tk.EW)
         sep2.grid(column=0, row=9, columnspan=5,
                   padx=5, pady=(6, 4), sticky=tk.EW)
-
-        # Fill in headers for data rows.
-        row_header = {
-                    'Counting since':     2,
-                    'Count interval':     3,
-                    '# tasks reported':   4,
-                    'Task times:  mean':  5,
-                    'stdev':              6,
-                    'range':              7,
-                    'total':              8,
-                    'Last count was':     10,
-                    '# counts remaining:': 11,
-                    'Next count in':      12
-                     }
-        for key, value in row_header.items():
-            tk.Label(text=f'{key}',
-                     bg=self.mainwin_bg,
-                     fg=self.row_fg
-                     ).grid(row=value, column=0,
-                            padx=(5, 0), sticky=tk.E)
-
-        # Set up frame to display data
-        self.dataframe = tk.LabelFrame(borderwidth=2, relief='sunken',
-                                       background=self.data_bg)
-        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
-                            padx=5, sticky=tk.NSEW)
-        framerows = (2, 3, 4, 5, 6, 7, 8)
-        for row in framerows:
-            self.dataframe.rowconfigure(row, weight=1)
-
-        self.dataframe.columnconfigure(1, weight=1)
-        self.dataframe.columnconfigure(2, weight=1)
 
     def config_startdata(self) -> None:
         """

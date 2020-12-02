@@ -164,10 +164,10 @@ class BoincCommand:
         # Works with Python 3.6 and up. shell=True not necessary in Windows.
         try:
             output = subprocess.run(cmd_str,
-                                    shell = True,
-                                    stdout = PIPE,
-                                    encoding = 'utf8',
-                                    check = True).stdout.split('\n')
+                                    shell=True,
+                                    stdout=PIPE,
+                                    encoding='utf8',
+                                    check=True).stdout.split('\n')
             return output
         except subprocess.CalledProcessError as cpe:
             msg = 'If the boinccmd usage message is displayed, then '\

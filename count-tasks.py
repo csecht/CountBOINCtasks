@@ -231,10 +231,10 @@ def main() -> None:
                              'existing log',
                         action='store_true',
                         default=False)
-    # parser.add_argument('--gui',
-    #                     help= 'Show data in graphics window.'
-    #                     action='store_true',
-    #                     default=False)
+    parser.add_argument('--gui',
+                        help='Show data in graphics window.',
+                        action='store_true',
+                        default=False)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
@@ -331,8 +331,11 @@ def main() -> None:
                      indent, args.count_lim,
                      report)
     # TODO: add report data to pass to GUI module. Example?:
-    # args.qui = True
+    # args.gui = True
     # if args.gui is True:
+    #     from COUNTmodules import count_gui
+    #     GUI = count_gui.CountGui()  # <-Nothing happens from here on after tk
+    #                                 #    is launched.
     #     startdata = {"time_start": time_start,
     #                  "count_intvl": count_intvl,
     #                  'sumry_intvl': sumry_intvl,
@@ -341,8 +344,9 @@ def main() -> None:
     #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
     #                  'count_lim': count_lim}
     #     GUI.set_startdata(**startdata)
-        # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
-        # Need to push data to count_gui or pull data from within count_gui??
+    #     print(startdata)
+    # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
+    # Need to push data to count_gui or pull data from within count_gui??
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
