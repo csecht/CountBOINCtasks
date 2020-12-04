@@ -124,7 +124,7 @@ class CountGui:
         # self.tic_nnt_sv = tk.IntVar()
 
         # Unique to summary data report var
-        self. count_uniq = ''
+        self.count_uniq = ''
         self.count_uniq_sv = tk.StringVar()
 
         self.set_stubdata()
@@ -152,7 +152,7 @@ class CountGui:
         mainwin.configure(bg=self.mainwin_bg)
 
         # Title of master widget, the main window.
-        self.master.title("count-tasks")
+        mainwin.title("count-tasks")
 
         # Use of theme overrides most tk font and border options.
         # Controls entire window theme. Opt: alt, clam, default, aqua(MacOS)
@@ -364,8 +364,7 @@ class CountGui:
         """
         Set StringVars with starting data from count-tasks main().
 
-        :param startdata: Dict of main() report data var with matching
-        keywords.
+        :param startdata: Dict of report data vars with matching keywords.
         :return: Initial textvariables for datatable labels.
         """
 
@@ -378,15 +377,14 @@ class CountGui:
         self.tt_sd_sv.set(startdata['tt_sd'])
         self.tt_sum_sv.set(startdata['tt_sum'])
         self.count_lim_sv.set(startdata['count_lim'])
-    #     # self.count_lim_sv.set(kwargs.get('count_lim', 'unk key'))
-    #     # return anything?
+    #     # self.count_lim_sv.set(startdata.get('count_lim', 'unk key'))
+    #     # Is there a need to return anything?
 
     def set_intvldata(self, **intvldata: dict):
         """
         Set StringVars with interval data from count-tasks main().
 
-        :param intvldata: Dict of main() report data var with matching
-        keywords.
+        :param intvldata: Dict of report data vars with matching keywords.
         :return: Updated interval textvariables for datatable labels.
         """
 
@@ -405,8 +403,7 @@ class CountGui:
         """
         Set StringVars with summary data from count-tasks main().
 
-        :param sumrydata: Dict of main() report data var with matching
-        keywords.
+        :param sumrydata: Dict of report data vars with matching keywords.
         :return: Summary textvariables for datatable labels.
         """
 
@@ -551,8 +548,9 @@ class CountGui:
 
 
 def quitnow() -> None:
-    """A safe way to exit the program.
+    """A safe and informative way to exit the program.
     """
+    print('\n  --- User has quit the count-tasks GUI. ---')
     mainwin.destroy()
 
 
@@ -672,6 +670,7 @@ def increment_prog(incr=100) -> None:
 app = CountGui(mainwin)
 # mainwin.mainloop()
 
+# Use this once integrate this module with count-tasks main().
 # def about() -> None:
 #     """
 #     Print details about_gui this module.
