@@ -60,15 +60,13 @@ mainwin = tk.Tk()
 
 # Template used:
 # https://pythonprogramming.net/tkinter-tutorial-python-3-event-handling/
-class CountGui(tk.Frame):
+class CountGui:
     """
     A GUI window to display data from count-tasks.
     """
 
-    def __init__(self):
-        # parameters that you want to send through the Frame class.
-        super().__init__()
-        # self.dataframe = None
+    def __init__(self, master=None):
+        self.master = master
         self.row_fg = None
         self.data_bg = None
         self.mainwin_bg = None
@@ -85,7 +83,7 @@ class CountGui(tk.Frame):
         self.sumry_main = ['']
         self.sumry_stat = ['']
 
-        # Starting data report
+        # Starting data report var
         # Probably don't need to assign null variables here, just StringVars?
         # Vars names are used only for stub data.?
         # Assign StringVar objects in a for loop with .append from a list or
@@ -101,7 +99,7 @@ class CountGui(tk.Frame):
         self.count_start = ''
         self.count_start_sv = tk.StringVar()
 
-        # Common data reports
+        # Common data reports var
         self.tt_mean = ''
         self.tt_mean_sv = tk.StringVar()
         self.tt_sd = ''
@@ -119,13 +117,13 @@ class CountGui(tk.Frame):
         self.count_remain = ''
         self.count_remain_sv = tk.StringVar()
 
-        # Unique to interval data report
+        # Unique to interval data report var
         self.count_now = ''
         self.count_now_sv = tk.StringVar()
         # self.tic_nnt = -1
         # self.tic_nnt_sv = tk.IntVar()
 
-        # Unique to summary data report
+        # Unique to summary data report var
         self. count_uniq = ''
         self.count_uniq_sv = tk.StringVar()
 
@@ -153,12 +151,15 @@ class CountGui(tk.Frame):
         self.mainwin_bg = 'SkyBlue4'
         mainwin.configure(bg=self.mainwin_bg)
 
+        # Title of master widget, the main window.
+        self.master.title("count-tasks")
+
         # Use of theme overrides most tk font and border options.
         # Controls entire window theme. Opt: alt, clam, default, aqua(MacOS)
         # ttk.Style().theme_use('classic')
 
-        mainwin.bind("<Escape>", lambda q: mainwin.quit())
-        mainwin.bind("<Control-q>", lambda q: mainwin.quit())
+        mainwin.bind("<Escape>", lambda q: quitnow())
+        mainwin.bind("<Control-q>", lambda q: quitnow())
         mainwin.bind("<Control-C>", lambda q: compliment())
         mainwin.bind("<Control-l>", lambda q: show_log())
 
@@ -172,7 +173,8 @@ class CountGui(tk.Frame):
         # Needed for data readability in smallest resized dataframe.
         mainwin.minsize(444, 370)
 
-        # Set up frame to display data
+        # Set up frame to display data. Putting frame here instead of in
+        # mainwin_widgets gives proper alignment of row headers and data.
         self.dataframe = tk.LabelFrame(borderwidth=2, relief='sunken',
                                        background=self.data_bg)
         self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
@@ -194,7 +196,7 @@ class CountGui(tk.Frame):
                     'range':              7,
                     'total':              8,
                     'Last count was':     10,
-                    '# counts remaining:': 11,
+                    '# counts to go:':    11,
                     'Next count in':      12
                      }
         for key, value in row_header.items():
@@ -209,26 +211,24 @@ class CountGui(tk.Frame):
         Layout menus, buttons, separators, row labels in main window.
         """
 
-        # Title of master widget, the main window.
-        self.master.title("count-tasks")
-
         # creating a menu instance
-        menu = tk.Menu(self.master)
-        self.master.config(menu=menu)
+        menu = tk.Menu(mainwin)
+        mainwin.config(menu=menu)
 
         # Add pull-down menus
-        file = tk.Menu(menu)
-        file.add_command(label="Quit", command=mainwin.quit,
-                         accelerator="Ctrl+Q")
+        file = tk.Menu(menu, tearoff=0)
         file.add_command(label="Archive log", state=tk.DISABLED)
+        file.add_separator()
+        file.add_command(label="Quit", command=quitnow,
+                         accelerator="Ctrl+Q")
         menu.add_cascade(label="File", menu=file)
 
-        view = tk.Menu(menu)
+        view = tk.Menu(menu, tearoff=0)
         view.add_command(label="Log file", command=show_log,
                          accelerator="Ctrl+L")
         menu.add_cascade(label="View", menu=view)
 
-        info = tk.Menu(menu)
+        info = tk.Menu(menu, tearoff=0)
         info.add_command(label="Info", state=tk.DISABLED)
         info.add_command(label="Compliment", command=compliment,
                          accelerator="Ctrl+Shift+C")
@@ -247,12 +247,12 @@ class CountGui(tk.Frame):
                                                       padx=2, pady=5)
         # Start button used only to test progressbar
         tk.Button(text="Start bar", font='default, 8',
-                  command=increment).grid(row=12, column=1,
-                                          padx=5, sticky=tk.E)
+                  command=increment_prog).grid(row=12, column=1,
+                                               padx=5, sticky=tk.E)
 
         tk.Button(text="Quit", font='default, 8',
-                  command=quit).grid(row=12, column=2,
-                                     padx=5, sticky=tk.E)
+                  command=quitnow).grid(row=12, column=2,
+                                        padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -550,7 +550,12 @@ class CountGui(tk.Frame):
                   padx=5, pady=6, sticky=tk.EW)
 
 
-# TODO: Work up png file for "about" information
+def quitnow() -> None:
+    """A safe way to exit the program.
+    """
+    mainwin.destroy()
+
+
 def about() -> None:
     """
     Provide basic information for count-tasks and use of GUI.
@@ -560,13 +565,13 @@ def about() -> None:
 
     aboutwin = tk.Toplevel(mainwin)
     aboutwin.title('About count-tasks')
-    # aboutxt = "https://www.gnu.org/licenses/"
-    # tk.Label(aboutwin, text=aboutxt).grid(row=1, column=0, padx=5, pady=5)
-    aboutimg = tk.PhotoImage(file='about.png')  # or 'about.png'
+    aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
     aboutimg.image = aboutimg  # Need to anchor the image for it to display.
     tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
 
 
+# TODO: Make function to copy log file to Home folder; call from File menu.
+# https://stackabuse.com/how-to-copy-a-file-in-python/  Try shutil.copyfileobj
 def show_log() -> None:
     """
     Create a separate window to view the log file.
@@ -584,7 +589,7 @@ def show_log() -> None:
     try:
         with open(LOGPATH, 'r') as log:
             logtext.insert(tk.INSERT, log.read())
-            # print(log)
+            logtext.see('end')
     except FileNotFoundError as fnferr:
         print('count-tasks_log.txt is not in the CountBOINCtasks-master '
               'folder.\n Has the file been created with the --log command '
@@ -644,7 +649,7 @@ def compliment() -> None:
     mainwin.after(2468, text.destroy)
 
 
-def increment(incr=100) -> None:
+def increment_prog(incr=100) -> None:
     """
     Used to test drive the Progressbar.
 
@@ -664,7 +669,7 @@ def increment(incr=100) -> None:
 # size = mainwin.grid_size()
 # print(size)
 # creation of an instance
-app = CountGui()
+app = CountGui(mainwin)
 # mainwin.mainloop()
 
 # def about() -> None:

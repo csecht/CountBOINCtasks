@@ -25,5 +25,5 @@ count-tasks.py_log.txt
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
-/COUNTmodules/count_gui.py
+/COUNTmodules/count_gui3.py
 

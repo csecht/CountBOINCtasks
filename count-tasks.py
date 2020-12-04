@@ -330,7 +330,7 @@ def main() -> None:
                      indent, args.summary,
                      indent, args.count_lim,
                      report)
-    # TODO: add report data to pass to GUI module. Example?:
+    # TODO: Pass report data to GUI module. Example?:
     # args.gui = True
     # if args.gui is True:
     #     from COUNTmodules import count_gui
