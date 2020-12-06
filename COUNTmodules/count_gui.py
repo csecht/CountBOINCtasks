@@ -67,6 +67,7 @@ class CountGui:
 
     def __init__(self, master=None):
         self.master = master
+        # self.datadict = datadict
         self.row_fg = None
         self.data_bg = None
         self.mainwin_bg = None
@@ -88,15 +89,15 @@ class CountGui:
         # Vars names are used only for stub data.?
         # Assign StringVar objects in a for loop with .append from a list or
         # dictionary?
-        self.count_lim = ''
+        # self.count_lim = ''
         self.count_lim_sv = tk.StringVar()
-        self.time_start = ''
+        # self.time_start = ''
         self.time_start_sv = tk.StringVar()
-        self.count_intvl = ''
+        # self.count_intvl = ''
         self.count_intvl_sv = tk.StringVar()
-        self.sumry_intvl = ''
+        # self.sumry_intvl = ''
         self.sumry_intvl_sv = tk.StringVar()
-        self.count_start = ''
+        # self.count_start = ''
         self.count_start_sv = tk.StringVar()
 
         # Common data reports var
@@ -133,7 +134,7 @@ class CountGui:
         #  how to return back to count-tasks main().
         # self.set_startdata()
 
-        # Set starting data colors (same as for intvl_config.)
+        # Set starting data colors (same colors as intvl_config.)
         self.config_startdata()
 
         tk.mainloop()
@@ -199,11 +200,11 @@ class CountGui:
                     '# counts to go:':    11,
                     'Next count in':      12
                      }
-        for key, value in row_header.items():
-            tk.Label(text=f'{key}',
+        for header, rownum in row_header.items():
+            tk.Label(text=f'{header}',
                      bg=self.mainwin_bg,
                      fg=self.row_fg
-                     ).grid(row=value, column=0,
+                     ).grid(row=rownum, column=0,
                             padx=(5, 0), sticky=tk.E)
 
     def mainwin_widgets(self) -> None:
@@ -360,14 +361,16 @@ class CountGui:
         self.count_uniq = '123'
         self.count_uniq_sv.set(self.count_uniq)
 
-    def set_startdata(self, **startdata: dict):
+#    TODO: Figure out how to call in startdata from count-tasks.
+    def set_startdata(self, **startdata):
         """
         Set StringVars with starting data from count-tasks main().
 
         :param startdata: Dict of report data vars with matching keywords.
+        :type startdata: dict
         :return: Initial textvariables for datatable labels.
         """
-
+        print('this is startdata from gui:', startdata)  # for testing
         self.time_start_sv.set(startdata['time_start'])
         self.count_intvl_sv.set(startdata['count_intvl'])
         self.sumry_intvl_sv.set(startdata['sumry_intvl'])
@@ -378,7 +381,8 @@ class CountGui:
         self.tt_sum_sv.set(startdata['tt_sum'])
         self.count_lim_sv.set(startdata['count_lim'])
     #     # self.count_lim_sv.set(startdata.get('count_lim', 'unk key'))
-    #     # Is there a need to return anything?
+        self.config_startdata()
+        # mainwin.after(500, self.set_startdata(**startdata))
 
     def set_intvldata(self, **intvldata: dict):
         """
