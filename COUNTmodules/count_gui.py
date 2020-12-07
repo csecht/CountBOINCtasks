@@ -65,8 +65,8 @@ class CountGui:
     A GUI window to display data from count-tasks.
     """
 
-    def __init__(self, master=None):
-        self.master = master
+    def __init__(self):
+
         # self.datadict = datadict
         self.row_fg = None
         self.data_bg = None
@@ -671,7 +671,7 @@ def increment_prog(incr=100) -> None:
 # size = mainwin.grid_size()
 # print(size)
 # creation of an instance
-app = CountGui(mainwin)
+app = CountGui()
 # mainwin.mainloop()
 
 # Use this once integrate this module with count-tasks main().
