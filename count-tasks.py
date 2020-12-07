@@ -331,21 +331,21 @@ def main() -> None:
                      indent, args.count_lim,
                      report)
     # TODO: figure out how to Pass report data to GUI module.
-    args.gui = True
-    if args.gui is True:
-        from COUNTmodules import count_gui  # draws gui then stops here.
-        # Need to pass data to gui module before tkinter draws window?
-        # I don't know how to import gui module then get data from here.
-        GUI = count_gui.CountGui
-        startdata = {"time_start": time_start,
-                     "count_intvl": count_intvl,
-                     'sumry_intvl': sumry_intvl,
-                     'count_start': count_start,
-                     'tt_lo': tt_lo, 'tt_hi': tt_hi,
-                     'tt_sd': tt_sd, 'tt_sum': tt_sum,
-                     'count_lim': count_lim}
-        print('this is startdata from ct:', startdata)  # for testing
-        GUI.set_startdata(**startdata)
+    # args.gui = True
+    # if args.gui is True:
+    #     from COUNTmodules import count_gui  # draws gui then stops here.
+    #     # Need to pass data to gui module before tkinter draws window?
+    #     # I don't know how to import gui module then get data from here.
+    #     GUI = count_gui.CountGui
+    #     startdata = {"time_start": time_start,
+    #                  "count_intvl": count_intvl,
+    #                  'sumry_intvl': sumry_intvl,
+    #                  'count_start': count_start,
+    #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+    #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+    #                  'count_lim': count_lim}
+    #     print('this is startdata from ct:', startdata)  # for testing
+    #     GUI.set_startdata(**startdata)
         # ^^ open CountGui, runs init, then stops. does not set startdata,
         # but set_startdata (print test) is called once mainwin is quit.
 
