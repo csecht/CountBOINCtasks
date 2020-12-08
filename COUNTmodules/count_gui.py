@@ -56,6 +56,7 @@ __status__      = 'Development Status :: 4 - Beta'
 # https://pythonprogramming.net/python-3-tkinter-basics-tutorial/
 
 mainwin = tk.Tk()
+mainwin.title("count-tasks")
 
 
 # Template used:
@@ -65,9 +66,9 @@ class CountGui:
     A GUI window to display data from count-tasks.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
 
-        # self.datadict = datadict
+        # self.datadict = kwargs
         self.row_fg = None
         self.data_bg = None
         self.mainwin_bg = None
@@ -85,19 +86,18 @@ class CountGui:
         self.sumry_stat = ['']
 
         # Starting data report var
-        # Probably don't need to assign null variables here, just StringVars?
-        # Vars names are used only for stub data.?
-        # Assign StringVar objects in a for loop with .append from a list or
-        # dictionary?
-        # self.count_lim = ''
+        # Vars names are used only in stubdata().
+        # _sv can be refactored w/o suffix and assigned as StringVar
+        # objects in a for loop with .append from a list or dictionary?
+        self.count_lim = ''
         self.count_lim_sv = tk.StringVar()
-        # self.time_start = ''
+        self.time_start = ''
         self.time_start_sv = tk.StringVar()
-        # self.count_intvl = ''
+        self.count_intvl = ''
         self.count_intvl_sv = tk.StringVar()
-        # self.sumry_intvl = ''
+        self.sumry_intvl = ''
         self.sumry_intvl_sv = tk.StringVar()
-        # self.count_start = ''
+        self.count_start = ''
         self.count_start_sv = tk.StringVar()
 
         # Common data reports var
@@ -129,15 +129,14 @@ class CountGui:
         self.count_uniq_sv = tk.StringVar()
 
         self.set_stubdata()
-
+        # self.set_startdata()
         # TODO: Figure out how to bring in data from count-tasks main(). And
         #  how to return back to count-tasks main().
-        # self.set_startdata()
 
         # Set starting data colors (same colors as intvl_config.)
         self.config_startdata()
 
-        tk.mainloop()
+        mainwin.mainloop()
 
     def mainwin_cfg(self) -> None:
         """
@@ -148,12 +147,9 @@ class CountGui:
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
         self.data_bg = 'grey40'  # background for data labels and frame
-        # window background & used for some labels.
+        # window background color, also used for some labels.
         self.mainwin_bg = 'SkyBlue4'
         mainwin.configure(bg=self.mainwin_bg)
-
-        # Title of master widget, the main window.
-        mainwin.title("count-tasks")
 
         # Use of theme overrides most tk font and border options.
         # Controls entire window theme. Opt: alt, clam, default, aqua(MacOS)
@@ -164,7 +160,8 @@ class CountGui:
         mainwin.bind("<Control-C>", lambda q: compliment())
         mainwin.bind("<Control-l>", lambda q: show_log())
 
-        # Make data rows and columns stretch with window drag size.
+        # Make data rows and columns stretch with window drag size; don't
+        # stretch separators.
         rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12)
         for r in rows2config:
             mainwin.rowconfigure(r, weight=1)
@@ -261,7 +258,7 @@ class CountGui:
         style.configure('TFrame', background=self.mainwin_bg)
         sep1 = ttk.Frame(mainwin, relief="raised", height=5)
         sep2 = ttk.Frame(mainwin, relief="raised", height=5)
-        # sep1, Use no top pady; button widgets set padding.
+        # sep1, Use no top pady; button widgets will set padding.
         sep1.grid(column=0, row=1, columnspan=5,
                   padx=5, pady=(2, 5), sticky=tk.EW)
         sep2.grid(column=0, row=9, columnspan=5,

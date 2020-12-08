@@ -55,6 +55,7 @@ __status__      = 'Development Status :: 4 - Beta'
 # https://pythonprogramming.net/python-3-tkinter-basics-tutorial/
 
 mainwin = tk.Tk()
+mainwin.title("count-tasks")
 
 
 class GuiSetup:
@@ -62,7 +63,7 @@ class GuiSetup:
     A GUI window to display data from count-tasks.
     """
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, **kwargs):
 
         self.dataframe = None
         self.master = master
@@ -147,9 +148,6 @@ class GuiSetup:
         Layout menus, buttons, separators, row labels in main window.
         """
 
-        # Title of master widget, the main window.
-        mainwin.title("count-tasks")
-
         # creating a menu instance
         menu = tk.Menu(mainwin)
         mainwin.config(menu=menu)
@@ -178,26 +176,8 @@ class GuiSetup:
         tk.Button(text='View log file',
                   command=show_log).grid(row=0, column=0,
                                          padx=5, pady=5)
-        # TODO: Provide proper command call to GuiData methods.
-        # Does work if button widgets are moved into GuiData()
-        # This doesn't work:
-        # tk.Button(text='Last count',
-        #           command=GuiData.config_intvldata).grid(row=0, column=1,
-        #                                                  padx=2, pady=5)
-        # tk.Button(text='Last summary',
-        #           command=GuiData.config_sumrydata).grid(row=0, column=2,
-        #                                                  padx=2, pady=5)
-        # And neither does this:
-        # tk.Button(text='Last count',
-        #           command=lambda: GuiData().config_intvldata).grid(row=0,
-        #                                                              column=1,
-        #                                                              padx=2,
-        #                                                              pady=5)
-        # tk.Button(text='Last summary',
-        #           command=lambda: GuiData().config_sumrydata).grid(row=0,
-        #                                                              column=2,
-        #                                                              padx=2,
-        #                                                              pady=5)
+
+        # Interval and Summary configuration buttons in GuiData
 
         # Start button used only to test progressbar
         tk.Button(text="Start bar", font='default, 8',
@@ -214,26 +194,22 @@ class GuiSetup:
         style.configure('TFrame', background=self.mainwin_bg)
         sep1 = ttk.Frame(mainwin, relief="raised", height=5)
         sep2 = ttk.Frame(mainwin, relief="raised", height=5)
-        # sep1, Use no top pady; button widgets set padding.
+        # sep1, Use no top pady; button widgets will set padding.
         sep1.grid(column=0, row=1, columnspan=5,
                   padx=5, pady=(2, 5), sticky=tk.EW)
         sep2.grid(column=0, row=9, columnspan=5,
                   padx=5, pady=(6, 4), sticky=tk.EW)
 
 
-# TODO: Fix bug: buttons in setup need proper command to call data methods.
-# When click Summary button:
-# TypeError: config_sumrydata() missing 1 required positional argument: 'self'
-# Need to create an instance of GuiData(), but nothing I've tried works.
 class GuiData(GuiSetup):
     """
     Populate gui window with count_tasks data.
     """
 
-    def __init__(self, master = None,):
+    def __init__(self, master = None, **kwargs):
         super().__init__(master)
         self.master = master
-        # self.data = datadict
+        # self.datadict = kwargs
 
         # Mutable color variables used for emphasizing different data
         # categories via buttons.
@@ -245,8 +221,7 @@ class GuiData(GuiSetup):
         self.sumry_stat = ['']
 
         # Starting data report
-        # Probably don't need to assign null variables here, just StringVars.
-        # Vars names are used only as stubs.
+        # Vars names are used only in stubdata().
         # _sv can be refactored w/o suffix and assigned as StringVar
         # objects in a for loop with .append from a list or dictionary?
         self.count_lim = ''
@@ -286,8 +261,6 @@ class GuiData(GuiSetup):
         self. count_uniq = ''
         self.count_uniq_sv = tk.StringVar()
 
-        # Making buttons here instead of in GuiSetup.mainwin_widgets() is
-        # one way make the commands work. Need to make it work in GuiSetup.
         tk.Button(text='Last count',
                   command=self.config_intvldata).grid(row=0, column=1,
                                                       padx=2, pady=5)
@@ -715,8 +688,8 @@ def increment_prog(incr=100) -> None:
 # size = mainwin.grid_size()
 # print(size)
 
-setup = GuiSetup(mainwin)
-ctdata = GuiData(mainwin)
+GuiSetup(mainwin)
+GuiData(mainwin)
 
 # Use this once integrate this module with count-tasks main().
 # def about() -> None:
