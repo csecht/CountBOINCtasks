@@ -63,10 +63,9 @@ class GuiSetup:
     A GUI window to display data from count-tasks.
     """
 
-    def __init__(self, master=None, **kwargs):
+    def __init__(self, **kwargs):
 
         self.dataframe = None
-        self.master = master
 
         self.row_fg = None
         self.data_bg = None
@@ -206,9 +205,8 @@ class GuiData(GuiSetup):
     Populate gui window with count_tasks data.
     """
 
-    def __init__(self, master = None, **kwargs):
-        super().__init__(master)
-        self.master = master
+    def __init__(self, **kwargs):
+        super().__init__()
         # self.datadict = kwargs
 
         # Mutable color variables used for emphasizing different data
@@ -261,10 +259,10 @@ class GuiData(GuiSetup):
         self. count_uniq = ''
         self.count_uniq_sv = tk.StringVar()
 
-        tk.Button(text='Last count',
+        tk.Button(text='Recent count',
                   command=self.config_intvldata).grid(row=0, column=1,
                                                       padx=2, pady=5)
-        tk.Button(text='Last summary',
+        tk.Button(text='Recent summary',
                   command=self.config_sumrydata).grid(row=0, column=2,
                                                       padx=2, pady=5)
 
@@ -688,8 +686,8 @@ def increment_prog(incr=100) -> None:
 # size = mainwin.grid_size()
 # print(size)
 
-GuiSetup(mainwin)
-GuiData(mainwin)
+GuiSetup()
+GuiData()
 
 # Use this once integrate this module with count-tasks main().
 # def about() -> None:

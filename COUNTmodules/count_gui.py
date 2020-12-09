@@ -237,10 +237,10 @@ class CountGui:
         tk.Button(text='View log file',
                   command=show_log).grid(row=0, column=0,
                                          padx=5, pady=5)
-        tk.Button(text='Last count',
+        tk.Button(text='Recent count',
                   command=self.config_intvldata).grid(row=0, column=1,
                                                       padx=2, pady=5)
-        tk.Button(text='Last summary',
+        tk.Button(text='Recent summary',
                   command=self.config_sumrydata).grid(row=0, column=2,
                                                       padx=2, pady=5)
         # Start button used only to test progressbar
@@ -667,9 +667,8 @@ def increment_prog(incr=100) -> None:
 
 # size = mainwin.grid_size()
 # print(size)
-# creation of an instance
-app = CountGui()
-# mainwin.mainloop()
+
+CountGui()
 
 # Use this once integrate this module with count-tasks main().
 # def about() -> None:
