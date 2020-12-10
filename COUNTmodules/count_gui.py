@@ -18,7 +18,7 @@ A dummy module; a template GUI for displaying count-tasks data.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
-import os
+# import os
 import random
 import shutil
 import time
@@ -38,8 +38,8 @@ except (ImportError, ModuleNotFoundError) as err:
 # Assume log file is in the CountBOINCtasks-master folder.
 # Not sure what determines the relative Project path.
 #    Depends on copying the module?
-LOGPATH = "../count-tasks_log.txt"
-# LOGPATH = "count-tasks_log.txt"
+LOGPATH = Path('../count-tasks_log.txt')
+# LOGPATH = Path('count-tasks_log.txt')
 BKUPFILE = "count-tasks_log(copy).txt"
 SCRIPT_VER = '0.5'
 
@@ -645,7 +645,7 @@ def archive_log() -> None:
     """
 
     destination = Path.home() / BKUPFILE
-    if os.path.isfile(LOGPATH) is True:
+    if Path.is_file(LOGPATH) is True:
         shutil.copyfile(LOGPATH, destination)
         msg = 'Log file has been copied to ' + str(destination)
         text = tk.Label(text=msg, font=('default', 10),
