@@ -38,21 +38,21 @@ except (ImportError, ModuleNotFoundError) as err:
 # Assume log file is in the CountBOINCtasks-master folder.
 # Not sure what determines the relative Project path.
 #    Depends on copying the module?
-logpath = "../count-tasks_log.txt"
-# logpath = "count-tasks_log.txt"
-bkupfile = "count-tasks_log(copy).txt"
-script_ver = '0.5'
+LOGPATH = "../count-tasks_log.txt"
+# LOGPATH = "count-tasks_log.txt"
+BKUPFILE = "count-tasks_log(copy).txt"
+SCRIPT_VER = '0.5'
 
-__author__      = 'cecht, BOINC ID: 990821'
-__copyright__   = 'Copyright (C) 2020 C. Echt'
-__credits__     = ['Inspired by rickslab-gpu-utils',
-                   'Keith Myers - Testing, debug']
-__license__     = 'GNU General Public License'
-__program_name__ = 'count-tasks.py'
-__version__     = script_ver
-__maintainer__  = 'cecht'
-__docformat__   = 'reStructuredText'
-__status__      = 'Development Status :: 4 - Beta'
+# __author__      = 'cecht, BOINC ID: 990821'
+# __copyright__   = 'Copyright (C) 2020 C. Echt'
+# __credits__     = ['Inspired by rickslab-gpu-utils',
+#                    'Keith Myers - Testing, debug']
+# __license__     = 'GNU General Public License'
+# __program_name__ = 'count-tasks.py'
+# __version__     = script_ver
+# __maintainer__  = 'cecht'
+# __docformat__   = 'reStructuredText'
+# __status__      = 'Development Status :: 4 - Beta'
 
 # https://python.readthedocs.io/en/stable/library/tk.html
 # Original code source:
@@ -597,7 +597,7 @@ along with this program. If not, see https://www.gnu.org/licenses/.
     abouttxt = tk.Text(aboutwin, width=72, height=25,
                        background='SkyBlue4', foreground='LightCyan2',
                        relief='raised', padx=5)
-    abouttxt.insert('1.0', msg + script_ver)
+    abouttxt.insert('1.0', msg + SCRIPT_VER)
     # Lines 1-18 include only the GNU license boilerplate.
     abouttxt.tag_add('all', '1.0', '18.0')
     abouttxt.tag_configure('all', justify='center')
@@ -612,7 +612,7 @@ def show_log() -> None:
     """
 
     try:
-        with open(logpath, 'r') as log:
+        with open(LOGPATH, 'r') as log:
             logwin = tk.Toplevel(mainwin)
             logwin.attributes('-topmost', 1)  # for Windows, needed?
             logwin.title('count-tasks_log.txt')
@@ -644,9 +644,9 @@ def archive_log() -> None:
     :return: A new or overwritten backup file.
     """
 
-    destination = Path.home() / bkupfile
-    if os.path.isfile(logpath) is True:
-        shutil.copyfile(logpath, destination)
+    destination = Path.home() / BKUPFILE
+    if os.path.isfile(LOGPATH) is True:
+        shutil.copyfile(LOGPATH, destination)
         msg = 'Log file has been copied to ' + str(destination)
         text = tk.Label(text=msg, font=('default', 10),
                         foreground='DodgerBlue4', background='gold2',
@@ -665,7 +665,7 @@ def archive_log() -> None:
         logtext.grid(row=0, column=0, sticky=tk.NSEW)
         logtext.focus_set()
     else:
-        msg = (f'The file {logpath} cannot be archived because it\n'
+        msg = (f'The file {LOGPATH} cannot be archived because it\n'
                '  is not in the CountBOINCtasks-master folder.\n'
                'Has the file been created with the --log command line option?\n'
                'Or perhaps it has been moved?')
