@@ -85,8 +85,7 @@ class GuiSetup:
         """
         Configure colors, bindings, and basic behavior of main window.
         """
-        # Set colors for row labels and data display. Make them mutable,
-        # as lists.
+        # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
         self.data_bg = 'grey40'  # background for data labels and frame

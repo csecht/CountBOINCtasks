@@ -24,7 +24,6 @@ import shutil
 import time
 
 from pathlib import Path
-
 # from COUNTmodules import boinc_command
 
 try:
@@ -60,7 +59,7 @@ __status__      = 'Development Status :: 4 - Beta'
 # https://pythonprogramming.net/python-3-tkinter-basics-tutorial/
 
 mainwin = tk.Tk()
-mainwin.title("count-tasks")
+mainwin.title("stub count-tasks data")
 
 
 # Template used:
@@ -73,6 +72,7 @@ class CountGui:
     def __init__(self, **kwargs):
 
         # self.datadict = kwargs
+
         self.row_fg = None
         self.data_bg = None
         self.mainwin_bg = None
@@ -146,8 +146,7 @@ class CountGui:
         """
         Configure colors, bindings, and basic behavior of main window.
         """
-        # Set colors for row labels and data display. Make them mutable,
-        # as lists.
+        # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
         self.data_bg = 'grey40'  # background for data labels and frame
@@ -173,7 +172,7 @@ class CountGui:
         mainwin.columnconfigure(1, weight=1)
         mainwin.columnconfigure(2, weight=1)
         # Needed for data readability in smallest resized dataframe.
-        mainwin.minsize(444, 370)
+        mainwin.minsize(444, 380)
 
         # Set up frame to display data. Putting frame here instead of in
         # mainwin_widgets gives proper alignment of row headers and data.
@@ -219,7 +218,6 @@ class CountGui:
 
         # Add pull-down menus
         file = tk.Menu(menu, tearoff=0)
-
         menu.add_cascade(label="File", menu=file)
         file.add_command(label="Archive log", command=archive_log)
         file.add_separator()
@@ -260,9 +258,8 @@ class CountGui:
         # Initialize then configure style for separator color.
         style = ttk.Style()
         style.configure('TFrame', background=self.mainwin_bg)
-        sep1 = ttk.Frame(mainwin, relief="raised", height=5)
-        sep2 = ttk.Frame(mainwin, relief="raised", height=5)
-        # sep1, Use no top pady; button widgets will set padding.
+        sep1 = ttk.Frame(mainwin, relief="raised", height=6)
+        sep2 = ttk.Frame(mainwin, relief="raised", height=6)
         sep1.grid(column=0, row=1, columnspan=5,
                   padx=5, pady=(2, 5), sticky=tk.EW)
         sep2.grid(column=0, row=9, columnspan=5,
@@ -270,7 +267,7 @@ class CountGui:
 
     def config_startdata(self) -> None:
         """
-        Populates initial data table from count-tasks.
+        Populate initial data table from count-tasks.
 
         :return: Starting BOINC data from past hour.
         """
