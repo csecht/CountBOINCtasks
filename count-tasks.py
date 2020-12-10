@@ -311,12 +311,12 @@ def main() -> None:
     # Report: Starting information of task times and task counts.
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
-    report = f'{time_start}; Number of tasks in the most recent report:' \
-             f' {blue}{count_start}{nc}\n' \
-             f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
-             f' range [{tt_lo} - {tt_hi}],\n' \
-             f'{bigindent}stdev {tt_sd}, total {tt_sum}\n' \
-             f'{indent}Counts remaining until exit: {count_lim}'
+    report = (f'{time_start}; Number of tasks in the most recent report:'
+              f' {blue}{count_start}{nc}\n'
+              f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+              f' range [{tt_lo} - {tt_hi}],\n'
+              f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
+              f'{indent}Counts remaining until exit: {count_lim}')
     # TODO: Consider repressing terminal print if --gui option used.
     print(report)
     if args.log is True:
@@ -392,9 +392,10 @@ def main() -> None:
         # Overwrite successive NNT reports for a tidy terminal window: \x1b[A.
         if count_now == 0:
             tic_nnt += 1
-            report = f'{time_now}; ' \
-                f'No tasks reported in the past {tic_nnt} {interval_m}m' \
-                f' interval(s).\nCounts remaining until exit: {count_lim}'
+            report = (f'{time_now}; '
+                      f'No tasks reported in the past {tic_nnt} {interval_m}m'
+                      f' interval(s).\n'
+                      f'{indent}Counts remaining until exit: {count_lim}')
 
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
@@ -406,13 +407,13 @@ def main() -> None:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_now, ttimes_now).values()
-            report = f'{time_now}; ' \
-                f'Tasks reported in the past {interval_m}m:' \
-                f' {blue}{count_now}{nc}\n' \
-                f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
-                f' range [{tt_lo} - {tt_hi}],\n' \
-                f'{bigindent}stdev {tt_sd}, total {tt_sum}\n' \
-                f'{indent}Counts remaining until exit: {count_remain}'
+            report = (f'{time_now}; '
+                      f'Tasks reported in the past {interval_m}m:'
+                      f' {blue}{count_now}{nc}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f' range [{tt_lo} - {tt_hi}],\n'
+                      f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
+                      f'{indent}Counts remaining until exit: {count_remain}')
 
             print(f'\r{del_line}{report}')
             if args.log is True:
@@ -436,12 +437,12 @@ def main() -> None:
 
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_uniq, ttimes_uniq).values()
-            report = f'{time_now}; ' \
-                f'{orng}>>> SUMMARY{nc} count for the past {args.summary}:' \
-                f' {blue}{count_uniq}{nc}\n' \
-                f'{indent}Task Times: mean {blue}{tt_mean}{nc},' \
-                f' range [{tt_lo} - {tt_hi}],\n' \
-                f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+            report = (f'{time_now}; '
+                      f'{orng}>>> SUMMARY{nc} count for the past'
+                      f' {args.summary}: {blue}{count_uniq}{nc}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f' range [{tt_lo} - {tt_hi}],\n'
+                      f'{bigindent}stdev {tt_sd}, total {tt_sum}')
             print(f'\r{del_line}{report}')
             if args.log is True:
                 report = ansi_escape.sub('', report)

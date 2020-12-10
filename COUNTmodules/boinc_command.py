@@ -170,8 +170,8 @@ class BoincCommand:
                                     check=True).stdout.split('\n')
             return output
         except subprocess.CalledProcessError as cpe:
-            msg = 'If the boinccmd usage message is displayed, then '\
-                   'boinccmd has an error in its command argument.'
+            msg = ('If the boinccmd usage message is displayed, then'
+                   ' boinccmd has an error in its command argument.')
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
         # TODO: Are more subprocess exceptions needed?.
@@ -253,8 +253,8 @@ class BoincCommand:
             cmd_str = self.boincpath + \
                       f' --project {self.project_url[{project}]} {action}'
             return self.run_boinc(cmd_str)
-        msg = f"Unrecognized action: {action}. Expecting one of these: " \
-              f"{self.projectcmd}"
+        msg = (f"Unrecognized action: {action}. Expecting one of these: "
+               f"{self.projectcmd}")
         return msg
 
 
