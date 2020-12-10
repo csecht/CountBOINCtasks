@@ -552,7 +552,7 @@ class CountGui:
 def quitnow() -> None:
     """A safe and informative way to exit the program.
     """
-    print('\n  --- User has quit the count-tasks GUI. ---')
+    print('\n  --- User has quit the count-tasks GUI. ---\n')
     mainwin.destroy()
 
 
@@ -565,11 +565,11 @@ def about() -> None:
 
     msg = (
         """This program, count-tasks.py, will provide at regular
-intervals counts and time statistics of tasks that have
+intervals counts and time statistics for tasks that have
 been reported to BOINC servers.
 
 This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
+it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
@@ -641,10 +641,7 @@ def archive_log() -> None:
     :return: A new or overwritten backup file.
     """
 
-    # user = getpass.getuser()
     destination = Path.home() / bkupfile
-    # dst_darwin = Path.home() / bkupfile
-    # dst_win = Path.home() / bkupfile
     if os.path.isfile(logpath) is True:
         shutil.copyfile(logpath, destination)
         msg = 'Log file has been copied to ' + str(destination)

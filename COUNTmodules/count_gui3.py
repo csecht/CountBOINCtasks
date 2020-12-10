@@ -654,10 +654,7 @@ def archive_log() -> None:
     :return: A new or overwritten backup file.
     """
 
-    # user = getpass.getuser()
     destination = Path.home() / bkupfile
-    # dst_darwin = Path.home() / bkupfile
-    # dst_win = Path.home() / bkupfile
     if os.path.isfile(logpath) is True:
         shutil.copyfile(logpath, destination)
         msg = 'Log file has been copied to ' + str(destination)
