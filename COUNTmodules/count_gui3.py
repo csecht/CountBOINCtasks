@@ -18,8 +18,12 @@ A test module to construct tkinter GUI for displaying count-tasks data.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
+import os
 import random
+import shutil
 import time
+
+from pathlib import Path
 
 # from COUNTmodules import boinc_command
 
@@ -35,9 +39,10 @@ except (ImportError, ModuleNotFoundError) as err:
 # BC = boinc_command.BoincCommand()
 # Assume log file is in the CountBOINCtasks-master folder.
 # Not sure what determines which relative path. Depends on copying the mod.
-LOGPATH = "../count-tasks_log.txt"
+logpath = "../count-tasks_log.txt"
 # LOGPATH = "count-tasks_log.txt"
-
+bkupfile = "count-tasks_log(copy).txt"
+script_ver = '0.5'
 
 __author__      = 'cecht, BOINC ID: 990821'
 __copyright__   = 'Copyright (C) 2020 C. Echt'
@@ -45,7 +50,7 @@ __credits__     = ['Inspired by rickslab-gpu-utils',
                    'Keith Myers - Testing, debug']
 __license__     = 'GNU General Public License'
 __program_name__ = 'count-tasks.py'
-__version__     = '0.5'
+__version__     = script_ver
 __maintainer__  = 'cecht'
 __docformat__   = 'reStructuredText'
 __status__      = 'Development Status :: 4 - Beta'
@@ -153,24 +158,23 @@ class GuiSetup:
 
         # Add pull-down menus
         file = tk.Menu(menu, tearoff=0)
-        file.add_command(label="Archive log", state=tk.DISABLED)
-        file.add_separator()
-        file.add_command(label="Quit", command=quitnow,
-                         accelerator="Ctrl+Q")
+
         menu.add_cascade(label="File", menu=file)
+        file.add_command(label="Archive log", command=archive_log)
+        file.add_separator()
+        file.add_command(label="Quit", command=quitnow, accelerator="Ctrl+Q")
 
         view = tk.Menu(menu, tearoff=0)
+        menu.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=show_log,
                          accelerator="Ctrl+L")
-        menu.add_cascade(label="View", menu=view)
 
         info = tk.Menu(menu, tearoff=0)
+        menu.add_cascade(label="Help", menu=info)
         info.add_command(label="Info", state=tk.DISABLED)
         info.add_command(label="Compliment", command=compliment,
                          accelerator="Ctrl+Shift+C")
         info.add_command(label="About", command=about)
-        menu.add_cascade(label="Help", menu=info)
-
         # Create button widgets:
         tk.Button(text='View log file',
                   command=show_log).grid(row=0, column=0,
@@ -568,18 +572,47 @@ def quitnow() -> None:
 
 def about() -> None:
     """
-    Provide basic information for count-tasks and use of GUI.
+    Basic information for count-tasks. Called from Help menu.
 
     :return: Information window.
     """
 
+    msg = (
+        """This program, count-tasks.py, will provide at regular
+intervals counts and time statistics of tasks that have
+been reported to BOINC servers.
+
+This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see https://www.gnu.org/licenses/.
+
+        Author:     cecht, BOINC ID: 990821
+        Copyright:  Copyright (C) 2020 C. Echt
+        Credits:    Inspired by rickslab-gpu-utils,
+                    Keith Myers - Testing, debug
+        Development Status :: 4 - Beta"""
+    )
+
     aboutwin = tk.Toplevel(mainwin)
     aboutwin.title('About count-tasks')
-    # aboutxt = "Everything you need to know about this program in a picture."
-    # tk.Label(aboutwin, text=aboutxt).grid(row=0, column=0, padx=5, pady=5)
-    aboutimg = tk.PhotoImage(file="../about.png")  # or 'about.png'
-    aboutimg.image = aboutimg  # Need to anchor the image for it to display.
-    tk.Label(aboutwin, image=aboutimg).grid(row=2, column=0, padx=5, pady=5)
+    # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
+    # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
+    # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
+    # TODO: Center the msg text.
+    abouttxt = tk.Text(aboutwin, width=72, height=25,
+                       background='SkyBlue4', foreground='LightCyan2',
+                       relief='raised', padx=5)
+    abouttxt.insert(tk.INSERT, msg + "\n\tVersion: " + script_ver)
+    abouttxt.pack()
 
 
 def show_log() -> None:
@@ -588,26 +621,78 @@ def show_log() -> None:
 
     :return: Read-only log file as scrolled text.
     """
-    logwin = tk.Toplevel(mainwin)
-    logwin.attributes('-topmost', 1)  # for Windows, needed?
-    logwin.title('count-tasks_log.txt')
 
-    logtext = ScrolledText(logwin, width=79, height=30,
-                           bg='grey85',
-                           relief='raised',
-                           padx=5)
     try:
-        with open(LOGPATH, 'r') as log:
+        with open(logpath, 'r') as log:
+            logwin = tk.Toplevel(mainwin)
+            logwin.attributes('-topmost', 1)  # for Windows, needed?
+            logwin.title('count-tasks_log.txt')
+            logtext = ScrolledText(logwin, width=79, height=30, bg='grey85',
+                                   relief='raised', padx=5)
             logtext.insert(tk.INSERT, log.read())
             logtext.see('end')
+            logtext.grid(row=0, column=0, sticky=tk.NSEW)
+            logtext.focus_set()
     except FileNotFoundError as fnferr:
-        print('count-tasks_log.txt is not in the CountBOINCtasks-master '
-              'folder.\n Has the file been created with the --log command '
-              'line option?')
-        print(fnferr)
+        msg = ('The file count-tasks_log.txt is not in the'
+               ' CountBOINCtasks-master folder.\n'
+               'Has the file been created with the --log command line option?')
+        print(f'{msg}\n{fnferr}')
+        logwin = tk.Toplevel(mainwin)
+        logwin.attributes('-topmost', 1)  # for Windows, needed?
+        logwin.title('View log error')
+        logtext = tk.Text(logwin, width=75, height=4, bg='grey85',
+                          fg='red', relief='raised', padx=5)
+        logtext.insert(tk.INSERT, msg)
+        logtext.grid(row=0, column=0, sticky=tk.NSEW)
+        logtext.focus_set()
 
-    logtext.grid(row=0, column=0, sticky=tk.NSEW)
-    logtext.focus_set()
+
+def archive_log() -> None:
+    """
+    Copy the log file to the home folder. Is called from the File menu.
+
+    :return: A new or overwritten backup file.
+    """
+
+    # user = getpass.getuser()
+    destination = Path.home() / bkupfile
+    # dst_darwin = Path.home() / bkupfile
+    # dst_win = Path.home() / bkupfile
+    if os.path.isfile(logpath) is True:
+        shutil.copyfile(logpath, destination)
+        msg = 'Log file has been copied to ' + str(destination)
+        text = tk.Label(text=msg, font=('default', 10),
+                        foreground='DodgerBlue4', background='gold2',
+                        relief='flat')
+        text.grid(row=9, column=0, columnspan=3,
+                  padx=5, pady=6,
+                  sticky=tk.EW)
+        mainwin.after(5000, text.destroy)
+        logwin = tk.Toplevel(mainwin)
+        logwin.attributes('-topmost', 1)  # for Windows, needed?
+        logwin.title('Archive notification')
+        logtext = tk.Text(logwin, width=75, height=2,
+                          fg='green', bg='grey85',
+                          relief='raised', padx=5)
+        logtext.insert(tk.INSERT, msg)
+        logtext.grid(row=0, column=0, sticky=tk.NSEW)
+        logtext.focus_set()
+    else:
+        msg = (f'The file {logpath} cannot be archived because it\n'
+               '  is not in the CountBOINCtasks-master folder.\n'
+               'Has the file been created with the --log command line option?\n'
+               'Or perhaps it has been moved?')
+        print(msg)
+        logwin = tk.Toplevel(mainwin)
+        logwin.attributes('-topmost', 1)  # for Windows, needed?
+        logwin.title('Archive log error')
+        logtext = tk.Text(logwin, width=62, height=4,
+                          fg='red', bg='grey85',
+                          relief='raised', padx=5)
+        logtext.insert(tk.INSERT, msg)
+        logtext.grid(row=0, column=0, sticky=tk.NSEW)
+        logtext.focus_set()
 
 
 def compliment() -> None:
