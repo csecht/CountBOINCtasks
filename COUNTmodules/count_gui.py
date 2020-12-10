@@ -246,11 +246,11 @@ class CountGui:
                   command=self.config_sumrydata).grid(row=0, column=2,
                                                       padx=2, pady=5)
         # Start button used only to test progressbar
-        tk.Button(text="Start bar", font='default, 8',
+        tk.Button(text="Start bar", font=('default', 8),
                   command=increment_prog).grid(row=12, column=1,
                                                padx=5, sticky=tk.E)
 
-        tk.Button(text="Quit", font='default, 8',
+        tk.Button(text="Quit", font=('default', 10),
                   command=quitnow).grid(row=12, column=2,
                                         padx=5, sticky=tk.E)
 
@@ -439,12 +439,12 @@ class CountGui:
         # TODO: Create labels in a loop iterating over a list or dict?
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
-                 relief='groove', borderwidth=2, font=('default', 8),
+                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
                  width=20,
-                 relief='groove', borderwidth=2, font=('default', 8),
+                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
                  ).grid(row=3, column=2, padx=(0, 15), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
@@ -486,12 +486,12 @@ class CountGui:
         # Count and summary interval times
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
-                 relief='groove', borderwidth=2, font=('default', 8),
+                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
                  width=20,
-                 relief='groove', borderwidth=2, font=('default', 8),
+                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
                  ).grid(row=3, column=2, padx=(0, 15), sticky=tk.EW)
 
