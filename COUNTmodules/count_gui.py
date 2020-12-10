@@ -581,23 +581,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see https://www.gnu.org/licenses/.
 
-        Author:     cecht, BOINC ID: 990821
-        Copyright:  Copyright (C) 2020 C. Echt
-        Credits:    Inspired by rickslab-gpu-utils,
-                    Keith Myers - Testing, debug
-        Development Status :: 4 - Beta"""
+            Author:     cecht, BOINC ID: 990821
+            Copyright:  Copyright (C) 2020 C. Echt
+            Credits:    Inspired by rickslab-gpu-utils,
+                        Keith Myers - Testing, debug
+            Development Status :: 4 - Beta
+            Version: """
     )
 
-    aboutwin = tk.Toplevel(mainwin)
+    aboutwin = tk.Toplevel()
     aboutwin.title('About count-tasks')
     # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
     # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
     # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
-    # TODO: Center the msg text.
     abouttxt = tk.Text(aboutwin, width=72, height=25,
                        background='SkyBlue4', foreground='LightCyan2',
                        relief='raised', padx=5)
-    abouttxt.insert(tk.INSERT, msg + "\n\tVersion: " + script_ver)
+    abouttxt.insert('1.0', msg + script_ver)
+    # Lines 1-18 include only the GNU license boilerplate.
+    abouttxt.tag_add('all', '1.0', '18.0')
+    abouttxt.tag_configure('all', justify='center')
     abouttxt.pack()
 
 
