@@ -614,10 +614,9 @@ along with this program. If not, see https://www.gnu.org/licenses/.
     abouttxt = tk.Text(aboutwin, width=72, height=msg_lines+2,
                        background=bkg, foreground='white',
                        relief='groove', borderwidth=5, padx=5)
-
     abouttxt.insert('1.0', msg + SCRIPT_VER)
     # Center text preceding the Author, etc. details.
-    abouttxt.tag_add('text1', '1.0', '20.0')
+    abouttxt.tag_add('text1', '1.0', float(msg_lines-5))
     abouttxt.tag_configure('text1', justify='center')
     abouttxt.pack()
 
