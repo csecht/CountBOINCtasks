@@ -58,7 +58,7 @@ def set_boincpath() -> str:
     my_os = sys.platform[:3]
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
-    lin_path = Path('/usr/bin/boinccm')
+    lin_path = Path('/usr/bin/boinccmd')
     dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
     default_path = {
                     'win': win_path,
