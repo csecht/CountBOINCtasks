@@ -563,9 +563,8 @@ def about() -> None:
     """
 
     msg = ("""
-CountBOINCtasks will provide at regular intervals
-task counts and time statistics for tasks 
-that have been reported to BOINC servers.
+CountBOINCtasks provides task counts and time statistics at set
+intervals for tasks that have been reported to BOINC servers.
 Download the most recent version from: 
 https://github.com/csecht/CountBOINCtasks
 ———————————————————————————————————————————————————————————————————
@@ -575,8 +574,8 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.\n
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.\n
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.\n
 You should have received a copy of the GNU General Public License
 along with this program. If not, see https://www.gnu.org/licenses/.
 ———————————————————————————————————————————————————————————————————\n
@@ -587,18 +586,24 @@ along with this program. If not, see https://www.gnu.org/licenses/.
                 Development Status: 4 - Beta
                 Version:    """)
 
+    msg_lines = msg.count('\n')
     aboutwin = tk.Toplevel()
     aboutwin.title('About count-tasks')
     # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
     # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
     # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
-    abouttxt = tk.Text(aboutwin, width=72, height=28,
-                       background='SkyBlue4', foreground='LightCyan2',
-                       relief='raised', padx=5)
+    colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
+              'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
+              'dark olive green', 'grey1', 'grey25', 'DodgerBlue4']
+    bkg = random.choice(colour)
+    abouttxt = tk.Text(aboutwin, width=72, height=msg_lines+2,
+                       background=bkg, foreground='grey98',
+                       relief='groove', borderwidth=5, padx=5)
+
     abouttxt.insert('1.0', msg + SCRIPT_VER)
     # Center text preceding the Author, etc. details.
-    abouttxt.tag_add('all', '1.0', '22.0')
-    abouttxt.tag_configure('all', justify='center')
+    abouttxt.tag_add('text1', '1.0', '20.0')
+    abouttxt.tag_configure('text1', justify='center')
     abouttxt.pack()
 
 
@@ -652,7 +657,7 @@ def archive_log() -> None:
         text.grid(row=9, column=0, columnspan=3,
                   padx=5, pady=6,
                   sticky=tk.EW)
-        mainwin.after(5000, text.destroy)
+        mainwin.after(4000, text.destroy)
         logwin = tk.Toplevel(mainwin)
         logwin.attributes('-topmost', 1)  # for Windows, needed?
         logwin.title('Archive notification')
