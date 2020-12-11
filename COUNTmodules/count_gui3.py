@@ -564,8 +564,9 @@ class GuiData(GuiSetup):
 
 
 def quitnow() -> None:
-    """A safe way to exit the program.
+    """Safe and informative exit from the program.
     """
+    print('\n  --- User has quit the count-tasks GUI. ---\n')
     mainwin.destroy()
 
 

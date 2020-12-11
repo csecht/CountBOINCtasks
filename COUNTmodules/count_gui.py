@@ -18,7 +18,6 @@ A dummy module; a template GUI for displaying count-tasks data.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
-# import os
 import random
 import shutil
 import time
@@ -550,7 +549,7 @@ class CountGui:
 
 
 def quitnow() -> None:
-    """A safe and informative way to exit the program.
+    """Safe and informative exit from the program.
     """
     print('\n  --- User has quit the count-tasks GUI. ---\n')
     mainwin.destroy()
@@ -563,43 +562,42 @@ def about() -> None:
     :return: Information window.
     """
 
-    msg = (
-        """This program, count-tasks.py, will provide at regular
-intervals counts and time statistics for tasks that have
-been reported to BOINC servers.
-
+    msg = ("""
+CountBOINCtasks will provide at regular intervals
+task counts and time statistics for tasks 
+that have been reported to BOINC servers.
+Download the most recent version from: 
+https://github.com/csecht/CountBOINCtasks
+———————————————————————————————————————————————————————————————————
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
+(at your option) any later version.\n
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
+GNU General Public License for more details.\n
 You should have received a copy of the GNU General Public License
 along with this program. If not, see https://www.gnu.org/licenses/.
-
-            Author:     cecht, BOINC ID: 990821
-            Copyright:  Copyright (C) 2020 C. Echt
-            Credits:    Inspired by rickslab-gpu-utils,
-                        Keith Myers - Testing, debug
-            Development Status :: 4 - Beta
-            Version: """
-    )
+———————————————————————————————————————————————————————————————————\n
+                Author:     cecht, BOINC ID: 990821
+                Copyright:  Copyright (C) 2020 C. Echt
+                Credits:    Inspired by rickslab-gpu-utils,
+                            Keith Myers - Testing, debug
+                Development Status: 4 - Beta
+                Version:    """)
 
     aboutwin = tk.Toplevel()
     aboutwin.title('About count-tasks')
     # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
     # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
     # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
-    abouttxt = tk.Text(aboutwin, width=72, height=25,
+    abouttxt = tk.Text(aboutwin, width=72, height=28,
                        background='SkyBlue4', foreground='LightCyan2',
                        relief='raised', padx=5)
     abouttxt.insert('1.0', msg + SCRIPT_VER)
-    # Lines 1-18 include only the GNU license boilerplate.
-    abouttxt.tag_add('all', '1.0', '18.0')
+    # Center text preceding the Author, etc. details.
+    abouttxt.tag_add('all', '1.0', '22.0')
     abouttxt.tag_configure('all', justify='center')
     abouttxt.pack()
 

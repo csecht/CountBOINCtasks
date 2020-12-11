@@ -58,7 +58,7 @@ def set_boincpath() -> str:
     my_os = sys.platform[:3]
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
-    lin_path = Path('/usr/bin/boinccmd')
+    lin_path = Path('/usr/bin/boinccm')
     dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
     default_path = {
                     'win': win_path,
@@ -69,28 +69,28 @@ def set_boincpath() -> str:
     if my_os in default_path:
         if Path.is_file(default_path[my_os]) is False:
             custom_path = input(
-                f'\nboinccmd is not in its default path: '
+                '\nboinccmd is not in its default path: '
                 f'{default_path[my_os]}\n'
-                f'You may set your custom path in countCFG.txt, or you can\n'
-                f'   enter your custom path here to execute boinccmd: ')
+                'You may set your custom path in countCFG.txt, or you can\n'
+                '   enter your custom path here to execute boinccmd: ')
             if os.path.isfile(custom_path) is False:
                 raise OSError(f'Oops. {custom_path} will not work.\n'
-                              f'Be sure to include \\boinccmd or '
-                              f'/boinccmd.exe, depending on your system.\n'
-                              f'Try again. Exiting now...\n')
+                              'Be sure to include \\boinccmd.exe or '
+                              '/boinccmd, depending on your system.\n'
+                              'Try again. Exiting now...\n')
             cmd_tail = os.path.split(custom_path)[1]
-            if cmd_tail not in ('\\boinccmd.exe', 'boinccmd.exe'):
+            if cmd_tail not in ('boinccmd.exe', 'boinccmd'):
                 raise OSError(f'The entered action path, {custom_path},'
-                              f' must end with \\boinccmd.exe or '
-                              f'/boinccmd, depending on your system.\n'
-                              f'Try again. Exiting now...\n')
+                              ' must end with \\boinccmd.exe or '
+                              '/boinccmd, depending on your system.\n'
+                              'Try again. Exiting now...\n')
             return custom_path
         # MacOS paths need double-quotes if folder names have spaces.
         boinccmd = f'"{default_path[my_os]}"'
         return boinccmd
-    raise KeyError(f"Platform <{my_os}> is not recognized.\n"
-                   f"Expecting win (win32 or win64), lin (linux), or dar "
-                   f"(darwin =>Mac OS).")
+    print(f"Platform <{my_os}> is not recognized.\n"
+          "Expecting win (Win32 or Win64), lin (Linux) or dar (Darwin =>Mac OS).")
+    sys.exit(1)
 
 
 class BoincCommand:
