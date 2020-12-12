@@ -453,7 +453,6 @@ class GuiData(GuiSetup):
         # Starting count data and times (from past boinc-client hour).
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
 
-        # TODO: Create labels in a loop iterating over a list or dict?
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,

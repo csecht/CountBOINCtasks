@@ -44,6 +44,7 @@ from COUNTmodules import boinc_command  #, count_gui
 BC = boinc_command.BoincCommand()
 # GUI = count_gui.CountGui()
 
+# Here logging is lazily employed to create a file of report data.
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
@@ -330,24 +331,21 @@ def main() -> None:
                      indent, args.summary,
                      indent, args.count_lim,
                      report)
-    # TODO: figure out how to Pass report data to GUI module.
-    # args.gui = True
-    # if args.gui is True:
-    #     from COUNTmodules import count_gui  # draws gui then stops here.
-    #     # Need to pass data to gui module before tkinter draws window?
-    #     # I don't know how to import gui module then get data from here.
-    #     GUI = count_gui.CountGui
-    #     datadict = {"time_start": time_start,
-    #                  "count_intvl": count_intvl,
-    #                  'sumry_intvl': sumry_intvl,
-    #                  'count_start': count_start,
-    #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
-    #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
-    #                  'count_lim': count_lim}
-    #     print('this is datadict from ct:', datadict)  # for testing
-    #     GUI.set_startdata(**datadict)
-        # ^^ open CountGui, runs init, then stops. does not set datadict,
-        # but datadict (print test) is called once mainwin is quit.
+    # TODO: figure out how to pass report data to GUI module.
+    args.gui = True
+    if args.gui is True:
+        from COUNTmodules import count_gui  # draws gui then stops here.
+        # Need to pass data to gui module before tkinter draws window.
+        datadict = {'time_start': time_start,
+                     'count_intvl': count_intvl,
+                     'sumry_intvl': sumry_intvl,
+                     'count_start': count_start,
+                     'tt_lo': tt_lo, 'tt_hi': tt_hi,
+                     'tt_sd': tt_sd, 'tt_sum': tt_sum,
+                     'count_lim': count_lim}
+        print('this is data from ct:', datadict)  # for testing
+        # GUI = count_gui.CountGui
+        count_gui.CountGui.set_startdata(**datadict)
 
     # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
     # Need to push data to count_gui or pull data from within count_gui??
