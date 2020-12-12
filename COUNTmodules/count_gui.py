@@ -583,7 +583,7 @@ def about() -> None:
 
     :return: Information window.
     """
-
+    # msg separators use em dashes.
     msg = ("""
 CountBOINCtasks provides task counts and time statistics at set
 intervals for tasks that have been reported to BOINC servers.
@@ -599,7 +599,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU General Public License for more details.\n
 You should have received a copy of the GNU General Public License
-along with this program. If not, see https://www.gnu.org/licenses/.
+along with this program. If not, see https://www.gnu.org/licenses/
 ————————————————————————————————————————————————————————————————————\n
                 Author:     cecht, BOINC ID: 990821
                 Copyright:  Copyright (C) 2020 C. Echt
@@ -610,6 +610,9 @@ along with this program. If not, see https://www.gnu.org/licenses/.
 
     msg_lines = msg.count('\n')
     aboutwin = tk.Toplevel()
+    # Minsize needed for MacOS where Help>About opens tab in mainwin.
+    #   Gives larger MacOS mainwin when tab is closed, but, oh well.
+    aboutwin.minsize(540, 425)
     aboutwin.title('About count-tasks')
     # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
     # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
