@@ -111,7 +111,7 @@ class GuiSetup:
         mainwin.columnconfigure(1, weight=1)
         mainwin.columnconfigure(2, weight=1)
         # Needed for data readability in smallest resized dataframe.
-        mainwin.minsize(444, 370)
+        mainwin.minsize(430, 390)
 
         # Set up frame to display data. Putting frame here instead of in
         # mainwin_widgets gives proper alignment of row headers and data.
@@ -159,7 +159,7 @@ class GuiSetup:
         file = tk.Menu(menu, tearoff=0)
 
         menu.add_cascade(label="File", menu=file)
-        file.add_command(label="Archive log", command=archive_log)
+        file.add_command(label="Backup log file", command=backup_log)
         file.add_separator()
         file.add_command(label="Quit", command=quitnow, accelerator="Ctrl+Q")
 
@@ -443,15 +443,12 @@ class GuiData(GuiSetup):
         :return: count-tasks datatable
         """
 
-        # TODO: ADD row-label for max. count cycles (count_lim) and consider
-        #  another for cycles remaining before program quits (in last row?);
-        #  place on a new row with report on tic_nnt, no tasks reported.
-
         # Starting datetime of count-tasks; fg is invariant here.
+        # The 0,3 pady makes room for the compliment label.
         tk.Label(self.dataframe, textvariable=self.time_start_sv,
                  bg=self.data_bg, fg='grey90'
                  ).grid(row=2, column=1, columnspan=2,
-                        padx=15, pady=(0, 3), sticky=tk.EW)
+                        padx=15, pady=(3, 3), sticky=tk.EW)
 
         # Starting count data and times (from past boinc-client hour).
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
@@ -459,29 +456,37 @@ class GuiData(GuiSetup):
         # TODO: Create labels in a loop iterating over a list or dict?
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
-                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
+                 relief='groove', borderwidth=2,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
                  width=20,
-                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
+                 relief='groove', borderwidth=2,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
                  ).grid(row=3, column=2, padx=(0, 15), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
+                 font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=4, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
+                 font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=5, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=6, column=1,  padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=7, column=1,  padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=8, column=1,  padx=15, sticky=tk.EW)
+                 ).grid(row=8, column=1,
+                        padx=15, pady=(0, 2), sticky=tk.EW)
 
         # Previous and until task count times.
         tk.Label(textvariable=self.time_now_sv,
@@ -506,12 +511,14 @@ class GuiData(GuiSetup):
         # Count and summary interval times
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
-                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
+                 relief='groove', borderwidth=2,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
                  width=20,
-                 relief='groove', borderwidth=2, font=('TkTextFont', 10),
+                 relief='groove', borderwidth=2,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
                  ).grid(row=3, column=2, padx=(0, 15), sticky=tk.EW)
 
@@ -519,37 +526,49 @@ class GuiData(GuiSetup):
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
 
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
+                 font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=4, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
+                 font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=5, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=6, column=1,  padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=7, column=1,  padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=8, column=1,  padx=15, sticky=tk.EW)
+                 ).grid(row=8, column=1,
+                        padx=15, pady=(0, 2), sticky=tk.EW)
 
         # Summary data, column2
         tk.Label(self.dataframe, textvariable=self.count_uniq_sv,
+                 font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
                  ).grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
+                 font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
                  ).grid(row=5, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
                  ).grid(row=6, column=2,  padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
                  ).grid(row=7, column=2,  padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=8, column=2,  padx=(0, 10), sticky=tk.EW)
+                 ).grid(row=8, column=2,
+                        padx=(0, 10), pady=(0, 2), sticky=tk.EW)
 
         # Previous and until task count times.
         tk.Label(textvariable=self.time_now_sv,
@@ -572,7 +591,7 @@ def quitnow() -> None:
 
 def about() -> None:
     """
-    Basic information for count-tasks. Called from Help menu.
+    Basic information for count-tasks; called from the Help menu.
 
     :return: Information window.
     """
@@ -582,7 +601,7 @@ CountBOINCtasks provides task counts and time statistics at set
 intervals for tasks that have been reported to BOINC servers.
 Download the most recent version from: 
 https://github.com/csecht/CountBOINCtasks
-———————————————————————————————————————————————————————————————————
+————————————————————————————————————————————————————————————————————
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -593,7 +612,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU General Public License for more details.\n
 You should have received a copy of the GNU General Public License
 along with this program. If not, see https://www.gnu.org/licenses/.
-———————————————————————————————————————————————————————————————————\n
+————————————————————————————————————————————————————————————————————\n
                 Author:     cecht, BOINC ID: 990821
                 Copyright:  Copyright (C) 2020 C. Echt
                 Credits:    Inspired by rickslab-gpu-utils,
@@ -609,7 +628,8 @@ along with this program. If not, see https://www.gnu.org/licenses/.
     # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
     colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
               'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
-              'dark olive green', 'grey1', 'grey25', 'DodgerBlue4']
+              'dark olive green', 'grey2', 'grey25', 'DodgerBlue4',
+              'DarkOrchid4']
     bkg = random.choice(colour)
     abouttxt = tk.Text(aboutwin, width=72, height=msg_lines+2,
                        background=bkg, foreground='white',
@@ -654,9 +674,9 @@ def show_log() -> None:
         logtext.focus_set()
 
 
-def archive_log() -> None:
+def backup_log() -> None:
     """
-    Copy the log file to the home folder. Is called from the File menu.
+    Copy the log file to the home folder; called from the File menu.
 
     :return: A new or overwritten backup file.
     """
@@ -672,7 +692,8 @@ def archive_log() -> None:
                   padx=5, pady=6,
                   sticky=tk.EW)
         mainwin.after(4000, text.destroy)
-        logwin = tk.Toplevel(mainwin)
+        # Need a persistent window alert in addition to transient row alert.
+        logwin = tk.Toplevel()
         logwin.attributes('-topmost', 1)  # for Windows, needed?
         logwin.title('Archive notification')
         logtext = tk.Text(logwin, width=75, height=2,
@@ -687,7 +708,7 @@ def archive_log() -> None:
                'Has the file been created with the --log command line option?\n'
                'Or perhaps it has been moved?')
         print(msg)
-        logwin = tk.Toplevel(mainwin)
+        logwin = tk.Toplevel()
         logwin.attributes('-topmost', 1)  # for Windows, needed?
         logwin.title('Archive log error')
         logtext = tk.Text(logwin, width=62, height=4,
