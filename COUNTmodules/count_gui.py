@@ -359,27 +359,27 @@ class CountGui:
         self.count_uniq_sv.set(self.count_uniq)
 
 #    TODO: Figure out how to call in startdata from count-tasks.
-    def set_startdata(self, **startdata):
+    def set_startdata(self, **datadict):
         """
         Set StringVars with starting data from count-tasks main().
 
-        :param startdata: Dict of report data vars with matching keywords.
-        :type startdata: dict
+        :param datadict: Dict of report data vars with matching keywords.
+        :type datadict: dict
         :return: Initial textvariables for datatable labels.
         """
-        print('this is startdata from gui:', startdata)  # for testing
-        self.time_start_sv.set(startdata['time_start'])
-        self.count_intvl_sv.set(startdata['count_intvl'])
-        self.sumry_intvl_sv.set(startdata['sumry_intvl'])
-        self.count_start_sv.set(startdata['count_start'])
-        self.tt_hi_sv.set(startdata['tt_hi'])
-        self.tt_lo_sv.set(startdata['tt_lo'])
-        self.tt_sd_sv.set(startdata['tt_sd'])
-        self.tt_sum_sv.set(startdata['tt_sum'])
-        self.count_lim_sv.set(startdata['count_lim'])
-    #     # self.count_lim_sv.set(startdata.get('count_lim', 'unk key'))
+        print('this is startdata from gui:', datadict)  # for testing
+        self.time_start_sv.set(datadict['time_start'])
+        self.count_intvl_sv.set(datadict['count_intvl'])
+        self.sumry_intvl_sv.set(datadict['sumry_intvl'])
+        self.count_start_sv.set(datadict['count_start'])
+        self.tt_hi_sv.set(datadict['tt_hi'])
+        self.tt_lo_sv.set(datadict['tt_lo'])
+        self.tt_sd_sv.set(datadict['tt_sd'])
+        self.tt_sum_sv.set(datadict['tt_sum'])
+        self.count_lim_sv.set(datadict['count_lim'])
+    #     # self.count_lim_sv.set(datadict.get('count_lim', 'unk key'))
         self.config_startdata()
-        # mainwin.after(500, self.set_startdata(**startdata))
+        # mainwin.after(500, self.set_datadict(**datadict))
 
     def set_intvldata(self, **intvldata: dict):
         """

@@ -337,17 +337,17 @@ def main() -> None:
     #     # Need to pass data to gui module before tkinter draws window?
     #     # I don't know how to import gui module then get data from here.
     #     GUI = count_gui.CountGui
-    #     startdata = {"time_start": time_start,
+    #     datadict = {"time_start": time_start,
     #                  "count_intvl": count_intvl,
     #                  'sumry_intvl': sumry_intvl,
     #                  'count_start': count_start,
     #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
     #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
     #                  'count_lim': count_lim}
-    #     print('this is startdata from ct:', startdata)  # for testing
-    #     GUI.set_startdata(**startdata)
-        # ^^ open CountGui, runs init, then stops. does not set startdata,
-        # but set_startdata (print test) is called once mainwin is quit.
+    #     print('this is datadict from ct:', datadict)  # for testing
+    #     GUI.set_startdata(**datadict)
+        # ^^ open CountGui, runs init, then stops. does not set datadict,
+        # but datadict (print test) is called once mainwin is quit.
 
     # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
     # Need to push data to count_gui or pull data from within count_gui??
