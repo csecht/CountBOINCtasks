@@ -251,8 +251,7 @@ class CountGui:
 
         # Create button widgets:
         style = ttk.Style()
-        style.configure('TButton', background='grey80', font=('default', 9),
-                        anchor='center')
+        style.configure('TButton', background='grey80', anchor='center')
         ttk.Button(text='View log file',
                    command=self.show_log).grid(row=0, column=0,
                                                padx=5, pady=5)
@@ -778,7 +777,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                         relief='flat',
                         border=0)
         text.grid(row=2, column=1, columnspan=2,
-                  padx=(10, 13), pady=(3, 0), sticky=tk.EW)
+                  padx=(15, 20), pady=(3, 0), sticky=tk.EW)
         # To fit well, pady ^here must match pady of the data label row.
         self.mainwin.after(2468, text.destroy)
 
