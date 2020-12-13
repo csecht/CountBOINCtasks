@@ -453,44 +453,43 @@ class CountGui:
         tk.Label(self.dataframe, textvariable=self.time_start_sv,
                  bg=self.data_bg, fg='grey90'
                  ).grid(row=2, column=1, columnspan=2,
-                        padx=15, sticky=tk.EW)
+                        padx=10, sticky=tk.EW)
 
         # Starting count data and times (from past boinc-client hour).
-        range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
+        time_range = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
 
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
-                 width=22,  # Longest data cell is time range, 20 char.
+                 width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
-                 ).grid(row=3, column=1, padx=15, sticky=tk.EW)
+                 ).grid(row=3, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
-                 width=22,
+                 width=20,
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
-                 ).grid(row=3, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
-                 ).grid(row=4, column=1, padx=15, sticky=tk.EW)
+                 ).grid(row=4, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
-                 ).grid(row=5, column=1, padx=15, sticky=tk.EW)
+                 ).grid(row=5, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=6, column=1,  padx=15, sticky=tk.EW)
-        tk.Label(self.dataframe, text=range_cat,
+                 ).grid(row=6, column=1,  padx=10, sticky=tk.EW)
+        tk.Label(self.dataframe, text=time_range,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=7, column=1,  padx=15, sticky=tk.EW)
+                 ).grid(row=7, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=8, column=1,
-                        padx=15, pady=(0, 2), sticky=tk.EW)
+                 ).grid(row=8, column=1, padx=10, sticky=tk.EW)
 
         # Previous and until task count times.
         tk.Label(textvariable=self.time_now_sv,
@@ -515,17 +514,17 @@ class CountGui:
 
         # Count and summary interval times
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
-                 width=22,  # Longest data cell is time range, 20 char.
+                 width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
-                 ).grid(row=3, column=1, padx=15, sticky=tk.EW)
+                 ).grid(row=3, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
-                 width=22,
+                 width=20,
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
-                 ).grid(row=3, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
 
         # Interval data, column1
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
@@ -533,46 +532,46 @@ class CountGui:
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
-                 ).grid(row=4, column=1, padx=15, sticky=tk.EW)
+                 ).grid(row=4, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
-                 ).grid(row=5, column=1, padx=15, sticky=tk.EW)
+                 ).grid(row=5, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=6, column=1,  padx=15, sticky=tk.EW)
+                 ).grid(row=6, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
-                 ).grid(row=7, column=1,  padx=15, sticky=tk.EW)
+                 ).grid(row=7, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=8, column=1,
-                        padx=15, sticky=tk.EW)
+                        padx=10, sticky=tk.EW)
 
         # Summary data, column2
         tk.Label(self.dataframe, textvariable=self.count_uniq_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
-                 ).grid(row=4, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
-                 ).grid(row=5, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=5, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=6, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=6, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=7, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=7, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=8, column=2, padx=(0, 15), sticky=tk.EW)
+                 ).grid(row=8, column=2, padx=(0, 10), sticky=tk.EW)
 
         # Previous and until task count times.
         tk.Label(textvariable=self.time_now_sv,
