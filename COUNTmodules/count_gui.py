@@ -151,8 +151,12 @@ class CountGui:
 
     def mainwin_cfg(self) -> None:
         """
-        Configure colors, bindings, and basic behavior of main Tk window.
+        Configure colors, key binds & basic behavior of main Tk window.
         """
+        # Needed for data readability in smallest resized dataframe. Depends
+        #   on platform; set for Linux with its largest relative font size.
+        self.mainwin.minsize(446, 390)
+
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
@@ -161,29 +165,29 @@ class CountGui:
         self.mainwin_bg = 'SkyBlue4'
         self.mainwin.configure(bg=self.mainwin_bg)
 
-        # Use of theme overrides most tk font and border options.
-        # Controls entire window theme. Opt: alt, clam, default, aqua(MacOS)
-        # ttk.Style().theme_use('classic')
+        # Use of theme can override most tk font and border options.
+        # Controls entire window theme, but only for ttk.Style objects.
+        # Options: classic, alt, clam, default, aqua(MacOS only)
+        ttk.Style().theme_use('classic')
 
         self.mainwin.bind("<Escape>", lambda q: self.quitnow())
         self.mainwin.bind("<Control-q>", lambda q: self.quitnow())
         self.mainwin.bind("<Control-C>", lambda q: self.compliment())
         self.mainwin.bind("<Control-l>", lambda q: self.show_log())
 
-        # Make data rows and columns stretch with window drag size; don't
-        # stretch separators.
+        # Make data rows and columns stretch with window drag size.
+        # Don't vertically stretch separator rows.
         rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12)
         for _r in rows2config:
             self.mainwin.rowconfigure(_r, weight=1)
 
         self.mainwin.columnconfigure(1, weight=1)
         self.mainwin.columnconfigure(2, weight=1)
-        # Needed for data readability in smallest resized dataframe.
-        self.mainwin.minsize(430, 390)
 
         # Set up frame to display data. Putting frame here instead of in
         # mainwin_widgets gives proper alignment of row headers and data.
-        self.dataframe = tk.LabelFrame(borderwidth=2, relief='sunken',
+        self.dataframe = tk.LabelFrame(borderwidth=2,
+                                       relief='sunken',
                                        background=self.data_bg)
         self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
                             padx=5, sticky=tk.NSEW)
@@ -203,9 +207,9 @@ class CountGui:
                     'stdev':              6,
                     'range':              7,
                     'total':              8,
-                    'Last count was':     10,
+                    'Last count was:':    10,
                     '# counts to go:':    11,
-                    'Next count in':      12
+                    'Next count in:':     12
                      }
         for header, rownum in row_header.items():
             tk.Label(text=f'{header}',
@@ -269,7 +273,7 @@ class CountGui:
         sep1.grid(column=0, row=1, columnspan=5,
                   padx=5, pady=(2, 5), sticky=tk.EW)
         sep2.grid(column=0, row=9, columnspan=5,
-                  padx=5, pady=(6, 4), sticky=tk.EW)
+                  padx=5, pady=(6, 6), sticky=tk.EW)
 
     def config_startdata(self) -> None:
         """
@@ -455,13 +459,13 @@ class CountGui:
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
 
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
-                 width=20,  # Longest data cell is time range, 20 char.
+                 width=22,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
-                 width=20,
+                 width=22,
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
@@ -511,13 +515,13 @@ class CountGui:
 
         # Count and summary interval times
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
-                 width=20,  # Longest data cell is time range, 20 char.
+                 width=22,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=15, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
-                 width=20,
+                 width=22,
                  relief='groove', borderwidth=2,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
@@ -546,30 +550,29 @@ class CountGui:
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=8, column=1,
-                        padx=15, pady=(0, 2), sticky=tk.EW)
+                        padx=15, sticky=tk.EW)
 
         # Summary data, column2
         tk.Label(self.dataframe, textvariable=self.count_uniq_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
-                 ).grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
+                 ).grid(row=4, column=2, padx=(0, 15), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
                  font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
-                 ).grid(row=5, column=2, padx=(0, 10), sticky=tk.EW)
+                 ).grid(row=5, column=2, padx=(0, 15), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=6, column=2,  padx=(0, 10), sticky=tk.EW)
+                 ).grid(row=6, column=2, padx=(0, 15), sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=7, column=2,  padx=(0, 10), sticky=tk.EW)
+                 ).grid(row=7, column=2, padx=(0, 15), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
                  font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
-                 ).grid(row=8, column=2,
-                        padx=(0, 10), pady=(0, 2), sticky=tk.EW)
+                 ).grid(row=8, column=2, padx=(0, 15), sticky=tk.EW)
 
         # Previous and until task count times.
         tk.Label(textvariable=self.time_now_sv,
@@ -598,34 +601,34 @@ class CountGui:
         """
         # msg separators use em dashes.
         msg = ("""
-    CountBOINCtasks provides task counts and time statistics at set
-    intervals for tasks that have been reported to BOINC servers.
-    Download the most recent version from: 
-    https://github.com/csecht/CountBOINCtasks
-    ————————————————————————————————————————————————————————————————————
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.\n
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    See the GNU General Public License for more details.\n
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/
-    ————————————————————————————————————————————————————————————————————\n
-                    Author:     cecht, BOINC ID: 990821
-                    Copyright:  Copyright (C) 2020 C. Echt
-                    Credits:    Inspired by rickslab-gpu-utils,
-                                Keith Myers - Testing, debug
-                    Development Status: 4 - Beta
-                    Version:    """)
+CountBOINCtasks provides task counts and time statistics at set
+intervals for tasks that have been reported to BOINC servers.
+Download the most recent version from: 
+https://github.com/csecht/CountBOINCtasks
+————————————————————————————————————————————————————————————————————
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.\n
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.\n
+You should have received a copy of the GNU General Public License
+along with this program. If not, see https://www.gnu.org/licenses/
+————————————————————————————————————————————————————————————————————\n
+                Author:     cecht, BOINC ID: 990821
+                Copyright:  Copyright (C) 2020 C. Echt
+                Credits:    Inspired by rickslab-gpu-utils,
+                            Keith Myers - Testing, debug
+                Development Status: 4 - Beta
+                Version:    """)
 
         msg_lines = msg.count('\n')
         aboutwin = tk.Toplevel()
         # Minsize needed for MacOS where Help>About opens tab in mainwin.
         #   Gives larger MacOS mainwin when tab is closed, but, oh well.
-        aboutwin.minsize(540, 425)
+        aboutwin.minsize(570, 460)
         aboutwin.title('About count-tasks')
         # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
         # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
