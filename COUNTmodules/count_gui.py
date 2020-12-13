@@ -158,7 +158,7 @@ class CountGui:
         """
         # Needed for data readability in smallest resized dataframe. Depends
         #   on platform; set for Linux with its largest relative font size.
-        self.mainwin.minsize(455, 390)
+        self.mainwin.minsize(466, 390)
 
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
@@ -457,7 +457,7 @@ class CountGui:
         # Starting datetime of count-tasks; fg is invariant here.
         # Start time label is static; don't need a textvariable.
         tk.Label(self.dataframe, textvariable=self.time_start_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg='grey90'
                  ).grid(row=2, column=1, columnspan=2,
                         padx=10, sticky=tk.EW)
@@ -773,7 +773,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 ]
         txt = random.choice(comp)
         text = tk.Label(text=txt,
-                        font=('default', 10),
+                        # font=('default', 10),
                         foreground='DodgerBlue4',
                         background='gold2',
                         relief='flat',
