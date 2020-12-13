@@ -73,9 +73,10 @@ class CountGui:
         self.row_fg = None
         self.data_bg = None
         self.mainwin_bg = None
+        self.dataframe = None
+
         self.mainwin_cfg()
         self.mainwin_widgets()
-        self.dataframe = None
 
         # Mutable color variables used for emphasizing different data
         # categories via buttons.
@@ -86,55 +87,60 @@ class CountGui:
         self.sumry_main = ['']
         self.sumry_stat = ['']
 
-        # Starting data report var
         # Vars names are used only in stubdata().
         # _sv can be refactored w/o suffix and assigned as StringVar
         # objects in a for loop with .append from a list or dictionary?
-        self.count_lim = ''
+        # Starting data report var
+        self.count_lim = None
+        self.time_start = None
+        self.count_intvl = None
+        self.sumry_intvl = None
+        self.count_start = None
+
         self.count_lim_sv = tk.StringVar()
-        self.time_start = ''
         self.time_start_sv = tk.StringVar()
-        self.count_intvl = ''
         self.count_intvl_sv = tk.StringVar()
-        self.sumry_intvl = ''
         self.sumry_intvl_sv = tk.StringVar()
-        self.count_start = ''
         self.count_start_sv = tk.StringVar()
 
         # Common data reports var
-        self.tt_mean = ''
+        self.tt_mean = None
+        self.tt_sd = None
+        self.tt_lo = None
+        self.tt_hi = None
+        self.tt_sum = None
+        self.time_now = None
+        self.count_next = None
+        self.count_remain = None
+
         self.tt_mean_sv = tk.StringVar()
-        self.tt_sd = ''
         self.tt_sd_sv = tk.StringVar()
-        self.tt_lo = ''
         self.tt_lo_sv = tk.StringVar()
-        self.tt_hi = ''
         self.tt_hi_sv = tk.StringVar()
-        self.tt_sum = ''
         self.tt_sum_sv = tk.StringVar()
-        self.time_now = ''
         self.time_now_sv = tk.StringVar()
-        self.count_next = ''
         self.next_var = tk.StringVar()
-        self.count_remain = ''
         self.count_remain_sv = tk.StringVar()
 
         # Unique to interval data report var
-        self.count_now = ''
+        self.count_now = None
+        self.tic_nnt = None
+
         self.count_now_sv = tk.StringVar()
-        # self.tic_nnt = -1
-        # self.tic_nnt_sv = tk.IntVar()
+        self.tic_nnt_sv = tk.IntVar()
 
         # Unique to summary data report var
-        self.count_uniq = ''
+        self.count_uniq = None
         self.count_uniq_sv = tk.StringVar()
 
         self.set_stubdata()
         # self.set_startdata(**kwargs)
         # TODO: Figure out how to bring in data from count-tasks main().
 
-        # Set starting data colors (same as config_intvldata.)
+        # Set starting data colors (same as config_intvldata) and starting
+        #   data labels.
         self.config_startdata()
+        self.show_startdata()
 
         self.mainwin.mainloop()
 
@@ -273,7 +279,7 @@ class CountGui:
         self.sumry_t[0]     = 'grey60'
         self.sumry_main[0]  = 'grey60'
         self.sumry_stat[0]  = 'grey60'
-        self.show_startdata()
+        # self.show_startdata()
 
     def config_intvldata(self) -> None:
         """
@@ -356,7 +362,7 @@ class CountGui:
         self.count_uniq_sv.set(self.count_uniq)
 
 #    TODO: Figure out how to get startdata from count-tasks.
-
+    # Set methods are for data from count-tasks main().
     def set_startdata(self, datadict):
         # def set_startdata(self, time_start,
         #                   count_intvl, sumry_intvl,
@@ -428,6 +434,7 @@ class CountGui:
         # self.show_updatedata()  # is this needed?
         # mainwin.update()  # is this needed?  Need new values in data labels.
 
+    # Show methods define the data labels.
     def show_startdata(self) -> None:
         """
         Show count-tasks starting data in GUI data table.
@@ -492,6 +499,7 @@ class CountGui:
 
     # This method includes the interval and summary data columns.
     # Make a separate show_sumrydata() method?
+    # Both reports are triggered by a common count-tasks interval event.
     def show_updatedata(self) -> None:
         """
         Place count-tasks data in GUI data table.
@@ -572,6 +580,7 @@ class CountGui:
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, sticky=tk.W)
 
+    # Menu and keybind functions below.
     def quitnow(self) -> None:
         """Safe and informative exit from the program.
         """
@@ -673,7 +682,7 @@ class CountGui:
 
         :return: A new or overwritten backup file.
         """
-
+        # Notify user with two alerts that copy was successful or not.
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGPATH) is True:
             shutil.copyfile(LOGPATH, destination)
@@ -687,7 +696,7 @@ class CountGui:
             self.mainwin.after(4000, text.destroy)
             # Need a persistent window alert in addition to transient row alert.
             logwin = tk.Toplevel()
-            logwin.attributes('-topmost', 1)  # for Windows, needed?
+            logwin.attributes('-topmost', 1)
             logwin.title('Archive notification')
             logtext = tk.Text(logwin, width=75, height=2,
                               fg='green', bg='grey85',
@@ -701,8 +710,9 @@ class CountGui:
                    'Has the file been created with the --log command line option?\n'
                    'Or perhaps it has been moved?')
             print(msg)
+            # Need a persistent window alert in addition to a terminal alert.
             logwin = tk.Toplevel()
-            logwin.attributes('-topmost', 1)  # for Windows, needed?
+            logwin.attributes('-topmost', 1)
             logwin.title('Archive log error')
             logtext = tk.Text(logwin, width=62, height=4,
                               fg='red', bg='grey85',
@@ -759,6 +769,7 @@ class CountGui:
         # To fit well, pady ^here must match pady of the data label row.
         self.mainwin.after(2468, text.destroy)
 
+    # Optional feature:
     # TODO: Integrate Progressbar widget with count-tasks sleep_timer.
     progress = ttk.Progressbar(orient=tk.HORIZONTAL, length=100,
                                mode='determinate')
@@ -779,9 +790,6 @@ class CountGui:
             self.mainwin.update()
             time.sleep(0.1)
         CountGui.progress["value"] = 0  # Reset bar
-
-# size = mainwin.grid_size()
-# print(size)
 
 
 CountGui()
