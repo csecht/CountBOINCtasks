@@ -158,7 +158,7 @@ class CountGui:
         """
         # Needed for data readability in smallest resized dataframe. Depends
         #   on platform; set for Linux with its largest relative font size.
-        self.mainwin.minsize(446, 390)
+        self.mainwin.minsize(455, 390)
 
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
@@ -455,7 +455,9 @@ class CountGui:
         """
 
         # Starting datetime of count-tasks; fg is invariant here.
+        # Start time label is static; don't need a textvariable.
         tk.Label(self.dataframe, textvariable=self.time_start_sv,
+                 font=('TkTextFont', 10),
                  bg=self.data_bg, fg='grey90'
                  ).grid(row=2, column=1, columnspan=2,
                         padx=10, sticky=tk.EW)
@@ -466,33 +468,33 @@ class CountGui:
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
                  width=20,
                  relief='groove', borderwidth=2,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
                  ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
-                 font=('TkTextFont', 12),
+                 # font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=4, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
-                 font=('TkTextFont', 12),
+                 # font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=5, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=6, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, text=time_range,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=7, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=8, column=1, padx=10, sticky=tk.EW)
 
@@ -521,13 +523,13 @@ class CountGui:
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_t
                  ).grid(row=3, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
                  width=20,
                  relief='groove', borderwidth=2,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_t
                  ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
 
@@ -535,46 +537,46 @@ class CountGui:
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
 
         tk.Label(self.dataframe, textvariable=self.count_now_sv,
-                 font=('TkTextFont', 12),
+                 # font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=4, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
-                 font=('TkTextFont', 12),
+                 # font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.intvl_main
                  ).grid(row=5, column=1, padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=6, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=7, column=1,  padx=10, sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.intvl_stat
                  ).grid(row=8, column=1,
                         padx=10, sticky=tk.EW)
 
         # Summary data, column2
         tk.Label(self.dataframe, textvariable=self.count_uniq_sv,
-                 font=('TkTextFont', 12),
+                 # font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
                  ).grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
-                 font=('TkTextFont', 12),
+                 # font=('TkTextFont', 12),
                  bg=self.data_bg, fg=self.sumry_main
                  ).grid(row=5, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
                  ).grid(row=6, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, text=range_cat,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
                  ).grid(row=7, column=2, padx=(0, 10), sticky=tk.EW)
         tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
-                 font=('TkTextFont', 10),
+                 # font=('TkTextFont', 10),
                  bg=self.data_bg, fg=self.sumry_stat
                  ).grid(row=8, column=2, padx=(0, 10), sticky=tk.EW)
 
@@ -777,8 +779,8 @@ along with this program. If not, see https://www.gnu.org/licenses/
                         relief='flat',
                         border=0)
         text.grid(row=2, column=1, columnspan=2,
-                  padx=(15, 20), pady=(3, 0), sticky=tk.EW)
-        # To fit well, pady ^here must match pady of the data label row.
+                  padx=(15, 20),  sticky=tk.EW)
+        # To fit well, pady ^here must match pady of the same data label row.
         self.mainwin.after(2468, text.destroy)
 
     # Optional feature:
@@ -786,7 +788,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
     progress = ttk.Progressbar(orient=tk.HORIZONTAL, length=100,
                                mode='determinate')
     progress.grid(row=13, column=0, columnspan=3,
-                  padx=5, pady=6, sticky=tk.EW)
+                  padx=5, pady=5, sticky=tk.EW)
 
     def increment_prog(self) -> None:
         """
