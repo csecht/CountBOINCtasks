@@ -188,11 +188,11 @@ class CountGui:
 
         # Set up frame to display data. Putting frame here instead of in
         # mainwin_widgets gives proper alignment of row headers and data.
-        self.dataframe = tk.LabelFrame(borderwidth=2,
+        self.dataframe = tk.LabelFrame(borderwidth=3,
                                        relief='sunken',
                                        background=self.data_bg)
         self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
-                            padx=5, sticky=tk.NSEW)
+                            padx=(5, 10), sticky=tk.NSEW)
         framerows = (2, 3, 4, 5, 6, 7, 8)
         for row in framerows:
             self.dataframe.rowconfigure(row, weight=1)
@@ -251,27 +251,28 @@ class CountGui:
 
         # Create button widgets:
         style = ttk.Style()
-        style.configure('TButton', background='grey80', font=('default', 9))
+        style.configure('TButton', background='grey80', font=('default', 9),
+                        anchor='center')
         ttk.Button(text='View log file',
                    command=self.show_log).grid(row=0, column=0,
                                                padx=5, pady=5)
         ttk.Button(text='Recent count',
                    command=self.config_intvldata).grid(row=0, column=1,
-                                                       padx=2, pady=5)
+                                                       padx=0, pady=5)
         ttk.Button(text='Recent summary',
                    command=self.config_sumrydata).grid(row=0, column=2,
-                                                       padx=2, pady=5)
-        ttk.Button(text="Quit",  # font=('default', 10),
+                                                       padx=(0, 25), pady=5)
+        ttk.Button(text="Quit",
                    command=self.quitnow).grid(row=12, column=2,
                                               padx=5, sticky=tk.E)
         # Start button used only to test progressbar
-        ttk.Button(text="Start bar",  # font=('default', 8),
+        ttk.Button(text="Run test bar",
                    command=self.increment_prog).grid(row=12, column=1,
                                                      padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
-        style = ttk.Style()
+        # style = ttk.Style()
         style.configure('TFrame', background=self.mainwin_bg)
         sep1 = ttk.Frame(self.mainwin, relief="raised", height=6)
         sep2 = ttk.Frame(self.mainwin, relief="raised", height=6)
