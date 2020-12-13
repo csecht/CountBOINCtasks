@@ -39,8 +39,9 @@ except (ImportError, ModuleNotFoundError) as err:
 # #    Depends on copying the module?
 LOGPATH = Path('../count-tasks_log.txt')
 # LOGPATH = Path('count-tasks_log.txt')
-BKUPFILE = "count-tasks_log(copy).txt"
-SCRIPT_VER = '0.5'
+BKUPFILE = 'count-tasks_log(copy).txt'
+MOD_VER = '0.5'
+TITLE = 'stub count-tasks data'
 
 # __author__      = 'cecht, BOINC ID: 990821'
 # __copyright__   = 'Copyright (C) 2020 C. Echt'
@@ -48,7 +49,7 @@ SCRIPT_VER = '0.5'
 #                    'Keith Myers - Testing, debug']
 # __license__     = 'GNU General Public License'
 # __program_name__ = 'count-tasks.py'
-# __version__     = script_ver
+# __version__     = SCRIPT_VER
 # __maintainer__  = 'cecht'
 # __docformat__   = 'reStructuredText'
 # __status__      = 'Development Status :: 4 - Beta'
@@ -64,7 +65,7 @@ class CountGui:
     """
 
     mainwin = tk.Tk()
-    mainwin.title("stub count-tasks data")
+    mainwin.title(TITLE)
 
     def __init__(self, **kwargs):
 
@@ -133,8 +134,10 @@ class CountGui:
         self.count_uniq = None
         self.count_uniq_sv = tk.StringVar()
 
+        # stubdata is only for testing GUI layout.
         self.set_stubdata()
-        # self.set_startdata(**kwargs)
+
+        # self.set_startdata(self.datadict)
         # TODO: Figure out how to bring in data from count-tasks main().
 
         # Set starting data colors (same as config_intvldata) and starting
@@ -142,6 +145,7 @@ class CountGui:
         self.config_startdata()
         self.show_startdata()
 
+        # tkinter loop point
         self.mainwin.mainloop()
 
     def mainwin_cfg(self) -> None:
@@ -294,7 +298,7 @@ class CountGui:
         self.sumry_main[0]  = 'grey60'
         self.sumry_stat[0]  = 'grey60'
         self.show_updatedata()
-        # This redraws data Labels each time. Necessary to update data?
+        # ".show" redraws data Labels each time. Necessary to update data?
         # Or use some .configure method to re-color Labels and update data
         # another way?
 
@@ -318,7 +322,6 @@ class CountGui:
 
         :return: Data for assigning and updating dataframe labels.
         """
-        # return ? what?
 
         # Starting report
         # Stub data strings for testing
@@ -363,7 +366,7 @@ class CountGui:
 
 #    TODO: Figure out how to get startdata from count-tasks.
     # Set methods are for data from count-tasks main().
-    def set_startdata(self, datadict):
+    def set_startdata(self, **datadict):
         # def set_startdata(self, time_start,
         #                   count_intvl, sumry_intvl,
         #                   count_start,
@@ -434,7 +437,7 @@ class CountGui:
         # self.show_updatedata()  # is this needed?
         # mainwin.update()  # is this needed?  Need new values in data labels.
 
-    # Show methods define the data labels.
+    # Methods to define and show data labels.
     def show_startdata(self) -> None:
         """
         Show count-tasks starting data in GUI data table.
@@ -443,11 +446,10 @@ class CountGui:
         """
 
         # Starting datetime of count-tasks; fg is invariant here.
-        # The 0,3 pady makes room for the compliment label.
         tk.Label(self.dataframe, textvariable=self.time_start_sv,
                  bg=self.data_bg, fg='grey90'
                  ).grid(row=2, column=1, columnspan=2,
-                        padx=15, pady=(3, 3), sticky=tk.EW)
+                        padx=15, sticky=tk.EW)
 
         # Starting count data and times (from past boinc-client hour).
         range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
@@ -497,15 +499,15 @@ class CountGui:
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, sticky=tk.W)
 
-    # This method includes the interval and summary data columns.
-    # Make a separate show_sumrydata() method?
-    # Both reports are triggered by a common count-tasks interval event.
     def show_updatedata(self) -> None:
         """
         Place count-tasks data in GUI data table.
 
         :return: count-tasks datatable.
         """
+        # show_updatedata includes the interval and summary data columns.
+        # Make a separate show_sumrydata() method?
+        # Both reports are triggered by a common count-tasks interval event.
 
         # Count and summary interval times
         tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
@@ -580,7 +582,7 @@ class CountGui:
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, sticky=tk.W)
 
-    # Menu and keybind functions below.
+    # Methods for menu items and keybinds.
     def quitnow(self) -> None:
         """Safe and informative exit from the program.
         """
@@ -636,7 +638,7 @@ class CountGui:
         abouttxt = tk.Text(aboutwin, width=72, height=msg_lines+2,
                            background=bkg, foreground='grey98',
                            relief='groove', borderwidth=5, padx=5)
-        abouttxt.insert('1.0', msg + SCRIPT_VER)
+        abouttxt.insert('1.0', msg + MOD_VER)
         # Center text preceding the Author, etc. details.
         abouttxt.tag_add('text1', '1.0', float(msg_lines-5))
         abouttxt.tag_configure('text1', justify='center')
@@ -683,6 +685,7 @@ class CountGui:
 
         :return: A new or overwritten backup file.
         """
+
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGPATH) is True:
             shutil.copyfile(LOGPATH, destination)
