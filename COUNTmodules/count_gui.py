@@ -676,25 +676,27 @@ class CountGui:
             logtext.grid(row=0, column=0, sticky=tk.NSEW)
             logtext.focus_set()
 
-    def backup_log(self) -> None:
+    @staticmethod
+    def backup_log() -> None:
         """
         Copy the log file to the home folder; called from the File menu.
 
         :return: A new or overwritten backup file.
         """
-        # Notify user with two alerts that copy was successful or not.
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGPATH) is True:
             shutil.copyfile(LOGPATH, destination)
             msg = 'Log file has been copied to ' + str(destination)
-            text = tk.Label(text=msg, font=('default', 10),
-                            foreground='DodgerBlue4', background='gold2',
-                            relief='flat')
-            text.grid(row=9, column=0, columnspan=3,
-                      padx=5, pady=6,
-                      sticky=tk.EW)
-            self.mainwin.after(4000, text.destroy)
-            # Need a persistent window alert in addition to transient row alert.
+            # Main window alert; needed along with notification in new window?
+            # text = tk.Label(text=msg, font=('default', 10),
+            #                 foreground='DodgerBlue4', background='gold2',
+            #                 relief='flat')
+            # text.grid(row=9, column=0, columnspan=3,
+            #           padx=5, pady=6,
+            #           sticky=tk.EW)
+            # self.mainwin.after(4000, text.destroy)
+
+            # Need a persistent window alert.
             logwin = tk.Toplevel()
             logwin.attributes('-topmost', 1)
             logwin.title('Archive notification')
