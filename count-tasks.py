@@ -214,8 +214,9 @@ def get_timestats(count: int, taskt: iter) -> dict:
 
 def main() -> None:
     """
-    Main flow for count-tasks.py utility. Counts and times reported tasks.
+    Main flow for count-tasks.py utility. Reports task counts and times.
     """
+
     # NOTE: --interval and --summary argument formats are different
     #   because summary times can be min, hr, or days, while interval times
     #   are always minutes (60m maximum).

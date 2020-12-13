@@ -146,7 +146,10 @@ class CountGui:
         self.config_startdata()
         self.show_startdata()
 
-        # tkinter loop point
+        # tkinter's infinite event loop
+        # "Always call mainloop as the last logical line of code in your
+        # program." per Bryan Oakly:
+        # https://stackoverflow.com/questions/29158220/tkinter-understanding-mainloop
         self.mainwin.mainloop()
 
     def mainwin_cfg(self) -> None:
@@ -165,10 +168,9 @@ class CountGui:
         self.mainwin_bg = 'SkyBlue4'
         self.mainwin.configure(bg=self.mainwin_bg)
 
-        # Use of theme can override most tk font and border options.
-        # Controls entire window theme, but only for ttk.Style objects.
+        # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
-        ttk.Style().theme_use('classic')
+        ttk.Style().theme_use('alt')
 
         self.mainwin.bind("<Escape>", lambda q: self.quitnow())
         self.mainwin.bind("<Control-q>", lambda q: self.quitnow())
@@ -232,7 +234,8 @@ class CountGui:
         menu.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
         file.add_separator()
-        file.add_command(label="Quit", command=self.quitnow, accelerator="Ctrl+Q")
+        file.add_command(label="Quit", command=self.quitnow,
+                         accelerator="Ctrl+Q")
 
         view = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="View", menu=view)
@@ -247,22 +250,24 @@ class CountGui:
         info.add_command(label="About", command=self.about)
 
         # Create button widgets:
-        tk.Button(text='View log file',
-                  command=self.show_log).grid(row=0, column=0,
-                                              padx=5, pady=5)
-        tk.Button(text='Recent count',
-                  command=self.config_intvldata).grid(row=0, column=1,
-                                                      padx=2, pady=5)
-        tk.Button(text='Recent summary',
-                  command=self.config_sumrydata).grid(row=0, column=2,
-                                                      padx=2, pady=5)
-        tk.Button(text="Quit", font=('default', 10),
-                  command=self.quitnow).grid(row=12, column=2,
-                                             padx=5, sticky=tk.E)
+        style = ttk.Style()
+        style.configure('TButton', background='grey80', font=('default', 9))
+        ttk.Button(text='View log file',
+                   command=self.show_log).grid(row=0, column=0,
+                                               padx=5, pady=5)
+        ttk.Button(text='Recent count',
+                   command=self.config_intvldata).grid(row=0, column=1,
+                                                       padx=2, pady=5)
+        ttk.Button(text='Recent summary',
+                   command=self.config_sumrydata).grid(row=0, column=2,
+                                                       padx=2, pady=5)
+        ttk.Button(text="Quit",  # font=('default', 10),
+                   command=self.quitnow).grid(row=12, column=2,
+                                              padx=5, sticky=tk.E)
         # Start button used only to test progressbar
-        tk.Button(text="Start bar", font=('default', 8),
-                  command=self.increment_prog).grid(row=12, column=1,
-                                                    padx=5, sticky=tk.E)
+        ttk.Button(text="Start bar",  # font=('default', 8),
+                   command=self.increment_prog).grid(row=12, column=1,
+                                                     padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
