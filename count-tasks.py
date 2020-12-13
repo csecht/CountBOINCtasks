@@ -332,20 +332,20 @@ def main() -> None:
                      indent, args.count_lim,
                      report)
     # TODO: figure out how to pass report data to GUI module.
-    args.gui = True
-    if args.gui is True:
-        from COUNTmodules import count_gui  # draws gui then stops here.
-        # Need to pass data to gui module before tkinter draws window.
-        datadict = {'time_start': time_start,
-                     'count_intvl': count_intvl,
-                     'sumry_intvl': sumry_intvl,
-                     'count_start': count_start,
-                     'tt_lo': tt_lo, 'tt_hi': tt_hi,
-                     'tt_sd': tt_sd, 'tt_sum': tt_sum,
-                     'count_lim': count_lim}
-        print('this is data from ct:', datadict)  # for testing
-        # GUI = count_gui.CountGui
-        count_gui.CountGui.set_startdata(**datadict)
+    # args.gui = True
+    # if args.gui is True:
+    #     from COUNTmodules import count_gui  # draws gui then stops here.
+    #     # Need to pass data to gui module before tkinter draws window.
+    #     datadict = {'time_start': time_start,
+    #                  'count_intvl': count_intvl,
+    #                  'sumry_intvl': sumry_intvl,
+    #                  'count_start': count_start,
+    #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+    #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+    #                  'count_lim': count_lim}
+    #     print('this is data from ct:', datadict)  # for testing
+    #     # GUI = count_gui.CountGui
+    #     count_gui.CountGui.set_startdata(**datadict)
 
     # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
     # Need to push data to count_gui or pull data from within count_gui??

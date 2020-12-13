@@ -40,7 +40,7 @@ except (ImportError, ModuleNotFoundError) as err:
 LOGPATH = Path('../count-tasks_log.txt')
 # LOGPATH = Path('count-tasks_log.txt')
 BKUPFILE = 'count-tasks_log(copy).txt'
-MOD_VER = '0.5'
+PROGRAM_VER = '0.5'
 TITLE = 'stub count-tasks data'
 
 # __author__      = 'cecht, BOINC ID: 990821'
@@ -63,6 +63,7 @@ class CountGui:
     """
     A GUI window to display data from count-tasks.
     """
+    # pylint: disable=too-many-instance-attributes
 
     mainwin = tk.Tk()
     mainwin.title(TITLE)
@@ -88,7 +89,7 @@ class CountGui:
         self.sumry_main = ['']
         self.sumry_stat = ['']
 
-        # Vars names are used only in stubdata().
+        # Data var names=None are used only in stubdata().
         # _sv can be refactored w/o suffix and assigned as StringVar
         # objects in a for loop with .append from a list or dictionary?
         # Starting data report var
@@ -150,7 +151,7 @@ class CountGui:
 
     def mainwin_cfg(self) -> None:
         """
-        Configure colors, bindings, and basic behavior of main window.
+        Configure colors, bindings, and basic behavior of main Tk window.
         """
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
@@ -172,8 +173,8 @@ class CountGui:
         # Make data rows and columns stretch with window drag size; don't
         # stretch separators.
         rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12)
-        for r in rows2config:
-            self.mainwin.rowconfigure(r, weight=1)
+        for _r in rows2config:
+            self.mainwin.rowconfigure(_r, weight=1)
 
         self.mainwin.columnconfigure(1, weight=1)
         self.mainwin.columnconfigure(2, weight=1)
@@ -215,7 +216,7 @@ class CountGui:
 
     def mainwin_widgets(self) -> None:
         """
-        Layout menus, buttons, separators, row labels in main window.
+        Layout menus, buttons, separators, row labels in main Tk window.
         """
 
         # creating a menu instance
@@ -251,14 +252,13 @@ class CountGui:
         tk.Button(text='Recent summary',
                   command=self.config_sumrydata).grid(row=0, column=2,
                                                       padx=2, pady=5)
+        tk.Button(text="Quit", font=('default', 10),
+                  command=self.quitnow).grid(row=12, column=2,
+                                             padx=5, sticky=tk.E)
         # Start button used only to test progressbar
         tk.Button(text="Start bar", font=('default', 8),
                   command=self.increment_prog).grid(row=12, column=1,
                                                     padx=5, sticky=tk.E)
-
-        tk.Button(text="Quit", font=('default', 10),
-                  command=self.quitnow).grid(row=12, column=2,
-                                             padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -638,7 +638,7 @@ class CountGui:
         abouttxt = tk.Text(aboutwin, width=72, height=msg_lines+2,
                            background=bkg, foreground='grey98',
                            relief='groove', borderwidth=5, padx=5)
-        abouttxt.insert('1.0', msg + MOD_VER)
+        abouttxt.insert('1.0', msg + PROGRAM_VER)
         # Center text preceding the Author, etc. details.
         abouttxt.tag_add('text1', '1.0', float(msg_lines-5))
         abouttxt.tag_configure('text1', justify='center')
