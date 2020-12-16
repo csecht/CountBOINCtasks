@@ -63,7 +63,7 @@ BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5'
 TITLE = 'count-tasks.py'
 
-# Here logging is lazily employed to create a file of report data.
+# Here logging is lazily employed to manage the file of report data.
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
@@ -261,9 +261,6 @@ class CountGui:
         self.sumry_highlite = ['']
         self.sumry_lowlite = ['']
 
-        # Data var names=None are used only in stubdata().
-        # _sv can be refactored w/o suffix and assigned as StringVar
-        # objects in a for loop with .append from a list or dictionary?
         # Starting data report var
         self.count_lim = None
         self.time_start = None
@@ -291,13 +288,12 @@ class CountGui:
         # stubdata is only for testing GUI layout.
         # self.set_stubdata()
 
+        # The data dictionary is from main().
         self.set_startdata(datadict)
-        # TODO: Figure out how to bring in data from count-tasks main().
-
-        # Set starting data colors (same as config_intvldata) and starting
-        #   data labels.
-        self.config_startdata()
-        # self.show_startdata()
+        # Set starting data style (is same style as config_intvldata).
+        # self.config_startdata()  # <- ??can't call show from config?
+        # # Make labels in mainwin and dataframe to show the data.
+        self.show_startdata()
 
         # tkinter's infinite event loop
         # "Always call mainloop as the last logical line of code in your
@@ -433,6 +429,97 @@ class CountGui:
         sep2.grid(column=0, row=9, columnspan=5,
                   padx=5, pady=(6, 6), sticky=tk.EW)
 
+    def set_stubdata(self) -> None:
+        """
+        Test data for GUI table layout.
+
+        :return: Data for assigning and updating dataframe labels.
+        """
+
+        # Starting report
+        self.count_lim = '1008'
+        self.time_start = '2020-Nov-10 10:00:10'
+        self.count_intvl = '60m'
+        self.sumry_intvl = '1d'
+        self.count_start = '24'
+
+        # Common data reports
+        self.tt_mean = '00:25:47'
+        self.tt_sd = '00:00:26'
+        self.tt_lo = '00:17:26'
+        self.tt_hi = '00:25:47'
+        self.tt_sum = '10:25:47'
+        self.time_now = '2020-Nov-17 11:14:25'
+        self.count_next = '27m'
+        self.count_remain = '1000'
+
+        # Interval data report
+        self.count_now = '21'
+        # self.tic_nnt = 0
+
+        # Summary data report
+        self.count_uniq = '123'
+
+    # Set methods: for data from count-tasks main().
+    def set_startdata(self, datadict: dict) -> None:
+        """
+        Set label variables with starting data from count-tasks main().
+
+        :param datadict: Dict of report data vars with matching keywords.
+        :type datadict: dict
+        :return: Initial textvariables for datatable labels.
+        """
+        # print('this is startdata from gui:', datadict)  # for testing
+        self.time_start = datadict['time_start']
+        self.count_intvl = datadict['count_intvl']
+        self.sumry_intvl = datadict['sumry_intvl']
+        self.count_start = datadict['count_start']
+        self.tt_mean = datadict['tt_mean']
+        self.tt_hi = datadict['tt_hi']
+        self.tt_lo = datadict['tt_lo']
+        self.tt_sd = datadict['tt_sd']
+        self.tt_sum = datadict['tt_sum']
+        self.count_lim = datadict['count_lim']
+
+        self.config_startdata()
+
+    def set_intvldata(self, datadict: dict) -> None:
+        """
+        Set StringVars with interval data from count-tasks main().
+
+        :param datadict: Dict of report data vars with matching keywords.
+        :return: Interval values for datatable labels.
+        """
+
+        self.time_now = datadict['time_now']
+        self.count_now = datadict['count_now']
+        self.tt_mean = datadict['tt_mean']
+        self.tt_lo = datadict['tt_lo']
+        self.tt_hi = datadict['tt_hi']
+        self.tt_sd = datadict['tt_sd']
+        self.tt_sum = datadict['tt_sum']
+        self.count_remain = datadict['count_remain']
+
+        self.config_intvldata()
+
+    def set_sumrydata(self, datadict: dict) -> None:
+        """
+        Set StringVars with summary data from count-tasks main().
+
+        :param datadict: Dict of report data vars with matching keywords.
+        :return: Summary values for datatable labels.
+        """
+
+        self.time_now = datadict['time_now']
+        self.count_uniq = datadict['count_uniq']
+        self.tt_hi = datadict['tt_hi']
+        self.tt_lo = datadict['tt_lo']
+        self.tt_sd = datadict['tt_sd']
+        self.tt_sum = datadict['tt_sum']
+
+        self.config_sumrydata()
+
+    # Config methods: set font emphasis styles.
     def config_startdata(self) -> None:
         """
         Populate initial data table from count-tasks.
@@ -446,7 +533,7 @@ class CountGui:
         self.sumry_highlite[0]  = 'grey60'
         self.sumry_lowlite[0]  = 'grey60'
 
-        self.show_startdata()
+        # self.show_startdata()
 
     def config_intvldata(self) -> None:
         """
@@ -481,99 +568,7 @@ class CountGui:
 
         self.show_updatedata()
 
-    def set_stubdata(self) -> None:
-        """
-        Test data for GUI table layout.
-
-        :return: Data for assigning and updating dataframe labels.
-        """
-
-        # Starting report
-        self.count_lim = '1008'
-        self.time_start = '2020-Nov-10 10:00:10'
-        self.count_intvl = '60m'
-        self.sumry_intvl = '1d'
-        self.count_start = '24'
-
-        # Common data reports
-        self.tt_mean = '00:25:47'
-        self.tt_sd = '00:00:26'
-        self.tt_lo = '00:17:26'
-        self.tt_hi = '00:25:47'
-        self.tt_sum = '10:25:47'
-        self.time_now = '2020-Nov-17 11:14:25'
-        self.count_next = '27m'
-        self.count_remain = '1000'
-
-        # Interval data report
-        self.count_now = '21'
-        # self.tic_nnt = 0
-
-        # Summary data report
-        self.count_uniq = '123'
-
-#    TODO: Figure out how to get startdata from count-tasks.
-    # Set methods are for data from count-tasks main().
-    def set_startdata(self, datadict: dict) -> None:
-        """
-        Set label variables with starting data from count-tasks main().
-
-        :param datadict: Dict of report data vars with matching keywords.
-        :type datadict: dict
-        :return: Initial textvariables for datatable labels.
-        """
-        # print('this is startdata from gui:', datadict)  # for testing
-        self.time_start = datadict['time_start']
-        self.count_intvl = datadict['count_intvl']
-        self.sumry_intvl = datadict['sumry_intvl']
-        self.count_start = datadict['count_start']
-        self.tt_mean = datadict['tt_mean']
-        self.tt_hi = datadict['tt_hi']
-        self.tt_lo = datadict['tt_lo']
-        self.tt_sd = datadict['tt_sd']
-        self.tt_sum = datadict['tt_sum']
-        self.count_lim = datadict['count_lim']
-
-        self.config_startdata()
-
-    def set_intvldata(self, datadict: dict) -> None:
-        """
-        Set StringVars with interval data from count-tasks main().
-
-        :param datadict: Dict of report data vars with matching keywords.
-        :return: Interval values for datatable labels.
-        """
-
-        self.time_now = datadict['time_now']
-        self.count_now = datadict['count_now']
-        self.tt_hi = datadict['tt_hi']
-        self.tt_lo = datadict['tt_lo']
-        self.tt_sd = datadict['tt_sd']
-        self.tt_sum = datadict['tt_sum']
-        self.count_remain = datadict['count_remain']
-
-        self.show_updatedata()
-        self.mainwin.update()  # is this needed?
-
-    def set_sumrydata(self, datadict: dict) -> None:
-        """
-        Set StringVars with summary data from count-tasks main().
-
-        :param datadict: Dict of report data vars with matching keywords.
-        :return: Summary values for datatable labels.
-        """
-
-        self.time_now = datadict['time_now']
-        self.count_uniq = datadict['count_uniq']
-        self.tt_hi = datadict['tt_hi']
-        self.tt_lo = datadict['tt_lo']
-        self.tt_sd = datadict['tt_sd']
-        self.tt_sum = datadict['tt_sum']
-
-        self.show_updatedata()
-        self.mainwin.update()  # is this needed?
-
-    # Methods to define and show data labels.
+    # Show methods: define and display data labels.
     def show_startdata(self) -> None:
         """
         Show starting count-tasks data in GUI window.
@@ -602,6 +597,7 @@ class CountGui:
                  relief='groove', borderwidth=2,
                  bg=self.data_bg, fg=self.sumry_time
                  ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
+
         tk.Label(self.dataframe,
                  text=self.count_start,
                  bg=self.data_bg, fg=self.intvl_highlite
@@ -625,9 +621,9 @@ class CountGui:
 
         # Previous and until task count times.
         tk.Label(self.mainwin,
-                 text='# tasks reported is for the past hour.',
+                 text='The most recent BOINC report.',
                  bg=self.mainwin_bg, fg=self.row_fg
-                 ).grid(row=10, column=1, sticky=tk.W)
+                 ).grid(row=10, column=1, columnspan=2, sticky=tk.W)
         tk.Label(self.mainwin,
                  text=self.count_lim,
                  bg=self.mainwin_bg, fg=self.row_fg
@@ -648,6 +644,8 @@ class CountGui:
         # Both reports are triggered by a common count-tasks interval event.
 
         # Count and summary interval times
+        time_range = self.tt_lo + ' -- ' + self.tt_hi
+
         tk.Label(self.dataframe, text=self.count_intvl,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
@@ -660,8 +658,6 @@ class CountGui:
                  ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
 
         # Interval data, column1
-        time_range = self.tt_lo + ' -- ' + self.tt_hi
-
         tk.Label(self.dataframe, text=self.count_now,
                  bg=self.data_bg, fg=self.intvl_highlite
                  ).grid(row=4, column=1, padx=10, sticky=tk.EW)
@@ -1042,7 +1038,7 @@ def main() -> None:
                      indent, args.summary,
                      indent, args.count_lim,
                      report)
-    args.gui = True  # For testing
+    args.gui = True  # For testing only.
     if args.gui is True:
         datadict = {'time_start':  time_start,
                     'count_intvl': count_intvl,
@@ -1059,10 +1055,7 @@ def main() -> None:
         gui.set_startdata(datadict)
     # TODO: Fix code to allow program to continue after CountGui is called.
 
-    # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
-    # Need to push data to count_gui or pull data from within count_gui??
-    # EVENTS happen on this side, so PUSH to count_gui.
-    #
+    # Repeat for gui.set_intvldata(**intvldata)
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -1100,6 +1093,7 @@ def main() -> None:
         # Suppress full report for no new tasks, which are expected for
         # long-running tasks (b/c 60 m is longest allowed count interval).
         # Overwrite successive NNT reports for a tidy terminal window: \x1b[A.
+        # TODO: Develop GUI report for no new tasks.
         if count_now == 0:
             tic_nnt += 1
             report = (f'{time_now}; '
@@ -1130,14 +1124,19 @@ def main() -> None:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
-            # if args.gui is True:
-            #     intvldata = {"time_now": time_now,
-            #                  'count_now': count_now,
-            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
-            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
-            #                  'count_remain': count_remain
-            #                  }
-            #     GUI.set_intvldata(**intvldata)
+            if args.gui is True:
+                datadict = {
+                            'time_now':     time_now,
+                            'count_now':    count_now,
+                            'tt_mean':      tt_mean,
+                            'tt_lo':        tt_lo,
+                            'tt_hi':        tt_hi,
+                            'tt_sd':        tt_sd,
+                            'tt_sum':       tt_sum,
+                            'count_remain': count_remain}
+                # print('this is data from ct:', datadict)  # For testing
+                gui = CountGui(datadict)
+                gui.set_intvldata(datadict)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
