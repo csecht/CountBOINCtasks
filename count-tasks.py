@@ -39,7 +39,7 @@ import sys
 import time as t
 from datetime import datetime
 
-from COUNTmodules import boinc_command  #, count_gui
+from COUNTmodules import boinc_command  #, count_gui2  # , count_gui
 
 BC = boinc_command.BoincCommand()
 # GUI = count_gui.CountGui()
@@ -346,7 +346,7 @@ def main() -> None:
     #                  'count_lim': count_lim}
     #     print('this is data from ct:', datadict)  # for testing
     #     # GUI = count_gui.CountGui
-    #     count_gui.CountGui.set_startdata(**datadict)
+    #     count_gui2.CountGui.set_startdata(**datadict)
 
     # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
     # Need to push data to count_gui or pull data from within count_gui??

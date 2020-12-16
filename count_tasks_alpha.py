@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
+
 """
-A dummy module; a template GUI for displaying count-tasks data.
+count_now-tasks.py counts reported boinc-client tasks at set intervals.
 
     Copyright (C) 2020 C. Echt
 
@@ -18,45 +19,216 @@ A dummy module; a template GUI for displaying count-tasks data.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
-import random
-import shutil
-import time
+__author__ = 'cecht, BOINC ID: 990821'
+__copyright__ = 'Copyright (C) 2020 C. Echt'
+__credits__ = ['Inspired by rickslab-gpu-utils',
+               'Keith Myers - Testing, debug']
+__license__ = 'GNU General Public License'
+__version__ = '0.5x'
+__program_name__ = 'count-tasks.py'
+__maintainer__ = 'cecht'
+__docformat__ = 'reStructuredText'
+__status__ = 'Development Status :: 5 - ALPHA'
 
+import argparse
+import logging
+import random
+import re
+import shutil
+import statistics as stat
+import subprocess
+import sys
+import time as t
+from datetime import datetime
 from pathlib import Path
-# from COUNTmodules import boinc_command
+
+from COUNTmodules import boinc_command
 
 try:
     import tkinter as tk
     import tkinter.ttk as ttk
     from tkinter.scrolledtext import ScrolledText
-except (ImportError, ModuleNotFoundError) as err:
+except (ImportError, ModuleNotFoundError) as error:
     print('GUI requires tkinter, which is included with Python 3.7 and higher')
     print('Install 3.7+ or re-install Python and include Tk/Tcl.')
-    print(f'See also: https://tkdocs.com/tutorial/install.html \n{err}')
+    print(f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
+BC = boinc_command.BoincCommand()
 # # Assume log file is in the CountBOINCtasks-master folder.
 # # Not sure what determines the relative Project path.
 # #    Depends on copying the module?
-LOGPATH = Path('../count-tasks_log.txt')
-# LOGPATH = Path('count-tasks_log.txt')
+# LOGPATH = Path('../count-tasks_log.txt')
+LOGPATH = Path('count-tasks_log.txt')
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5'
-TITLE = 'stub count-tasks data'
+TITLE = 'count-tasks.py'
 
-# __author__      = 'cecht, BOINC ID: 990821'
-# __copyright__   = 'Copyright (C) 2020 C. Echt'
-# __credits__     = ['Inspired by rickslab-gpu-utils',
-#                    'Keith Myers - Testing, debug']
-# __license__     = 'GNU General Public License'
-# __program_name__ = 'count-tasks.py'
-# __version__     = SCRIPT_VER
-# __maintainer__  = 'cecht'
-# __docformat__   = 'reStructuredText'
-# __status__      = 'Development Status :: 4 - Beta'
+# Here logging is lazily employed to create a file of report data.
+logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
+                    filemode="a", format='%(message)s')
 
-# https://python.readthedocs.io/en/stable/library/tk.html
-# Original code source:
-# https://pythonprogramming.net/python-3-tkinter-basics-tutorial/
+
+def check_args(parameter) -> None:
+    """
+    Check command line arguments for errors.
+
+    :param parameter: Used for the --summary parameter.
+    :return: If no errors, return the parameter string.
+    """
+
+    if parameter == "0":
+        msg = "Parameter value cannot be zero."
+        raise argparse.ArgumentTypeError(msg)
+    # Evaluate the --summary parameter, expect e.g., 15m, 2h, 1d, etc.
+    if parameter != "0":
+        valid_units = ['m', 'h', 'd']
+        val = (parameter[:-1])
+        unit = parameter[-1]
+        if str(unit) not in valid_units:
+            msg = f"TIME unit must be m, h, or d, not {unit}"
+            raise argparse.ArgumentTypeError(msg)
+        try:
+            int(val)
+        except ValueError as err:
+            msg = "TIME must be an integer"
+            raise argparse.ArgumentTypeError(msg) from err
+    return parameter
+
+
+def get_min(time_string: str) -> int:
+    """Convert time string to minutes.
+
+    :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
+    :return: Time as integer minutes.
+    """
+    t_min = {'m': 1,
+             'h': 60,
+             'd': 1440}
+    val = int(time_string[:-1])
+    unit = time_string[-1]
+    try:
+        return t_min[unit] * val
+    except KeyError as err:
+        msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
+        raise KeyError(msg) from err
+
+
+def fmt_sec(secs: int, fmt: str) -> str:
+    """Convert seconds to the specified time format for display.
+
+    :param secs: Time in seconds, any integer except 0.
+    :param fmt: Either 'std' or 'short'
+    :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
+    """
+    # Time conversion concept from Niko
+    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
+
+    _m, _s = divmod(secs, 60)
+    _h, _m = divmod(_m, 60)
+    day, _h = divmod(_h, 24)
+    msg = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
+          f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
+    if fmt == 'short':
+        if secs >= 86400:
+            return f'{day:1d}d'  # option, add {h:01d}h'
+        if 86400 > secs >= 3600:
+            return f'{_h:01d}h'  # option, add :{m:01d}m
+        if 3600 > secs >= 60:
+            return f'{_m:01d}m'  # option, add :{s:01d}s
+        return f'{_s:01d}s'
+    if fmt == 'std':
+        if secs >= 86400:
+            return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
+        return f'{_h:02d}:{_m:02d}:{_s:02d}'
+    return msg
+
+
+def sleep_timer(interval: int) -> print:
+    """Provide sleep intervals and display countdown timer.
+
+    :param interval: Minutes between task counts; range[5-60, by 5's]
+    :return: A terminal/console graphic that displays time remaining.
+    """
+    # Idea for development from
+    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
+
+    # Initial timer bar length; 60 fits well with most clock times.
+    bar_len = 60
+    prettybar = ' ' * bar_len
+    # Need to assign for-loop decrement time & total sleep time as seconds.
+    # Need bar segment sleep time, in sec.; is a factor of bar length.
+    total_s = interval * 60
+    barseg_s = round(total_s / bar_len)
+    remain_s = total_s
+
+    # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
+    whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
+    whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
+    reset = '\x1b[0m'  # No color, reset to system default.
+    del_line = '\x1b[2K'  # Clear entire line.
+
+    # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
+    # because there is no external input.
+    if sys.platform[:3] == 'win':
+        subprocess.call('', shell=True)
+
+    # Not +1 in range because need only to sleep to END of interval.
+    for i in range(bar_len):
+        remain_bar = prettybar[i:]
+        length = len(remain_bar)
+        print(f"\r{del_line}{whitexx_on_red}"
+              f"{fmt_sec(remain_s, 'short')}{remain_bar}"
+              f"{reset}|< ~time to next count", end='')
+        if length == 1:
+            print(f"\r{del_line}{whitexx_on_grn}"
+                  f"{fmt_sec(remain_s, 'short')}{remain_bar}"
+                  f"{reset}|< ~time to next count", end='')
+        remain_s = (remain_s - barseg_s)
+        # Need to clear the line for main() report printing.
+        if length == 0:
+            print(f'\r{del_line}')
+        # t.sleep(.5)  # DEBUG
+        t.sleep(barseg_s)
+
+
+def get_timestats(count: int, taskt: iter) -> dict:
+    """
+    Sum and run statistics from times, as seconds (integers or floats).
+
+    :param count: The number of elements in taskt.
+    :param taskt: A list, tuple, or set of times, in seconds.
+    :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; values as:
+    00:00:00.
+    """
+    total = fmt_sec(int(sum(set(taskt))), 'std')
+    if count > 1:
+        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
+        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
+        low = fmt_sec(int(min(taskt)), 'std')
+        high = fmt_sec(int(max(taskt)), 'std')
+        return {
+            'tt_sum':   total,
+            'tt_mean':  mean,
+            'tt_sd':    stdev,
+            'tt_min':   low,
+            'tt_max':   high
+        }
+    if count == 1:
+        return {
+            'tt_sum':   total,
+            'tt_mean':  total,
+            'tt_sd':    'na',
+            'tt_min':   'na',
+            'tt_max':   'na'
+        }
+
+    return {
+        'tt_sum':   '00:00:00',
+        'tt_mean':  'na',
+        'tt_sd':    'na',
+        'tt_min':   'na',
+        'tt_max':   'na'
+        }
 
 
 class CountGui:
@@ -68,9 +240,9 @@ class CountGui:
     mainwin = tk.Tk()
     mainwin.title(TITLE)
 
-    def __init__(self, **kwargs):
+    def __init__(self, datadict: dict):
 
-        self.datadict = kwargs
+        self.datadict = datadict
 
         self.row_fg = None
         self.data_bg = None
@@ -82,12 +254,12 @@ class CountGui:
 
         # Mutable color variables used for emphasizing different data
         # categories via buttons.
-        self.intvl_t    = ['']
-        self.intvl_main = ['']
-        self.intvl_stat = ['']
-        self.sumry_t    = ['']
-        self.sumry_main = ['']
-        self.sumry_stat = ['']
+        self.intvl_time    = ['']
+        self.intvl_highlite = ['']
+        self.intvl_lowlite = ['']
+        self.sumry_time    = ['']
+        self.sumry_highlite = ['']
+        self.sumry_lowlite = ['']
 
         # Data var names=None are used only in stubdata().
         # _sv can be refactored w/o suffix and assigned as StringVar
@@ -99,52 +271,33 @@ class CountGui:
         self.sumry_intvl = None
         self.count_start = None
 
-        self.count_lim_sv = tk.StringVar()
-        self.time_start_sv = tk.StringVar()
-        self.count_intvl_sv = tk.StringVar()
-        self.sumry_intvl_sv = tk.StringVar()
-        self.count_start_sv = tk.StringVar()
-
         # Common data reports var
         self.tt_mean = None
         self.tt_sd = None
-        self.tt_lo = None
-        self.tt_hi = None
+        self.tt_lo = ''
+        self.tt_hi = ''
         self.tt_sum = None
         self.time_now = None
         self.count_next = None
         self.count_remain = None
 
-        self.tt_mean_sv = tk.StringVar()
-        self.tt_sd_sv = tk.StringVar()
-        self.tt_lo_sv = tk.StringVar()
-        self.tt_hi_sv = tk.StringVar()
-        self.tt_sum_sv = tk.StringVar()
-        self.time_now_sv = tk.StringVar()
-        self.next_var = tk.StringVar()
-        self.count_remain_sv = tk.StringVar()
-
         # Unique to interval data report var
         self.count_now = None
         self.tic_nnt = None
 
-        self.count_now_sv = tk.StringVar()
-        self.tic_nnt_sv = tk.IntVar()
-
         # Unique to summary data report var
         self.count_uniq = None
-        self.count_uniq_sv = tk.StringVar()
 
         # stubdata is only for testing GUI layout.
-        self.set_stubdata()
+        # self.set_stubdata()
 
-        # self.set_startdata(self.datadict)
+        self.set_startdata(datadict)
         # TODO: Figure out how to bring in data from count-tasks main().
 
         # Set starting data colors (same as config_intvldata) and starting
         #   data labels.
         self.config_startdata()
-        self.show_startdata()
+        # self.show_startdata()
 
         # tkinter's infinite event loop
         # "Always call mainloop as the last logical line of code in your
@@ -265,9 +418,9 @@ class CountGui:
                    command=self.quitnow).grid(row=12, column=2,
                                               padx=5, sticky=tk.E)
         # Start button used only to test progressbar
-        ttk.Button(text="Run test bar",
-                   command=self.increment_prog).grid(row=12, column=1,
-                                                     padx=5, sticky=tk.E)
+        # ttk.Button(text="Run test bar",
+        #            command=self.increment_prog).grid(row=12, column=1,
+        #                                              padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -286,12 +439,13 @@ class CountGui:
 
         :return: Starting BOINC data from past hour.
         """
-        self.intvl_t[0]     = 'grey90'
-        self.intvl_main[0]  = 'gold'
-        self.intvl_stat[0]  = 'grey90'
-        self.sumry_t[0]     = 'grey60'
-        self.sumry_main[0]  = 'grey60'
-        self.sumry_stat[0]  = 'grey60'
+        self.intvl_time[0]     = 'grey90'
+        self.intvl_highlite[0]  = 'gold'
+        self.intvl_lowlite[0]  = 'grey90'
+        self.sumry_time[0]     = 'grey60'
+        self.sumry_highlite[0]  = 'grey60'
+        self.sumry_lowlite[0]  = 'grey60'
+
         self.show_startdata()
 
     def config_intvldata(self) -> None:
@@ -300,12 +454,13 @@ class CountGui:
 
         :return: Highlighted interval data, de-emphasized summary data.
         """
-        self.intvl_t[0]     = 'grey90'
-        self.intvl_main[0]  = 'gold'
-        self.intvl_stat[0]  = 'grey90'
-        self.sumry_t[0]     = 'grey60'
-        self.sumry_main[0]  = 'grey60'
-        self.sumry_stat[0]  = 'grey60'
+        self.intvl_time[0]     = 'grey90'
+        self.intvl_highlite[0]  = 'gold'
+        self.intvl_lowlite[0]  = 'grey90'
+        self.sumry_time[0]     = 'grey60'
+        self.sumry_highlite[0]  = 'grey60'
+        self.sumry_lowlite[0]  = 'grey60'
+
         self.show_updatedata()
         # ".show" redraws data Labels each time. Necessary to update data?
         # Or use some .configure method to re-color Labels and update data
@@ -317,15 +472,16 @@ class CountGui:
 
         :return: Highlighted summary data, de-emphasized interval data.
         """
-        self.intvl_t[0]     = 'grey60'
-        self.intvl_main[0]  = 'grey60'
-        self.intvl_stat[0]  = 'grey60'
-        self.sumry_t[0]     = 'grey90'
-        self.sumry_main[0]  = 'gold'
-        self.sumry_stat[0]  = 'grey90'
+        self.intvl_time[0]     = 'grey60'
+        self.intvl_highlite[0]  = 'grey60'
+        self.intvl_lowlite[0]  = 'grey60'
+        self.sumry_time[0]     = 'grey90'
+        self.sumry_highlite[0]  = 'gold'
+        self.sumry_lowlite[0]  = 'grey90'
+
         self.show_updatedata()
 
-    def set_stubdata(self):
+    def set_stubdata(self) -> None:
         """
         Test data for GUI table layout.
 
@@ -333,261 +489,221 @@ class CountGui:
         """
 
         # Starting report
-        # Stub data strings for testing
         self.count_lim = '1008'
-        self.count_lim_sv.set(self.count_lim)
         self.time_start = '2020-Nov-10 10:00:10'
-        self.time_start_sv.set(self.time_start)
         self.count_intvl = '60m'
-        self.count_intvl_sv.set(self.count_intvl)
         self.sumry_intvl = '1d'
-        self.sumry_intvl_sv.set(self.sumry_intvl)
         self.count_start = '24'
-        self.count_start_sv.set(self.count_start)
 
         # Common data reports
         self.tt_mean = '00:25:47'
-        self.tt_mean_sv.set(self.tt_mean)
         self.tt_sd = '00:00:26'
-        self.tt_sd_sv.set(self.tt_sd)
         self.tt_lo = '00:17:26'
-        self.tt_lo_sv.set(self.tt_lo)
         self.tt_hi = '00:25:47'
-        self.tt_hi_sv.set(self.tt_hi)
         self.tt_sum = '10:25:47'
-        self.tt_sum_sv.set(self.tt_sum)
         self.time_now = '2020-Nov-17 11:14:25'
-        self.time_now_sv.set(self.time_now)
         self.count_next = '27m'
-        self.next_var.set(self.count_next)
         self.count_remain = '1000'
-        self.count_remain_sv.set(self.count_remain)
 
         # Interval data report
         self.count_now = '21'
-        self.count_now_sv.set(self.count_now)
         # self.tic_nnt = 0
-        # self.tic_nnt_sv.set(self.tic_nnt)
 
         # Summary data report
         self.count_uniq = '123'
-        self.count_uniq_sv.set(self.count_uniq)
 
 #    TODO: Figure out how to get startdata from count-tasks.
     # Set methods are for data from count-tasks main().
-    def set_startdata(self, **datadict):
-        # def set_startdata(self, time_start,
-        #                   count_intvl, sumry_intvl,
-        #                   count_start,
-        #                   tt_lo, tt_hi, tt_sd, tt_sum,
-        #                   count_lim):
+    def set_startdata(self, datadict: dict) -> None:
         """
-        Set StringVars with starting data from count-tasks main().
+        Set label variables with starting data from count-tasks main().
 
         :param datadict: Dict of report data vars with matching keywords.
         :type datadict: dict
         :return: Initial textvariables for datatable labels.
         """
-        print('this is startdata from gui:', datadict)  # for testing
-        self.time_start_sv.set(datadict['time_start'])
-        self.count_intvl_sv.set(datadict['count_intvl'])
-        self.sumry_intvl_sv.set(datadict['sumry_intvl'])
-        self.count_start_sv.set(datadict['count_start'])
-        self.tt_hi_sv.set(datadict['tt_hi'])
-        self.tt_lo_sv.set(datadict['tt_lo'])
-        self.tt_sd_sv.set(datadict['tt_sd'])
-        self.tt_sum_sv.set(datadict['tt_sum'])
-        # self.time_start_sv.set(time_start)
-        # self.count_intvl_sv.set(count_intvl)
-        # self.sumry_intvl_sv.set(sumry_intvl)
-        # self.count_start_sv.set(count_start)
-        # self.tt_hi_sv.set(tt_hi)
-        # self.tt_lo_sv.set(tt_lo)
-        # self.tt_sd_sv.set(tt_sd)
-        # self.tt_sum_sv.set(tt_sum)
-        # self.count_lim_sv.set(count_lim)
-    #     # self.count_lim_sv.set(datadict.get('count_lim', 'unk key'))
+        # print('this is startdata from gui:', datadict)  # for testing
+        self.time_start = datadict['time_start']
+        self.count_intvl = datadict['count_intvl']
+        self.sumry_intvl = datadict['sumry_intvl']
+        self.count_start = datadict['count_start']
+        self.tt_mean = datadict['tt_mean']
+        self.tt_hi = datadict['tt_hi']
+        self.tt_lo = datadict['tt_lo']
+        self.tt_sd = datadict['tt_sd']
+        self.tt_sum = datadict['tt_sum']
+        self.count_lim = datadict['count_lim']
+
         self.config_startdata()
 
-    def set_intvldata(self, datadict: dict):
+    def set_intvldata(self, datadict: dict) -> None:
         """
         Set StringVars with interval data from count-tasks main().
 
         :param datadict: Dict of report data vars with matching keywords.
-        :return: Updated interval textvariables for datatable labels.
+        :return: Interval values for datatable labels.
         """
 
-        self.time_now_sv.set(datadict['time_now'])
-        self.count_now_sv.set(datadict['count_now'])
-        self.tt_hi_sv.set(datadict['tt_hi'])
-        self.tt_lo_sv.set(datadict['tt_lo'])
-        self.tt_sd_sv.set(datadict['tt_sd'])
-        self.tt_sum_sv.set(datadict['tt_sum'])
-        self.count_remain_sv.set(datadict['count_remain'])
+        self.time_now = datadict['time_now']
+        self.count_now = datadict['count_now']
+        self.tt_hi = datadict['tt_hi']
+        self.tt_lo = datadict['tt_lo']
+        self.tt_sd = datadict['tt_sd']
+        self.tt_sum = datadict['tt_sum']
+        self.count_remain = datadict['count_remain']
 
-        # self.show_updatedata()  # is this needed?
-        # mainwin.update()  # is this needed?  Need new values in data labels.
+        self.show_updatedata()
+        self.mainwin.update()  # is this needed?
 
-    def set_sumrydata(self, datadict: dict):
+    def set_sumrydata(self, datadict: dict) -> None:
         """
         Set StringVars with summary data from count-tasks main().
 
         :param datadict: Dict of report data vars with matching keywords.
-        :return: Summary textvariables for datatable labels.
+        :return: Summary values for datatable labels.
         """
 
-        self.time_now_sv.set(datadict['time_now'])
-        self.count_uniq_sv.set(datadict['count_uniq'])
-        self.tt_hi_sv.set(datadict['tt_hi'])
-        self.tt_lo_sv.set(datadict['tt_lo'])
-        self.tt_sd_sv.set(datadict['tt_sd'])
-        self.tt_sum_sv.set(datadict['tt_sum'])
+        self.time_now = datadict['time_now']
+        self.count_uniq = datadict['count_uniq']
+        self.tt_hi = datadict['tt_hi']
+        self.tt_lo = datadict['tt_lo']
+        self.tt_sd = datadict['tt_sd']
+        self.tt_sum = datadict['tt_sum']
 
-        # self.show_updatedata()  # is this needed?
-        # mainwin.update()  # is this needed?  Need new values in data labels.
+        self.show_updatedata()
+        self.mainwin.update()  # is this needed?
 
     # Methods to define and show data labels.
     def show_startdata(self) -> None:
         """
-        Show count-tasks starting data in GUI data table.
+        Show starting count-tasks data in GUI window.
 
-        :return: count-tasks datatable
+        :return: Starting BOINC and count-tasks data, for the past hour.
         """
 
-        # Starting datetime of count-tasks; fg is invariant here.
-        # Start time label is static; don't need a textvariable.
-        tk.Label(self.dataframe, textvariable=self.time_start_sv,
-                 # font=('TkTextFont', 10),
+        # Starting datetime of count-tasks; Is invariant throughout counts.
+        tk.Label(self.dataframe, text=self.time_start,
                  bg=self.data_bg, fg='grey90'
                  ).grid(row=2, column=1, columnspan=2,
                         padx=10, sticky=tk.EW)
 
         # Starting count data and times (from past boinc-client hour).
-        time_range = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
+        time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
+        tk.Label(self.dataframe,
+                 text=self.count_intvl,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_t
+                 bg=self.data_bg, fg=self.intvl_time
                  ).grid(row=3, column=1, padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
+        tk.Label(self.dataframe,
+                 text=self.sumry_intvl,
                  width=20,
                  relief='groove', borderwidth=2,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.sumry_t
+                 bg=self.data_bg, fg=self.sumry_time
                  ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.count_now_sv,
-                 # font=('TkTextFont', 12),
-                 bg=self.data_bg, fg=self.intvl_main
+        tk.Label(self.dataframe,
+                 text=self.count_start,
+                 bg=self.data_bg, fg=self.intvl_highlite
                  ).grid(row=4, column=1, padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
-                 # font=('TkTextFont', 12),
-                 bg=self.data_bg, fg=self.intvl_main
+        tk.Label(self.dataframe,
+                 text=self.tt_mean,
+                 bg=self.data_bg, fg=self.intvl_highlite
                  ).grid(row=5, column=1, padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_stat
+        tk.Label(self.dataframe,
+                 text=self.tt_sd,
+                 bg=self.data_bg, fg=self.intvl_lowlite
                  ).grid(row=6, column=1,  padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, text=time_range,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_stat
+        tk.Label(self.dataframe,
+                 text=time_range,
+                 bg=self.data_bg, fg=self.intvl_lowlite
                  ).grid(row=7, column=1,  padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_stat
+        tk.Label(self.dataframe,
+                 text=self.tt_sum,
+                 bg=self.data_bg, fg=self.intvl_lowlite
                  ).grid(row=8, column=1, padx=10, sticky=tk.EW)
 
         # Previous and until task count times.
-        tk.Label(textvariable=self.time_now_sv,
+        tk.Label(self.mainwin,
+                 text='# tasks reported is for the past hour.',
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=10, column=1, sticky=tk.W)
-        tk.Label(textvariable=self.count_remain_sv,
+        tk.Label(self.mainwin,
+                 text=self.count_lim,
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=11, column=1, sticky=tk.W)
-        tk.Label(textvariable=self.next_var,
+        tk.Label(self.mainwin,
+                 text=self.count_intvl + ' <- stub, timer not working',
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, sticky=tk.W)
 
     def show_updatedata(self) -> None:
         """
-        Place count-tasks data in GUI data table.
+        Show interval and summary count-tasks data in GUI window.
 
-        :return: count-tasks datatable.
+        :return: The most recent BOINC and count-tasks data.
         """
         # show_updatedata includes the interval and summary data columns.
         # Make a separate show_sumrydata() method?
         # Both reports are triggered by a common count-tasks interval event.
 
         # Count and summary interval times
-        tk.Label(self.dataframe, textvariable=self.count_intvl_sv,
+        tk.Label(self.dataframe, text=self.count_intvl,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_t
+                 bg=self.data_bg, fg=self.intvl_time
                  ).grid(row=3, column=1, padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.sumry_intvl_sv,
+        tk.Label(self.dataframe, text=self.sumry_intvl,
                  width=20,
                  relief='groove', borderwidth=2,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.sumry_t
+                 bg=self.data_bg, fg=self.sumry_time
                  ).grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
 
         # Interval data, column1
-        range_cat = self.tt_lo_sv.get() + ' -- ' + self.tt_hi_sv.get()
+        time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        tk.Label(self.dataframe, textvariable=self.count_now_sv,
-                 # font=('TkTextFont', 12),
-                 bg=self.data_bg, fg=self.intvl_main
+        tk.Label(self.dataframe, text=self.count_now,
+                 bg=self.data_bg, fg=self.intvl_highlite
                  ).grid(row=4, column=1, padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
-                 # font=('TkTextFont', 12),
-                 bg=self.data_bg, fg=self.intvl_main
+        tk.Label(self.dataframe, text=self.tt_mean,
+                 bg=self.data_bg, fg=self.intvl_highlite
                  ).grid(row=5, column=1, padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_stat
+        tk.Label(self.dataframe, text=self.tt_sd,
+                 bg=self.data_bg, fg=self.intvl_lowlite
                  ).grid(row=6, column=1,  padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, text=range_cat,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_stat
+        tk.Label(self.dataframe, text=time_range,
+                 bg=self.data_bg, fg=self.intvl_lowlite
                  ).grid(row=7, column=1,  padx=10, sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.intvl_stat
+        tk.Label(self.dataframe, text=self.tt_sum,
+                 bg=self.data_bg, fg=self.intvl_lowlite
                  ).grid(row=8, column=1,
                         padx=10, sticky=tk.EW)
 
         # Summary data, column2
-        tk.Label(self.dataframe, textvariable=self.count_uniq_sv,
-                 # font=('TkTextFont', 12),
-                 bg=self.data_bg, fg=self.sumry_main
+        tk.Label(self.dataframe, text=self.count_uniq,
+                 bg=self.data_bg, fg=self.sumry_highlite
                  ).grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_mean_sv,
-                 # font=('TkTextFont', 12),
-                 bg=self.data_bg, fg=self.sumry_main
+        tk.Label(self.dataframe, text=self.tt_mean,
+                 bg=self.data_bg, fg=self.sumry_highlite
                  ).grid(row=5, column=2, padx=(0, 10), sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_sd_sv,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.sumry_stat
+        tk.Label(self.dataframe, text=self.tt_sd,
+                 bg=self.data_bg, fg=self.sumry_lowlite
                  ).grid(row=6, column=2, padx=(0, 10), sticky=tk.EW)
-        tk.Label(self.dataframe, text=range_cat,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.sumry_stat
+        tk.Label(self.dataframe, text=time_range,
+                 bg=self.data_bg, fg=self.sumry_lowlite
                  ).grid(row=7, column=2, padx=(0, 10), sticky=tk.EW)
-        tk.Label(self.dataframe, textvariable=self.tt_sum_sv,
-                 # font=('TkTextFont', 10),
-                 bg=self.data_bg, fg=self.sumry_stat
+        tk.Label(self.dataframe, text=self.tt_sum,
+                 bg=self.data_bg, fg=self.sumry_lowlite
                  ).grid(row=8, column=2, padx=(0, 10), sticky=tk.EW)
 
         # Previous and until task count times.
-        tk.Label(textvariable=self.time_now_sv,
+        tk.Label(text=self.time_now,
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=10, column=1, sticky=tk.W)
-        tk.Label(textvariable=self.count_remain_sv,
+        tk.Label(text=self.count_remain,
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=11, column=1, sticky=tk.W)
-        tk.Label(textvariable=self.next_var,
+        tk.Label(text=self.count_next,
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, sticky=tk.W)
 
@@ -802,27 +918,264 @@ along with this program. If not, see https://www.gnu.org/licenses/
         for i in range(100):
             CountGui.progress["value"] = i + 1
             self.mainwin.update()
-            time.sleep(0.1)
+            t.sleep(0.1)
         CountGui.progress["value"] = 0  # Reset bar
 
 
-CountGui()
+def main() -> None:
+    """
+    Main flow for count-tasks.py utility. Reports task counts and times.
+    """
 
-# Use this once integrate this module with count-tasks main().
-# def about() -> None:
-#     """
-#     Print details about_gui this module.
-#     """
-#     print(__doc__)
-#     print('Author: ', __author__)
-#     print('Copyright: ', __copyright__)
-#     print('Credits: ', *[f'\n      {item}' for item in __credits__])
-#     print('License: ', __license__)
-#     print('Version: ', __version__)
-#     print('Maintainer: ', __maintainer__)
-#     print('Status: ', __status__)
-#     sys.exit(0)
-#
-#
-# if __name__ == '__main__':
-#     about()
+    # NOTE: --interval and --summary argument formats are different
+    #   because summary times can be min, hr, or days, while interval times
+    #   are always minutes (60m maximum).
+    # NOTE: Boinc only returns tasks that were reported in past hour.
+    #   Hence an --interval range limit to count tasks at least once per
+    #   hour.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--about',
+                        help='Author, copyright, and GNU license',
+                        action='store_true',
+                        default=False)
+    parser.add_argument('--log',
+                        help='Create log file of results or append to '
+                             'existing log',
+                        action='store_true',
+                        default=False)
+    parser.add_argument('--gui',
+                        help='Show data in graphics window.',
+                        action='store_true',
+                        default=False)
+    parser.add_argument('--interval',
+                        help='Specify minutes between task counts'
+                             ' (default: %(default)d)',
+                        default=60,
+                        choices=range(5, 65, 5),
+                        type=int,
+                        metavar="M")
+    parser.add_argument('--summary',
+                        help='Specify time between count summaries,'
+                             ' e.g., 12h, 7d (default: %(default)s)',
+                        default='1d',
+                        type=check_args,
+                        metavar='TIMEunit')
+    parser.add_argument('--count_lim',
+                        help='Specify number of count reports until program'
+                             ' exits (default: %(default)d)',
+                        default=1008,
+                        type=int,
+                        metavar="N")
+    args = parser.parse_args()
+
+    count_lim = int(args.count_lim)
+    interval_m = int(args.interval)
+    sumry_m = get_min(args.summary)
+    sumry_factor = sumry_m // interval_m
+    if interval_m >= sumry_m:
+        msg = "Invalid parameters: --summary time must be greater than" \
+              " --interval time."
+        raise ValueError(msg)
+
+    # About me
+    if args.about:
+        print(__doc__)
+        print('Author: ', __author__)
+        print('Copyright: ', __copyright__)
+        print('Credits: ', *[f'\n      {item}' for item in __credits__])
+        print('License: ', __license__)
+        print('Version: ', __version__)
+        print('Maintainer: ', __maintainer__)
+        print('Status: ', __status__)
+        sys.exit(0)
+
+    # Used in GUI module
+    count_intvl = f'{args.interval}m'
+    sumry_intvl = args.summary
+
+    # Initial run: need to set variables for comparisons between intervals.
+    # As with task names, task times as sec.microsec are unique.
+    #   In future, may want to inspect task names with
+    #   tnames = BC.get_reported(boincpath, 'tasks').
+    time_fmt = '%Y-%b-%d %H:%M:%S'
+    time_start = datetime.now().strftime(time_fmt)
+    ttimes_start = BC.get_reported('elapsed time')
+    ttimes_now = ttimes_start[:]
+    ttimes_prev = ttimes_now[:]
+    ttimes_smry = []
+    count_start = len(ttimes_start)
+    tic_nnt = 0  # Used to track when No New Tasks have been reported.
+
+    # Terminal and log print formatting:
+    indent = ' ' * 22
+    bigindent = ' ' * 49
+    del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
+    blue = '\x1b[1;38;5;33m'
+    orng = '\x1b[1;38;5;202m'  # [32m Green3
+    nc = '\x1b[0m'  # No color, reset to system default.
+    # regex from https://stackoverflow.com/questions/14693701/
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
+    # because any command string is constructed from internal input only.
+    if sys.platform[:3] == 'win':
+        subprocess.call('', shell=True)
+
+    # Report: Starting information of task times and task counts.
+    tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
+                                                         ttimes_start).values()
+    report = (f'{time_start}; Number of tasks in the most recent report:'
+              f' {blue}{count_start}{nc}\n'
+              f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+              f' range [{tt_lo} - {tt_hi}],\n'
+              f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
+              f'{indent}Counts remaining until exit: {count_lim}')
+    # TODO: Consider repressing terminal print if --gui option used.
+    print(report)
+    if args.log is True:
+        report = ansi_escape.sub('', report)
+        logging.info("""%s; Task counter is starting with
+%scount interval (minutes): %s
+%ssummary interval: %s
+%smax count cycles: %s
+%s""",               time_start,
+                     indent, args.interval,
+                     indent, args.summary,
+                     indent, args.count_lim,
+                     report)
+    args.gui = True  # For testing
+    if args.gui is True:
+        datadict = {'time_start':  time_start,
+                    'count_intvl': count_intvl,
+                    'sumry_intvl': sumry_intvl,
+                    'count_start': count_start,
+                    'tt_mean':     tt_mean,
+                    'tt_lo':       tt_lo,
+                    'tt_hi':       tt_hi,
+                    'tt_sd':       tt_sd,
+                    'tt_sum':      tt_sum,
+                    'count_lim':   count_lim}
+        # print('this is data from ct:', datadict)  # For testing
+        gui = CountGui(datadict)
+        gui.set_startdata(datadict)
+    # TODO: Fix code to allow program to continue after CountGui is called.
+
+    # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
+    # Need to push data to count_gui or pull data from within count_gui??
+    # EVENTS happen on this side, so PUSH to count_gui.
+    #
+
+    # Repeated intervals: counts, time stats, and summaries.
+    # Synopsis:
+    # Only need to update _prev if tasks were reported in prior interval;
+    #   otherwise, _prev remains as it was from earlier intervals.
+    # Only need to remove previous tasks from _now when new tasks have
+    #   been reported.
+    # Do not include starting tasks in interval or summary counts.
+    # For each interval, need to count unique tasks because some tasks
+    #   may persist between counts when --interval is less than 1h.
+    #   set() may not be necessary if list updates are working as intended,
+    #     but better to err toward thoroughness.
+    for i in range(count_lim):
+        sleep_timer(interval_m)
+        # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
+        time_now = datetime.now().strftime(time_fmt)
+        count_remain = count_lim - (i + 1)
+
+        if len(ttimes_now) > 0:
+            ttimes_prev = ttimes_now[:]
+
+        ttimes_now = BC.get_reported('elapsed time')
+
+        if len(ttimes_now) > 0:
+            ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
+
+        if len(ttimes_start) > 0:
+            ttimes_now = [task for task in ttimes_now if task not in ttimes_start]
+            ttimes_start.clear()
+
+        count_now = len(set(ttimes_now))
+        ttimes_smry.extend(ttimes_now)
+
+        # Report: Repeating intervals
+        # Suppress full report for no new tasks, which are expected for
+        # long-running tasks (b/c 60 m is longest allowed count interval).
+        # Overwrite successive NNT reports for a tidy terminal window: \x1b[A.
+        if count_now == 0:
+            tic_nnt += 1
+            report = (f'{time_now}; '
+                      f'No tasks reported in the past {tic_nnt} {interval_m}m'
+                      f' interval(s).\n'
+                      f'{indent}Counts remaining until exit: {count_lim}')
+
+            if tic_nnt == 1:
+                print(f'\r{del_line}{report}')
+            if tic_nnt > 1:
+                print(f'\r\x1b[A{del_line}{report}')
+            if args.log is True:
+                logging.info(report)
+        elif count_now > 0:
+            tic_nnt -= tic_nnt
+            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                get_timestats(count_now, ttimes_now).values()
+            report = (f'{time_now}; '
+                      f'Tasks reported in the past {interval_m}m:'
+                      f' {blue}{count_now}{nc}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f' range [{tt_lo} - {tt_hi}],\n'
+                      f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
+                      f'{indent}Counts remaining until exit: {count_remain}')
+
+            print(f'\r{del_line}{report}')
+            if args.log is True:
+                report = ansi_escape.sub('', report)
+                logging.info(report)
+
+            # if args.gui is True:
+            #     intvldata = {"time_now": time_now,
+            #                  'count_now': count_now,
+            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+            #                  'count_remain': count_remain
+            #                  }
+            #     GUI.set_intvldata(**intvldata)
+
+        # Report: Summary intervals
+        if (i + 1) % sumry_factor == 0:
+            # Need unique tasks for stats and counting.
+            ttimes_uniq = set(ttimes_smry)
+            count_uniq = len(ttimes_uniq)
+
+            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                get_timestats(count_uniq, ttimes_uniq).values()
+            report = (f'{time_now}; '
+                      f'{orng}>>> SUMMARY{nc} count for the past'
+                      f' {args.summary}: {blue}{count_uniq}{nc}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f' range [{tt_lo} - {tt_hi}],\n'
+                      f'{bigindent}stdev {tt_sd}, total {tt_sum}')
+            print(f'\r{del_line}{report}')
+            if args.log is True:
+                report = ansi_escape.sub('', report)
+                logging.info(report)
+
+            # if args.gui is True:
+            #     sumrydata = {"time_now": time_now,
+            #                  'count_uniq': count_uniq,
+            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
+            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
+            #                  }
+            #     GUI.set_sumrydata(**sumrydata)
+
+            # Need to reset data list for the next summary interval.
+            ttimes_smry.clear()
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.stdout.write('\n\nInterrupted by user...\n')
+        logging.info(msg=f'\n{datetime.now()} --> Interrupted by user...\n')
+    except OSError as error:
+        sys.stdout.write(f'{error}')
+        logging.info(msg=f'\n{error}\n')
