@@ -288,10 +288,10 @@ class CountGui:
         # stubdata is only for testing GUI layout.
         # self.set_stubdata()
 
-        # The data dictionary is from main().
-        self.set_startdata(datadict)
+        # The data dictionary is from main(). "set()" calls "config()"
+        self.get_startdata(datadict)
         # Set starting data style (is same style as config_intvldata).
-        # self.config_startdata()  # <- ??can't call show from config?
+        self.config_startdata()  # <- ?? can't call show from config. Why?
         # # Make labels in mainwin and dataframe to show the data.
         self.show_startdata()
 
@@ -321,8 +321,8 @@ class CountGui:
         # Options: classic, alt, clam, default, aqua(MacOS only)
         ttk.Style().theme_use('alt')
 
-        self.mainwin.bind("<Escape>", lambda q: self.quitnow())
-        self.mainwin.bind("<Control-q>", lambda q: self.quitnow())
+        self.mainwin.bind("<Escape>", lambda q: self.quitgui())
+        self.mainwin.bind("<Control-q>", lambda q: self.quitgui())
         self.mainwin.bind("<Control-C>", lambda q: self.compliment())
         self.mainwin.bind("<Control-l>", lambda q: self.show_log())
 
@@ -383,7 +383,7 @@ class CountGui:
         menu.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
         file.add_separator()
-        file.add_command(label="Quit", command=self.quitnow,
+        file.add_command(label="Quit", command=self.quitgui,
                          accelerator="Ctrl+Q")
 
         view = tk.Menu(menu, tearoff=0)
@@ -404,14 +404,14 @@ class CountGui:
         ttk.Button(text='View log file',
                    command=self.show_log).grid(row=0, column=0,
                                                padx=5, pady=5)
-        ttk.Button(text='Recent count',
+        ttk.Button(text='Interval focus',
                    command=self.config_intvldata).grid(row=0, column=1,
                                                        padx=0, pady=5)
-        ttk.Button(text='Recent summary',
+        ttk.Button(text='Summary focus',
                    command=self.config_sumrydata).grid(row=0, column=2,
                                                        padx=(0, 25), pady=5)
         ttk.Button(text="Quit",
-                   command=self.quitnow).grid(row=12, column=2,
+                   command=self.quitgui).grid(row=12, column=2,
                                               padx=5, sticky=tk.E)
         # Start button used only to test progressbar
         # ttk.Button(text="Run test bar",
@@ -460,8 +460,8 @@ class CountGui:
         # Summary data report
         self.count_uniq = '123'
 
-    # Set methods: for data from count-tasks main().
-    def set_startdata(self, datadict: dict) -> None:
+    # Get methods: get recent data from count-tasks main().
+    def get_startdata(self, datadict: dict) -> None:
         """
         Set label variables with starting data from count-tasks main().
 
@@ -481,9 +481,9 @@ class CountGui:
         self.tt_sum = datadict['tt_sum']
         self.count_lim = datadict['count_lim']
 
-        self.config_startdata()
+        # self.config_startdata()
 
-    def set_intvldata(self, datadict: dict) -> None:
+    def get_intvldata(self, datadict: dict) -> None:
         """
         Set StringVars with interval data from count-tasks main().
 
@@ -502,7 +502,7 @@ class CountGui:
 
         self.config_intvldata()
 
-    def set_sumrydata(self, datadict: dict) -> None:
+    def get_sumrydata(self, datadict: dict) -> None:
         """
         Set StringVars with summary data from count-tasks main().
 
@@ -512,6 +512,7 @@ class CountGui:
 
         self.time_now = datadict['time_now']
         self.count_uniq = datadict['count_uniq']
+        self.tt_mean = datadict['tt_mean']
         self.tt_hi = datadict['tt_hi']
         self.tt_lo = datadict['tt_lo']
         self.tt_sd = datadict['tt_sd']
@@ -520,6 +521,7 @@ class CountGui:
         self.config_sumrydata()
 
     # Config methods: set font emphasis styles.
+    # TODO: Consider not using buttons to change styles.
     def config_startdata(self) -> None:
         """
         Populate initial data table from count-tasks.
@@ -621,9 +623,10 @@ class CountGui:
 
         # Previous and until task count times.
         tk.Label(self.mainwin,
-                 text='The most recent BOINC report.',
+                 text='The most recent 1 hr BOINC report.',
                  bg=self.mainwin_bg, fg=self.row_fg
-                 ).grid(row=10, column=1, columnspan=2, sticky=tk.W)
+                 ).grid(row=10, column=1, columnspan=2,
+                        padx=3, sticky=tk.W)
         tk.Label(self.mainwin,
                  text=self.count_lim,
                  bg=self.mainwin_bg, fg=self.row_fg
@@ -704,7 +707,7 @@ class CountGui:
                  ).grid(row=12, column=1, sticky=tk.W)
 
     # Methods for menu items and keybinds.
-    def quitnow(self) -> None:
+    def quitgui(self) -> None:
         """Safe and informative exit from the program.
         """
         print('\n  --- User has quit the count-tasks GUI. ---\n')
@@ -1050,10 +1053,10 @@ def main() -> None:
                     'tt_sd':       tt_sd,
                     'tt_sum':      tt_sum,
                     'count_lim':   count_lim}
-        # print('this is data from ct:', datadict)  # For testing
         gui = CountGui(datadict)
-        gui.set_startdata(datadict)
-    # TODO: Fix code to allow program to continue after CountGui is called.
+        gui.get_startdata(datadict)
+    # TODO: Fix code to allow main() to continue after CountGui is called;
+    #  (currently, sleep_timer runs only after GUI quits).
 
     # Repeat for gui.set_intvldata(**intvldata)
 
@@ -1134,9 +1137,8 @@ def main() -> None:
                             'tt_sd':        tt_sd,
                             'tt_sum':       tt_sum,
                             'count_remain': count_remain}
-                # print('this is data from ct:', datadict)  # For testing
                 gui = CountGui(datadict)
-                gui.set_intvldata(datadict)
+                gui.get_intvldata(datadict)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
@@ -1157,13 +1159,17 @@ def main() -> None:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
-            # if args.gui is True:
-            #     sumrydata = {"time_now": time_now,
-            #                  'count_uniq': count_uniq,
-            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
-            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
-            #                  }
-            #     GUI.set_sumrydata(**sumrydata)
+            if args.gui is True:
+                datadict = {
+                            'time_now':     time_now,
+                            'count_uniq':   count_uniq,
+                            'tt_mean':      tt_mean,
+                            'tt_lo':        tt_lo,
+                            'tt_hi':        tt_hi,
+                            'tt_sd':        tt_sd,
+                            'tt_sum':       tt_sum}
+                gui = CountGui(datadict)
+                gui.get_sumrydata(datadict)
 
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
