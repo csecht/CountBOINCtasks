@@ -394,7 +394,7 @@ def main() -> None:
             report = (f'{time_now}; '
                       f'No tasks reported in the past {tic_nnt} {interval_m}m'
                       f' interval(s).\n'
-                      f'{indent}Counts remaining until exit: {count_lim}')
+                      f'{indent}Counts remaining until exit: {count_remain}')
 
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')

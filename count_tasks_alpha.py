@@ -289,7 +289,7 @@ class CountGui:
         # self.set_stubdata()
 
         # The data dictionary is from main(). "set()" calls "config()"
-        self.get_startdata(datadict)
+        self.set_startdata(datadict)
         # Set starting data style (is same style as config_intvldata).
         self.config_startdata()  # <- ?? can't call show from config. Why?
         # # Make labels in mainwin and dataframe to show the data.
@@ -461,7 +461,7 @@ class CountGui:
         self.count_uniq = '123'
 
     # Get methods: get recent data from count-tasks main().
-    def get_startdata(self, datadict: dict) -> None:
+    def set_startdata(self, datadict: dict) -> None:
         """
         Set label variables with starting data from count-tasks main().
 
@@ -483,7 +483,7 @@ class CountGui:
 
         # self.config_startdata()
 
-    def get_intvldata(self, datadict: dict) -> None:
+    def set_intvldata(self, datadict: dict) -> None:
         """
         Set StringVars with interval data from count-tasks main().
 
@@ -502,7 +502,7 @@ class CountGui:
 
         self.config_intvldata()
 
-    def get_sumrydata(self, datadict: dict) -> None:
+    def set_sumrydata(self, datadict: dict) -> None:
         """
         Set StringVars with summary data from count-tasks main().
 
@@ -521,7 +521,7 @@ class CountGui:
         self.config_sumrydata()
 
     # Config methods: set font emphasis styles.
-    # TODO: Consider not using buttons to change styles.
+    # TODO: Consider not using buttons to change data emphasis styles.
     def config_startdata(self) -> None:
         """
         Populate initial data table from count-tasks.
@@ -537,6 +537,8 @@ class CountGui:
 
         # self.show_startdata()
 
+    # TODO: Consider naming labels and using .config to change data styles
+    #  instead of making call to show_updatedata() to redraw  labels.
     def config_intvldata(self) -> None:
         """
         Switch visual emphasis to interval data; update interval data.
@@ -645,6 +647,7 @@ class CountGui:
         # show_updatedata includes the interval and summary data columns.
         # Make a separate show_sumrydata() method?
         # Both reports are triggered by a common count-tasks interval event.
+        #
 
         # Count and summary interval times
         time_range = self.tt_lo + ' -- ' + self.tt_hi
@@ -942,10 +945,10 @@ def main() -> None:
                              'existing log',
                         action='store_true',
                         default=False)
-    parser.add_argument('--gui',
-                        help='Show data in graphics window.',
-                        action='store_true',
-                        default=False)
+    # parser.add_argument('--gui',
+    #                     help='Show data in graphics window.',
+    #                     action='store_true',
+    #                     default=False)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
@@ -988,9 +991,10 @@ def main() -> None:
         print('Status: ', __status__)
         sys.exit(0)
 
-    # Used in GUI module
+    # Used for CountGui() calls.
     count_intvl = f'{args.interval}m'
     sumry_intvl = args.summary
+    args.gui = True  # For testing only; True allows call to CountGui().
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
@@ -1041,7 +1045,6 @@ def main() -> None:
                      indent, args.summary,
                      indent, args.count_lim,
                      report)
-    args.gui = True  # For testing only.
     if args.gui is True:
         datadict = {'time_start':  time_start,
                     'count_intvl': count_intvl,
@@ -1054,11 +1057,9 @@ def main() -> None:
                     'tt_sum':      tt_sum,
                     'count_lim':   count_lim}
         gui = CountGui(datadict)
-        gui.get_startdata(datadict)
+        gui.set_startdata(datadict)
     # TODO: Fix code to allow main() to continue after CountGui is called;
     #  (currently, sleep_timer runs only after GUI quits).
-
-    # Repeat for gui.set_intvldata(**intvldata)
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -1126,7 +1127,6 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-
             if args.gui is True:
                 datadict = {
                             'time_now':     time_now,
@@ -1138,7 +1138,7 @@ def main() -> None:
                             'tt_sum':       tt_sum,
                             'count_remain': count_remain}
                 gui = CountGui(datadict)
-                gui.get_intvldata(datadict)
+                gui.set_intvldata(datadict)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
@@ -1158,7 +1158,6 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-
             if args.gui is True:
                 datadict = {
                             'time_now':     time_now,
@@ -1169,7 +1168,7 @@ def main() -> None:
                             'tt_sd':        tt_sd,
                             'tt_sum':       tt_sum}
                 gui = CountGui(datadict)
-                gui.get_sumrydata(datadict)
+                gui.set_sumrydata(datadict)
 
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
