@@ -105,3 +105,11 @@ TIP: To get the only the most recent task count and time metrics without
 ### Development Plans
 * Improve Python code
 * Add GUI
+
+### Known Issues
+* If boinc-client stalls on uploading tasks, thus preventing new tasks from 
+  loading once the task queue has run out, then the reported task list 
+  (--get_old_tasks command) won't be  updated. The last set of tasks reported 
+  by BOINC will be listed as newly reported tasks by this program. This 
+  will appear across successive report intervals having the same count and 
+  summary stats.

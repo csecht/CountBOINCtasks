@@ -79,9 +79,9 @@ class CountGui:
     mainwin.title(GUI_TITLE)
     # TODO: Add pretty icon to main window. These variations don't work:
     # icon = tk.PhotoImage(Image.open('Python-icon.png'))
-    # icon.show()
+    # icon.show() # Shows a stand-alone image, so file is okay.
     # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
-    # icon = tk.PhotoImage(file='tiny_icon.png')
+    # icon = tk.PhotoImage(file='Python-icon.png')
     # # icon.image = icon
     # mainwin.iconphoto(True, icon)
     # mainwin.tk.call('wm', 'iconphoto',  mainwin._w,
