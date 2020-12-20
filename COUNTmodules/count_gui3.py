@@ -770,7 +770,7 @@ def compliment() -> None:
     mainwin.after(2468, text.destroy)
 
 
-# TODO: Integrate Progressbar widget with count-tasks sleep_timer.
+# TODO: Integrate Progressbar widget with count-tasks intvl_timer.
 progress = ttk.Progressbar(orient=tk.HORIZONTAL, length=100,
                            mode='determinate')
 progress.grid(row=13, column=0, columnspan=3,

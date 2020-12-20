@@ -168,6 +168,7 @@ class CountGui:
         self.mainwin_bg = 'SkyBlue4'
         self.mainwin.configure(bg=self.mainwin_bg)
 
+
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
         ttk.Style().theme_use('alt')
@@ -636,7 +637,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         #   Gives larger MacOS mainwin when tab is closed, but, oh well.
         aboutwin.minsize(570, 460)
         aboutwin.title('About count-tasks')
-        # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
+        # aboutimg = tk.PhotoImage(file='about.png')  # or 'about.png'
         # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
         # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
@@ -784,7 +785,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         self.mainwin.after(2468, text.destroy)
 
     # Optional feature:
-    # TODO: Integrate Progressbar widget with count-tasks sleep_timer.
+    # TODO: Integrate Progressbar widget with count-tasks intvl_timer.
     progress = ttk.Progressbar(orient=tk.HORIZONTAL, length=100,
                                mode='determinate')
     progress.grid(row=13, column=0, columnspan=3,

@@ -61,7 +61,7 @@ BC = boinc_command.BoincCommand()
 LOGPATH = Path('count-tasks_log.txt')
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5'
-TITLE = 'count-tasks.py'
+TITLE = 'count_tasks_alpha.py'
 
 # Here logging is lazily employed to manage the file of report data.
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
@@ -143,7 +143,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
     return msg
 
 
-def sleep_timer(interval: int) -> print:
+def intvl_timer(interval: int) -> print:
     """Provide sleep intervals and display countdown timer.
 
     :param interval: Minutes between task counts; range[5-60, by 5's]
@@ -239,6 +239,13 @@ class CountGui:
 
     mainwin = tk.Tk()
     mainwin.title(TITLE)
+    # TODO: Add pretty icon to main window. These don't work:
+    # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
+    # icon = tk.PhotoImage(file='tiny_icon.png')
+    # # icon.image = icon
+    # mainwin.iconphoto(True, icon)
+    # mainwin.tk.call('wm', 'iconphoto',  mainwin._w,
+    #                 tk.PhotoImage(file='Python-icon.png'))
 
     def __init__(self, datadict: dict):
 
@@ -264,9 +271,10 @@ class CountGui:
         # Starting data report var
         self.count_lim = None
         self.time_start = None
-        self.count_intvl = None
+        self.intvl_str = None
         self.sumry_intvl = None
         self.count_start = None
+        self.interval = None
 
         # Common data reports var
         self.tt_mean = None
@@ -439,7 +447,7 @@ class CountGui:
         # Starting report
         self.count_lim = '1008'
         self.time_start = '2020-Nov-10 10:00:10'
-        self.count_intvl = '60m'
+        self.intvl_str = '60m'
         self.sumry_intvl = '1d'
         self.count_start = '24'
 
@@ -471,7 +479,8 @@ class CountGui:
         """
         # print('this is startdata from gui:', datadict)  # for testing
         self.time_start = datadict['time_start']
-        self.count_intvl = datadict['count_intvl']
+        self.intvl_str = datadict['intvl_str']
+        self.interval = datadict['intvl_int']
         self.sumry_intvl = datadict['sumry_intvl']
         self.count_start = datadict['count_start']
         self.tt_mean = datadict['tt_mean']
@@ -590,7 +599,7 @@ class CountGui:
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
         tk.Label(self.dataframe,
-                 text=self.count_intvl,
+                 text=self.intvl_str,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
                  bg=self.data_bg, fg=self.intvl_time
@@ -632,11 +641,11 @@ class CountGui:
         tk.Label(self.mainwin,
                  text=self.count_lim,
                  bg=self.mainwin_bg, fg=self.row_fg
-                 ).grid(row=11, column=1, sticky=tk.W)
+                 ).grid(row=11, column=1, padx=3, sticky=tk.W)
         tk.Label(self.mainwin,
-                 text=self.count_intvl + ' <- stub, timer not working',
+                 text=self.intvl_str + ' <- stub, timer not working',
                  bg=self.mainwin_bg, fg=self.row_fg
-                 ).grid(row=12, column=1, sticky=tk.W)
+                 ).grid(row=12, column=1, padx=3, sticky=tk.W)
 
     def show_updatedata(self) -> None:
         """
@@ -652,7 +661,7 @@ class CountGui:
         # Count and summary interval times
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        tk.Label(self.dataframe, text=self.count_intvl,
+        tk.Label(self.dataframe, text=self.intvl_str,
                  width=20,  # Longest data cell is time range, 20 char.
                  relief='groove', borderwidth=2,
                  bg=self.data_bg, fg=self.intvl_time
@@ -750,11 +759,14 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
         msg_lines = msg.count('\n')
         aboutwin = tk.Toplevel()
+        icon = tk.PhotoImage(file='tiny_icon.png')
+        icon.image = icon
+        aboutwin.iconphoto(True, icon)
         # Minsize needed for MacOS where Help>About opens tab in mainwin.
         #   Gives larger MacOS mainwin when tab is closed, but, oh well.
         aboutwin.minsize(570, 460)
         aboutwin.title('About count-tasks')
-        # aboutimg = tk.PhotoImage(file='../about.png')  # or 'about.png'
+        # aboutimg = tk.PhotoImage(file='about.png')  # or 'about.png'
         # aboutimg.image = aboutimg  # Need to anchor the image for it to display.
         # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5, pady=5)
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
@@ -902,7 +914,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         self.mainwin.after(2468, text.destroy)
 
     # Optional feature:
-    # TODO: Integrate Progressbar widget with count-tasks sleep_timer.
+    # TODO: Integrate Progressbar widget with count-tasks intvl_timer.
     progress = ttk.Progressbar(orient=tk.HORIZONTAL, length=100,
                                mode='determinate')
     progress.grid(row=13, column=0, columnspan=3,
@@ -992,7 +1004,7 @@ def main() -> None:
         sys.exit(0)
 
     # Used for CountGui() calls.
-    count_intvl = f'{args.interval}m'
+    intvl_str = f'{args.interval}m'
     sumry_intvl = args.summary
     args.gui = True  # For testing only; True allows call to CountGui().
 
@@ -1015,7 +1027,7 @@ def main() -> None:
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
     blue = '\x1b[1;38;5;33m'
     orng = '\x1b[1;38;5;202m'  # [32m Green3
-    nc = '\x1b[0m'  # No color, reset to system default.
+    undo_color = '\x1b[0m'  # No color, reset to system default.
     # regex from https://stackoverflow.com/questions/14693701/
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
@@ -1027,12 +1039,12 @@ def main() -> None:
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
     report = (f'{time_start}; Number of tasks in the most recent report:'
-              f' {blue}{count_start}{nc}\n'
-              f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+              f' {blue}{count_start}{undo_color}\n'
+              f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
               f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
               f'{indent}Counts remaining until exit: {count_lim}')
-    # TODO: Consider repressing terminal print if --gui option used.
+    # TODO: Consider repressing terminal reporting if --gui option used.
     print(report)
     if args.log is True:
         report = ansi_escape.sub('', report)
@@ -1046,20 +1058,21 @@ def main() -> None:
                      indent, args.count_lim,
                      report)
     if args.gui is True:
-        datadict = {'time_start':  time_start,
-                    'count_intvl': count_intvl,
-                    'sumry_intvl': sumry_intvl,
-                    'count_start': count_start,
-                    'tt_mean':     tt_mean,
-                    'tt_lo':       tt_lo,
-                    'tt_hi':       tt_hi,
-                    'tt_sd':       tt_sd,
-                    'tt_sum':      tt_sum,
-                    'count_lim':   count_lim}
+        datadict = {'time_start':   time_start,
+                    'intvl_str':    intvl_str,
+                    'intvl_int':    interval_m,
+                    'sumry_intvl':  sumry_intvl,
+                    'count_start':  count_start,
+                    'tt_mean':      tt_mean,
+                    'tt_lo':        tt_lo,
+                    'tt_hi':        tt_hi,
+                    'tt_sd':        tt_sd,
+                    'tt_sum':       tt_sum,
+                    'count_lim':    count_lim}
         gui = CountGui(datadict)
         gui.set_startdata(datadict)
     # TODO: Fix code to allow main() to continue after CountGui is called;
-    #  (currently, sleep_timer runs only after GUI quits).
+    #  (currently, intvl_timer runs only after GUI quits).
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -1073,8 +1086,8 @@ def main() -> None:
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
     for i in range(count_lim):
-        sleep_timer(interval_m)
-        # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
+        intvl_timer(interval_m)
+        # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
 
@@ -1103,7 +1116,7 @@ def main() -> None:
             report = (f'{time_now}; '
                       f'No tasks reported in the past {tic_nnt} {interval_m}m'
                       f' interval(s).\n'
-                      f'{indent}Counts remaining until exit: {count_lim}')
+                      f'{indent}Counts remaining until exit: {count_remain}')
 
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
@@ -1117,8 +1130,8 @@ def main() -> None:
                 get_timestats(count_now, ttimes_now).values()
             report = (f'{time_now}; '
                       f'Tasks reported in the past {interval_m}m:'
-                      f' {blue}{count_now}{nc}\n'
-                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f' {blue}{count_now}{undo_color}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
                       f'{indent}Counts remaining until exit: {count_remain}')
@@ -1149,9 +1162,9 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_uniq, ttimes_uniq).values()
             report = (f'{time_now}; '
-                      f'{orng}>>> SUMMARY{nc} count for the past'
-                      f' {args.summary}: {blue}{count_uniq}{nc}\n'
-                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f'{orng}>>> SUMMARY{undo_color} count for the past'
+                      f' {args.summary}: {blue}{count_uniq}{undo_color}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}')
             print(f'\r{del_line}{report}')

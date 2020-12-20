@@ -124,7 +124,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
     return msg
 
 
-def sleep_timer(interval: int) -> print:
+def intvl_timer(interval: int) -> print:
     """Provide sleep intervals and display countdown timer.
 
     :param interval: Minutes between task counts; range[5-60, by 5's]
@@ -233,10 +233,10 @@ def main() -> None:
                              'existing log',
                         action='store_true',
                         default=False)
-    parser.add_argument('--gui',
-                        help='Show data in graphics window.',
-                        action='store_true',
-                        default=False)
+    # parser.add_argument('--gui',
+    #                     help='Show data in graphics window.',
+    #                     action='store_true',
+    #                     default=False)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
@@ -280,8 +280,8 @@ def main() -> None:
         sys.exit(0)
 
     # Used in GUI module
-    count_intvl = f'{args.interval}m'
-    sumry_intvl = args.summary
+    # count_intvl = f'{args.interval}m'
+    # sumry_intvl = args.summary
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
@@ -302,7 +302,7 @@ def main() -> None:
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
     blue = '\x1b[1;38;5;33m'
     orng = '\x1b[1;38;5;202m'  # [32m Green3
-    nc = '\x1b[0m'  # No color, reset to system default.
+    undo_color = '\x1b[0m'  # Reset color to system default.
     # regex from https://stackoverflow.com/questions/14693701/
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
@@ -314,8 +314,8 @@ def main() -> None:
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
     report = (f'{time_start}; Number of tasks in the most recent report:'
-              f' {blue}{count_start}{nc}\n'
-              f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+              f' {blue}{count_start}{undo_color}\n'
+              f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
               f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
               f'{indent}Counts remaining until exit: {count_lim}')
@@ -332,26 +332,6 @@ def main() -> None:
                      indent, args.summary,
                      indent, args.count_lim,
                      report)
-    # TODO: figure out how to pass report data to GUI module.
-    # args.gui = True
-    # if args.gui is True:
-    #     from COUNTmodules import count_gui  # draws gui then stops here.
-    #     # Need to pass data to gui module before tkinter draws window.
-    #     datadict = {'time_start': time_start,
-    #                  'count_intvl': count_intvl,
-    #                  'sumry_intvl': sumry_intvl,
-    #                  'count_start': count_start,
-    #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
-    #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
-    #                  'count_lim': count_lim}
-    #     print('this is data from ct:', datadict)  # for testing
-    #     # GUI = count_gui.CountGui
-    #     count_gui2.CountGui.set_startdata(**datadict)
-
-    # Repeat for GUI.set_intvldata(**intvldata) & sumrydata reports.
-    # Need to push data to count_gui or pull data from within count_gui??
-    # EVENTS happen on this side, so PUSH to count_gui.
-    #
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -365,8 +345,8 @@ def main() -> None:
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
     for i in range(count_lim):
-        sleep_timer(interval_m)
-        # t.sleep(5)  # DEBUG; or use to bypass sleep_timer.
+        intvl_timer(interval_m)
+        # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
 
@@ -408,8 +388,8 @@ def main() -> None:
                 get_timestats(count_now, ttimes_now).values()
             report = (f'{time_now}; '
                       f'Tasks reported in the past {interval_m}m:'
-                      f' {blue}{count_now}{nc}\n'
-                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f' {blue}{count_now}{undo_color}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
                       f'{indent}Counts remaining until exit: {count_remain}')
@@ -418,15 +398,6 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-
-            # if args.gui is True:
-            #     intvldata = {"time_now": time_now,
-            #                  'count_now': count_now,
-            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
-            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
-            #                  'count_remain': count_remain
-            #                  }
-            #     GUI.set_intvldata(**intvldata)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
@@ -437,23 +408,15 @@ def main() -> None:
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_uniq, ttimes_uniq).values()
             report = (f'{time_now}; '
-                      f'{orng}>>> SUMMARY{nc} count for the past'
-                      f' {args.summary}: {blue}{count_uniq}{nc}\n'
-                      f'{indent}Task Times: mean {blue}{tt_mean}{nc},'
+                      f'{orng}>>> SUMMARY{undo_color} count for the past'
+                      f' {args.summary}: {blue}{count_uniq}{undo_color}\n'
+                      f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}')
             print(f'\r{del_line}{report}')
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-
-            # if args.gui is True:
-            #     sumrydata = {"time_now": time_now,
-            #                  'count_uniq': count_uniq,
-            #                  'tt_lo': tt_lo, 'tt_hi': tt_hi,
-            #                  'tt_sd': tt_sd, 'tt_sum': tt_sum,
-            #                  }
-            #     GUI.set_sumrydata(**sumrydata)
 
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
