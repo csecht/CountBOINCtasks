@@ -41,6 +41,7 @@ import sys
 import time as t
 from datetime import datetime
 from pathlib import Path
+from PIL import Image
 
 from COUNTmodules import boinc_command
 
@@ -61,185 +62,24 @@ BC = boinc_command.BoincCommand()
 LOGPATH = Path('count-tasks_log.txt')
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5'
-TITLE = 'count_tasks_alpha.py'
+GUI_TITLE = 'count_tasks_alpha.py'
 
 # Here logging is lazily employed to manage the file of report data.
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
-def check_args(parameter) -> None:
-    """
-    Check command line arguments for errors.
-
-    :param parameter: Used for the --summary parameter.
-    :return: If no errors, return the parameter string.
-    """
-
-    if parameter == "0":
-        msg = "Parameter value cannot be zero."
-        raise argparse.ArgumentTypeError(msg)
-    # Evaluate the --summary parameter, expect e.g., 15m, 2h, 1d, etc.
-    if parameter != "0":
-        valid_units = ['m', 'h', 'd']
-        val = (parameter[:-1])
-        unit = parameter[-1]
-        if str(unit) not in valid_units:
-            msg = f"TIME unit must be m, h, or d, not {unit}"
-            raise argparse.ArgumentTypeError(msg)
-        try:
-            int(val)
-        except ValueError as err:
-            msg = "TIME must be an integer"
-            raise argparse.ArgumentTypeError(msg) from err
-    return parameter
-
-
-def get_min(time_string: str) -> int:
-    """Convert time string to minutes.
-
-    :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
-    :return: Time as integer minutes.
-    """
-    t_min = {'m': 1,
-             'h': 60,
-             'd': 1440}
-    val = int(time_string[:-1])
-    unit = time_string[-1]
-    try:
-        return t_min[unit] * val
-    except KeyError as err:
-        msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
-        raise KeyError(msg) from err
-
-
-def fmt_sec(secs: int, fmt: str) -> str:
-    """Convert seconds to the specified time format for display.
-
-    :param secs: Time in seconds, any integer except 0.
-    :param fmt: Either 'std' or 'short'
-    :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
-    """
-    # Time conversion concept from Niko
-    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
-
-    _m, _s = divmod(secs, 60)
-    _h, _m = divmod(_m, 60)
-    day, _h = divmod(_h, 24)
-    msg = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
-          f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
-    if fmt == 'short':
-        if secs >= 86400:
-            return f'{day:1d}d'  # option, add {h:01d}h'
-        if 86400 > secs >= 3600:
-            return f'{_h:01d}h'  # option, add :{m:01d}m
-        if 3600 > secs >= 60:
-            return f'{_m:01d}m'  # option, add :{s:01d}s
-        return f'{_s:01d}s'
-    if fmt == 'std':
-        if secs >= 86400:
-            return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
-        return f'{_h:02d}:{_m:02d}:{_s:02d}'
-    return msg
-
-
-def intvl_timer(interval: int) -> print:
-    """Provide sleep intervals and display countdown timer.
-
-    :param interval: Minutes between task counts; range[5-60, by 5's]
-    :return: A terminal/console graphic that displays time remaining.
-    """
-    # Idea for development from
-    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
-
-    # Initial timer bar length; 60 fits well with most clock times.
-    bar_len = 60
-    prettybar = ' ' * bar_len
-    # Need to assign for-loop decrement time & total sleep time as seconds.
-    # Need bar segment sleep time, in sec.; is a factor of bar length.
-    total_s = interval * 60
-    barseg_s = round(total_s / bar_len)
-    remain_s = total_s
-
-    # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
-    whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
-    whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
-    reset = '\x1b[0m'  # No color, reset to system default.
-    del_line = '\x1b[2K'  # Clear entire line.
-
-    # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
-    # because there is no external input.
-    if sys.platform[:3] == 'win':
-        subprocess.call('', shell=True)
-
-    # Not +1 in range because need only to sleep to END of interval.
-    for i in range(bar_len):
-        remain_bar = prettybar[i:]
-        length = len(remain_bar)
-        print(f"\r{del_line}{whitexx_on_red}"
-              f"{fmt_sec(remain_s, 'short')}{remain_bar}"
-              f"{reset}|< ~time to next count", end='')
-        if length == 1:
-            print(f"\r{del_line}{whitexx_on_grn}"
-                  f"{fmt_sec(remain_s, 'short')}{remain_bar}"
-                  f"{reset}|< ~time to next count", end='')
-        remain_s = (remain_s - barseg_s)
-        # Need to clear the line for main() report printing.
-        if length == 0:
-            print(f'\r{del_line}')
-        # t.sleep(.5)  # DEBUG
-        t.sleep(barseg_s)
-
-
-def get_timestats(count: int, taskt: iter) -> dict:
-    """
-    Sum and run statistics from times, as seconds (integers or floats).
-
-    :param count: The number of elements in taskt.
-    :param taskt: A list, tuple, or set of times, in seconds.
-    :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; values as:
-    00:00:00.
-    """
-    total = fmt_sec(int(sum(set(taskt))), 'std')
-    if count > 1:
-        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
-        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
-        low = fmt_sec(int(min(taskt)), 'std')
-        high = fmt_sec(int(max(taskt)), 'std')
-        return {
-            'tt_sum':   total,
-            'tt_mean':  mean,
-            'tt_sd':    stdev,
-            'tt_min':   low,
-            'tt_max':   high
-        }
-    if count == 1:
-        return {
-            'tt_sum':   total,
-            'tt_mean':  total,
-            'tt_sd':    'na',
-            'tt_min':   'na',
-            'tt_max':   'na'
-        }
-
-    return {
-        'tt_sum':   '00:00:00',
-        'tt_mean':  'na',
-        'tt_sd':    'na',
-        'tt_min':   'na',
-        'tt_max':   'na'
-        }
-
-
 class CountGui:
     """
-    A GUI window to display data from count-tasks.
+    A GUI window for optional display of data from main().
     """
     # pylint: disable=too-many-instance-attributes
 
     mainwin = tk.Tk()
-    mainwin.title(TITLE)
-    # TODO: Add pretty icon to main window. These don't work:
+    mainwin.title(GUI_TITLE)
+    # TODO: Add pretty icon to main window. These variations don't work:
+    # icon = tk.PhotoImage(Image.open('Python-icon.png'))
+    # icon.show()
     # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
     # icon = tk.PhotoImage(file='tiny_icon.png')
     # # icon.image = icon
@@ -468,7 +308,7 @@ class CountGui:
         # Summary data report
         self.count_uniq = '123'
 
-    # Get methods: get recent data from count-tasks main().
+    # Set methods: use data from main().
     def set_startdata(self, datadict: dict) -> None:
         """
         Set label variables with starting data from count-tasks main().
@@ -529,7 +369,7 @@ class CountGui:
 
         self.config_sumrydata()
 
-    # Config methods: set font emphasis styles.
+    # Config methods: set font emphasis styles used by data labels.
     # TODO: Consider not using buttons to change data emphasis styles.
     def config_startdata(self) -> None:
         """
@@ -581,7 +421,7 @@ class CountGui:
 
         self.show_updatedata()
 
-    # Show methods: define and display data labels.
+    # Show methods: define and display labels for data.
     def show_startdata(self) -> None:
         """
         Show starting count-tasks data in GUI window.
@@ -913,7 +753,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         # To fit well, pady ^here must match pady of the same data label row.
         self.mainwin.after(2468, text.destroy)
 
-    # Optional feature:
+    # Trial feature:
     # TODO: Integrate Progressbar widget with count-tasks intvl_timer.
     progress = ttk.Progressbar(orient=tk.HORIZONTAL, length=100,
                                mode='determinate')
@@ -934,6 +774,170 @@ along with this program. If not, see https://www.gnu.org/licenses/
             self.mainwin.update()
             t.sleep(0.1)
         CountGui.progress["value"] = 0  # Reset bar
+
+
+# Functions that are used by main().
+def check_args(parameter) -> None:
+    """
+    Check command line arguments for errors.
+
+    :param parameter: Used for the --summary parameter.
+    :return: If no errors, return the parameter string.
+    """
+
+    if parameter == "0":
+        msg = "Parameter value cannot be zero."
+        raise argparse.ArgumentTypeError(msg)
+    # Evaluate the --summary parameter, expect e.g., 15m, 2h, 1d, etc.
+    if parameter != "0":
+        valid_units = ['m', 'h', 'd']
+        val = (parameter[:-1])
+        unit = parameter[-1]
+        if str(unit) not in valid_units:
+            msg = f"TIME unit must be m, h, or d, not {unit}"
+            raise argparse.ArgumentTypeError(msg)
+        try:
+            int(val)
+        except ValueError as err:
+            msg = "TIME must be an integer"
+            raise argparse.ArgumentTypeError(msg) from err
+    return parameter
+
+
+def get_min(time_string: str) -> int:
+    """Convert time string to minutes.
+
+    :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
+    :return: Time as integer minutes.
+    """
+    t_min = {'m': 1,
+             'h': 60,
+             'd': 1440}
+    val = int(time_string[:-1])
+    unit = time_string[-1]
+    try:
+        return t_min[unit] * val
+    except KeyError as err:
+        msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
+        raise KeyError(msg) from err
+
+
+def fmt_sec(secs: int, fmt: str) -> str:
+    """Convert seconds to the specified time format for display.
+
+    :param secs: Time in seconds, any integer except 0.
+    :param fmt: Either 'std' or 'short'
+    :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
+    """
+    # Time conversion concept from Niko
+    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
+
+    _m, _s = divmod(secs, 60)
+    _h, _m = divmod(_m, 60)
+    day, _h = divmod(_h, 24)
+    msg = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
+          f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
+    if fmt == 'short':
+        if secs >= 86400:
+            return f'{day:1d}d'  # option, add {h:01d}h'
+        if 86400 > secs >= 3600:
+            return f'{_h:01d}h'  # option, add :{m:01d}m
+        if 3600 > secs >= 60:
+            return f'{_m:01d}m'  # option, add :{s:01d}s
+        return f'{_s:01d}s'
+    if fmt == 'std':
+        if secs >= 86400:
+            return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
+        return f'{_h:02d}:{_m:02d}:{_s:02d}'
+    return msg
+
+
+def intvl_timer(interval: int) -> print:
+    """Provide sleep intervals and display countdown timer.
+
+    :param interval: Minutes between task counts; range[5-60, by 5's]
+    :return: A terminal/console graphic that displays time remaining.
+    """
+    # Idea for development from
+    # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
+
+    # Initial timer bar length; 60 fits well with most clock times.
+    bar_len = 60
+    prettybar = ' ' * bar_len
+    # Need to assign for-loop decrement time & total sleep time as seconds.
+    # Need bar segment sleep time, in sec.; is a factor of bar length.
+    total_s = interval * 60
+    barseg_s = round(total_s / bar_len)
+    remain_s = total_s
+
+    # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
+    whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
+    whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
+    reset = '\x1b[0m'  # No color, reset to system default.
+    del_line = '\x1b[2K'  # Clear entire line.
+
+    # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
+    # because there is no external input.
+    if sys.platform[:3] == 'win':
+        subprocess.call('', shell=True)
+
+    # Not +1 in range because need only to sleep to END of interval.
+    for i in range(bar_len):
+        remain_bar = prettybar[i:]
+        length = len(remain_bar)
+        print(f"\r{del_line}{whitexx_on_red}"
+              f"{fmt_sec(remain_s, 'short')}{remain_bar}"
+              f"{reset}|< ~time to next count", end='')
+        if length == 1:
+            print(f"\r{del_line}{whitexx_on_grn}"
+                  f"{fmt_sec(remain_s, 'short')}{remain_bar}"
+                  f"{reset}|< ~time to next count", end='')
+        remain_s = (remain_s - barseg_s)
+        # Need to clear the line for main() report printing.
+        if length == 0:
+            print(f'\r{del_line}')
+        # t.sleep(.5)  # DEBUG
+        t.sleep(barseg_s)
+
+
+def get_timestats(count: int, taskt: iter) -> dict:
+    """
+    Sum and run statistics from times, as seconds (integers or floats).
+
+    :param count: The number of elements in taskt.
+    :param taskt: A list, tuple, or set of times, in seconds.
+    :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; values as:
+    00:00:00.
+    """
+    total = fmt_sec(int(sum(set(taskt))), 'std')
+    if count > 1:
+        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
+        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
+        low = fmt_sec(int(min(taskt)), 'std')
+        high = fmt_sec(int(max(taskt)), 'std')
+        return {
+            'tt_sum':   total,
+            'tt_mean':  mean,
+            'tt_sd':    stdev,
+            'tt_min':   low,
+            'tt_max':   high
+        }
+    if count == 1:
+        return {
+            'tt_sum':   total,
+            'tt_mean':  total,
+            'tt_sd':    'na',
+            'tt_min':   'na',
+            'tt_max':   'na'
+        }
+
+    return {
+        'tt_sum':   '00:00:00',
+        'tt_mean':  'na',
+        'tt_sd':    'na',
+        'tt_min':   'na',
+        'tt_max':   'na'
+        }
 
 
 def main() -> None:

@@ -279,10 +279,6 @@ def main() -> None:
         print('Status: ', __status__)
         sys.exit(0)
 
-    # Used in GUI module
-    # count_intvl = f'{args.interval}m'
-    # sumry_intvl = args.summary
-
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
     #   In future, may want to inspect task names with
