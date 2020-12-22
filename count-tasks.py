@@ -242,6 +242,7 @@ def main() -> None:
                              ' (default: %(default)d)',
                         default=60,
                         choices=range(5, 65, 5),
+                        # choices=range(5),  # for testing
                         type=int,
                         metavar="M")
     parser.add_argument('--summary',
@@ -364,7 +365,7 @@ def main() -> None:
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
         # long-running tasks (b/c 60 m is longest allowed count interval).
-        # Overwrite successive NNT reports for a tidy terminal window: \x1b[A.
+        # Overwrite successive NNT reports for a tidy terminal window: \x1b[2A.
         if count_now == 0:
             tic_nnt += 1
             report = (f'{time_now}; '
@@ -375,7 +376,7 @@ def main() -> None:
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
-                print(f'\r\x1b[A{del_line}{report}')
+                print(f'\r\x1b[2A{del_line}{report}')
             if args.log is True:
                 logging.info(report)
         elif count_now > 0:

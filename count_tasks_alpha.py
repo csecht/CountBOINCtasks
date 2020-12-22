@@ -38,6 +38,7 @@ import shutil
 import statistics as stat
 import subprocess
 import sys
+import threading
 import time as t
 from datetime import datetime
 from pathlib import Path
@@ -89,6 +90,7 @@ class CountGui:
 
     def __init__(self, datadict: dict):
 
+        # super().__init__()
         self.datadict = datadict
 
         self.row_fg = None
@@ -136,18 +138,20 @@ class CountGui:
         # stubdata is only for testing GUI layout.
         # self.set_stubdata()
 
-        # The data dictionary is from main(). "set()" calls "config()"
+        # # The data dictionary is from main(). "set()" includes "config()"
         self.set_startdata(datadict)
-        # Set starting data style (is same style as config_intvldata).
-        self.config_startdata()  # <- ?? can't call show from config. Why?
-        # # Make labels in mainwin and dataframe to show the data.
+        # # Set starting data style (is same style as config_intvldata).
+        # self.config_startdata()
+        # # # Make labels in mainwin and dataframe to show the data.
         self.show_startdata()
 
         # tkinter's infinite event loop
         # "Always call mainloop as the last logical line of code in your
         # program." per Bryan Oakly:
         # https://stackoverflow.com/questions/29158220/tkinter-understanding-mainloop
-        self.mainwin.mainloop()
+        # self.mainwin.mainloop()
+        # ^^ NOTE: mainloop is instantiated in show_startdata(), which is
+        # only for testing purposes.
 
     def mainwin_cfg(self) -> None:
         """
@@ -330,7 +334,16 @@ class CountGui:
         self.tt_sum = datadict['tt_sum']
         self.count_lim = datadict['count_lim']
 
-        # self.config_startdata()
+        # Include font configurations here instead of in separate methode
+        # because these config are called only once, at start of program.
+        self.intvl_time[0]     = 'grey90'
+        self.intvl_highlite[0]  = 'gold'
+        self.intvl_lowlite[0]  = 'grey90'
+        self.sumry_time[0]     = 'grey60'
+        self.sumry_highlite[0]  = 'grey60'
+        self.sumry_lowlite[0]  = 'grey60'
+
+        # self.show_startdata()
 
     def set_intvldata(self, datadict: dict) -> None:
         """
@@ -370,24 +383,26 @@ class CountGui:
         self.config_sumrydata()
 
     # Config methods: set font emphasis styles used by data labels.
+
+    # def config_startdata(self) -> None:
+    #     """
+    #     Populate initial data table from count-tasks.
+    #
+    #     :return: Starting BOINC data from past hour.
+    #     """
+    #     self.intvl_time[0]     = 'grey90'
+    #     self.intvl_highlite[0]  = 'gold'
+    #     self.intvl_lowlite[0]  = 'grey90'
+    #     self.sumry_time[0]     = 'grey60'
+    #     self.sumry_highlite[0]  = 'grey60'
+    #     self.sumry_lowlite[0]  = 'grey60'
+    #
+    #     self.show_startdata()
+
     # TODO: Consider not using buttons to change data emphasis styles.
-    def config_startdata(self) -> None:
-        """
-        Populate initial data table from count-tasks.
-
-        :return: Starting BOINC data from past hour.
-        """
-        self.intvl_time[0]     = 'grey90'
-        self.intvl_highlite[0]  = 'gold'
-        self.intvl_lowlite[0]  = 'grey90'
-        self.sumry_time[0]     = 'grey60'
-        self.sumry_highlite[0]  = 'grey60'
-        self.sumry_lowlite[0]  = 'grey60'
-
-        # self.show_startdata()
 
     # TODO: Consider naming labels and using .config to change data styles
-    #  instead of making call to show_updatedata() to redraw  labels.
+    #  instead of making call to show_updatedata() to redraw labels.
     def config_intvldata(self) -> None:
         """
         Switch visual emphasis to interval data; update interval data.
@@ -486,6 +501,8 @@ class CountGui:
                  text=self.intvl_str + ' <- stub, timer not working',
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, padx=3, sticky=tk.W)
+
+        self.mainwin.mainloop()
 
     def show_updatedata(self) -> None:
         """
@@ -1074,7 +1091,13 @@ def main() -> None:
                     'tt_sum':       tt_sum,
                     'count_lim':    count_lim}
         gui = CountGui(datadict)
-        gui.set_startdata(datadict)
+        # gui.set_startdata(datadict)
+        # ^^^^ Method call not used when set_startdata is called from CountGui
+        # __init__. This is just testing.
+        # THE PROBLEM with this thread is that it only calls the gui and
+        # never makes it back here to .start() threading.
+        # thread2 = threading.Thread(target=gui.set_startdata, args=(datadict,))
+        # thread2.start()
     # TODO: Fix code to allow main() to continue after CountGui is called;
     #  (currently, intvl_timer runs only after GUI quits).
 
@@ -1144,18 +1167,18 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-            if args.gui is True:
-                datadict = {
-                            'time_now':     time_now,
-                            'count_now':    count_now,
-                            'tt_mean':      tt_mean,
-                            'tt_lo':        tt_lo,
-                            'tt_hi':        tt_hi,
-                            'tt_sd':        tt_sd,
-                            'tt_sum':       tt_sum,
-                            'count_remain': count_remain}
-                gui = CountGui(datadict)
-                gui.set_intvldata(datadict)
+            # if args.gui is True:
+            #     datadict = {
+            #                 'time_now':     time_now,
+            #                 'count_now':    count_now,
+            #                 'tt_mean':      tt_mean,
+            #                 'tt_lo':        tt_lo,
+            #                 'tt_hi':        tt_hi,
+            #                 'tt_sd':        tt_sd,
+            #                 'tt_sum':       tt_sum,
+            #                 'count_remain': count_remain}
+            #     gui = CountGui(datadict)
+            #     gui.set_intvldata(datadict)
 
         # Report: Summary intervals
         if (i + 1) % sumry_factor == 0:
@@ -1175,17 +1198,17 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-            if args.gui is True:
-                datadict = {
-                            'time_now':     time_now,
-                            'count_uniq':   count_uniq,
-                            'tt_mean':      tt_mean,
-                            'tt_lo':        tt_lo,
-                            'tt_hi':        tt_hi,
-                            'tt_sd':        tt_sd,
-                            'tt_sum':       tt_sum}
-                gui = CountGui(datadict)
-                gui.set_sumrydata(datadict)
+            # if args.gui is True:
+            #     datadict = {
+            #                 'time_now':     time_now,
+            #                 'count_uniq':   count_uniq,
+            #                 'tt_mean':      tt_mean,
+            #                 'tt_lo':        tt_lo,
+            #                 'tt_hi':        tt_hi,
+            #                 'tt_sd':        tt_sd,
+            #                 'tt_sum':       tt_sum}
+            #     gui = CountGui(datadict)
+            #     gui.set_sumrydata(datadict)
 
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
@@ -1194,6 +1217,8 @@ def main() -> None:
 if __name__ == '__main__':
     try:
         main()
+        # thread1 = threading.Thread(target=main)
+        # thread1.start()
     except KeyboardInterrupt:
         sys.stdout.write('\n\nInterrupted by user...\n')
         logging.info(msg=f'\n{datetime.now()} --> Interrupted by user...\n')
