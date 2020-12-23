@@ -113,3 +113,6 @@ TIP: To get the only the most recent task count and time metrics without
   by BOINC will be listed as newly reported tasks by this program. This 
   will appear across successive report intervals having the same count and 
   summary stats.
+* BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different 
+  boinccmd path from the default path used by count-tasks.py. I've yet to 
+  figure out the new path. Any help would be appreciated.
