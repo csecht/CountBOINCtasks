@@ -219,7 +219,6 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    # Methods below not currently used by count_tasks.py.
     def get_tasks(self, tag: str, cmd=' --get_tasks') -> list:
         """
         Get data from current boinc-client tasks.
@@ -240,6 +239,7 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
+    # Method below not currently used by count_tasks.py.
     def project_action(self, project: str, action: str):
         """
         Execute a boinc-client action for a specified Project.

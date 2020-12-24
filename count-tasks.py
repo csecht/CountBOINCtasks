@@ -347,19 +347,18 @@ def main() -> None:
         # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
+        tasks_running = BC.get_tasks('active_task_state')
         notrunning = False
 
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
 
         ttimes_now = BC.get_reported('elapsed time')
-        tasks_running = BC.get_tasks('active_task_state')
 
         if len(ttimes_now) > 0 and "EXECUTING" in tasks_running:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
 
-        # Need this check for when tasks have run out and the --get_old_tasks
-        #   task times (ttimes_now) do not change between counts.
+        # Need this check for when tasks have run out.
         if len(ttimes_now) > 0 and "EXECUTING" not in tasks_running:
             notrunning = True
 
