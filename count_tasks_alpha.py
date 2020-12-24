@@ -70,17 +70,17 @@ logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
-# TODO: Restructure to have CountGui as main() and call count_task functions
-#  as thread(s) from there. (b/c tkinter needs to run as main thread)
+# TODO: Restructure to have CountGui as data_intervals() and call count_task functions
+#  as thread(s) from there. (b/c tkinter needs to run as data_intervals thread)
 class CountGui:
     """
-    A GUI window for optional display of data from main().
+    A GUI window for optional display of data from data_intervals().
     """
     # pylint: disable=too-many-instance-attributes
 
     mainwin = tk.Tk()
     mainwin.title(GUI_TITLE)
-    # TODO: Add pretty icon to main window. These variations don't work:
+    # TODO: Add pretty icon to data_intervals window. These variations don't work:
     # icon = tk.PhotoImage(Image.open('Python-icon.png'))
     # icon.show() # Shows a stand-alone image, so file is okay.
     # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
@@ -141,7 +141,7 @@ class CountGui:
         # stubdata are only for testing GUI layout.
         # self.set_stubdata()
 
-        # The data dictionary is from main(). set_startdata includes "config()"
+        # The data dictionary is from data_intervals(). set_startdata includes "config()"
         # and calls show_startdata().
         # Set starting data config are same style as config_intvldata.
         self.set_startdata(datadict)
@@ -157,7 +157,7 @@ class CountGui:
 
     def mainwin_cfg(self) -> None:
         """
-        Configure colors, key binds & basic behavior of main Tk window.
+        Configure colors, key binds & basic behavior of data_intervals Tk window.
         """
         # Needed for data readability in smallest resized dataframe. Depends
         #   on platform; set for Linux with its largest relative font size.
@@ -225,7 +225,7 @@ class CountGui:
 
     def mainwin_widgets(self) -> None:
         """
-        Layout menus, buttons, separators, row labels in main Tk window.
+        Layout menus, buttons, separators, row labels in data_intervals Tk window.
         """
 
         # creating a menu instance
@@ -314,10 +314,10 @@ class CountGui:
         # Summary data report
         self.count_uniq = '123'
 
-    # Set methods: use data from main().
+    # Set methods: use data from data_intervals().
     def set_startdata(self, datadict: dict) -> None:
         """
-        Set label variables with starting data from count-tasks main().
+        Set label variables with starting data from count-tasks data_intervals().
 
         :param datadict: Dict of report data vars with matching keywords.
         :type datadict: dict
@@ -349,7 +349,7 @@ class CountGui:
 
     def set_intvldata(self, datadict: dict) -> None:
         """
-        Set StringVars with interval data from count-tasks main().
+        Set StringVars with interval data from count-tasks data_intervals().
 
         :param datadict: Dict of report data vars with matching keywords.
         :return: Interval values for datatable labels.
@@ -368,7 +368,7 @@ class CountGui:
 
     def set_sumrydata(self, datadict: dict) -> None:
         """
-        Set StringVars with summary data from count-tasks main().
+        Set StringVars with summary data from count-tasks data_intervals().
 
         :param datadict: Dict of report data vars with matching keywords.
         :return: Summary values for datatable labels.
@@ -587,7 +587,7 @@ class CountGui:
     @staticmethod
     def about() -> None:
         """
-        Basic information for count-tasks; called from the Help menu.
+        Basic information for count-tasks; called from GUI Help menu.
 
         :return: Information window.
         """
@@ -679,7 +679,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
     @staticmethod
     def backup_log() -> None:
         """
-        Copy the log file to the home folder; called from the File menu.
+        Copy the log file to the home folder; called from GUI File menu.
 
         :return: A new or overwritten backup file.
         """
@@ -726,7 +726,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
     def compliment(self) -> None:
         """
-         A silly diversion; used with the 'compliment' menu item.
+         A silly diversion; used with the 'compliment' GUI menu item.
 
         :return: Transient label to make one smile.
         """
@@ -795,7 +795,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         CountGui.progress["value"] = 0  # Reset bar
 
 
-# Functions that are used by main().
+# Functions that are used by data_intervals().
 def check_args(parameter) -> None:
     """
     Check command line arguments for errors.
@@ -912,7 +912,7 @@ def intvl_timer(interval: int) -> print:
                   f"{fmt_sec(remain_s, 'short')}{remain_bar}"
                   f"{reset}|< ~time to next count", end='')
         remain_s = (remain_s - barseg_s)
-        # Need to clear the line for main() report printing.
+        # Need to clear the line for data_intervals() report printing.
         if length == 0:
             print(f'\r{del_line}')
         # t.sleep(.5)  # DEBUG
@@ -1099,9 +1099,8 @@ def main() -> None:
         # THE PROBLEM with this thread is that it only calls the gui and
         # never makes it back here to .start() threading.
         # thread2 = threading.Thread()
-        # # thread2.setDaemon(True)
-        # thread2.start() # -> RuntimeError: main thread is not in main loop
-    # TODO: Fix code to allow main() to continue after CountGui is called;
+        # thread2.start()  # -> RuntimeError: data_intervals thread is not in data_intervals loop
+    # TODO: Fix code to allow data_intervals() to continue after CountGui is called;
     #  (currently, intvl_timer runs only after GUI quits).
 
     # Repeated intervals: counts, time stats, and summaries.
@@ -1201,17 +1200,17 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-            # if args.gui is True:
-            #     datadict = {
-            #                 'time_now':     time_now,
-            #                 'count_uniq':   count_uniq,
-            #                 'tt_mean':      tt_mean,
-            #                 'tt_lo':        tt_lo,
-            #                 'tt_hi':        tt_hi,
-            #                 'tt_sd':        tt_sd,
-            #                 'tt_sum':       tt_sum}
-            #     gui = CountGui(datadict)
-            #     gui.set_sumrydata(datadict)
+            if args.gui is True:
+                datadict = {
+                            'time_now':     time_now,
+                            'count_uniq':   count_uniq,
+                            'tt_mean':      tt_mean,
+                            'tt_lo':        tt_lo,
+                            'tt_hi':        tt_hi,
+                            'tt_sd':        tt_sd,
+                            'tt_sum':       tt_sum}
+                gui = CountGui(datadict)
+                gui.set_sumrydata(datadict)
 
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
@@ -1220,10 +1219,9 @@ def main() -> None:
 if __name__ == '__main__':
     try:
         # thread1 = CountGui
-        # thread2 = threading.Thread(target=main)
+        # thread2 = threading.Thread(target=data_intervals)
         # thread1.start()
         # thread2.start()
-
         main()
     except KeyboardInterrupt:
         sys.stdout.write('\n\nInterrupted by user...\n')

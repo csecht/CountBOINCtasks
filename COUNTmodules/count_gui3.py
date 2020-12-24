@@ -83,7 +83,7 @@ class GuiSetup:
 
     def mainwin_cfg(self) -> None:
         """
-        Configure colors, bindings, and basic behavior of main window.
+        Configure colors, bindings, and basic behavior of data_intervals window.
         """
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
@@ -148,7 +148,7 @@ class GuiSetup:
 
     def mainwin_widgets(self) -> None:
         """
-        Layout menus, buttons, separators, row labels in main window.
+        Layout menus, buttons, separators, row labels in data_intervals window.
         """
 
         # creating a menu instance
@@ -273,7 +273,7 @@ class GuiData(GuiSetup):
         # self.set_startdata()
 
         # Set starting data colors (same as for intvl_config.)
-        # Populate start_data labels in main dataframe table
+        # Populate start_data labels in data_intervals dataframe table
         self.config_startdata()
 
         # Call mainloop when ready to have program run. It runs loop until
@@ -378,9 +378,9 @@ class GuiData(GuiSetup):
 
     def set_startdata(self, **startdata: dict):
         """
-        Set StringVars with starting data from count-tasks main().
+        Set StringVars with starting data from count-tasks data_intervals().
 
-        :param startdata: Dict of main() report data var with matching
+        :param startdata: Dict of data_intervals() report data var with matching
         keywords.
         :return: Initial textvariables for datatable labels.
         """
@@ -399,9 +399,9 @@ class GuiData(GuiSetup):
 
     def set_intvldata(self, **intvldata: dict):
         """
-        Set StringVars with interval data from count-tasks main().
+        Set StringVars with interval data from count-tasks data_intervals().
 
-        :param intvldata: Dict of main() report data var with matching
+        :param intvldata: Dict of data_intervals() report data var with matching
         keywords.
         :return: Updated interval textvariables for datatable labels.
         """
@@ -419,9 +419,9 @@ class GuiData(GuiSetup):
 
     def set_sumrydata(self, **sumrydata: dict):
         """
-        Set StringVars with summary data from count-tasks main().
+        Set StringVars with summary data from count-tasks data_intervals().
 
-        :param sumrydata: Dict of main() report data var with matching
+        :param sumrydata: Dict of data_intervals() report data var with matching
         keywords.
         :return: Summary textvariables for datatable labels.
         """
@@ -800,7 +800,7 @@ def increment_prog(incr=100) -> None:
 GuiSetup()
 GuiData()
 
-# Use this once integrate this module with count-tasks main().
+# Use this once integrate this module with count-tasks data_intervals().
 # def about() -> None:
 #     """
 #     Print details about_gui this module.

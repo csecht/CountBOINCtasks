@@ -165,7 +165,7 @@ def intvl_timer(interval: int) -> print:
                   f"{fmt_sec(remain_s, 'short')}{remain_bar}"
                   f"{reset}|< ~time to next count", end='')
         remain_s = (remain_s - barseg_s)
-        # Need to clear the line for main() report printing.
+        # Need to clear the line for data_intervals() report printing.
         if length == 0:
             print(f'\r{del_line}')
         # t.sleep(.5)  # DEBUG
@@ -205,7 +205,7 @@ def get_timestats(count: int, taskt: iter) -> dict:
 
     return {
         'tt_sum':   '00:00:00',
-        'tt_mean':  'na',
+        'tt_mean':  '00:00:00',
         'tt_sd':    'na',
         'tt_min':   'na',
         'tt_max':   'na'
@@ -299,6 +299,7 @@ def main() -> None:
     del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
     blue = '\x1b[1;38;5;33m'
     orng = '\x1b[1;38;5;202m'  # [32m Green3
+    # grey = '\x1b[1;38;5;252m'  # Provides 'white', over-riding system default.
     undo_color = '\x1b[0m'  # Reset color to system default.
     # regex from https://stackoverflow.com/questions/14693701/
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -312,10 +313,10 @@ def main() -> None:
                                                          ttimes_start).values()
     report = (f'{time_start}; Number of tasks in the most recent report:'
               f' {blue}{count_start}{undo_color}\n'
+              f'{indent}Counts remaining until exit: {count_lim}\n'
               f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
-              f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
-              f'{indent}Counts remaining until exit: {count_lim}')
+              f'{bigindent}stdev {tt_sd}, total {tt_sum}')
     # TODO: Consider repressing terminal print if --gui option used.
     print(report)
     if args.log is True:
@@ -346,14 +347,20 @@ def main() -> None:
         # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
+        notasks = False
 
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
 
         ttimes_now = BC.get_reported('elapsed time')
 
-        if len(ttimes_now) > 0:
+        if len(ttimes_now) > 0 and ttimes_now != ttimes_prev:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
+
+        # Need this check for when tasks have run out and the
+        # --get_old_tasks report has not changed between counts.
+        if len(ttimes_now) > 0 and ttimes_now == ttimes_prev:
+            notasks = True
 
         if len(ttimes_start) > 0:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_start]
@@ -379,17 +386,25 @@ def main() -> None:
                 print(f'\r\x1b[2A{del_line}{report}')
             if args.log is True:
                 logging.info(report)
-        elif count_now > 0:
+        elif count_now > 0 and notasks is False:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_now, ttimes_now).values()
             report = (f'{time_now}; '
                       f'Tasks reported in the past {interval_m}m:'
                       f' {blue}{count_now}{undo_color}\n'
+                      f'{indent}Counts remaining until exit: {count_remain}\n'
                       f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
-                      f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
-                      f'{indent}Counts remaining until exit: {count_remain}')
+                      f'{bigindent}stdev {tt_sd}, total {tt_sum}')
+
+            print(f'\r{del_line}{report}')
+            if args.log is True:
+                report = ansi_escape.sub('', report)
+                logging.info(report)
+        elif notasks is True:
+            tic_nnt -= tic_nnt
+            report = f'{time_now}; Check whether any tasks are running.'
 
             print(f'\r{del_line}{report}')
             if args.log is True:

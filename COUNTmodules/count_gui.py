@@ -139,7 +139,7 @@ class CountGui:
         self.set_stubdata()
 
         # self.set_startdata(self.datadict)
-        # TODO: Figure out how to bring in data from count-tasks main().
+        # TODO: Figure out how to bring in data from count-tasks data_intervals().
 
         # Set starting data colors (same as config_intvldata) and starting
         #   data labels.
@@ -154,7 +154,7 @@ class CountGui:
 
     def mainwin_cfg(self) -> None:
         """
-        Configure colors, key binds & basic behavior of main Tk window.
+        Configure colors, key binds & basic behavior of data_intervals Tk window.
         """
         # Needed for data readability in smallest resized dataframe. Depends
         #   on platform; set for Linux with its largest relative font size.
@@ -223,7 +223,7 @@ class CountGui:
 
     def mainwin_widgets(self) -> None:
         """
-        Layout menus, buttons, separators, row labels in main Tk window.
+        Layout menus, buttons, separators, row labels in data_intervals Tk window.
         """
 
         # creating a menu instance
@@ -375,7 +375,7 @@ class CountGui:
         self.count_uniq_sv.set(self.count_uniq)
 
 #    TODO: Figure out how to get startdata from count-tasks.
-    # Set methods are for data from count-tasks main().
+    # Set methods are for data from count-tasks data_intervals().
     def set_startdata(self, **datadict):
         # def set_startdata(self, time_start,
         #                   count_intvl, sumry_intvl,
@@ -383,7 +383,7 @@ class CountGui:
         #                   tt_lo, tt_hi, tt_sd, tt_sum,
         #                   count_lim):
         """
-        Set StringVars with starting data from count-tasks main().
+        Set StringVars with starting data from count-tasks data_intervals().
 
         :param datadict: Dict of report data vars with matching keywords.
         :type datadict: dict
@@ -412,7 +412,7 @@ class CountGui:
 
     def set_intvldata(self, datadict: dict):
         """
-        Set StringVars with interval data from count-tasks main().
+        Set StringVars with interval data from count-tasks data_intervals().
 
         :param datadict: Dict of report data vars with matching keywords.
         :return: Updated interval textvariables for datatable labels.
@@ -431,7 +431,7 @@ class CountGui:
 
     def set_sumrydata(self, datadict: dict):
         """
-        Set StringVars with summary data from count-tasks main().
+        Set StringVars with summary data from count-tasks data_intervals().
 
         :param datadict: Dict of report data vars with matching keywords.
         :return: Summary textvariables for datatable labels.
@@ -809,7 +809,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
 CountGui()
 
-# Use this once integrate this module with count-tasks main().
+# Use this once integrate this module with count-tasks data_intervals().
 # def about() -> None:
 #     """
 #     Print details about_gui this module.
