@@ -347,20 +347,21 @@ def main() -> None:
         # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
-        notasks = False
+        notrunning = False
 
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
 
         ttimes_now = BC.get_reported('elapsed time')
+        tasks_running = BC.get_tasks('active_task_state')
 
-        if len(ttimes_now) > 0 and ttimes_now != ttimes_prev:
+        if len(ttimes_now) > 0 and "EXECUTING" in tasks_running:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
 
-        # Need this check for when tasks have run out and the
-        # --get_old_tasks report has not changed between counts.
-        if len(ttimes_now) > 0 and ttimes_now == ttimes_prev:
-            notasks = True
+        # Need this check for when tasks have run out and the --get_old_tasks
+        #   task times (ttimes_now) do not change between counts.
+        if len(ttimes_now) > 0 and "EXECUTING" not in tasks_running:
+            notrunning = True
 
         if len(ttimes_start) > 0:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_start]
@@ -386,7 +387,7 @@ def main() -> None:
                 print(f'\r\x1b[2A{del_line}{report}')
             if args.log is True:
                 logging.info(report)
-        elif count_now > 0 and notasks is False:
+        elif count_now > 0 and notrunning is False:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_now, ttimes_now).values()
@@ -402,9 +403,9 @@ def main() -> None:
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-        elif notasks is True:
+        elif notrunning is True:
             tic_nnt -= tic_nnt
-            report = f'{time_now}; Check whether any tasks are running.'
+            report = f'{time_now}; **Check whether any tasks are running.**\n'
 
             print(f'\r{del_line}{report}')
             if args.log is True:
