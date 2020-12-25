@@ -33,13 +33,13 @@ __status__ = 'Development Status :: 4 - Beta'
 import argparse
 import logging
 import re
-import statistics as stat
+import statistics as stats
 import subprocess
 import sys
-import time as t
+import time
 from datetime import datetime
 
-from COUNTmodules import boinc_command  #, count_gui2  # , count_gui
+from COUNTmodules import boinc_command
 
 BC = boinc_command.BoincCommand()
 # GUI = count_gui.CountGui()
@@ -169,7 +169,7 @@ def intvl_timer(interval: int) -> print:
         if length == 0:
             print(f'\r{del_line}')
         # t.sleep(.5)  # DEBUG
-        t.sleep(barseg_s)
+        time.sleep(barseg_s)
 
 
 def get_timestats(count: int, taskt: iter) -> dict:
@@ -183,8 +183,8 @@ def get_timestats(count: int, taskt: iter) -> dict:
     """
     total = fmt_sec(int(sum(set(taskt))), 'std')
     if count > 1:
-        mean = fmt_sec(int(stat.mean(set(taskt))), 'std')
-        stdev = fmt_sec(int(stat.stdev(set(taskt))), 'std')
+        mean = fmt_sec(int(stats.mean(set(taskt))), 'std')
+        stdev = fmt_sec(int(stats.stdev(set(taskt))), 'std')
         low = fmt_sec(int(min(taskt)), 'std')
         high = fmt_sec(int(max(taskt)), 'std')
         return {
