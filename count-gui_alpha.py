@@ -135,6 +135,9 @@ class CountGui(object):
         # Unique to summary data report var
         self.count_uniq = None
 
+        # Experimental
+        self.progress = ttk.Progressbar()
+
         # stubdata are only for testing GUI layout.
         self.set_stubdata()
 
@@ -283,9 +286,9 @@ class CountGui(object):
         # Trial feature:
         # TODO: Integrate Progressbar widget with count-tasks intvl_timer.
         self.progress = ttk.Progressbar(self.mainwin, orient=tk.HORIZONTAL,
-                                   length=100, mode='determinate')
-        self.progress.grid(row=13, column=0, columnspan=3, padx=5, pady=5,
-                      sticky=tk.EW)
+                                        length=100, mode='determinate')
+        self.progress.grid(row=13, column=0, columnspan=3,
+                           padx=5, pady=5, sticky=tk.EW)
 
     def set_stubdata(self) -> None:
         """
@@ -612,7 +615,7 @@ class CountGui(object):
         :return: Information window.
         """
         # msg separators use em dashes.
-        msg = ("""
+        info = ("""
 CountBOINCtasks provides task counts and time statistics at set
 intervals for tasks that have been reported to BOINC servers.
 Download the most recent version from: 
@@ -636,7 +639,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 Development Status: 4 - Beta
                 Version:    """)
 
-        msg_lines = msg.count('\n')
+        num_lines = info.count('\n')
         aboutwin = tk.Toplevel()
         icon = tk.PhotoImage(file='tiny_icon.png')
         icon.image = icon
@@ -653,12 +656,12 @@ along with this program. If not, see https://www.gnu.org/licenses/
                   'dark olive green', 'grey2', 'grey25', 'DodgerBlue4',
                   'DarkOrchid4']
         bkg = random.choice(colour)
-        abouttxt = tk.Text(aboutwin, width=72, height=msg_lines+2,
+        abouttxt = tk.Text(aboutwin, width=72, height=num_lines+2,
                            background=bkg, foreground='grey98',
                            relief='groove', borderwidth=5, padx=5)
-        abouttxt.insert('1.0', msg + PROGRAM_VER)
+        abouttxt.insert('1.0', info + PROGRAM_VER)
         # Center text preceding the Author, etc. details.
-        abouttxt.tag_add('text1', '1.0', float(msg_lines-5))
+        abouttxt.tag_add('text1', '1.0', float(num_lines-5))
         abouttxt.tag_configure('text1', justify='center')
         abouttxt.pack()
 
@@ -683,16 +686,17 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 logtext.grid(row=0, column=0, sticky=tk.NSEW)
                 logtext.focus_set()
         except FileNotFoundError as fnferr:
-            msg = ('The file count-tasks_log.txt is not in the'
-                   ' CountBOINCtasks-master folder.\n'
-                   'Has the file been created with the --log command line option?')
-            print(f'{msg}\n{fnferr}')
+            notice = ('The file count-tasks_log.txt is not in the'
+                      ' CountBOINCtasks-master folder.\n'
+                      'Has the file been created with the --log command line '
+                      'option?')
+            print(f'{notice}\n{fnferr}')
             logwin = tk.Toplevel()
             logwin.attributes('-topmost', 1)  # for Windows, needed?
             logwin.title('View log error')
             logtext = tk.Text(logwin, width=75, height=4, bg='grey85',
                               fg='red', relief='raised', padx=5)
-            logtext.insert(tk.INSERT, msg)
+            logtext.insert(tk.INSERT, notice)
             logtext.grid(row=0, column=0, sticky=tk.NSEW)
             logtext.focus_set()
 
@@ -707,7 +711,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGPATH) is True:
             shutil.copyfile(LOGPATH, destination)
-            msg = 'Log file has been copied to ' + str(destination)
+            success_msg = 'Log file has been copied to ' + str(destination)
             # Main window alert; needed along with notification in new window?
             # text = tk.Label(self.mainwin, text=msg, font=('default', 10),
             #                 foreground='DodgerBlue4', background='gold2',
@@ -724,15 +728,15 @@ along with this program. If not, see https://www.gnu.org/licenses/
             logtext = tk.Text(logwin, width=75, height=2,
                               fg='green', bg='grey85',
                               relief='raised', padx=5)
-            logtext.insert(tk.INSERT, msg)
+            logtext.insert(tk.INSERT, success_msg)
             logtext.grid(row=0, column=0, sticky=tk.NSEW)
             logtext.focus_set()
         else:
-            msg = (f'The file {LOGPATH} cannot be archived because it\n'
-                   '  is not in the CountBOINCtasks-master folder.\n'
-                   'Has the file been created with the --log command line option?\n'
-                   'Or perhaps it has been moved?')
-            print(msg)
+            user_warn = (f'The file {LOGPATH} cannot be archived because it\n'
+                         ' is not in the CountBOINCtasks-master folder.\n'
+                         'Has the file been created with the --log command '
+                         'line option?\nOr perhaps it has been moved?')
+            print(user_warn)
             # Need a persistent window alert in addition to a terminal alert.
             logwin = tk.Toplevel()
             logwin.attributes('-topmost', 1)
@@ -740,7 +744,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
             logtext = tk.Text(logwin, width=62, height=4,
                               fg='red', bg='grey85',
                               relief='raised', padx=5)
-            logtext.insert(tk.INSERT, msg)
+            logtext.insert(tk.INSERT, user_warn)
             logtext.grid(row=0, column=0, sticky=tk.NSEW)
             logtext.focus_set()
 
@@ -821,21 +825,21 @@ def check_args(parameter) -> None:
     """
 
     if parameter == "0":
-        msg = "Parameter value cannot be zero."
-        raise argparse.ArgumentTypeError(msg)
+        notice = "Parameter value cannot be zero."
+        raise argparse.ArgumentTypeError(notice)
     # Evaluate the --summary parameter, expect e.g., 15m, 2h, 1d, etc.
     if parameter != "0":
         valid_units = ['m', 'h', 'd']
         val = (parameter[:-1])
         unit = parameter[-1]
         if str(unit) not in valid_units:
-            msg = f"TIME unit must be m, h, or d, not {unit}"
-            raise argparse.ArgumentTypeError(msg)
+            notice = f"TIME unit must be m, h, or d, not {unit}"
+            raise argparse.ArgumentTypeError(notice)
         try:
             int(val)
         except ValueError as err:
-            msg = "TIME must be an integer"
-            raise argparse.ArgumentTypeError(msg) from err
+            err_msg = "TIME must be an integer"
+            raise argparse.ArgumentTypeError(err_msg) from err
     return parameter
 
 
@@ -853,8 +857,8 @@ def get_min(time_string: str) -> int:
     try:
         return t_min[unit] * val
     except KeyError as err:
-        msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
-        raise KeyError(msg) from err
+        err_msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
+        raise KeyError(err_msg) from err
 
 
 def fmt_sec(secs: int, fmt: str) -> str:
@@ -870,8 +874,8 @@ def fmt_sec(secs: int, fmt: str) -> str:
     _m, _s = divmod(secs, 60)
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
-    msg = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
-          f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
+    info = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
+           f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
     if fmt == 'short':
         if secs >= 86400:
             return f'{day:1d}d'  # option, add {h:01d}h'
@@ -884,7 +888,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
         if secs >= 86400:
             return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
         return f'{_h:02d}:{_m:02d}:{_s:02d}'
-    return msg
+    return info
 
 
 def intvl_timer(interval: int) -> print:
@@ -1036,9 +1040,9 @@ def data_intervals() -> None:
     sumry_m = get_min(args.summary)
     sumry_factor = sumry_m // interval_m
     if interval_m >= sumry_m:
-        msg = "Invalid parameters: --summary time must be greater than" \
+        info = "Invalid parameters: --summary time must be greater than" \
               " --interval time."
-        raise ValueError(msg)
+        raise ValueError(info)
 
     if args.about:
         print(__doc__)
