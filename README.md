@@ -107,12 +107,11 @@ TIP: To get the only the most recent task count and time metrics without
 * Add GUI
 
 ### Known Issues
-* If boinc-client stalls on uploading tasks, thus preventing new tasks from 
-  loading once the task queue has run out, then the reported task list 
-  (--get_old_tasks command) won't be  updated. The last set of tasks reported 
-  by BOINC will be listed as newly reported tasks by this program. This 
-  will appear across successive report intervals having the same count and 
-  summary stats.
 * BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different 
   boinccmd path from the default path used by count-tasks.py. I've yet to 
-  figure out the new path. Any help would be appreciated.
+  figure out the new path. (Any help would be appreciated.) As a work-around, 
+  if you archived a prior BOINC package, you can copy the boinccmd 
+  executable file into the default location: 
+  Users/<you>/Application Support/BOINC/ , or follow the 
+  prompts to enter a custom path to boinccmd (assuming you have figured 
+  that out!)
