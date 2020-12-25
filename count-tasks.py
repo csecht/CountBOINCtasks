@@ -347,6 +347,7 @@ def main() -> None:
         # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
+        # active_task_state for running tasks will be 'EXECUTING'.
         tasks_running = BC.get_tasks('active_task_state')
         notrunning = False
 
@@ -357,9 +358,8 @@ def main() -> None:
 
         if len(ttimes_now) > 0 and "EXECUTING" in tasks_running:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
-
         # Need this check for when tasks have run out.
-        if len(ttimes_now) > 0 and "EXECUTING" not in tasks_running:
+        elif len(ttimes_now) > 0 and "EXECUTING" not in tasks_running:
             notrunning = True
 
         if len(ttimes_start) > 0:
@@ -379,13 +379,13 @@ def main() -> None:
                       f'No tasks reported in the past {tic_nnt} {interval_m}m'
                       f' interval(s).\n'
                       f'{indent}Counts remaining until exit: {count_remain}')
-
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
                 print(f'\r\x1b[2A{del_line}{report}')
             if args.log is True:
                 logging.info(report)
+
         elif count_now > 0 and notrunning is False:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
@@ -397,22 +397,20 @@ def main() -> None:
                       f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}')
-
             print(f'\r{del_line}{report}')
             if args.log is True:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
-        elif notrunning is True:
-            tic_nnt -= tic_nnt
-            report = f'{time_now}; **Check whether any tasks are running.**\n'
 
+        elif count_now > 0 and notrunning is True:
+            tic_nnt -= tic_nnt
+            report = f'{time_now}; *** Check whether tasks are running. ***\n'
             print(f'\r{del_line}{report}')
             if args.log is True:
-                report = ansi_escape.sub('', report)
                 logging.info(report)
 
         # Report: Summary intervals
-        if (i + 1) % sumry_factor == 0:
+        if (i + 1) % sumry_factor == 0 and notrunning is False:
             # Need unique tasks for stats and counting.
             ttimes_uniq = set(ttimes_smry)
             count_uniq = len(ttimes_uniq)
