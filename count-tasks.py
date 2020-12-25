@@ -348,19 +348,19 @@ def main() -> None:
         time_now = datetime.now().strftime(time_fmt)
         count_remain = count_lim - (i + 1)
         # active_task_state for running tasks will be 'EXECUTING'.
-        tasks_running = BC.get_tasks('active_task_state')
-        notrunning = False
+        task_states = BC.get_tasks('active_task_state')
+        not_running = False
 
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
 
         ttimes_now = BC.get_reported('elapsed time')
 
-        if len(ttimes_now) > 0 and "EXECUTING" in tasks_running:
+        if len(ttimes_now) > 0 and "EXECUTING" in task_states:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_prev]
         # Need this check for when tasks have run out.
-        elif len(ttimes_now) > 0 and "EXECUTING" not in tasks_running:
-            notrunning = True
+        elif len(ttimes_now) > 0 and "EXECUTING" not in task_states:
+            not_running = True
 
         if len(ttimes_start) > 0:
             ttimes_now = [task for task in ttimes_now if task not in ttimes_start]
@@ -386,7 +386,7 @@ def main() -> None:
             if args.log is True:
                 logging.info(report)
 
-        elif count_now > 0 and notrunning is False:
+        elif count_now > 0 and not_running is False:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_now, ttimes_now).values()
@@ -402,7 +402,7 @@ def main() -> None:
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
-        elif count_now > 0 and notrunning is True:
+        elif count_now > 0 and not_running is True:
             tic_nnt -= tic_nnt
             report = f'{time_now}; *** Check whether tasks are running. ***\n'
             print(f'\r{del_line}{report}')
@@ -410,7 +410,7 @@ def main() -> None:
                 logging.info(report)
 
         # Report: Summary intervals
-        if (i + 1) % sumry_factor == 0 and notrunning is False:
+        if (i + 1) % sumry_factor == 0 and not_running is False:
             # Need unique tasks for stats and counting.
             ttimes_uniq = set(ttimes_smry)
             count_uniq = len(ttimes_uniq)
