@@ -38,10 +38,10 @@ import shutil
 import statistics as stats
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from threading import Thread
 
 from COUNTmodules import boinc_command
 
@@ -596,11 +596,13 @@ class CountGui(object):
     def quitgui(self) -> None:
         """Safe and informative exit from the program.
         """
-        print('\n  --- User has quit the count-tasks GUI. ---\n'
-              '  --- Use Ctrl+C to exit the count-tasks program. ---\n')
+        # For aesthetics, clear the persistent timer line; timer will be
+        # redrawn (as threaded) following the print message.
+        # Move cursor to beginning of timer line, erase the line, then print.
+        print('\r\x1b[K'
+              '  --- User has quit the count-tasks GUI. ---\n'
+              '  --- To exit from scheduled task counts, use Ctrl+C. ---\n')
         self.mainwin.destroy()
-        # main.quit()
-
 
     @staticmethod
     def about() -> None:
@@ -707,7 +709,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
             shutil.copyfile(LOGPATH, destination)
             msg = 'Log file has been copied to ' + str(destination)
             # Main window alert; needed along with notification in new window?
-            # text = tk.Label(text=msg, font=('default', 10),
+            # text = tk.Label(self.mainwin, text=msg, font=('default', 10),
             #                 foreground='DodgerBlue4', background='gold2',
             #                 relief='flat')
             # text.grid(row=9, column=0, columnspan=3,
@@ -972,8 +974,15 @@ def get_timestats(count: int, taskt: iter) -> dict:
         'tt_max':   'na'
         }
 
-# TODO: consider splitting this into two functions; 1) parser and start data 2)
-#  intervals and summary data; then can use self.after(100, self.2) on thread.
+
+# SEMAPHORE ############
+DI_SEM = threading.Semaphore()
+########################
+
+
+# TODO: consider splitting this into two functions; 1) parser and start
+#  data, 2) intervals and summary data; then can use self.after(100, self.2)
+#  on thread.
 def data_intervals() -> None:
     """
     Main flow for count-tasks.py utility. Reports task counts and times.
@@ -985,7 +994,6 @@ def data_intervals() -> None:
     # NOTE: Boinc only returns tasks that were reported in past hour.
     #   Hence an --interval range limit to count tasks at least once per
     #   hour.
-# while not finish:  # <<- Does not help to smoothly exit the thread (Process)
     parser = argparse.ArgumentParser()
     parser.add_argument('--about',
                         help='Author, copyright, and GNU license',
@@ -1022,6 +1030,7 @@ def data_intervals() -> None:
                         metavar="N")
     args = parser.parse_args()
 
+    # Variables to deal with parser arguments and defaults.
     count_lim = int(args.count_lim)
     interval_m = int(args.interval)
     sumry_m = get_min(args.summary)
@@ -1031,7 +1040,6 @@ def data_intervals() -> None:
               " --interval time."
         raise ValueError(msg)
 
-    # About me
     if args.about:
         print(__doc__)
         print('Author: ', __author__)
@@ -1043,7 +1051,7 @@ def data_intervals() -> None:
         print('Status: ', __status__)
         sys.exit(0)
 
-    # Used for CountGui() calls.
+    # Variables used for CountGui() data, from calls in data_intervals().
     intvl_str = f'{args.interval}m'
     sumry_intvl = args.summary
     args.gui = False  # For testing only; True allows call to CountGui().
@@ -1075,16 +1083,15 @@ def data_intervals() -> None:
     if sys.platform[:3] == 'win':
         subprocess.call('', shell=True)
 
-    # Report: Starting information of task times and task counts.
+    # Report: start information for existing task times and counts.
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
-    report = (f'{time_start}; Number of tasks in the most recent report:'
+    report = (f'{time_start}; Number of tasks in the most recent BOINC report:'
               f' {blue}{count_start}{undo_color}\n'
               f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
               f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
               f'{indent}Counts remaining until exit: {count_lim}')
-    # TODO: Consider repressing terminal reporting if --gui option used.
     print(report)
     if args.log is True:
         report = ansi_escape.sub('', report)
@@ -1173,7 +1180,7 @@ def data_intervals() -> None:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_now, ttimes_now).values()
-            report = (f'{time_now}; '
+            report = (f'\n{time_now}; '
                       f'Tasks reported in the past {interval_m}m:'
                       f' {blue}{count_now}{undo_color}\n'
                       f'{indent}Counts remaining until exit: {count_remain}\n'
@@ -1200,7 +1207,7 @@ def data_intervals() -> None:
 
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_uniq, ttimes_uniq).values()
-            report = (f'{time_now}; '
+            report = (f'\n{time_now}; '
                       f'{orng}>>> SUMMARY{undo_color} count for the past'
                       f' {args.summary}: {blue}{count_uniq}{undo_color}\n'
                       f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
@@ -1214,32 +1221,20 @@ def data_intervals() -> None:
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
 
-
-interval_thread = Thread(target=data_intervals, daemon=True)
-interval_thread.start()
-CountGui(tk.Tk())
-try:
-    interval_thread.join()
-except KeyboardInterrupt:
-    msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
-    sys.stdout.write(msg)
-    logging.info(msg=f'\n{datetime.now()}: {msg}')
+    # SEMAPHORE ############
+    DI_SEM.release()
+    ########################
 
 
-# When count cycles end, GUI and terminal stay up until Quit GUI.
-# Can replace std terminal output with notice "Gui running..."  OR/AND
-#   post notice in mainwin that "Counts have completed; click Quit to exit"
-# Requires Ctrl-C to close out terminal after Quit GUI.
-# Need to use threading.Semaphore?
-
-# Not needed?  Would like to have a "Interrupted by user..." msg.
-# if __name__ == '__main__':
-#     try:
-#         data_intervals()
-#         CountGui(object)
-#     except KeyboardInterrupt:
-#         sys.stdout.write('\n\nInterrupted by user...\n')
-#         logging.info(msg=f'\n{datetime.now()} --> Interrupted by user...\n')
-#     except OSError as error:
-#         sys.stdout.write(f'{error}')
-#         logging.info(msg=f'\n{error}\n')
+# Set data acquisition and timer in Thread so tkinter can run in main thread.
+if __name__ == '__main__':
+    interval_thread = threading.Thread(target=data_intervals, daemon=True)
+    interval_thread.start()
+    CountGui(tk.Tk())
+    try:
+        interval_thread.join()
+    except KeyboardInterrupt:
+        msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
+        sys.stdout.write(msg)
+        logging.info(msg=f'\n{datetime.now()}: {msg}')
+# The if __name__ line is not required b/c its statements run fine without it.

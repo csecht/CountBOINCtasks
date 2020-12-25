@@ -311,7 +311,7 @@ def main() -> None:
     # Report: Starting information of task times and task counts.
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
-    report = (f'{time_start}; Number of tasks in the most recent report:'
+    report = (f'{time_start}; Number of tasks in the most recent BOINC report:'
               f' {blue}{count_start}{undo_color}\n'
               f'{indent}Counts remaining until exit: {count_lim}\n'
               f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
@@ -390,7 +390,7 @@ def main() -> None:
             tic_nnt -= tic_nnt
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_now, ttimes_now).values()
-            report = (f'{time_now}; '
+            report = (f'\n{time_now}; '
                       f'Tasks reported in the past {interval_m}m:'
                       f' {blue}{count_now}{undo_color}\n'
                       f'{indent}Counts remaining until exit: {count_remain}\n'
@@ -417,7 +417,7 @@ def main() -> None:
 
             tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                 get_timestats(count_uniq, ttimes_uniq).values()
-            report = (f'{time_now}; '
+            report = (f'\n{time_now}; '
                       f'{orng}>>> SUMMARY{undo_color} count for the past'
                       f' {args.summary}: {blue}{count_uniq}{undo_color}\n'
                       f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
