@@ -174,7 +174,7 @@ class BoincCommand:
                    ' boinccmd has an error in its command argument.')
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
-        # TODO: Are more subprocess exceptions needed?.
+        # TODO: Use subprocess.Popen to avoid shell=True?
 
         # Works with Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
@@ -195,8 +195,9 @@ class BoincCommand:
     def get_reported(self, tag: str, cmd=' --get_old_tasks') -> list:
         """
         Get data from reported boinc-client tasks.
-        :param cmd: The boinccmd command for tasks returned to boinc server.
-        :param tag: 'task' returns reported task names.
+
+        :param cmd: The boinccmd command for tasks reported to boinc server.
+        :param tag: e.g., 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
         :return: List of specified data parsed from cmd.
         """
@@ -222,6 +223,7 @@ class BoincCommand:
     def get_tasks(self, tag: str, cmd=' --get_tasks') -> list:
         """
         Get data from current boinc-client tasks.
+
         :param cmd: The boinccmd command to get queued tasks information.
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
