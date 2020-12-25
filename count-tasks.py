@@ -409,7 +409,7 @@ def main() -> None:
             if args.log is True:
                 logging.info(report)
 
-        # Report: Summary intervals
+        # Report: Summary intervals; suppress summary if tasks not running.
         if (i + 1) % sumry_factor == 0 and not_running is False:
             # Need unique tasks for stats and counting.
             ttimes_uniq = set(ttimes_smry)
