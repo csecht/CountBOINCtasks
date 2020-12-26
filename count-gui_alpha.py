@@ -25,7 +25,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __version__ = '0.5x'
-__program_name__ = 'count-tasks.py'
+__program_name__ = __file__
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 5 - ALPHA'
@@ -62,7 +62,7 @@ BC = boinc_command.BoincCommand()
 LOGPATH = Path('count-tasks_log.txt')
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5x'
-GUI_TITLE = 'count-gui_alpha.py'
+GUI_TITLE = __file__
 
 # Here logging is lazily employed to manage the file of report data.
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
@@ -75,8 +75,7 @@ class CountGui(object):
     A GUI window for optional display of data from data_intervals().
     """
     # pylint: disable=too-many-instance-attributes
-
-    # TODO: Add pretty icon to data_intervals window. These variations don't work:
+# TODO: Add pretty icon to data_intervals window. These variations don't work:
     # icon = tk.PhotoImage(Image.open('Python-icon.png'))
     # icon.show() # Shows a stand-alone image, so file is okay.
     # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
@@ -87,7 +86,6 @@ class CountGui(object):
     #                 tk.PhotoImage(file='Python-icon.png'))
 
     def __init__(self, mainwin):
-    # With this constructor, ^^^^, datadict isn't read from data_intervals().
 
         super().__init__()
 
@@ -604,8 +602,8 @@ class CountGui(object):
         # redrawn (as threaded) following the print message.
         # Move cursor to beginning of timer line, erase the line, then print.
         print('\r\x1b[K'
-              '  --- User has quit the count-tasks GUI. ---\n'
-              '  --- To exit from scheduled task counts, use Ctrl+C. ---\n')
+              '\n  --- User has quit the count-tasks GUI. ---'
+              '\n  --- To exit from scheduled task counts, use Ctrl+C. ---\n')
         self.mainwin.destroy()
 
     @staticmethod
@@ -1124,7 +1122,7 @@ def data_intervals() -> None:
                     'tt_sd':        tt_sd,
                     'tt_sum':       tt_sum,
                     'count_lim':    count_lim}
-        CountGui(object, datadict)
+        # CountGui(object, datadict)
         # gui.set_startdata(datadict)
         # ^^^^ Method call not used when set_startdata is called from CountGui
         # __init__. This is just for testing.
@@ -1243,7 +1241,7 @@ if __name__ == '__main__':
     try:
         interval_thread.join()
     except KeyboardInterrupt:
-        notice = '\n\n  *** Interrupted by user. Quitting now... \n\n'
-        sys.stdout.write(notice)
-        logging.info(msg=f'\n{datetime.now()}: {notice}')
+        usr_notice = '\n\n  *** Interrupted by user. Quitting now... \n\n'
+        sys.stdout.write(usr_notice)
+        logging.info(msg=f'\n{datetime.now()}: {usr_notice}')
 # The if __name__ line is not required b/c its statements run fine without it.
