@@ -69,6 +69,7 @@ logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
+# The tkinter gui engine that runs as main thread.
 class CountGui(object):
     """
     A GUI window for optional display of data from data_intervals().
@@ -641,7 +642,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
         num_lines = info.count('\n')
         aboutwin = tk.Toplevel()
-        icon = tk.PhotoImage(file='tiny_icon.png')
+        icon = tk.PhotoImage(file='unused_bits/tiny_icon.png')
         icon.image = icon
         aboutwin.iconphoto(True, icon)
         # Minsize needed for MacOS where Help>About opens tab in mainwin.
@@ -979,10 +980,10 @@ def get_timestats(count: int, taskt: iter) -> dict:
         }
 
 
-# SEMAPHORE ############
+# SEMAPHORE ############ for data_intervals()
 DI_SEM = threading.Semaphore()
 ########################
-# DI_SEM is released at end of 'for' count cycle loop.
+# DI_SEM is released at the end of 'for' cycle counting loop.
 
 
 # TODO: Either make this a class with methods that feed data to GUI or make
@@ -997,9 +998,9 @@ def data_intervals() -> None:
 
     # NOTE: --interval and --summary argument formats are different
     #   because summary times can be min, hr, or days, while interval times
-    #   are always minutes (60m maximum).
+    #   are always minutes (60 maximum).
     # NOTE: Boinc only returns tasks that were reported in past hour.
-    #   Hence an --interval range limit to count tasks at least once per
+    #   Hence an --interval maximum limit to count tasks at least once per
     #   hour.
     parser = argparse.ArgumentParser()
     parser.add_argument('--about',

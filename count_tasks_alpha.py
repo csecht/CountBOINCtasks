@@ -618,7 +618,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
         msg_lines = msg.count('\n')
         aboutwin = tk.Toplevel()
-        icon = tk.PhotoImage(file='tiny_icon.png')
+        icon = tk.PhotoImage(file='unused_bits/tiny_icon.png')
         icon.image = icon
         aboutwin.iconphoto(True, icon)
         # Minsize needed for MacOS where Help>About opens tab in mainwin.

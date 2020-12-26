@@ -2,6 +2,7 @@
 count-tasks_log.txt
 count-tasks.py_log.txt
 count_tasks_alpha.py
+/unused_bits
 .gitignore
 
 # https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
