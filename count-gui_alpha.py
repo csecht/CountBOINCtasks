@@ -225,7 +225,7 @@ class CountGui(object):
 
     def mainwin_widgets(self) -> None:
         """
-        Layout menus, buttons, separators, row labels in data_intervals Tk window.
+        Layout menus, buttons, separators, row labels in main window.
         """
 
         # creating a menu instance
@@ -267,7 +267,7 @@ class CountGui(object):
         ttk.Button(self.mainwin, text="Quit",
                    command=self.quitgui).grid(row=12, column=2,
                                               padx=5, sticky=tk.E)
-        # Start button used only to test progressbar
+        # Button used only to test progressbar.
         ttk.Button(text="Run test bar",
                    command=self.increment_prog).grid(row=11, column=2,
                                                      padx=5, sticky=tk.E)

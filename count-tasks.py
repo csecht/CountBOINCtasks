@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-count_now-tasks.py counts reported boinc-client tasks at set intervals.
+Provides regular counts and time stats for reported BOINC tasks.
 
     Copyright (C) 2020 C. Echt
 
