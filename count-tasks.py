@@ -90,8 +90,8 @@ def get_min(time_string: str) -> int:
     try:
         return t_min[unit] * val
     except KeyError as err:
-        msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
-        raise KeyError(msg) from err
+        err_msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
+        raise KeyError(err_msg) from err
 
 
 def fmt_sec(secs: int, fmt: str) -> str:
@@ -149,7 +149,7 @@ def intvl_timer(interval: int) -> print:
     del_line = '\x1b[2K'  # Clear entire line.
 
     # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
-    # because there is no external input.
+    # because there is no external input?
     if sys.platform[:3] == 'win':
         subprocess.call('', shell=True)
 

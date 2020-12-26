@@ -972,7 +972,7 @@ def get_timestats(count: int, taskt: iter) -> dict:
 
     return {
         'tt_sum':   '00:00:00',
-        'tt_mean':  'na',
+        'tt_mean':  '00:00:00',
         'tt_sd':    'na',
         'tt_min':   'na',
         'tt_max':   'na'
@@ -982,14 +982,17 @@ def get_timestats(count: int, taskt: iter) -> dict:
 # SEMAPHORE ############
 DI_SEM = threading.Semaphore()
 ########################
+# DI_SEM is released at end of 'for' count cycle loop.
 
 
-# TODO: consider splitting this into two functions; 1) parser and start
-#  data, 2) intervals and summary data; then can use self.after(100, self.2)
-#  on thread.
+# TODO: Either make this a class with methods that feed data to GUI or make
+#  reporting functions that 'return' report data when called from GUI class.
+# TODO: Consider making main program a GUI with terminal display optional,
+#   terminal with GUI opt, or having two programs, GUI only and terminal
+#   only.
 def data_intervals() -> None:
     """
-    Main flow for count-tasks.py utility. Reports task counts and times.
+    Threaded flow for timed intervals and gathering task data.
     """
 
     # NOTE: --interval and --summary argument formats are different
