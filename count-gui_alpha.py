@@ -685,18 +685,18 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 logtext.see('end')
                 logtext.grid(row=0, column=0, sticky=tk.NSEW)
                 logtext.focus_set()
-        except FileNotFoundError as fnferr:
-            notice = ('The file count-tasks_log.txt is not in the'
-                      ' CountBOINCtasks-master folder.\n'
-                      'Has the file been created with the --log command line '
-                      'option?')
-            print(f'{notice}\n{fnferr}')
+        except FileNotFoundError as fnf_err:
+            headsup = ('The file count-tasks_log.txt is not in the'
+                       ' CountBOINCtasks-master folder.\n'
+                       'Has the file been created with the --log command line'
+                       ' option?')
+            print(f'{headsup}\n{fnf_err}')
             logwin = tk.Toplevel()
             logwin.attributes('-topmost', 1)  # for Windows, needed?
             logwin.title('View log error')
             logtext = tk.Text(logwin, width=75, height=4, bg='grey85',
                               fg='red', relief='raised', padx=5)
-            logtext.insert(tk.INSERT, notice)
+            logtext.insert(tk.INSERT, headsup)
             logtext.grid(row=0, column=0, sticky=tk.NSEW)
             logtext.focus_set()
 
@@ -825,16 +825,16 @@ def check_args(parameter) -> None:
     """
 
     if parameter == "0":
-        notice = "Parameter value cannot be zero."
-        raise argparse.ArgumentTypeError(notice)
+        instruct = "Parameter value cannot be zero."
+        raise argparse.ArgumentTypeError(instruct)
     # Evaluate the --summary parameter, expect e.g., 15m, 2h, 1d, etc.
     if parameter != "0":
         valid_units = ['m', 'h', 'd']
         val = (parameter[:-1])
         unit = parameter[-1]
         if str(unit) not in valid_units:
-            notice = f"TIME unit must be m, h, or d, not {unit}"
-            raise argparse.ArgumentTypeError(notice)
+            instruct = f"TIME unit must be m, h, or d, not {unit}"
+            raise argparse.ArgumentTypeError(instruct)
         try:
             int(val)
         except ValueError as err:
@@ -1148,6 +1148,7 @@ def data_intervals() -> None:
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
 
+        # Needs to be after ttimes_prev = ttimes_now[:].
         ttimes_now = BC.get_reported('elapsed time')
 
         if len(ttimes_now) > 0 and "EXECUTING" in tasks_running:
@@ -1230,7 +1231,7 @@ def data_intervals() -> None:
     ########################
 
 
-# Set data acquisition and timer in Thread so tkinter can run in main thread.
+# Put data acquisition and timer in Thread so tkinter can run in main thread.
 if __name__ == '__main__':
     interval_thread = threading.Thread(target=data_intervals, daemon=True)
     interval_thread.start()
@@ -1238,7 +1239,7 @@ if __name__ == '__main__':
     try:
         interval_thread.join()
     except KeyboardInterrupt:
-        msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
-        sys.stdout.write(msg)
-        logging.info(msg=f'\n{datetime.now()}: {msg}')
+        notice = '\n\n  *** Interrupted by user. Quitting now... \n\n'
+        sys.stdout.write(notice)
+        logging.info(msg=f'\n{datetime.now()}: {notice}')
 # The if __name__ line is not required b/c its statements run fine without it.
