@@ -983,67 +983,8 @@ def data_intervals() -> None:
     # NOTE: Boinc only returns tasks that were reported in past hour.
     #   Hence an --interval maximum limit to count tasks at least once per
     #   hour.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--about',
-                        help='Author, copyright, and GNU license',
-                        action='store_true',
-                        default=False)
-    parser.add_argument('--log',
-                        help='Create log file of results or append to '
-                             'existing log',
-                        action='store_true',
-                        default=False)
-    # parser.add_argument('--gui',
-    #                     help='Show data in graphics window.',
-    #                     action='store_true',
-    #                     default=False)
-    parser.add_argument('--interval',
-                        help='Specify minutes between task counts'
-                             ' (default: %(default)d)',
-                        # default=60,
-                        default=5,  # for testing
-                        choices=range(5, 65, 5),
-                        type=int,
-                        metavar="M")
-    parser.add_argument('--summary',
-                        help='Specify time between count summaries,'
-                             ' e.g., 12h, 7d (default: %(default)s)',
-                        default='1d',
-                        type=check_args,
-                        metavar='TIMEunit')
-    parser.add_argument('--count_lim',
-                        help='Specify number of count reports until program'
-                             ' exits (default: %(default)d)',
-                        default=1008,
-                        type=int,
-                        metavar="N")
-    args = parser.parse_args()
 
-    # Variables to deal with parser arguments and defaults.
-    count_lim = int(args.count_lim)
-    interval_m = int(args.interval)
-    sumry_m = get_min(args.summary)
-    sumry_factor = sumry_m // interval_m
-    if interval_m >= sumry_m:
-        info = "Invalid parameters: --summary time must be greater than" \
-              " --interval time."
-        raise ValueError(info)
-
-    if args.about:
-        print(__doc__)
-        print('Author: ', __author__)
-        print('Copyright: ', __copyright__)
-        print('Credits: ', *[f'\n      {item}' for item in __credits__])
-        print('License: ', __license__)
-        print('Version: ', __version__)
-        print('Maintainer: ', __maintainer__)
-        print('Status: ', __status__)
-        sys.exit(0)
-
-    # Variables used for CountGui() data, from calls in data_intervals().
-    intvl_str = f'{args.interval}m'
-    sumry_intvl = args.summary
-    args.gui = False  # For testing only; True allows call to CountGui().
+    args.gui = True  # For testing only; True allows call to CountGui().
 
     # Initial run: need to set variables for comparisons between intervals.
     # As with task names, task times as sec.microsec are unique.
@@ -1217,9 +1158,68 @@ def data_intervals() -> None:
     ########################
 
 
-# Put data acquisition and timer in Thread so tkinter can run in main thread.
+# Need data acquisition and timer in Thread so tkinter can run in main thread.
 if __name__ == '__main__':
-    interval_thread = threading.Thread(target=data_intervals, daemon=True)
+    # NOTE: --interval and --summary argument formats are different
+    #   because summary times can be min, hr, or days, while interval times
+    #   are always minutes (60 maximum).
+    # NOTE: Boinc only returns tasks that were reported in past hour.
+    #   Hence an --interval maximum limit to count tasks at least once per
+    #   hour.
+    # TODO: RESET --interval default to 60 for distribution version.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--about', help='Author, copyright, and GNU license',
+                        action='store_true', default=False)
+    parser.add_argument('--log',
+                        help='Create log file of results or append to '
+                             'existing log', action='store_true',
+                        default=False)
+    # parser.add_argument('--gui',
+    #                     help='Show data in graphics window.',
+    #                     action='store_true',
+    #                     default=False)
+    parser.add_argument('--interval',
+                        help='Specify minutes between task counts'
+                             ' (default: %(default)d)', # default=60,
+                        default=5,  # for testing
+                        choices=range(5, 65, 5), type=int, metavar="M")
+    parser.add_argument('--summary',
+                        help='Specify time between count summaries,'
+                             ' e.g., 12h, 7d (default: %(default)s)',
+                        default='1d', type=check_args, metavar='TIMEunit')
+    parser.add_argument('--count_lim',
+                        help='Specify number of count reports until program'
+                             ' exits (default: %(default)d)', default=1008,
+                        type=int, metavar="N")
+    args = parser.parse_args()
+
+    # Variables to deal with parser arguments and defaults.
+    count_lim = int(args.count_lim)
+    interval_m = int(args.interval)
+    sumry_m = get_min(args.summary)
+    sumry_factor = sumry_m // interval_m
+    # Variables used for CountGui() data display.
+    intvl_str = f'{args.interval}m'
+    sumry_intvl = args.summary
+
+    if interval_m >= sumry_m:
+        info = "Invalid parameters: --summary time must be greater than" \
+               " --interval time."
+        raise ValueError(info)
+
+    if args.about:
+        print(__doc__)
+        print('Author: ', __author__)
+        print('Copyright: ', __copyright__)
+        print('Credits: ', *[f'\n      {item}' for item in __credits__])
+        print('License: ', __license__)
+        print('Version: ', __version__)
+        print('Maintainer: ', __maintainer__)
+        print('Status: ', __status__)
+        sys.exit(0)
+
+    # interval_thread = threading.Thread(target=data_intervals, daemon=True)
+    interval_thread = threading.Thread(target=data_intervals)
     interval_thread.start()
     # CountGui(tk.Tk())
     root = tk.Tk()
@@ -1230,5 +1230,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         usr_notice = '\n\n  *** Interrupted by user. Quitting now... \n\n'
         sys.stdout.write(usr_notice)
-        logging.info(msg=f'\n{datetime.now()}: {usr_notice}')
-# The if __name__ line is not required b/c its statements run fine without it.
+        logging.info(
+            msg=f'\n{datetime.now()}: {usr_notice}')  # The if __name__ line
+        # is not required b/c its statements run fine without
+# it, but it seems more pythonic with it.
