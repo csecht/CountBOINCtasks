@@ -87,7 +87,7 @@ class CountGui(object):
 
     def __init__(self, mainwin):
 
-        super().__init__()
+        # super().__init__()
 
         # self.datadict = datadict
         self.mainwin = mainwin
@@ -149,7 +149,7 @@ class CountGui(object):
         # "Always call mainloop as the last logical line of code in your
         # program." per Bryan Oakly:
         # https://stackoverflow.com/questions/29158220/tkinter-understanding-mainloop
-        self.mainwin.mainloop()
+        # self.mainwin.mainloop()
         # ^^ NOTE: mainloop is may be instantiated in show_startdata(),
         #  for testing purposes.
 
@@ -402,21 +402,6 @@ class CountGui(object):
         self.config_sumrydata()
 
     # Config methods: set font emphasis styles used by data labels.
-
-    # def config_startdata(self) -> None:
-    #     """
-    #     Populate initial data table from count-tasks.
-    #
-    #     :return: Starting BOINC data from past hour.
-    #     """
-    #     self.intvl_time[0]     = 'grey90'
-    #     self.intvl_highlite[0]  = 'gold'
-    #     self.intvl_lowlite[0]  = 'grey90'
-    #     self.sumry_time[0]     = 'grey60'
-    #     self.sumry_highlite[0]  = 'grey60'
-    #     self.sumry_lowlite[0]  = 'grey60'
-    #
-    #     self.show_startdata()
 
     # TODO: Consider not using buttons to change data emphasis styles.
 
@@ -1239,7 +1224,10 @@ def data_intervals() -> None:
 if __name__ == '__main__':
     interval_thread = threading.Thread(target=data_intervals, daemon=True)
     interval_thread.start()
-    CountGui(tk.Tk())
+    # CountGui(tk.Tk())
+    root = tk.Tk()
+    CG = CountGui(root)
+    root.mainloop()
     try:
         interval_thread.join()
     except KeyboardInterrupt:

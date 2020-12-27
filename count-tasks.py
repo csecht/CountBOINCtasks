@@ -322,6 +322,8 @@ def main() -> None:
     print(report)
     if args.log is True:
         report = ansi_escape.sub('', report)
+        # This is proper string formatting for logging, but f-strings, as used
+        # elsewhere, are fine for this program's shortcut use of logging.
         logging.info("""%s; Task counter is starting with
 %scount interval (minutes): %s
 %ssummary interval: %s
