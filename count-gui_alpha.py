@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-A test GUI for count-tasks.py.
+A test GUI for count-tasks.py. Data are not live.
 
     Copyright (C) 2020 C. Echt
 
@@ -87,9 +87,6 @@ class CountGui(object):
 
     def __init__(self, mainwin):
 
-        # super().__init__()
-
-        # self.datadict = datadict
         self.mainwin = mainwin
 
         self.row_fg = None
@@ -297,7 +294,7 @@ class CountGui(object):
         """
 
         # Starting report
-        self.count_lim = '1008'
+        self.count_lim = 'Terminal data are real'
         self.time_start = '2020-Nov-10 10:00:10'
         self.intvl_str = '60m'
         self.sumry_intvl = '1d'
@@ -308,10 +305,10 @@ class CountGui(object):
         self.tt_sd = '00:00:26'
         self.tt_lo = '00:17:26'
         self.tt_hi = '00:25:47'
-        self.tt_sum = '10:25:47'
+        self.tt_sum = 'GUI data are stubs'
         self.time_now = '2020-Nov-17 11:14:25'
         self.count_next = '27m'
-        self.count_remain = '1000'
+        # self.count_remain = 'Terminal data are real'
 
         # Interval data report
         self.count_now = '21'
@@ -502,7 +499,7 @@ class CountGui(object):
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=11, column=1, padx=3, sticky=tk.W)
         tk.Label(self.mainwin,
-                 text=self.intvl_str + ' <- stub, timer not working',
+                 text=self.intvl_str + ' <- timer does not work',
                  bg=self.mainwin_bg, fg=self.row_fg
                  ).grid(row=12, column=1, padx=3, sticky=tk.W)
 
