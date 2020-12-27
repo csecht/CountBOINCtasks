@@ -602,7 +602,8 @@ class CountGui(object):
         # redrawn (as threaded) following the print message.
         # Move cursor to beginning of timer line, erase the line, then print.
         print('\r\x1b[K'
-              '\n  --- User has quit the count-tasks GUI. ---'
+              '\n  --- User has quit the count-tasks GUI. Scheduled counts '
+              'continue... ---'
               '\n  --- To exit from scheduled task counts, use Ctrl+C. ---\n')
         self.mainwin.destroy()
 
@@ -1097,7 +1098,8 @@ def data_intervals() -> None:
               f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
               f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
-              f'{indent}Counts remaining until exit: {count_lim}')
+              f'{indent}Number of scheduled count intervals: {count_lim}\n'
+              f'{indent}Timed intervals beginning now...')
     print(report)
     if args.log is True:
         report = ansi_escape.sub('', report)

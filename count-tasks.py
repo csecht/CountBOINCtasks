@@ -313,10 +313,11 @@ def main() -> None:
                                                          ttimes_start).values()
     report = (f'{time_start}; Number of tasks in the most recent BOINC report:'
               f' {blue}{count_start}{undo_color}\n'
-              f'{indent}Counts remaining until exit: {count_lim}\n'
               f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
-              f'{bigindent}stdev {tt_sd}, total {tt_sum}')
+              f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+              f'{indent}Number of scheduled count intervals: {count_lim}\n'
+              f'{indent}Timed intervals beginning now...')
     # TODO: Consider repressing terminal print if --gui option used.
     print(report)
     if args.log is True:
