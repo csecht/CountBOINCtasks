@@ -783,7 +783,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
     @staticmethod
     def settings():
         """
-        Test Pop-up menu window to implement parser arguments.
+        Test structure for menu window to implement parser arguments.
 
         :return: On-the-fly program parameters changes.
         """
@@ -794,34 +794,54 @@ along with this program. If not, see https://www.gnu.org/licenses/
         # settingwin.minsize(500, 250)
         settingwin.title('Settings (inactive)')
         settingwin.focus_set()
+        # setting_bg = 'SkyBlue4'
+        # setting_fg = 'LightCyan2'
+        # settingwin.configure(bg=setting_bg)
 
-        dolog = ttk.Checkbutton(settingwin, text='Log results to file')
-        dolog.grid(column=0, row=0)
+        # # logcheck = tk.IntVar()  # use logcheck.get() to read state, 0, 1.
+        # style = ttk.Style()
+        # style.configure('TCheckbutton', background=setting_bg)
+        chooselog = ttk.Checkbutton(settingwin, text='Log results to file')
+        chooselog.grid(column=0, row=0,
+                       padx=5, pady=(10, 5),
+                       sticky=tk.W)
+
         # use args.log is True here, somewhere?
 
-        # interval_m = tk.StringVar()  # Use this?
-        intvl_minutes = ttk.Combobox(settingwin, width=3, justify='left')
+        # intvl = tk.IntVar()
+        intvl_minutes = ttk.Combobox(settingwin, width=3)
         # useminutes = range(5, 65, 5)  # how to used for 'values'?
         intvl_minutes['values'] = (5, 10, 15, 20, 25, 30, 60)
         intvl_minutes.state(['readonly'])
         intvl_minutes.grid(column=1, row=1)
-        intvl_label = tk.Label(settingwin, text='Count interval, minutes')
-        intvl_label.grid(column=0, row=1, sticky=tk.W)
-        tk.Label(settingwin, text='(default: 60)').grid(column=2, row=1,
-                                                        sticky=tk.W)
+        intvl_label = tk.Label(settingwin,
+                               text='Count interval')
+                               # background=setting_bg,
+                               # foreground=setting_fg)
+        intvl_label.grid(column=0, row=1,
+                         padx=5, pady=5,
+                         sticky=tk.W)
+        tk.Label(settingwin,
+                 text='(minutes; default=60)').grid(column=2, row=1,
+                                                    padx=5, pady=5,
+                                                    sticky=tk.W)
 
         # sumry_intvl = tk.StringVar()  # Use this?
-        sumry_time = ttk.Entry(settingwin, width=5, justify='left')
+        sumry_time = ttk.Entry(settingwin, width=4)
         sumry_time.grid(column=1, row=2)
         sumry_label = tk.Label(settingwin,
-                               text='Enter summary interval, e.g., 12h, 7d')
-        sumry_label.grid(column=0, row=2, sticky=tk.W)
-        tk.Label(settingwin, text='(default: 1d)').grid(column=2, row=2,
-                                                        sticky=tk.W)
+                               text='Enter summary interval')
+        sumry_label.grid(column=0, row=2, padx=5, pady=10, sticky=tk.W)
+        tk.Label(settingwin,
+                 text='(e.g., 12h, 7d; default=1d)').grid(column=2, row=2,
+                                                          padx=5, pady=5,
+                                                          sticky=tk.W)
 
         # What command to use to activate settings? How to pass values to args?
-        ttk.Button(settingwin, text='Use these values').grid(column=2, row=3,
-                                                             padx=5, pady=5)
+        ttk.Button(settingwin,
+                   text='Use these values').grid(column=2, row=3,
+                                                 padx=5, pady=10,
+                                                 sticky=tk.E)
 
     # TODO: Integrate Progressbar widget with count-tasks intvl_timer
     # Test timer for progress bar; button may be disabled.
@@ -901,7 +921,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
     note = ('fmt_sec error: Enter secs as seconds, fmt (format) as either'
-            f" 'std' or 'short'. Arguments entered: secs={secs}, fmt={fmt}.")
+           f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}.")
     if fmt == 'short':
         if secs >= 86400:
             return f'{day:1d}d'  # option, add {h:01d}h'
@@ -1108,6 +1128,7 @@ def data_intervals() -> None:
     #   may persist between counts when --interval is less than 1h.
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
+    # intvl_timer() sleeps the for loop between count cycles.
     for i in range(count_lim):
         intvl_timer(interval_m)
         # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
@@ -1249,8 +1270,8 @@ if __name__ == '__main__':
     sumry_intvl = args.summary
 
     if interval_m >= sumry_m:
-        info = "Invalid parameters: --summary time must be greater than" \
-               " --interval time."
+        info = ("Invalid parameters: --summary time must be greater than",
+                " --interval time.")
         raise ValueError(info)
 
     if args.about:

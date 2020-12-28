@@ -107,8 +107,8 @@ def fmt_sec(secs: int, fmt: str) -> str:
     _m, _s = divmod(secs, 60)
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
-    msg = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
-          f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
+    note = ('fmt_sec error: Enter secs as seconds, fmt (format) as either'
+           f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}.")
     if fmt == 'short':
         if secs >= 86400:
             return f'{day:1d}d'  # option, add {h:01d}h'
@@ -121,7 +121,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
         if secs >= 86400:
             return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
         return f'{_h:02d}:{_m:02d}:{_s:02d}'
-    return msg
+    return note
 
 
 def intvl_timer(interval: int) -> print:
@@ -264,10 +264,9 @@ def main() -> None:
     sumry_m = get_min(args.summary)
     sumry_factor = sumry_m // interval_m
     if interval_m >= sumry_m:
-        msg = "Invalid parameters: --summary time must be greater than" \
-              " --interval time."
+        msg = ("Invalid parameters: --summary time must be greater than",
+               " --interval time.")
         raise ValueError(msg)
-
     # About me
     if args.about:
         print(__doc__)
@@ -345,6 +344,7 @@ def main() -> None:
     #   may persist between counts when --interval is less than 1h.
     #   set() may not be necessary if list updates are working as intended,
     #     but better to err toward thoroughness.
+    # intvl_timer() sleeps the for loop between count cycles.
     for i in range(count_lim):
         intvl_timer(interval_m)
         # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
