@@ -232,6 +232,9 @@ class CountGui(object):
         file = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
+        menu_settings = tk.Menu(file)
+        file.add_cascade(menu=menu_settings, label='Settings',
+                         state=tk.DISABLED)
         file.add_separator()
         file.add_command(label="Quit", command=self.quitgui,
                          accelerator="Ctrl+Q")
@@ -241,12 +244,12 @@ class CountGui(object):
         view.add_command(label="Log file", command=self.show_log,
                          accelerator="Ctrl+L")
 
-        info = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="Help", menu=info)
-        info.add_command(label="Info", state=tk.DISABLED)
-        info.add_command(label="Compliment", command=self.compliment,
-                         accelerator="Ctrl+Shift+C")
-        info.add_command(label="About", command=self.about)
+        help_menu = tk.Menu(menu, tearoff=0)
+        menu. add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Tips", state=tk.DISABLED)
+        help_menu.add_command(label="Compliment", command=self.compliment,
+                              accelerator="Ctrl+Shift+C")
+        help_menu.add_command(label="About", command=self.about)
 
         # Create button widgets:
         style = ttk.Style()
@@ -1051,6 +1054,7 @@ def data_intervals() -> None:
         # gui.set_startdata(datadict)
         # ^^^^ Method call not used when set_startdata is called from CountGui
         # __init__. This is just for testing.
+        # return datadict  # For testing
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -1094,7 +1098,7 @@ def data_intervals() -> None:
         # Report: Repeating intervals
         # Suppress full report for no new tasks, which are expected for
         # long-running tasks (b/c 60 m is longest allowed count interval).
-        # Overwrite successive NNT reports for a tidy terminal window: \x1b[2A.
+        # Overwrite successive NNT reports for a tidy terminal window: \x1b[3A.
         if count_now == 0:
             tic_nnt += 1
             report = (f'{time_now}; '
@@ -1104,7 +1108,7 @@ def data_intervals() -> None:
             if tic_nnt == 1:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
-                print(f'\r\x1b[2A{del_line}{report}')
+                print(f'\r\x1b[3A{del_line}{report}')
             if args.log is True:
                 logging.info(report)
 
@@ -1153,9 +1157,9 @@ def data_intervals() -> None:
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
 
-    # SEMAPHORE ############
-    DI_SEM.release()
-    ########################
+        # SEMAPHORE ############
+        DI_SEM.release()
+        ########################
 
 
 # Need data acquisition and timer in Thread so tkinter can run in main thread.
@@ -1174,10 +1178,10 @@ if __name__ == '__main__':
                         help='Create log file of results or append to '
                              'existing log', action='store_true',
                         default=False)
-    # parser.add_argument('--gui',
-    #                     help='Show data in graphics window.',
-    #                     action='store_true',
-    #                     default=False)
+    parser.add_argument('--gui',
+                        help='Show data in graphics window.',
+                        action='store_true',
+                        default=False)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)', # default=60,
@@ -1231,6 +1235,6 @@ if __name__ == '__main__':
         usr_notice = '\n\n  *** Interrupted by user. Quitting now... \n\n'
         sys.stdout.write(usr_notice)
         logging.info(
-            msg=f'\n{datetime.now()}: {usr_notice}')  # The if __name__ line
-        # is not required b/c its statements run fine without
-# it, but it seems more pythonic with it.
+            msg=f'\n{datetime.now()}: {usr_notice}')
+# The if __name__ line is not required b/c its statements run fine without it,
+#   but it seems more pythonic with it.
