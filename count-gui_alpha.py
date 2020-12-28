@@ -232,9 +232,7 @@ class CountGui(object):
         file = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
-        menu_settings = tk.Menu(file)
-        file.add_cascade(menu=menu_settings, label='Settings',
-                         state=tk.DISABLED)
+        file.add_command(label='Settings...', command=self.settings)
         file.add_separator()
         file.add_command(label="Quit", command=self.quitgui,
                          accelerator="Ctrl+Q")
@@ -770,7 +768,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 'What makes you so successful?', "I've always looked up to you."
                 ]
         txt = random.choice(comp)
-        text = tk.Label(text=txt,
+        text = tk.Label(self.dataframe, text=txt,
                         # font=('default', 10),
                         foreground='DodgerBlue4',
                         background='gold2',
@@ -779,10 +777,53 @@ along with this program. If not, see https://www.gnu.org/licenses/
         text.grid(row=2, column=1, columnspan=2,
                   padx=(15, 20),  sticky=tk.EW)
         # To fit well, pady ^here must match pady of the same data label row.
-        self.mainwin.after(2468, text.destroy)
+        self.dataframe.after(2468, text.destroy)
 
-    # # Trial feature:
-    # # TODO: Integrate Progressbar widget with count-tasks intvl_timer
+    # Trial features:
+    @staticmethod
+    def settings():
+        """
+        Test Pop-up menu window to implement parser arguments.
+
+        :return: On-the-fly program parameters changes.
+        """
+
+        # Use for on-the-fly changes, or use in place of command line
+        # parameters? In place of may be easier to code.
+        settingwin = tk.Toplevel()
+        # settingwin.minsize(500, 250)
+        settingwin.title('Settings (inactive)')
+        settingwin.focus_set()
+
+        dolog = ttk.Checkbutton(settingwin, text='Log results to file')
+        dolog.grid(column=0, row=0)
+        # use args.log is True here, somewhere?
+
+        # interval_m = tk.StringVar()  # Use this?
+        intvl_minutes = ttk.Combobox(settingwin, width=3, justify='left')
+        # useminutes = range(5, 65, 5)  # how to used for 'values'?
+        intvl_minutes['values'] = (5, 10, 15, 20, 25, 30, 60)
+        intvl_minutes.state(['readonly'])
+        intvl_minutes.grid(column=1, row=1)
+        intvl_label = tk.Label(settingwin, text='Count interval, minutes')
+        intvl_label.grid(column=0, row=1, sticky=tk.W)
+        tk.Label(settingwin, text='(default: 60)').grid(column=2, row=1,
+                                                        sticky=tk.W)
+
+        # sumry_intvl = tk.StringVar()  # Use this?
+        sumry_time = ttk.Entry(settingwin, width=5, justify='left')
+        sumry_time.grid(column=1, row=2)
+        sumry_label = tk.Label(settingwin,
+                               text='Enter summary interval, e.g., 12h, 7d')
+        sumry_label.grid(column=0, row=2, sticky=tk.W)
+        tk.Label(settingwin, text='(default: 1d)').grid(column=2, row=2,
+                                                        sticky=tk.W)
+
+        # What command to use to activate settings? How to pass values to args?
+        ttk.Button(settingwin, text='Use these values').grid(column=2, row=3,
+                                                             padx=5, pady=5)
+
+    # TODO: Integrate Progressbar widget with count-tasks intvl_timer
     # Test timer for progress bar; button may be disabled.
     def increment_prog(self) -> None:
         """
