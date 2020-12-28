@@ -598,7 +598,7 @@ class CountGui(object):
         :return: Information window.
         """
         # msg separators use em dashes.
-        info = ("""
+        about = ("""
 CountBOINCtasks provides task counts and time statistics at set
 intervals for tasks that have been reported to BOINC servers.
 Download the most recent version from: 
@@ -622,7 +622,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 Development Status: 4 - Beta
                 Version:    """)
 
-        num_lines = info.count('\n')
+        num_lines = about.count('\n')
         aboutwin = tk.Toplevel()
         icon = tk.PhotoImage(file='unused_bits/tiny_icon.png')
         icon.image = icon
@@ -642,7 +642,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         abouttxt = tk.Text(aboutwin, width=72, height=num_lines+2,
                            background=bkg, foreground='grey98',
                            relief='groove', borderwidth=5, padx=5)
-        abouttxt.insert('1.0', info + PROGRAM_VER)
+        abouttxt.insert('1.0', about + PROGRAM_VER)
         # Center text preceding the Author, etc. details.
         abouttxt.tag_add('text1', '1.0', float(num_lines-5))
         abouttxt.tag_configure('text1', justify='center')
@@ -900,8 +900,8 @@ def fmt_sec(secs: int, fmt: str) -> str:
     _m, _s = divmod(secs, 60)
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
-    info = f"fmt_sec error: Enter secs as seconds, fmt (format) as either " \
-           f" 'std' or 'short'. Arguments as entered: secs={secs}, fmt={fmt}."
+    note = ('fmt_sec error: Enter secs as seconds, fmt (format) as either'
+            f" 'std' or 'short'. Arguments entered: secs={secs}, fmt={fmt}.")
     if fmt == 'short':
         if secs >= 86400:
             return f'{day:1d}d'  # option, add {h:01d}h'
@@ -914,7 +914,7 @@ def fmt_sec(secs: int, fmt: str) -> str:
         if secs >= 86400:
             return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
         return f'{_h:02d}:{_m:02d}:{_s:02d}'
-    return info
+    return note
 
 
 def intvl_timer(interval: int) -> print:
@@ -1211,6 +1211,7 @@ if __name__ == '__main__':
     # NOTE: Boinc only returns tasks that were reported in past hour.
     #   Hence an --interval maximum limit to count tasks at least once per
     #   hour.
+
     # TODO: RESET --interval default to 60 for distribution version.
     parser = argparse.ArgumentParser()
     parser.add_argument('--about', help='Author, copyright, and GNU license',
@@ -1225,7 +1226,7 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
-                             ' (default: %(default)d)', # default=60,
+                             ' (default: %(default)d)',  # default=60,
                         default=5,  # for testing
                         choices=range(5, 65, 5), type=int, metavar="M")
     parser.add_argument('--summary',
