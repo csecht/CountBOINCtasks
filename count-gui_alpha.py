@@ -790,6 +790,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
         # Use for on-the-fly changes, or use in place of command line
         # parameters? In place of may be easier to code.
+        # See: https://www.tutorialkart.com/python/tkinter/checkbutton/
         settingwin = tk.Toplevel()
         # settingwin.minsize(500, 250)
         settingwin.title('Settings (inactive)')
@@ -798,50 +799,50 @@ along with this program. If not, see https://www.gnu.org/licenses/
         # setting_fg = 'LightCyan2'
         # settingwin.configure(bg=setting_bg)
 
+        # intvl = tk.IntVar()
+        intvl_minutes = ttk.Combobox(settingwin, width=2)
+        # useminutes = range(5, 65, 5)  # how to used for 'values'?
+        intvl_minutes['values'] = (5, 10, 15, 20, 25, 30, 60)
+        intvl_minutes.state(['readonly'])
+        intvl_minutes.grid(column=1, row=0)
+        intvl_label = ttk.Label(settingwin, text='Count interval')
+        # background=setting_bg,
+        # foreground=setting_fg)
+        intvl_label.grid(column=0, row=0, padx=5, pady=5, sticky=tk.W)
+        tk.Label(settingwin, text='(minutes; default=60)').grid(column=2,
+                                                                row=0, padx=5,
+                                                                pady=5,
+                                                                sticky=tk.W)
+
+        # sumry_intvl = tk.StringVar()  # Use this?
+        sumry_time = ttk.Entry(settingwin, width=4)
+        sumry_time.grid(column=1, row=1)
+        sumry_label = ttk.Label(settingwin, text='Enter summary interval')
+        sumry_label.grid(column=0, row=1, padx=5, pady=10, sticky=tk.W)
+        tk.Label(settingwin, text='(e.g., 12h, 7d; default=1d)').grid(column=2,
+                                                                      row=1,
+                                                                      padx=5,
+                                                                      pady=5,
+                                                                      sticky=tk.W)
+        cycles = ttk.Entry(settingwin, width=4)
+        cycles.grid(column=1, row=2)
+        cycles_label = ttk.Label(settingwin, text='Enter # count cycles')
+        cycles_label.grid(column=0, row=2, padx=5, pady=10, sticky=tk.W)
+        tk.Label(settingwin, text='(default=1008)').grid(column=2, row=2,
+                                                         padx=5, pady=5,
+                                                         sticky=tk.W)
+
         # # logcheck = tk.IntVar()  # use logcheck.get() to read state, 0, 1.
         # style = ttk.Style()
         # style.configure('TCheckbutton', background=setting_bg)
         chooselog = ttk.Checkbutton(settingwin, text='Log results to file')
-        chooselog.grid(column=0, row=0,
-                       padx=5, pady=(10, 5),
-                       sticky=tk.W)
-
+        chooselog.grid(column=0, row=3, padx=5, sticky=tk.W)
         # use args.log is True here, somewhere?
 
-        # intvl = tk.IntVar()
-        intvl_minutes = ttk.Combobox(settingwin, width=3)
-        # useminutes = range(5, 65, 5)  # how to used for 'values'?
-        intvl_minutes['values'] = (5, 10, 15, 20, 25, 30, 60)
-        intvl_minutes.state(['readonly'])
-        intvl_minutes.grid(column=1, row=1)
-        intvl_label = tk.Label(settingwin,
-                               text='Count interval')
-                               # background=setting_bg,
-                               # foreground=setting_fg)
-        intvl_label.grid(column=0, row=1,
-                         padx=5, pady=5,
-                         sticky=tk.W)
-        tk.Label(settingwin,
-                 text='(minutes; default=60)').grid(column=2, row=1,
-                                                    padx=5, pady=5,
-                                                    sticky=tk.W)
-
-        # sumry_intvl = tk.StringVar()  # Use this?
-        sumry_time = ttk.Entry(settingwin, width=4)
-        sumry_time.grid(column=1, row=2)
-        sumry_label = tk.Label(settingwin,
-                               text='Enter summary interval')
-        sumry_label.grid(column=0, row=2, padx=5, pady=10, sticky=tk.W)
-        tk.Label(settingwin,
-                 text='(e.g., 12h, 7d; default=1d)').grid(column=2, row=2,
-                                                          padx=5, pady=5,
-                                                          sticky=tk.W)
-
         # What command to use to activate settings? How to pass values to args?
-        ttk.Button(settingwin,
-                   text='Use these values').grid(column=2, row=3,
-                                                 padx=5, pady=10,
-                                                 sticky=tk.E)
+        ttk.Button(settingwin, text='Use these values').grid(column=2, row=3,
+                                                             padx=5, pady=5,
+                                                             sticky=tk.E)
 
     # TODO: Integrate Progressbar widget with count-tasks intvl_timer
     # Test timer for progress bar; button may be disabled.
