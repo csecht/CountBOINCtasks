@@ -131,6 +131,12 @@ class CountGui(object):
         # Unique to summary data report var
         self.count_uniq = None
 
+        # Settings window var for Parser args
+        # Settings variables with default parser args values.
+        self.intvl_arg = tk.IntVar(value=60)
+        self.sumry_arg = tk.StringVar(value='1d')
+        self.cycles_arg = tk.IntVar(value=1008)
+
         # Experimental
         self.progress = ttk.Progressbar()
 
@@ -780,8 +786,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         self.dataframe.after(2468, text.destroy)
 
     # Trial features:
-    @staticmethod
-    def settings():
+    def settings(self):
         """
         Test structure for menu window to implement parser arguments.
 
@@ -800,62 +805,49 @@ along with this program. If not, see https://www.gnu.org/licenses/
         setting_fg = 'LightCyan2'
         settingwin.configure(bg=setting_bg)
 
-        # intvl = tk.IntVar()
-        intvl_minutes = ttk.Combobox(settingwin, width=2)
-        # useminutes = range(5, 65, 5)  # use range for 'values'?
-        intvl_minutes['values'] = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
-                                   55, 60)
-        intvl_minutes.state(['readonly'])
-        intvl_minutes.grid(column=1, row=0)
-        intvl_label = ttk.Label(settingwin, text='Count interval',
+        intvl_time = ttk.Combobox(settingwin, textvariable=self.intvl_arg,
+                                  width=2)
+        intvl_time['values'] = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60)
+        intvl_time.state(['readonly'])
+        intvl_time.grid(column=1, row=0)
+        intvl_label1 = ttk.Label(settingwin, text='Count interval',
+                                 background=setting_bg, foreground=setting_fg)
+        intvl_label1.grid(column=0, row=0, padx=5, pady=5, sticky=tk.E)
+        intvl_label2 = tk.Label(settingwin, text='(minutes; default 60)',
                                 background=setting_bg, foreground=setting_fg)
-        intvl_label.grid(column=0, row=0, padx=5, pady=5, sticky=tk.W)
-        tk.Label(settingwin,
-                 text='(minutes; default=60)',
-                 background=setting_bg,
-                 foreground=setting_fg).grid(column=2, row=0,
-                                             padx=5, pady=5,
-                                             sticky=tk.W)
-
-        # sumry_intvl = tk.StringVar()  # Use this?
-        sumry_time = ttk.Entry(settingwin, width=4)
+        intvl_label2.grid(column=2, row=0, padx=5, pady=5, sticky=tk.W)
+        # self.sumry_arg.set('1d')
+        sumry_time = ttk.Entry(settingwin, textvariable=self.sumry_arg,
+                               width=4)
         sumry_time.grid(column=1, row=1)
-        sumry_label = ttk.Label(settingwin, text='Enter summary interval',
+        sumry_label1 = ttk.Label(settingwin, text='Enter summary interval',
+                                 background=setting_bg, foreground=setting_fg)
+        sumry_label1.grid(column=0, row=1, padx=5, pady=10, sticky=tk.E)
+        sumry_label2 = tk.Label(settingwin, text='(e.g., 12h, 7d; default 1d)',
                                 background=setting_bg, foreground=setting_fg)
-        sumry_label.grid(column=0, row=1, padx=5, pady=10, sticky=tk.W)
-        tk.Label(settingwin,
-                 text='(e.g., 12h, 7d; default=1d)', background=setting_bg,
-                 foreground=setting_fg).grid(column=2, row=1,
-                                             padx=5, pady=5,
-                                             sticky=tk.W)
-        cycles = ttk.Entry(settingwin, width=4)
+        sumry_label2.grid(column=2, row=1, padx=5, pady=5, sticky=tk.W)
+
+        cycles = ttk.Entry(settingwin, textvariable=self.cycles_arg, width=4)
         cycles.grid(column=1, row=2)
         cycles_label1 = ttk.Label(settingwin, text='Enter # count cycles',
                                   background=setting_bg, foreground=setting_fg)
-        cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.W)
-        cycles_label2 = tk.Label(settingwin,
-                                 text='(default=1008)',
-                                 background=setting_bg,
-                                 foreground=setting_fg)
+        cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
+        cycles_label2 = tk.Label(settingwin, text='(default 1008)',
+                                 background=setting_bg, foreground=setting_fg)
         cycles_label2.grid(column=2, row=2, padx=5, pady=5, sticky=tk.W)
 
-        # # logcheck = tk.IntVar()  # use logcheck.get() to read state, 0, 1.
         # style = ttk.Style()
         # style.configure('TCheckbutton', background=setting_bg)
         chooselog = tk.Checkbutton(settingwin, bg=setting_bg, borderwidth=0)
         chooselog.grid(column=1, row=3, padx=0, sticky=tk.W)
-        tk.Label(settingwin, text='Log results to file',
-                 background=setting_bg,
-                 foreground=setting_fg).grid(column=0, row=3, padx=5, pady=5,
-                                             sticky=tk.W)
+        log_label = tk.Label(settingwin, text='Log results to file',
+                             background=setting_bg, foreground=setting_fg)
+        log_label.grid(column=0, row=3, padx=5, pady=5, sticky=tk.E)
         # use args.log is True here, somewhere?
 
-
         # What command to use to activate settings? How to pass values to args?
-        ttk.Button(settingwin,
-                   text='Use these values').grid(column=2, row=3,
-                                                 padx=5, pady=5,
-                                                 sticky=tk.E)
+        okay_label = ttk.Button(settingwin, text='Confirm settings')
+        okay_label.grid(column=2, row=3, padx=5, pady=5, sticky=tk.E)
 
     # TODO: Integrate Progressbar widget with count-tasks intvl_timer
     # Test timer for progress bar; button may be disabled.
