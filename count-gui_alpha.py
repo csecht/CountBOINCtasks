@@ -797,51 +797,47 @@ along with this program. If not, see https://www.gnu.org/licenses/
         # parameters? In place of may be easier to code.
         # See: https://www.programcreek.com/python/example/104124/tkinter.ttk.Checkbutton
         # https://stackoverflow.com/questions/6876518/set-a-default-value-for-a-ttk-combobox
-        settingwin = tk.Toplevel()
+        settingwin = tk.Toplevel(relief='raised', bd=3)
         # settingwin.minsize(500, 250)
         settingwin.title('Settings (inactive)')
-        settingwin.focus_set()
+        settingwin.attributes('-topmost', True)
+        # settingwin.call('wm', 'attributes', '.', '-topmost', '1')
         setting_bg = 'SkyBlue4'
         setting_fg = 'LightCyan2'
         settingwin.configure(bg=setting_bg)
+        style = ttk.Style()
+        style.configure('TLabel', background=setting_bg, foreground=setting_fg)
 
         intvl_time = ttk.Combobox(settingwin, textvariable=self.intvl_arg,
                                   width=2)
         intvl_time['values'] = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60)
         intvl_time.state(['readonly'])
         intvl_time.grid(column=1, row=0)
-        intvl_label1 = ttk.Label(settingwin, text='Count interval',
-                                 background=setting_bg, foreground=setting_fg)
+        intvl_label1 = ttk.Label(settingwin, text='Count interval')
         intvl_label1.grid(column=0, row=0, padx=5, pady=5, sticky=tk.E)
-        intvl_label2 = tk.Label(settingwin, text='(minutes; default 60)',
-                                background=setting_bg, foreground=setting_fg)
+        intvl_label2 = ttk.Label(settingwin, text='minutes; default 60')
         intvl_label2.grid(column=2, row=0, padx=5, pady=5, sticky=tk.W)
-        # self.sumry_arg.set('1d')
+
         sumry_time = ttk.Entry(settingwin, textvariable=self.sumry_arg,
                                width=4)
         sumry_time.grid(column=1, row=1)
-        sumry_label1 = ttk.Label(settingwin, text='Enter summary interval',
-                                 background=setting_bg, foreground=setting_fg)
+        sumry_label1 = ttk.Label(settingwin, text='Enter summary interval')
         sumry_label1.grid(column=0, row=1, padx=5, pady=10, sticky=tk.E)
-        sumry_label2 = tk.Label(settingwin, text='(e.g., 12h, 7d; default 1d)',
-                                background=setting_bg, foreground=setting_fg)
+        sumry_label2 = ttk.Label(settingwin, text='e.g., 12h, 7d; default 1d')
         sumry_label2.grid(column=2, row=1, padx=5, pady=5, sticky=tk.W)
 
         cycles = ttk.Entry(settingwin, textvariable=self.cycles_arg, width=4)
         cycles.grid(column=1, row=2)
-        cycles_label1 = ttk.Label(settingwin, text='Enter # count cycles',
-                                  background=setting_bg, foreground=setting_fg)
+        cycles_label1 = ttk.Label(settingwin, text='Enter # count cycles')
         cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
-        cycles_label2 = tk.Label(settingwin, text='(default 1008)',
-                                 background=setting_bg, foreground=setting_fg)
+        cycles_label2 = ttk.Label(settingwin, text='default 1008')
         cycles_label2.grid(column=2, row=2, padx=5, pady=5, sticky=tk.W)
 
         # style = ttk.Style()
         # style.configure('TCheckbutton', background=setting_bg)
         chooselog = tk.Checkbutton(settingwin, bg=setting_bg, borderwidth=0)
         chooselog.grid(column=1, row=3, padx=0, sticky=tk.W)
-        log_label = tk.Label(settingwin, text='Log results to file',
-                             background=setting_bg, foreground=setting_fg)
+        log_label = ttk.Label(settingwin, text='Log results to file')
         log_label.grid(column=0, row=3, padx=5, pady=5, sticky=tk.E)
         # use args.log is True here, somewhere?
 
