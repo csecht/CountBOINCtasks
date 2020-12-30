@@ -42,7 +42,6 @@ from datetime import datetime
 from COUNTmodules import boinc_command
 
 BC = boinc_command.BoincCommand()
-# GUI = count_gui.CountGui()
 
 # Here logging is lazily employed to create a file of report data.
 logging.basicConfig(filename='count-tasks_log.txt', level=logging.INFO,
