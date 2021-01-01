@@ -210,7 +210,7 @@ def get_timestats(count: int, taskt: iter) -> dict:
         'tt_max':   'na'
         }
 
-
+# TODO: Reset default interval and summary before uploading.
 def main() -> None:
     """
     Main flow for count-tasks.py utility. Reports task counts and times.
@@ -239,7 +239,8 @@ def main() -> None:
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
-                        default=60,
+                        # default=60,
+                        default=5,
                         choices=range(5, 65, 5),
                         # choices=range(5),  # for testing
                         type=int,
@@ -247,7 +248,8 @@ def main() -> None:
     parser.add_argument('--summary',
                         help='Specify time between count summaries,'
                              ' e.g., 12h, 7d (default: %(default)s)',
-                        default='1d',
+                        # default='1d',
+                        default='15m',
                         type=check_args,
                         metavar='TIMEunit')
     parser.add_argument('--count_lim',
@@ -310,10 +312,11 @@ def main() -> None:
     tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = get_timestats(count_start,
                                                          ttimes_start).values()
     report = (f'{time_start}; Number of tasks in the most recent BOINC report:'
-              f' {blue}{count_start}{undo_color}\n'
+              # f' {blue}{count_start}{undo_color}\n'
+              f' {blue}{count_start}{undo_color} tasks:{ttimes_start}\n'  # TESTING
               f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
               f' range [{tt_lo} - {tt_hi}],\n'
-              f'{bigindent}stdev {tt_sd}, total {tt_sum}'
+              f'{bigindent}stdev {tt_sd}, total {tt_sum}\n'
               f'{indent}Number of scheduled count intervals: {count_lim}\n'
               f'{indent}Timed intervals beginning now...')
     # TODO: Consider repressing terminal print if --gui option used.
@@ -355,7 +358,10 @@ def main() -> None:
 
         if len(ttimes_now) > 0:
             ttimes_prev = ttimes_now[:]
+        elif len(ttimes_now) == 0:
+            ttimes_prev = []
 
+        # Needs to be after ttimes_prev = ttimes_now[:].
         ttimes_now = BC.get_reported('elapsed time')
 
         if len(ttimes_now) > 0 and "EXECUTING" in task_states:
@@ -394,7 +400,9 @@ def main() -> None:
                 get_timestats(count_now, ttimes_now).values()
             report = (f'\n{time_now}; '
                       f'Tasks reported in the past {interval_m}m:'
-                      f' {blue}{count_now}{undo_color}\n'
+                      # f' {blue}{count_now}{undo_color}\n'
+                      f' {blue}{count_now}{undo_color} tasks: '
+                      f'{ttimes_now}\n'  # TESTING
                       f'{indent}Counts remaining until exit: {count_remain}\n'
                       f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
@@ -421,7 +429,9 @@ def main() -> None:
                 get_timestats(count_uniq, ttimes_uniq).values()
             report = (f'\n{time_now}; '
                       f'{orng}>>> SUMMARY{undo_color} count for the past'
-                      f' {args.summary}: {blue}{count_uniq}{undo_color}\n'
+                      # f' {args.summary}: {blue}{count_uniq}{undo_color}\n'
+                      f' {args.summary}: {blue}{count_uniq}{undo_color}'
+                      f' tasks: {ttimes_uniq}\n'
                       f'{indent}Task Times: mean {blue}{tt_mean}{undo_color},'
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}')

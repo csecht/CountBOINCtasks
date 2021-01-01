@@ -17,6 +17,9 @@ Download the .zip package from the Code download button and extract to your
 <li>Linux or Mac OS: ./count-tasks.py --help</li>
 <li>Windows: python count-tasks.py --help</li>
 </ul>
+Depending on your Python path settings in Windows, double-clicking on 
+the count-tasks.py file icon may automatically launch the program, with its 
+default settings, in a Terminal window.
 
 Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
