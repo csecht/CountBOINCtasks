@@ -1,8 +1,6 @@
 /venv/
 count-tasks_log.txt
 count-tasks.py_log.txt
-unused_bits/count_tasks_alpha.py
-count_tasks_alpha1.py
 /unused_bits
 .gitignore
 
@@ -29,3 +27,4 @@ count_tasks_alpha1.py
 .idea/**/dbnavigator.xml
 
 
+/unused_bits/

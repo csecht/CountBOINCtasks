@@ -50,25 +50,20 @@ Running the default settings (no optional arguments), will count the
      tasks reported by boinc-client during the past hour. Repeating
       counts intervals begin after the initial report (see TIP, below).
 
-Example report results, using option --summary 2h:
+Example report results, using default settings:
 
 ```
-2020-Nov-01 11:17:33; Number of tasks in the most recent report: 18
-                      Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
-                                                 stdev 00:00:13, total 07:39:23
-                      Counts remaining until exit: 400
-2020-Nov-01 12:17:36; Tasks reported in the past 60m: 13
-                      Task Times: mean 00:25:28, range [00:25:05 - 00:25:51],
-                                                 stdev 00:00:11, total 05:31:15
-                      Counts remaining until exit: 399
-2020-Nov-01 13:17:40; Tasks reported in the past 60m: 8
-                      Task Times: mean 00:26:25, range [00:25:20 - 00:26:51],
-                                                 stdev 00:00:39, total 03:31:25
-                      Counts remaining until exit: 398
-2020-Nov-01 13:17:40; >>> SUMMARY count for past 2h: 21
-                      Task Times: mean 00:26:17, range [00:25:05 - 00:26:51],
-                                                 stdev 00:00:40, total 09:02:40
-                      Counts remaining until exit: 397
+2021-Jan-02 15:23:36; Number of tasks in the most recent BOINC report: 11
+                      Task Times: mean 00:17:15, range [00:13:52 - 00:20:18],
+                                                 stdev 00:02:20, total 03:09:49
+                      Number of scheduled count intervals: 1008
+                      Counts every 60m, summaries every 1d
+                      Timed intervals beginning now...
+
+2021-Jan-02 16:23:36; Tasks reported in the past 60m: 13
+                      Counts remaining until exit: 1007
+                      Task Times: mean 00:17:48, range [00:13:33 - 00:20:43],
+                                                 stdev 00:03:06, total 01:46:49
 10m ||||||||||< ~time to next count
 ```
 
@@ -91,19 +86,10 @@ NOTE: Summary counts may be less than the sum of individual counts because
    , `boinccmd  --get_old_tasks`, retrieves tasks reported for the past hour
    , independent of the utility's count interval. To avoid missing any
     reported tasks, the `--interval` option has a 60 minutes maximum count
-     interval, but even that, as well as shorter intervals, can re-count
-      tasks that carry over between intervals. Summary counts do not
-       included re-counted tasks.
+     interval.
 
 TIP: To get the only the most recent task count and time metrics without
- running count intervals, run:  
- `count-tasks.py --c 0`
-```
-2020-Nov-01 11:17:33; Number of tasks in the most recent report: 18
-                      Task Times: mean 00:25:31, range [00:25:02 - 00:25:52],
-                                                 stdev 00:00:13, total 07:39:23
-                      Counts remaining until exit: 1008
-```
+ running count intervals, run:  `count-tasks.py --c 0`
  
 ### Development Plans
 * Improve Python code
