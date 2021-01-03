@@ -116,8 +116,8 @@ class DataIntervals:
         print(report)
         if args.log is True:
             report_cleaned = self.ansi_esc.sub('', report)
-            # This is proper string formatting for logging, but f-strings, as
-            # used elsewhere, would be fine for that type use of "logging".
+            # This is proper string formatting for logging, but f-strings
+            # would be fine for how "logging" is used here.
             logging.info("""%s; Task counter is starting with
 %scount interval (minutes): %s
 %ssummary interval: %s
@@ -348,32 +348,41 @@ class DataIntervals:
             # t.sleep(.5)  # DEBUG
             time.sleep(barseg_s)
 
-    def get_timestats(self, count: int, taskt: iter) -> dict:
+    def get_timestats(self, numtasks: int, tasktimes: iter) -> dict:
         """
         Sum and run statistics from times, as sec (integers or floats).
 
-        :param count: The number of elements in taskt.
-        :param taskt: A list, tuple, or set of times, in seconds.
-        :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; values as:
-        00:00:00.
+        :param numtasks: The number of elements in taskt.
+        :param tasktimes: A list, tuple, or set of times, in seconds.
+        :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; Dict
+        values as: 00:00:00.
         """
-        total = self.fmt_sec(int(sum(set(taskt))), 'std')
-        if count > 1:
-            mean = self.fmt_sec(int(stats.mean(set(taskt))), 'std')
-            stdev = self.fmt_sec(int(stats.stdev(set(taskt))), 'std')
-            low = self.fmt_sec(int(min(taskt)), 'std')
-            high = self.fmt_sec(int(max(taskt)), 'std')
+        total = self.fmt_sec(int(sum(set(tasktimes))), 'std')
+        if numtasks > 1:
+            mean = self.fmt_sec(int(stats.mean(set(tasktimes))), 'std')
+            stdev = self.fmt_sec(int(stats.stdev(set(tasktimes))), 'std')
+            low = self.fmt_sec(int(min(tasktimes)), 'std')
+            high = self.fmt_sec(int(max(tasktimes)), 'std')
             return {
-                'tt_sum': total, 'tt_mean': mean, 'tt_sd': stdev,
-                'tt_min': low, 'tt_max': high}
-        if count == 1:
+                'tt_sum': total,
+                'tt_mean': mean,
+                'tt_sd': stdev,
+                'tt_min': low,
+                'tt_max': high}
+        if numtasks == 1:
             return {
-                'tt_sum': total, 'tt_mean': total, 'tt_sd': 'na',
-                'tt_min': 'na', 'tt_max': 'na'}
+                'tt_sum': total,
+                'tt_mean': total,
+                'tt_sd': 'na',
+                'tt_min': 'na',
+                'tt_max': 'na'}
 
         return {
-            'tt_sum': '00:00:00', 'tt_mean': '00:00:00', 'tt_sd': 'na',
-            'tt_min': 'na', 'tt_max': 'na'}
+            'tt_sum': '00:00:00',
+            'tt_mean': '00:00:00',
+            'tt_sd': 'na',
+            'tt_min': 'na',
+            'tt_max': 'na'}
 
 
 def check_args(parameter) -> None:
