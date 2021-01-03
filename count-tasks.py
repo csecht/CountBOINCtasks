@@ -3,7 +3,7 @@
 """
 Provides regular counts and time stats for reported BOINC tasks.
 
-    Copyright (C) 2020 C. Echt
+    Copyright (C) 2021 C. Echt
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,14 +43,10 @@ __docformat__ = 'reStructuredText'
 __status__ =    'Development Status :: 4 - BETA'
 
 BC = boinc_command.BoincCommand()
-# # Assume log file is in the CountBOINCtasks-master folder.
-# LOGPATH = Path('../count-tasks_log.txt')
+# Assume log file is in the CountBOINCtasks-master folder.
 LOGPATH = Path('count-tasks_log.txt')
-BKUPFILE = 'count-tasks_log(copy).txt'
-PROGRAM_VER = '0.5x'
-# GUI_TITLE = __file__
-
-# Here logging is lazily employed to manage the file of report data.
+# LOGPATH = Path('../count-tasks_log.txt')
+# Here logging is lazily employed to manage the user file of report data.
 logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')
 
