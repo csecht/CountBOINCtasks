@@ -38,6 +38,7 @@ try:
     import tkinter as tk
     import tkinter.ttk as ttk
     from tkinter.scrolledtext import ScrolledText
+    from tkinter import messagebox
 except (ImportError, ModuleNotFoundError) as error:
     print('GUI requires tkinter, which is included with Python 3.7 and higher')
     print('Install 3.7+ or re-install Python and include Tk/Tcl.')
@@ -671,40 +672,20 @@ along with this program. If not, see https://www.gnu.org/licenses/
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGPATH) is True:
             shutil.copyfile(LOGPATH, destination)
-            success_msg = 'Log file has been copied to ' + str(destination)
-            # Main window alert; needed along with notification in new window?
-            # text = tk.Label(self.mainwin, text=msg, font=('default', 10),
-            #                 foreground='DodgerBlue4', background='gold2',
-            #                 relief='flat')
-            # text.grid(row=9, column=0, columnspan=3,
-            #           padx=5, pady=6,
-            #           sticky=tk.EW)
-            # self.mainwin.after(4000, text.destroy)
-
-            # Need a persistent window alert.
-            logwin = tk.Toplevel()
-            logwin.attributes('-topmost', 1)
-            logwin.title('Archive notification')
-            logtext = tk.Text(logwin, width=75, height=2, fg='green',
-                              bg='grey85', relief='raised', padx=5)
-            logtext.insert(tk.INSERT, success_msg)
-            logtext.grid(row=0, column=0, sticky=tk.NSEW)
-            logtext.focus_set()
+            success_msg = 'Log file has been copied to: '
+            success_detail = str(destination)
+            # print(success_msg)
+            messagebox.showinfo(title='Archive notice',
+                                message=success_msg, detail=success_detail)
         else:
-            user_warn = (f'The file {LOGPATH} cannot be archived because it\n'
-                         ' is not in the CountBOINCtasks-master folder.\n'
-                         'Has the file been created with the --log command '
-                         'line option?\nOr perhaps it has been moved?')
-            print(user_warn)
-            # Need a persistent window alert in addition to a terminal alert.
-            logwin = tk.Toplevel()
-            logwin.attributes('-topmost', 1)
-            logwin.title('Archive log error')
-            logtext = tk.Text(logwin, width=62, height=4, fg='red',
-                              bg='grey85', relief='raised', padx=5)
-            logtext.insert(tk.INSERT, user_warn)
-            logtext.grid(row=0, column=0, sticky=tk.NSEW)
-            logtext.focus_set()
+            warn_main = f'The file {LOGPATH} cannot be archived'
+            warn_detail = ('It is not in the CountBOINCtasks-master '
+                           'folder. Has the file been created with the '
+                           '--log command line option?\n'
+                           'Perhaps it has been moved?')
+            # print('\n', warn_main, warn_detail)
+            messagebox.showwarning(title='Archive warning',
+                                   message=warn_main, detail=warn_detail)
 
     def compliment(self) -> None:
         """
@@ -771,6 +752,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
         set_win = tk.Toplevel(relief='raised', bd=3)
         set_win.title('Settings (inactive)')
         set_win.attributes('-topmost', True)
+        set_win.resizable(False, False)
         # set_win.call('wm', 'attributes', '.', '-topmost', '1')
         setting_bg = 'SkyBlue4'
         setting_fg = 'LightCyan2'
