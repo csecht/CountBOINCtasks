@@ -178,6 +178,7 @@ class DataIntervals:
             #   long-running tasks (60 m is longest allowed count interval).
             # Overwrite successive NNT reports for a tidy terminal window;
             #   move cursor up two lines before overwriting: \x1b[2A.
+            # Need a notification when tasks first run out.
             if self.count_new == 0:
                 self.tic_nnt += 1
                 report = (f'\n{self.time_now}; '
@@ -216,7 +217,6 @@ class DataIntervals:
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
 
-            # Need a notification when tasks first run out.
             elif self.count_new > 0 and notrunning is True:
                 report = (f'\n{self.time_now};'
                           f' *** Check whether tasks are running. ***')
@@ -352,7 +352,7 @@ class DataIntervals:
         """
         Sum and run statistics from times, as sec (integers or floats).
 
-        :param numtasks: The number of elements in taskt.
+        :param numtasks: The number of elements in tasktimes.
         :param tasktimes: A list, tuple, or set of times, in seconds.
         :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; Dict
         values as: 00:00:00.
