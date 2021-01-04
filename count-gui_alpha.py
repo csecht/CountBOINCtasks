@@ -295,33 +295,40 @@ class CountGui:
         help_menu.add_command(label="About", command=self.about)
 
         # Create button widgets:
-        style_sep = ttk.Style(self.mainwin)
-        style_sep.configure('TButton', background='grey80', anchor='center')
-
-        view_log_b = ttk.Button(text='View log file', command=self.show_log)
+        style_button = ttk.Style(self.mainwin)
+        style_button.configure('TButton', background='grey80', anchor='center')
+        viewlog_b = ttk.Button(text='View log file',
+                               command=self.show_log)
         intvl_b = ttk.Button(text='Interval focus',
                              command=self.show_intvldata)
-        sumry_b = ttk.Button(text='Summary focus', command=self.show_sumrydata)
+        sumry_b = ttk.Button(text='Summary focus',
+                             command=self.show_sumrydata)
         quit_b = ttk.Button(text="Quit", command=self.quitgui)
         # Button used only to test progressbar.
-        test_b = ttk.Button(text="Run test bar", command=self.increment_prog)
+        test_b = ttk.Button(text="Run test bar",
+                            command=self.increment_prog)
 
-        view_log_b.grid(row=0, column=0, padx=5, pady=5)
-        intvl_b.grid(row=0, column=1, padx=0, pady=5)
-        sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
-        quit_b.grid(row=12, column=2, padx=5, sticky=tk.E)
-        test_b.grid(row=11, column=2, padx=5, sticky=tk.E)
+        # TODO: DEBUG why viewlog button does not show in col 0 (ok col 3,
+        #  row 11 ok)
+        # ttk.Button(text='View log file',
+        #            command=self.show_log).grid(row=0, column=0,
+        #                                        padx=5, pady=5)
+        viewlog_b.grid( row=0, column=0, padx=5, pady=5)
+        intvl_b.grid(   row=0, column=1, padx=0, pady=5)
+        sumry_b.grid(   row=0, column=2, padx=(0, 25), pady=5)
+        quit_b.grid(    row=12, column=2, padx=5, sticky=tk.E)
+        test_b.grid(    row=11, column=2, padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
-        style = ttk.Style()
-        style.configure('TFrame', background=self.mainwin_bg)
-        sep1 = ttk.Frame(self.mainwin, relief="raised", height=6)
-        sep2 = ttk.Frame(self.mainwin, relief="raised", height=6)
-        sep1.grid(column=0, row=1, columnspan=5, padx=5, pady=(2, 5),
-                  sticky=tk.EW)
-        sep2.grid(column=0, row=9, columnspan=5, padx=5, pady=(6, 6),
-                  sticky=tk.EW)
+        style_sep = ttk.Style(self.mainwin)
+        style_sep.configure('TFrame', background=self.mainwin_bg)
+        sep1 = ttk.Frame(relief="raised", height=6)
+        sep2 = ttk.Frame(relief="raised", height=6)
+        sep1.grid(column=0, row=1, columnspan=5,
+                  padx=5, pady=(2, 5), sticky=tk.EW)
+        sep2.grid(column=0, row=9, columnspan=5,
+                  padx=5, pady=(6, 6), sticky=tk.EW)
 
         # Trial feature:
         # TODO: Integrate Progressbar widget with count-tasks intvl_timer.
@@ -612,18 +619,8 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
         num_lines = about.count('\n')
         aboutwin = tk.Toplevel()
-        # icon = tk.PhotoImage(file='unused_bits/tiny_icon.png')
-        # icon.image = icon
-        # aboutwin.iconphoto(True, icon)
-        # Minsize needed for MacOS where Help>About opens tab in mainwin.
-        #   Gives larger MacOS mainwin when tab is closed, but, oh well.
         aboutwin.minsize(570, 460)
         aboutwin.title('About count-tasks')
-        # aboutimg = tk.PhotoImage(file='about.png')  # or 'about.png'
-        # aboutimg.image = aboutimg  # Need to anchor the image for it to
-        # display.
-        # tk.Label(aboutwin, image=aboutimg).grid(row=0, column=0, padx=5,
-        # pady=5)
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
                   'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
                   'dark olive green', 'grey2', 'grey25', 'DodgerBlue4',
