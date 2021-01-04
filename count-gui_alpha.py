@@ -184,12 +184,12 @@ class CountGui:
         self.progress = ttk.Progressbar()
 
         # stubdata are only for testing GUI layout.
-        self.set_stubdata()
+        # self.set_stubdata()
 
         # The data dictionary is from data_intervals(). set_startdata
         # includes "config()"  # and calls show_startdata().  # Set starting
         # data config are same style as config_intvldata.  #
-        # self.set_startdata()
+        self.set_startdata()
 
         # tkinter's infinite event loop  # "Always call mainloop as the last
         # logical line of code in your  # program." per Bryan Oakly:  #
@@ -250,11 +250,16 @@ class CountGui:
         self.dataframe.columnconfigure(2, weight=1)
 
         # Fill in headers for data rows.
-        row_header = {
-            'Counting since'   : 2, 'Count interval': 3, '# tasks reported': 4,
-            'Task times:  mean': 5, 'stdev': 6, 'range': 7, 'total': 8,
-            'Last count was:'  : 10, '# counts to go:': 11,
-            'Next count in:'   : 12}
+        row_header = {'Counting since'  : 2,
+                      'Count interval'  : 3,
+                      '# tasks reported': 4,
+                      'Task times:  mean': 5,
+                      'stdev'           : 6,
+                      'range'           : 7,
+                      'total'           : 8,
+                      'Last count was:' : 10,
+                      '# counts to go:' : 11,
+                      'Next count in:'  : 12}
         for header, rownum in row_header.items():
             tk.Label(self.mainwin, text=f'{header}', bg=self.mainwin_bg,
                      fg=self.row_fg).grid(row=rownum, column=0, padx=(5, 0),
@@ -360,13 +365,15 @@ class CountGui:
         self.show_startdata()
 
     # Set methods:
-    # TODO: Retrieve data from DataIntervals.start_report()
+    # TODO: After start data shows, call back to interval timer
     def set_startdata(self) -> None:
         """
         Set data label text variables with starting data.
         """
 
-        startdata = {**DI.start_report()}  # <-** ad hoc test return function
+        startdata = {**DataIntervals().start_report()}
+        print(f'The start dictionary: {startdata}')
+        self.mainwin.after(500)
         self.time_start = startdata['time_start']
         self.intvl_str = startdata['intvl_str']
         self.interval = startdata['intvl_int']
@@ -460,6 +467,8 @@ class CountGui:
                              columnspan=2)
         self.count_lim_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+
+        self.mainwin.update_idletasks()
 
     def show_intvldata(self) -> None:
         """
@@ -826,7 +835,7 @@ DI_SEM = threading.Semaphore()
 ##############################
 # DI_SEM should be released at the end of DataIntervals()???.
 
-# TODO: FIX duplicate/parallel? running of intvl_timer().
+
 class DataIntervals:
     """
     Timed interval counting, analysis, and reporting of BOINC task data.
@@ -863,11 +872,11 @@ class DataIntervals:
         if sys.platform[:3] == 'win':
             subprocess.call('', shell=True)
 
-        self.start_report()
-        self.interval_reports()
+        # self.start_report()
+        # self.interval_reports()
 
-    def start_report(self) -> None:
-        """Gather and report initial task counts and time stats.
+    def start_report(self) -> dict:
+        """Report initial task counts and time stats.
 
         :return: Terminal printed report; log report if optioned.
         """
@@ -876,6 +885,9 @@ class DataIntervals:
         #   In future, may want to inspect task names with
         #     task_names = BC.get_reported('tasks').
         self.ttimes_start = BC.get_reported('elapsed time')
+        # Begin list "old" tasks to exclude from new tasks.
+        self.ttimes_used.extend(self.ttimes_start)
+
         self.count_start = len(self.ttimes_start)
         tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
             self.count_start, self.ttimes_start).values()
@@ -905,8 +917,18 @@ class DataIntervals:
                          self.indent, args.count_lim,
                          report_cleaned)
 
-        # Need a list of tasks old tasks to exclude from new tasks.
-        self.ttimes_used.extend(self.ttimes_start)
+        startdata = {'time_start':   self.time_start,
+                     'intvl_str':    intvl_str,
+                     'intvl_int':    interval_m,
+                     'sumry_intvl':  sumry_intvl,
+                     'count_start':  self.count_start,
+                     'tt_mean':      tt_mean,
+                     'tt_lo':        tt_lo,
+                     'tt_hi':        tt_hi,
+                     'tt_sd':        tt_sd,
+                     'tt_sum':       tt_sum,
+                     'count_lim':    count_lim}
+        return startdata
 
     def interval_reports(self) -> None:
         """
@@ -1024,10 +1046,6 @@ class DataIntervals:
                 # Need to reset data lists for the next summary interval.
                 self.ttimes_smry.clear()
                 self.ttimes_uniq.clear()
-
-    # SEMAPHORE ############
-    DI_SEM.release()
-    ########################
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -1163,6 +1181,10 @@ class DataIntervals:
             'tt_sd': 'na',
             'tt_min': 'na',
             'tt_max': 'na'}
+
+    # SEMAPHORE ############
+    DI_SEM.release()
+    ########################
 
 
 def check_args(parameter) -> None:

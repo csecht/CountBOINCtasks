@@ -91,7 +91,7 @@ class DataIntervals:
         self.interval_reports()
 
     def start_report(self) -> None:
-        """Gather and report initial task counts and time stats.
+        """Report initial task counts and time stats.
 
         :return: Terminal printed report; log report if optioned.
         """
@@ -129,7 +129,7 @@ class DataIntervals:
                          self.indent, args.count_lim,
                          report_cleaned)
 
-        # Need a list of tasks old tasks to exclude from new tasks.
+        # Begin list "old" tasks to exclude from new tasks.
         self.ttimes_used.extend(self.ttimes_start)
 
     def interval_reports(self) -> None:
