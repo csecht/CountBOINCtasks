@@ -77,8 +77,7 @@ class CountGui:
     """
 
     # pylint: disable=too-many-instance-attributes
-    # TODO: Add pretty icon to data_intervals window. These variations don't
-    #  work:
+    # TODO: Add pretty icon to data_intervals window. These don't work:
     # icon = tk.PhotoImage(Image.open('Python-icon.png'))
     # icon.show() # Shows a stand-alone image, so file is okay.
     # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
@@ -110,7 +109,7 @@ class CountGui:
         self.count_lim = None
         self.time_start = None
         self.intvl_str = None
-        self.sumry_intvl = None
+        self.sumry_t = None
         self.count_start = None
         self.interval = None
 
@@ -136,9 +135,9 @@ class CountGui:
                                      fg='grey90')
         self.intvl_str_l = tk.Label(self.dataframe, width=20, relief='groove',
                                     borderwidth=2, bg=self.data_bg)
-        self.sumry_intvl_l = tk.Label(self.dataframe, width=20,
-                                      relief='groove', borderwidth=2,
-                                      bg=self.data_bg)
+        self.sumry_t_l = tk.Label(self.dataframe, width=20,
+                                  relief='groove', borderwidth=2,
+                                  bg=self.data_bg)
         self.count_start_l = tk.Label(self.dataframe, bg=self.data_bg)
         self.count_now_l = tk.Label(self.dataframe, bg=self.data_bg)
         self.count_uniq_l = tk.Label(self.dataframe, bg=self.data_bg)
@@ -250,16 +249,16 @@ class CountGui:
         self.dataframe.columnconfigure(2, weight=1)
 
         # Fill in headers for data rows.
-        row_header = {'Counting since'  : 2,
-                      'Count interval'  : 3,
-                      '# tasks reported': 4,
-                      'Task times:  mean': 5,
-                      'stdev'           : 6,
-                      'range'           : 7,
-                      'total'           : 8,
-                      'Last count was:' : 10,
-                      '# counts to go:' : 11,
-                      'Next count in:'  : 12}
+        row_header = {'Counting since':     2,
+                      'Count interval':     3,
+                      '# tasks reported':   4,
+                      'Task times:  mean':  5,
+                      'stdev':              6,
+                      'range':              7,
+                      'total':              8,
+                      'Last count was:':    10,
+                      '# counts to go:':    11,
+                      'Next count in:':     12}
         for header, rownum in row_header.items():
             tk.Label(self.mainwin, text=f'{header}', bg=self.mainwin_bg,
                      fg=self.row_fg).grid(row=rownum, column=0, padx=(5, 0),
@@ -342,7 +341,7 @@ class CountGui:
         self.count_lim = '1008'
         self.time_start = '2020-Nov-10 10:00:10'
         self.intvl_str = '60m'
-        self.sumry_intvl = '1d'
+        self.sumry_t = '1d'
         self.count_start = '24'
 
         # Common data reports
@@ -370,11 +369,12 @@ class CountGui:
         """
 
         startdata = {**DataIntervals().start_report()}
-        self.mainwin.after(500)
+        # self.mainwin.after(500)
+        self.dataframe.after(100)
         self.time_start = startdata['time_start']
         self.intvl_str = startdata['intvl_str']
         self.interval = startdata['intvl_int']
-        self.sumry_intvl = startdata['sumry_intvl']
+        self.sumry_t = startdata['sumry_t']
         self.count_start = startdata['count_start']
         self.tt_mean = startdata['tt_mean']
         self.tt_hi = startdata['tt_hi']
@@ -433,7 +433,7 @@ class CountGui:
         # Starting datetime and report times; invariant throughout counts.
         self.time_start_l.config(text=self.time_start)
         self.intvl_str_l.config(text=self.intvl_str, fg=self.emphasize)
-        self.sumry_intvl_l.config(text=self.sumry_intvl, fg=self.deemphasize)
+        self.sumry_t_l.config(text=self.sumry_t, fg=self.deemphasize)
 
         # Starting count data and times (from past boinc-client hour).
         time_range = self.tt_lo + ' -- ' + self.tt_hi
@@ -452,23 +452,25 @@ class CountGui:
         # Place labels in row,column positions.
         self.time_start_l.grid(row=2, column=1, padx=10, sticky=tk.EW,
                                columnspan=2)
-        self.intvl_str_l.grid(row=3, column=1, padx=10, sticky=tk.EW)
-        self.sumry_intvl_l.grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
+        self.intvl_str_l.grid(  row=3, column=1, padx=10, sticky=tk.EW)
+        self.sumry_t_l.grid(    row=3, column=2, padx=(0, 10), sticky=tk.EW)
         self.count_start_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
-        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
-        self.time_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
-        self.tt_sum_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
+        self.tt_mean_l.grid(    row=5, column=1, padx=10, sticky=tk.EW)
+        self.tt_sd_l.grid(      row=6, column=1, padx=10, sticky=tk.EW)
+        self.time_range_l.grid( row=7, column=1, padx=10, sticky=tk.EW)
+        self.tt_sum_l.grid(     row=8, column=1, padx=10, sticky=tk.EW)
 
-        self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                             columnspan=2)
-        self.count_lim_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+        self.time_now_l.grid(   row=10, column=1, padx=3, sticky=tk.W,
+                                columnspan=2)
+        self.count_lim_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
+        self.count_next_l.grid( row=12, column=1, padx=3, sticky=tk.W)
 
         self.mainwin.update_idletasks()
+        # self.mainwin.update()
         # Redirect back to data/timer method
         # TODO: Return control back to mainwin GUI after interval timer starts;
-        #  Is currently locked out.
+        #  GUI is not responsive when timer running, but will block timer
+        #  when GUI has focus.
         DataIntervals().interval_reports()
 
     def show_intvldata(self) -> None:
@@ -486,7 +488,7 @@ class CountGui:
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.intvl_str_l.config(fg=self.emphasize)
-        self.sumry_intvl_l.config(fg=self.deemphasize)
+        self.sumry_t_l.config(fg=self.deemphasize)
 
         # Interval data, column1
         self.count_now_l.config(text=self.count_now, fg=self.highlight)
@@ -529,7 +531,7 @@ class CountGui:
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.intvl_str_l.config(fg=self.deemphasize)
-        self.sumry_intvl_l.config(fg=self.emphasize)
+        self.sumry_t_l.config(fg=self.emphasize)
 
         # Summary data, column2, emphasize font color
         self.count_uniq_l.config(text=self.count_uniq, fg=self.highlight)
@@ -831,12 +833,6 @@ along with this program. If not, see https://www.gnu.org/licenses/
         self.progress["value"] = 0  # Reset bar
 
 
-# SEMAPHORE ##################
-DI_SEM = threading.Semaphore()
-##############################
-# DI_SEM should be released at the end of DataIntervals()???.
-
-
 class DataIntervals:
     """
     Timed interval counting, analysis, and reporting of BOINC task data.
@@ -899,9 +895,9 @@ class DataIntervals:
                   f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                   f' range [{tt_lo} - {tt_hi}],\n'
                   f'{self.bigindent}stdev {tt_sd}, total {tt_sum}\n'
-                  f'{self.indent}Number of scheduled count intervals: {count_lim}\n'
-                  f'{self.indent}Counts every {interval_m}m,'
-                  f' summaries every {sumry_t}\n'
+                  f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
+                  f'{self.indent}Counts every {INTERVAL_M}m,'
+                  f' summaries every {SUMMARY_T}\n'
                   f'{self.indent}Timed intervals beginning now...')
         print(report)
         if args.log is True:
@@ -921,16 +917,16 @@ class DataIntervals:
 
         # if args.gui is True: # ...if args.gui is used as parameter.
         startdata = {'time_start':   self.time_start,
-                     'intvl_str':    intvl_str,
-                     'intvl_int':    interval_m,
-                     'sumry_intvl':  sumry_intvl,
+                     'intvl_str':    INTVL_STR,
+                     'intvl_int':    INTERVAL_M,
+                     'sumry_t':      SUMMARY_T,
                      'count_start':  self.count_start,
                      'tt_mean':      tt_mean,
                      'tt_lo':        tt_lo,
                      'tt_hi':        tt_hi,
                      'tt_sd':        tt_sd,
                      'tt_sum':       tt_sum,
-                     'count_lim':    count_lim}
+                     'count_lim':    COUNT_LIM}
         # Data returned to CountGui().set_startdata()
         return startdata
 
@@ -945,11 +941,12 @@ class DataIntervals:
         # Remove previous ("used") tasks from current ("new") task metrics.
 
         # intvl_timer() sleeps the for loop between counts.
-        for i in range(count_lim):
-            self.intvl_timer(interval_m)
+        for i in range(COUNT_LIM):
+            # DI_thread.join()
+            self.intvl_timer(INTERVAL_M)
             # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
             self.time_now = datetime.now().strftime(self.time_fmt)
-            self.counts_remain = count_lim - (i + 1)
+            self.counts_remain = COUNT_LIM - (i + 1)
 
             # Need a flag for when tasks have run out.
             # active_task_state for a running task is 'EXECUTING'.
@@ -985,7 +982,7 @@ class DataIntervals:
                 self.tic_nnt += 1
                 report = (f'\n{self.time_now}; '
                           f'No tasks reported in the past {self.tic_nnt}'
-                          f' {interval_m}m interval(s).\n'
+                          f' {INTERVAL_M}m interval(s).\n'
                           f'{self.indent}Counts remaining until exit:'
                           f' {self.counts_remain}')
                 if self.tic_nnt == 1:
@@ -1007,7 +1004,7 @@ class DataIntervals:
                 tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                     self.get_timestats(self.count_new, self.ttimes_new).values()
                 report = (
-                    f'\n{self.time_now}; Tasks reported in the past {interval_m}m:'
+                    f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f' {self.blue}{self.count_new}{self.undo_color}\n'
                     f'{self.indent}Counts remaining until exit: {self.counts_remain}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
@@ -1030,6 +1027,7 @@ class DataIntervals:
                     'tt_sum':   tt_sum,
                     'counts_remain': self.counts_remain}
                 return intvldata
+                # TODO: THIS return will block summary report: FIX
 
             elif self.count_new > 0 and notrunning is True:
                 report = (f'\n{self.time_now};'
@@ -1039,7 +1037,7 @@ class DataIntervals:
                     logging.info(report)
 
             # Report: Summary intervals
-            if (i + 1) % sumry_factor == 0 and notrunning is False:
+            if (i + 1) % SUMRY_FACTOR == 0 and notrunning is False:
                 # Need unique tasks for stats and counting.
                 self.ttimes_uniq = set(self.ttimes_smry)
                 self.count_sumry = len(self.ttimes_uniq)
@@ -1049,7 +1047,7 @@ class DataIntervals:
                 report = (
                     f'\n{self.time_now}; '
                     f'{self.orng}>>> SUMMARY{self.undo_color} count for the past'
-                    f' {sumry_t}: {self.blue}{self.count_sumry}{self.undo_color}\n'
+                    f' {SUMMARY_T}: {self.blue}{self.count_sumry}{self.undo_color}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
@@ -1072,6 +1070,7 @@ class DataIntervals:
                              'tt_sd':       tt_sd,
                              'tt_sum':      tt_sum}
                 return sumrydata
+        DI_SEM.release()
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -1208,10 +1207,6 @@ class DataIntervals:
             'tt_min': 'na',
             'tt_max': 'na'}
 
-    # SEMAPHORE ############
-    DI_SEM.release()
-    ########################
-
 
 def check_args(parameter) -> None:
     """Check command line arguments for errors.
@@ -1266,7 +1261,7 @@ if __name__ == '__main__':
     parser.add_argument('--summary',
                         help='Specify time between count summaries,'
                              ' e.g., 12h, 7d (default: %(default)s)',
-                        default='30m', # TODO: reset default 1d
+                        default='30m',  # TODO: reset default 1d
                         type=check_args, metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
@@ -1275,16 +1270,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Variables to deal with parser arguments and defaults.
-    count_lim = int(args.count_lim)
-    interval_m = int(args.interval)
-    sumry_t = str(args.summary)
-    sumry_m = DataIntervals.get_min(sumry_t)
-    sumry_factor = sumry_m // interval_m
-    # Variables used for CountGui() data display.
-    intvl_str = f'{args.interval}m'
-    sumry_intvl = args.summary
+    # By convention, all these should be UPPER_CASE, as class constants.
+    COUNT_LIM = int(args.count_lim)
+    INTERVAL_M = int(args.interval)
+    SUMMARY_T = str(args.summary)
+    summary_m = DataIntervals.get_min(SUMMARY_T)
+    SUMRY_FACTOR = summary_m // INTERVAL_M
+    # Variables used in CountGui() data display.
+    INTVL_STR = f'{args.interval}m'
 
-    if interval_m >= sumry_m:
+    if INTERVAL_M >= summary_m:
         info = ("Invalid parameters: --summary time must be greater than",
                 " --interval time.")
         raise ValueError(info)
@@ -1301,15 +1296,26 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # interval_thread = threading.Thread(target=data_intervals, daemon=True)
-    interval_thread = threading.Thread(target=DataIntervals)
-    interval_thread.start()
+    DI_thread = threading.Thread(target=DataIntervals)
+    DI_thread.start()
+    DI_SEM = threading.Semaphore(10)
+    # start_thread = threading.Thread(target=DataIntervals.start_report)
+    # start_thread.start()
+    # intvl_thread = threading.Thread(target=DataIntervals.interval_reports)
+    # intvl_thread.start()
+    # timer_thread = threading.Thread(target=DataIntervals.intvl_timer)
+    # timer_thread.start()
     # CountGui(tk.Tk())
     root = tk.Tk()
     CG = CountGui(root)
     root.mainloop()
     DI = DataIntervals()
     try:
-        interval_thread.join()
+        DI_thread.join()
+        DI_SEM.release()
+        # start_thread.join()
+        # intvl_thread.join()
+        # timer_thread.join()
     except KeyboardInterrupt:
         exit_msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
         sys.stdout.write(exit_msg)
