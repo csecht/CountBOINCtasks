@@ -376,7 +376,6 @@ class CountGui:
         """
 
         startdata = {**DataIntervals().start_report()}
-        # self.mainwin.after(500)
         self.dataframe.after(100)
         self.time_start = startdata['time_start']
         self.intvl_str = startdata['intvl_str']
@@ -398,14 +397,16 @@ class CountGui:
 
         :return: Interval values for datatable labels.
         """
+
         intvldata = {**DataIntervals().interval_reports()}
+        self.dataframe.after(100)
         self.time_now = intvldata['time_now']
         self.count_now = intvldata['count_now']
         self.tt_mean = intvldata['tt_mean']
         self.tt_lo = intvldata['tt_lo']
         self.tt_hi = intvldata['tt_hi']
         self.tt_sd = intvldata['tt_sd']
-        self.tt_total = intvldata['tt_sum']
+        self.tt_total = intvldata['tt_total']
         self.count_remain = intvldata['count_remain']
 
         self.show_intvldata()
@@ -424,7 +425,7 @@ class CountGui:
         self.tt_hi = datadict['tt_hi']
         self.tt_lo = datadict['tt_lo']
         self.tt_sd = datadict['tt_sd']
-        self.tt_total = datadict['tt_sum']
+        self.tt_total = datadict['tt_total']
 
         self.show_sumrydata()
 
