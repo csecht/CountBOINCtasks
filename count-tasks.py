@@ -434,8 +434,8 @@ if __name__ == '__main__':
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
-                        # default=60,
-                        default=1,
+                        default=60,
+                        # default=1,  # For testing
                         choices=range(5, 65, 5),
                         type=int,
                         metavar="M")
