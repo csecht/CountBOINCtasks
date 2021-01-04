@@ -87,10 +87,9 @@ class CountGui:
     # mainwin.tk.call('wm', 'iconphoto',  mainwin._w,
     #                 tk.PhotoImage(file='Python-icon.png'))
 
-    def __init__(self, mainwin: tk.Tk):
+    def __init__(self):
 
-        # self.datadict = datadict
-        self.mainwin = mainwin
+        self.mainwin = tk.Tk()
 
         self.row_fg = None
         self.data_bg = None
@@ -189,13 +188,14 @@ class CountGui:
         # includes "config()"  # and calls show_startdata().  # Set starting
         # data config are same style as config_intvldata.  #
         self.set_startdata()
+        # self.mainwin.mainloop()
 
-        # tkinter's infinite event loop  # "Always call mainloop as the last
-        # logical line of code in your  # program." per Bryan Oakly:  #
-        # https://stackoverflow.com/questions/29158220/tkinter-understanding
-        # -mainloop  # self.mainwin.mainloop()  # ^^ NOTE: mainloop is may
-        # be instantiated in show_startdata(),  #  for testing purposes. Or
-        # may be in if __name__....
+        # tkinter's infinite event loop. "Always call mainloop as the last
+        # logical line of code in your program." per Bryan Oakly:
+# https://stackoverflow.com/questions/29158220/tkinter-understanding-mainloop
+        # self.mainwin.mainloop()
+        # ^^^ may be in if __name__....  or
+        # may be handled by self.mainwin.update_idletasks() in show methods.
 
     def mainwin_cfg(self) -> None:
         """
@@ -523,6 +523,8 @@ class CountGui:
         self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                              columnspan=2)
 
+        self.mainwin.update_idletasks()
+
     def show_sumrydata(self) -> None:
         """
         Show interval and summary count-tasks data in GUI window.
@@ -571,6 +573,8 @@ class CountGui:
                              columnspan=2)
         self.count_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+
+        self.mainwin.update_idletasks()
 
     # Methods for menu items and keybinds.
     def quitgui(self) -> None:
@@ -1067,7 +1071,6 @@ class DataIntervals:
                              'tt_sd':       tt_sd,
                              'tt_sum':      tt_sum}
                 return sumrydata
-        DI_SEM.release()
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -1292,24 +1295,31 @@ if __name__ == '__main__':
         print('Status: ', __status__)
         sys.exit(0)
 
-    # interval_thread = threading.Thread(target=data_intervals, daemon=True)
+    # root = tk.Tk()
+    # CG = CountGui(root)
+    # root.mainloop()
+    # ^^^ move tk.Tk to CG __init__. Not necessary to call mainloop() here.
+    # CG = CountGui()
+    # DI = DataIntervals()
+
+    # Put tkinter into a thread? Needed for Queue?
+    CG_thread = threading.Thread(target=CountGui)
+    # CG_thread = threading.Thread(target=CountGui, daemon=True)
     DI_thread = threading.Thread(target=DataIntervals)
+    CG_thread.start()
     DI_thread.start()
-    DI_SEM = threading.Semaphore(10)
+    # DI_SEM = threading.Semaphore(10)
     # start_thread = threading.Thread(target=DataIntervals.start_report)
     # start_thread.start()
     # intvl_thread = threading.Thread(target=DataIntervals.interval_reports)
     # intvl_thread.start()
     # timer_thread = threading.Thread(target=DataIntervals.intvl_timer)
     # timer_thread.start()
-    # CountGui(tk.Tk())
-    root = tk.Tk()
-    CG = CountGui(root)
-    root.mainloop()
-    DI = DataIntervals()
+
     try:
+        CG_thread.join()
         DI_thread.join()
-        DI_SEM.release()
+        # DI_SEM.release()
         # start_thread.join()
         # intvl_thread.join()
         # timer_thread.join()
