@@ -65,11 +65,11 @@ class DataIntervals:
         self.ttimes_start = []
         self.ttimes_new = []
         self.ttimes_smry = []
-        self.ttimes_uniq = []
+        # self.ttimes_uniq = []
         self.ttimes_used = ['']
         self.count_start = None
         self.count_new = None
-        self.count_sumry = None
+        # self.count_sumry = None
         self.tic_nnt = 0
 
         # # Terminal and log print formatting:
@@ -193,8 +193,7 @@ class DataIntervals:
                 if args.log is True:
                     logging.info(report)
                 if notrunning is True:
-                    report = (f'\n{self.time_now};'
-                              f' *** Check whether tasks are running. ***')
+                    report = '*** Check whether tasks are running. ***'
                     print(report)
                     if args.log is True:
                         logging.info(report)
@@ -218,8 +217,8 @@ class DataIntervals:
                     logging.info(report_cleaned)
 
             elif self.count_new > 0 and notrunning is True:
-                report = (f'\n{self.time_now};'
-                          f' *** Check whether tasks are running. ***')
+                report = (f'{self.time_now};'
+                          ' *** Check whether tasks are running. ***')
                 print(f'\r{self.del_line}{report}')
                 if args.log is True:
                     logging.info(report)
@@ -227,15 +226,15 @@ class DataIntervals:
             # Report: Summary intervals
             if (i + 1) % sumry_factor == 0 and notrunning is False:
                 # Need unique tasks for stats and counting.
-                self.ttimes_uniq = set(self.ttimes_smry)
-                self.count_sumry = len(self.ttimes_uniq)
+                ttimes_uniq = set(self.ttimes_smry)
+                count_sumry = len(ttimes_uniq)
 
                 tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                    self.get_timestats(self.count_sumry, self.ttimes_uniq).values()
+                    self.get_timestats(count_sumry, ttimes_uniq).values()
                 report = (
                     f'\n{self.time_now}; '
                     f'{self.orng}>>> SUMMARY{self.undo_color} count for the past'
-                    f' {sumry_t}: {self.blue}{self.count_sumry}{self.undo_color}\n'
+                    f' {sumry_t}: {self.blue}{count_sumry}{self.undo_color}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
@@ -247,7 +246,7 @@ class DataIntervals:
 
                 # Need to reset data lists for the next summary interval.
                 self.ttimes_smry.clear()
-                self.ttimes_uniq.clear()
+                ttimes_uniq.clear()
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -436,7 +435,7 @@ if __name__ == '__main__':
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
                         # default=60,
-                        default=60,
+                        default=1,
                         choices=range(5, 65, 5),
                         type=int,
                         metavar="M")

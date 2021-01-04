@@ -364,15 +364,12 @@ class CountGui:
 
         self.show_startdata()
 
-    # Set methods:
-    # TODO: After start data shows, call back to interval timer
     def set_startdata(self) -> None:
         """
         Set data label text variables with starting data.
         """
 
         startdata = {**DataIntervals().start_report()}
-        print(f'The start dictionary: {startdata}')
         self.mainwin.after(500)
         self.time_start = startdata['time_start']
         self.intvl_str = startdata['intvl_str']
@@ -469,6 +466,10 @@ class CountGui:
         self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
 
         self.mainwin.update_idletasks()
+        # Redirect back to data/timer method
+        # TODO: Return control back to mainwin GUI after interval timer starts;
+        #  Is currently locked out.
+        DataIntervals().interval_reports()
 
     def show_intvldata(self) -> None:
         """
@@ -878,7 +879,8 @@ class DataIntervals:
     def start_report(self) -> dict:
         """Report initial task counts and time stats.
 
-        :return: Terminal printed report; log report if optioned.
+        :return: Report printed to Terminal and/or log file; data dict
+        to CountGui.set_startdata().
         """
 
         # As with task names, task times as sec.microsec are unique.
@@ -917,6 +919,7 @@ class DataIntervals:
                          self.indent, args.count_lim,
                          report_cleaned)
 
+        # if args.gui is True: # ...if args.gui is used as parameter.
         startdata = {'time_start':   self.time_start,
                      'intvl_str':    intvl_str,
                      'intvl_int':    interval_m,
@@ -928,9 +931,10 @@ class DataIntervals:
                      'tt_sd':        tt_sd,
                      'tt_sum':       tt_sum,
                      'count_lim':    count_lim}
+        # Data returned to CountGui().set_startdata()
         return startdata
 
-    def interval_reports(self) -> None:
+    def interval_reports(self) -> dict:
         """
         Gather and report task counts and time stats at timed intervals.
 
@@ -1015,6 +1019,18 @@ class DataIntervals:
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
 
+                # if args.gui is True:
+                intvldata = {
+                    'time_now':  self.time_now,
+                    'count_now': self.count_new,
+                    'tt_mean':  tt_mean,
+                    'tt_lo':    tt_lo,
+                    'tt_hi':    tt_hi,
+                    'tt_sd':    tt_sd,
+                    'tt_sum':   tt_sum,
+                    'counts_remain': self.counts_remain}
+                return intvldata
+
             elif self.count_new > 0 and notrunning is True:
                 report = (f'\n{self.time_now};'
                           f' *** Check whether tasks are running. ***')
@@ -1046,6 +1062,16 @@ class DataIntervals:
                 # Need to reset data lists for the next summary interval.
                 self.ttimes_smry.clear()
                 self.ttimes_uniq.clear()
+
+                # if args.gui is True:
+                sumrydata = {'time_now':    self.time_now,
+                             'count_uniq':  self.count_sumry,
+                             'tt_mean':     tt_mean,
+                             'tt_lo':       tt_lo,
+                             'tt_hi':       tt_hi,
+                             'tt_sd':       tt_sd,
+                             'tt_sum':      tt_sum}
+                return sumrydata
 
     @staticmethod
     def get_min(time_string: str) -> int:
