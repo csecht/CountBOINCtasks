@@ -130,7 +130,7 @@ class CountGui:
         # Unique to summary data report var
         self.count_uniq = None
 
-        # Label names used to show data. _suml are for show_sumrydata()
+        # Label names used to show data.
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
                                      fg='grey90')
         self.intvl_str_l = tk.Label(self.dataframe, width=20, relief='groove',
@@ -160,11 +160,11 @@ class CountGui:
         # self.tt_mean_l =        ttk.Label()
         # self.tt_sd_l =          ttk.Label()
         # self.time_range_l =     ttk.Label()
-        # self.tt_sum_l =         ttk.Label()
-        # self.tt_mean_suml =     ttk.Label()
-        # self.tt_sd_suml =       ttk.Label()
-        # self.time_range_suml =  ttk.Label()
-        # self.tt_sum_suml =      ttk.Label()
+        # self.tt_total_l =       ttk.Label()
+        # self.ttmean_sumry_l =   ttk.Label()
+        # self.ttsd_sumry_l =     ttk.Label()
+        # self.timerange_sumry_l = ttk.Label()
+        # self.ttsum_sumry_l =    ttk.Label()
 
         style_main = ttk.Style(self.mainwin)
         style_main.configure('TLabel', background=self.mainwin_bg,
@@ -387,7 +387,7 @@ class CountGui:
         self.tt_hi = startdata['tt_hi']
         self.tt_lo = startdata['tt_lo']
         self.tt_sd = startdata['tt_sd']
-        self.tt_total = startdata['tt_sum']
+        self.tt_total = startdata['tt_total']
         self.count_lim = startdata['count_lim']
 
         self.show_startdata()
@@ -396,7 +396,6 @@ class CountGui:
         """
         Set interval data from count-tasks data_intervals().
 
-        :param datadict: Dict of report data vars with matching keywords.
         :return: Interval values for datatable labels.
         """
         intvldata = {**DataIntervals().interval_reports()}
@@ -438,34 +437,34 @@ class CountGui:
         """
 
         # Starting datetime and report times; invariant throughout counts.
-        self.time_start_l.config(text=self.time_start)
-        self.intvl_str_l.config(text=self.intvl_str, fg=self.emphasize)
-        self.sumry_t_l.config(text=self.sumry_t, fg=self.deemphasize)
+        self.time_start_l.config(   text=self.time_start)
+        self.intvl_str_l.config(    text=self.intvl_str, fg=self.emphasize)
+        self.sumry_t_l.config(      text=self.sumry_t, fg=self.deemphasize)
 
         # Starting count data and times (from past boinc-client hour).
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        self.count_start_l.config(text=self.count_start, fg=self.highlight)
-        self.tt_mean_l.config(text=self.tt_mean, fg=self.highlight)
-        self.tt_sd_l.config(text=self.tt_sd, fg=self.emphasize)
-        self.time_range_l.config(text=time_range, fg=self.emphasize)
-        self.tt_total_l.config(text=self.tt_total, fg=self.emphasize)
+        self.count_start_l.config(  text=self.count_start, fg=self.highlight)
+        self.tt_mean_l.config(      text=self.tt_mean, fg=self.highlight)
+        self.tt_sd_l.config(        text=self.tt_sd, fg=self.emphasize)
+        self.time_range_l.config(   text=time_range, fg=self.emphasize)
+        self.tt_total_l.config(     text=self.tt_total, fg=self.emphasize)
 
         # Previous and until task count times.
-        self.time_now_l.config(text='The most recent 1 hr BOINC report')
+        self.time_now_l.config( text='The most recent 1 hr BOINC report')
         self.count_lim_l.config(text=self.count_lim)
         self.count_next_l.config(text=self.count_next)
 
         # Place labels in row,column positions.
-        self.time_start_l.grid(row=2, column=1, padx=10, sticky=tk.EW,
-                               columnspan=2)
+        self.time_start_l.grid( row=2, column=1, padx=10, sticky=tk.EW,
+                                columnspan=2)
         self.intvl_str_l.grid(  row=3, column=1, padx=10, sticky=tk.EW)
         self.sumry_t_l.grid(    row=3, column=2, padx=(0, 10), sticky=tk.EW)
         self.count_start_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
         self.tt_mean_l.grid(    row=5, column=1, padx=10, sticky=tk.EW)
         self.tt_sd_l.grid(      row=6, column=1, padx=10, sticky=tk.EW)
         self.time_range_l.grid( row=7, column=1, padx=10, sticky=tk.EW)
-        self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
+        self.tt_total_l.grid(   row=8, column=1, padx=10, sticky=tk.EW)
 
         self.time_now_l.grid(   row=10, column=1, padx=3, sticky=tk.W,
                                 columnspan=2)
@@ -922,7 +921,7 @@ class DataIntervals:
                      'tt_lo':        tt_lo,
                      'tt_hi':        tt_hi,
                      'tt_sd':        tt_sd,
-                     'tt_total':       tt_total,
+                     'tt_total':     tt_total,
                      'count_lim':    COUNT_LIM}
         # Data returned to CountGui().set_startdata()
         return startdata
