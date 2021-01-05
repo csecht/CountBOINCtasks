@@ -100,14 +100,14 @@ class DataIntervals:
         #     task_names = BC.get_reported('tasks').
         self.ttimes_start = BC.get_reported('elapsed time')
         count_start = len(self.ttimes_start)
-        tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
+        tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
             count_start, self.ttimes_start).values()
 
         report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
                   f' {self.blue}{count_start}{self.undo_color}\n'
                   f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                   f' range [{tt_lo} - {tt_hi}],\n'
-                  f'{self.bigindent}stdev {tt_sd}, total {tt_sum}\n'
+                  f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                   f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
                   f'{self.indent}Counts every {INTERVAL_M}m,'
                   f' summaries every {SUMMARY_T}\n'
@@ -203,7 +203,7 @@ class DataIntervals:
             elif self.count_new > 0 and self.notrunning is False:
                 self.tic_nnt -= self.tic_nnt
                 # Not the most robust way to get dict values, but it's concise.
-                tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
                     self.get_timestats(self.count_new, self.ttimes_new).values()
                 report = (
                     f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
@@ -211,7 +211,7 @@ class DataIntervals:
                     f'{self.indent}Counts remaining until exit: {self.counts_remain}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
+                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
                 )
                 print(f'\r{self.del_line}{report}')
                 if args.log is True:
@@ -242,7 +242,7 @@ class DataIntervals:
             self.ttimes_uniq = set(ttimes_smry)
             count_sumry = len(self.ttimes_uniq)
 
-            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+            tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
                 self.get_timestats(count_sumry, self.ttimes_uniq).values()
             report = (
                 f'\n{self.time_now}; '
@@ -250,7 +250,7 @@ class DataIntervals:
                 f' {SUMMARY_T}: {self.blue}{count_sumry}{self.undo_color}\n'
                 f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
-                f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
             )
             print(f'\r{self.del_line}{report}')
             if args.log is True:
@@ -367,7 +367,7 @@ class DataIntervals:
 
         :param numtasks: The number of elements in tasktimes.
         :param tasktimes: A list, tuple, or set of times, in seconds.
-        :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; Dict
+        :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max; Dict
         values as: 00:00:00.
         """
         total = self.fmt_sec(int(sum(set(tasktimes))), 'std')
@@ -377,21 +377,21 @@ class DataIntervals:
             low = self.fmt_sec(int(min(tasktimes)), 'std')
             high = self.fmt_sec(int(max(tasktimes)), 'std')
             return {
-                'tt_sum': total,
+                'tt_total': total,
                 'tt_mean': mean,
                 'tt_sd': stdev,
                 'tt_min': low,
                 'tt_max': high}
         if numtasks == 1:
             return {
-                'tt_sum': total,
+                'tt_total': total,
                 'tt_mean': total,
                 'tt_sd': 'na',
                 'tt_min': 'na',
                 'tt_max': 'na'}
 
         return {
-            'tt_sum': '00:00:00',
+            'tt_total': '00:00:00',
             'tt_mean': '00:00:00',
             'tt_sd': 'na',
             'tt_min': 'na',
