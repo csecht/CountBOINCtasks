@@ -65,12 +65,13 @@ class DataIntervals:
         self.ttimes_start = []
         self.ttimes_new = []
         self.ttimes_smry = []
-        # self.ttimes_uniq = []
+        self.ttimes_uniq = []
         self.ttimes_used = ['']
         self.count_start = None
         self.count_new = None
         # self.count_sumry = None
         self.tic_nnt = 0
+        self.notrunning = False
 
         # # Terminal and log print formatting:
         self.indent = ' ' * 22
@@ -109,9 +110,9 @@ class DataIntervals:
                   f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                   f' range [{tt_lo} - {tt_hi}],\n'
                   f'{self.bigindent}stdev {tt_sd}, total {tt_sum}\n'
-                  f'{self.indent}Number of scheduled count intervals: {count_lim}\n'
-                  f'{self.indent}Counts every {interval_m}m,'
-                  f' summaries every {sumry_t}\n'
+                  f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
+                  f'{self.indent}Counts every {INTERVAL_M}m,'
+                  f' summaries every {SUMMARY_T}\n'
                   f'{self.indent}Timed intervals beginning now...')
         print(report)
         if args.log is True:
@@ -132,29 +133,31 @@ class DataIntervals:
         # Begin list "old" tasks to exclude from new tasks.
         self.ttimes_used.extend(self.ttimes_start)
 
-    def interval_reports(self) -> None:
+    def interval_reports(self):
         """
         Gather and report task counts and time stats at timed intervals.
 
-        :return: Terminal printed reports; log reports if optioned.
+        :return: Terminal printed reports. Data for GUI display. Log write if
+        optioned.
         """
         # Synopsis:
         # Do not include starting tasks in interval or summary counts.
         # Remove previous ("used") tasks from current ("new") task metrics.
 
         # intvl_timer() sleeps the for loop between counts.
-        for i in range(count_lim):
-            self.intvl_timer(interval_m)
+        for loop_num in range(COUNT_LIM):
+            # DI_thread.join()
+            self.intvl_timer(INTERVAL_M)
             # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
             self.time_now = datetime.now().strftime(self.time_fmt)
-            self.counts_remain = count_lim - (i + 1)
+            self.counts_remain = COUNT_LIM - (loop_num + 1)
 
             # Need a flag for when tasks have run out.
             # active_task_state for a running task is 'EXECUTING'.
             tasks_running = BC.get_tasks('active_task_state')
-            notrunning = False
+            self.notrunning = False
             if 'EXECUTING' not in tasks_running:
-                notrunning = True
+                self.notrunning = True
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.
@@ -183,28 +186,29 @@ class DataIntervals:
                 self.tic_nnt += 1
                 report = (f'\n{self.time_now}; '
                           f'No tasks reported in the past {self.tic_nnt}'
-                          f' {interval_m}m interval(s).\n'
+                          f' {INTERVAL_M}m interval(s).\n'
                           f'{self.indent}Counts remaining until exit:'
                           f' {self.counts_remain}')
                 if self.tic_nnt == 1:
                     print(f'\r{self.del_line}{report}')
                 if self.tic_nnt > 1:
-                    print(f'\r{self.del_line}{report}')
+                    print(f'\r\x1b[2A{self.del_line}{report}')
                 if args.log is True:
                     logging.info(report)
-                if notrunning is True:
-                    report = '*** Check whether tasks are running. ***'
+                if self.notrunning is True:
+                    report = (f'\n{self.time_now};'
+                              ' *** Check whether tasks are running. ***')
                     print(report)
                     if args.log is True:
                         logging.info(report)
 
-            elif self.count_new > 0 and notrunning is False:
+            elif self.count_new > 0 and self.notrunning is False:
                 self.tic_nnt -= self.tic_nnt
                 # Not the most robust way to get dict values, but it's concise.
                 tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
                     self.get_timestats(self.count_new, self.ttimes_new).values()
                 report = (
-                    f'\n{self.time_now}; Tasks reported in the past {interval_m}m:'
+                    f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f' {self.blue}{self.count_new}{self.undo_color}\n'
                     f'{self.indent}Counts remaining until exit: {self.counts_remain}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
@@ -216,37 +220,49 @@ class DataIntervals:
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
 
-            elif self.count_new > 0 and notrunning is True:
-                report = (f'{self.time_now};'
-                          ' *** Check whether tasks are running. ***')
+            elif self.count_new > 0 and self.notrunning is True:
+                report = (f'\n{self.time_now};'
+                          f' *** Check whether tasks are running. ***')
                 print(f'\r{self.del_line}{report}')
                 if args.log is True:
                     logging.info(report)
 
-            # Report: Summary intervals
-            if (i + 1) % sumry_factor == 0 and notrunning is False:
-                # Need unique tasks for stats and counting.
-                ttimes_uniq = set(self.ttimes_smry)
-                count_sumry = len(ttimes_uniq)
+            self.summary_reports(loop_num, self.ttimes_smry)
 
-                tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
-                    self.get_timestats(count_sumry, ttimes_uniq).values()
-                report = (
-                    f'\n{self.time_now}; '
-                    f'{self.orng}>>> SUMMARY{self.undo_color} count for the past'
-                    f' {sumry_t}: {self.blue}{count_sumry}{self.undo_color}\n'
-                    f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
-                    f' range [{tt_lo} - {tt_hi}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
-                )
-                print(f'\r{self.del_line}{report}')
-                if args.log is True:
-                    report_cleaned = self.ansi_esc.sub('', report)
-                    logging.info(report_cleaned)
+    def summary_reports(self, loop_num, ttimes_smry):
+        """
+        Report task counts time stats summaries at timed intervals.
 
-                # Need to reset data lists for the next summary interval.
-                self.ttimes_smry.clear()
-                ttimes_uniq.clear()
+        :param loop_num: The for loop number from interval_reports().
+        :param ttimes_smry: Cumulative list of task times from interval_reports()
+        :return: Terminal printed reports. Data for GUI display. Log write if
+        optioned.
+        """
+
+        if (loop_num + 1) % SUMRY_FACTOR == 0 and self.notrunning is False:
+            # Need unique tasks for stats and counting.
+            self.ttimes_uniq = set(ttimes_smry)
+            count_sumry = len(self.ttimes_uniq)
+
+            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                self.get_timestats(count_sumry, self.ttimes_uniq).values()
+            report = (
+                f'\n{self.time_now}; '
+                f'{self.orng}>>> SUMMARY{self.undo_color} count for the past'
+                f' {SUMMARY_T}: {self.blue}{count_sumry}{self.undo_color}\n'
+                f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                f' range [{tt_lo} - {tt_hi}],\n'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
+            )
+            print(f'\r{self.del_line}{report}')
+            if args.log is True:
+                report_cleaned = self.ansi_esc.sub('', report)
+                logging.info(report_cleaned)
+
+            # Need to reset data lists, in interval_reports(), for the next
+            # summary interval.
+            self.ttimes_smry.clear()
+            self.ttimes_uniq.clear()
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -454,16 +470,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Variables to manage parser arguments.
-    count_lim = int(args.count_lim)
-    interval_m = int(args.interval)
-    sumry_t = str(args.summary)
-    sumry_m = DataIntervals.get_min(sumry_t)
-    sumry_factor = sumry_m // interval_m
+    COUNT_LIM = int(args.count_lim)
+    INTERVAL_M = int(args.interval)
+    SUMMARY_T = str(args.summary)
+    summary_m = DataIntervals.get_min(SUMMARY_T)
+    SUMRY_FACTOR = summary_m // INTERVAL_M
     # Variables used for CountGui() data display.
     # intvl_str = f'{args.interval}m'
     # sumry_intvl = args.summary  # in CountGUI(), refactor to sumry_t
 
-    if interval_m >= sumry_m:
+    if INTERVAL_M >= summary_m:
         info = ("Invalid parameters: --summary time must be greater than",
                 " --interval time.")
         raise ValueError(info)
