@@ -67,9 +67,7 @@ class DataIntervals:
         self.ttimes_smry = []
         self.ttimes_uniq = []
         self.ttimes_used = ['']
-        self.count_start = None
         self.count_new = None
-        # self.count_sumry = None
         self.tic_nnt = 0
         self.notrunning = False
 
@@ -101,12 +99,12 @@ class DataIntervals:
         #   In future, may want to inspect task names with
         #     task_names = BC.get_reported('tasks').
         self.ttimes_start = BC.get_reported('elapsed time')
-        self.count_start = len(self.ttimes_start)
+        count_start = len(self.ttimes_start)
         tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
-            self.count_start, self.ttimes_start).values()
+            count_start, self.ttimes_start).values()
 
         report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                  f' {self.blue}{self.count_start}{self.undo_color}\n'
+                  f' {self.blue}{count_start}{self.undo_color}\n'
                   f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                   f' range [{tt_lo} - {tt_hi}],\n'
                   f'{self.bigindent}stdev {tt_sd}, total {tt_sum}\n'

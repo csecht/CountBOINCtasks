@@ -31,6 +31,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from queue import Queue
 
 from COUNTmodules import boinc_command
 
@@ -850,7 +851,7 @@ class DataIntervals:
         self.ttimes_smry = []
         self.ttimes_uniq = []
         self.ttimes_used = ['']
-        self.count_start = None
+        # self.count_start = None
         self.count_new = None
         # self.count_sumry = None
         self.tic_nnt = 0
@@ -888,12 +889,12 @@ class DataIntervals:
         # Begin list "old" tasks to exclude from new tasks.
         self.ttimes_used.extend(self.ttimes_start)
 
-        self.count_start = len(self.ttimes_start)
+        count_start = len(self.ttimes_start)
         tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
-            self.count_start, self.ttimes_start).values()
+            count_start, self.ttimes_start).values()
 
         report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                  f' {self.blue}{self.count_start}{self.undo_color}\n'
+                  f' {self.blue}{count_start}{self.undo_color}\n'
                   f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                   f' range [{tt_lo} - {tt_hi}],\n'
                   f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -922,7 +923,7 @@ class DataIntervals:
                      'intvl_str':    INTVL_STR,
                      'intvl_int':    INTERVAL_M,
                      'sumry_t':      SUMMARY_T,
-                     'count_start':  self.count_start,
+                     'count_start':  count_start,
                      'tt_mean':      tt_mean,
                      'tt_lo':        tt_lo,
                      'tt_hi':        tt_hi,
@@ -1314,12 +1315,19 @@ if __name__ == '__main__':
     # CG = CountGui()
     # DI = DataIntervals()
 
-    # Put tkinter into a thread? Needed for Queue?
+    # Put tkinter into a thread? Needed for Queueing?
+    # TODO: Code it so that closing Tk mainwin shuts down all threads.
+    queue = Queue()
+    # CG_thread = threading.Thread(target=CountGui, args=(queue,))
+    # DI_thread = threading.Thread(target=DataIntervals, args=(queue,))
     CG_thread = threading.Thread(target=CountGui)
-    # CG_thread = threading.Thread(target=CountGui, daemon=True)
     DI_thread = threading.Thread(target=DataIntervals)
+    # CG_thread = threading.Thread(target=CountGui, daemon=True)
     CG_thread.start()
     DI_thread.start()
+    # ^^ Having both classes threaded, without calling CG = CountGui(),
+    # allows KeyboardInterrupt exception. Omitting CG_thread does not allow.
+
     # DI_SEM = threading.Semaphore(10)
     # start_thread = threading.Thread(target=DataIntervals.start_report)
     # start_thread.start()
@@ -1331,12 +1339,13 @@ if __name__ == '__main__':
     try:
         CG_thread.join()
         DI_thread.join()
+        queue.join()
         # DI_SEM.release()
         # start_thread.join()
         # intvl_thread.join()
         # timer_thread.join()
     except KeyboardInterrupt:
-        exit_msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
+        exit_msg = '\n\n  *** Interrupted by user. ***\n  Quitting now... \n\n'
         sys.stdout.write(exit_msg)
         logging.info(
             msg=f'\n{datetime.now()}: {exit_msg}')
