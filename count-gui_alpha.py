@@ -32,6 +32,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from queue import Queue
+from threading import Thread
 
 from COUNTmodules import boinc_command
 
@@ -77,20 +78,14 @@ class CountGui:
     GUI displays only start data. Interval data not live.
     """
 
-    # pylint: disable=too-many-instance-attributes
-    # TODO: Add pretty icon to data_intervals window. These don't work:
-    # icon = tk.PhotoImage(Image.open('Python-icon.png'))
-    # icon.show() # Shows a stand-alone image, so file is okay.
-    # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
-    # icon = tk.PhotoImage(file='Python-icon.png')
-    # # icon.image = icon
-    # mainwin.iconphoto(True, icon)
-    # mainwin.tk.call('wm', 'iconphoto',  mainwin._w,
-    #                 tk.PhotoImage(file='Python-icon.png'))
-
-    def __init__(self):
+    def __init__(self, data=None):
 
         self.mainwin = tk.Tk()
+        # self.data = data
+        if data is None:
+            data = {}
+        else:
+            self.data = data
 
         self.row_fg = None
         self.data_bg = None
@@ -121,10 +116,10 @@ class CountGui:
         self.tt_total = None
         self.time_now = None
         self.count_next = "timer not working"
-        self.count_remain = None
+        self.counts_remain = None
 
         # Unique to interval data report var
-        self.count_now = None
+        self.count_new = None
         self.tic_nnt = None
 
         # Unique to summary data report var
@@ -139,7 +134,7 @@ class CountGui:
                                   relief='groove', borderwidth=2,
                                   bg=self.data_bg)
         self.count_start_l =    tk.Label(self.dataframe, bg=self.data_bg)
-        self.count_now_l =      tk.Label(self.dataframe, bg=self.data_bg)
+        self.count_new_l =      tk.Label(self.dataframe, bg=self.data_bg)
         self.count_uniq_l =     tk.Label(self.dataframe, bg=self.data_bg)
         self.tt_mean_l =        tk.Label(self.dataframe, bg=self.data_bg)
         self.tt_sd_l =          tk.Label(self.dataframe, bg=self.data_bg)
@@ -155,7 +150,7 @@ class CountGui:
         # style_data = ttk.Style(self.dataframe)
         # style_data.configure('TLabel', background=self.data_bg)
         # self.count_start_l =    ttk.Label()
-        # self.count_now_l =      ttk.Label()
+        # self.count_new_l =      ttk.Label()
         # self.count_uniq_l =     ttk.Label()
         # self.tt_mean_l =        ttk.Label()
         # self.tt_sd_l =          ttk.Label()
@@ -172,7 +167,7 @@ class CountGui:
         self.time_now_l = ttk.Label()
         self.count_lim_l = ttk.Label()
         self.count_next_l = ttk.Label()
-        self.count_remain_l = ttk.Label()
+        self.counts_remain_l = ttk.Label()
 
         # Settings variables with default parser args values.
         self.intvl_arg = tk.IntVar(value=60)
@@ -180,23 +175,24 @@ class CountGui:
         self.cycles_arg = tk.IntVar(value=1008)
 
         # Experimental
-        self.progress = ttk.Progressbar()
+        # self.progress = ttk.Progressbar()
 
         # stubdata are only for testing GUI layout.
         # self.set_stubdata()
 
-        # The data dictionary is from data_intervals(). set_startdata
-        # includes "config()"  # and calls show_startdata().  # Set starting
-        # data config are same style as config_intvldata.  #
-        self.set_startdata()
+        self.set_startdata()  # Accepts dict from CG(data) called in DI method.
         # self.mainwin.mainloop()
 
         # tkinter's infinite event loop. "Always call mainloop as the last
         # logical line of code in your program." per Bryan Oakly:
 # https://stackoverflow.com/questions/29158220/tkinter-understanding-mainloop
-        # self.mainwin.mainloop()
+#         self.mainwin.mainloop()
         # ^^^ may be in if __name__....  or
         # may be handled by self.mainwin.update_idletasks() in show methods.
+
+        # start_thread = Thread(target=DI().start_report)
+        # start_thread.start()
+        # start_thread.join()  # Where is best place for this join()?
 
     def mainwin_cfg(self) -> None:
         """
@@ -259,11 +255,12 @@ class CountGui:
                       'total':              8,
                       'Last count was:':    10,
                       '# counts to go:':    11,
-                      'Next count in:':     12}
+                      'Next count in:':     12
+                      }
         for header, rownum in row_header.items():
-            tk.Label(self.mainwin, text=f'{header}', bg=self.mainwin_bg,
-                     fg=self.row_fg).grid(row=rownum, column=0, padx=(5, 0),
-                                          sticky=tk.E)
+            tk.Label(self.mainwin, text=f'{header}',
+                     bg=self.mainwin_bg, fg=self.row_fg
+                     ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
 
     def mainwin_widgets(self) -> None:
         """
@@ -338,6 +335,9 @@ class CountGui:
         self.progress.grid(row=13, column=0, columnspan=3, padx=5, pady=5,
                            sticky=tk.EW)
 
+        # self.mainwin.mainloop()
+        # self.mainwin.update_idletasks()
+
     def set_stubdata(self) -> None:
         """
         Test data for GUI table layout.
@@ -360,10 +360,10 @@ class CountGui:
         self.tt_total = 'All data are stubs'
         self.time_now = '2020-Nov-17 11:14:25'
         self.count_next = '27m'
-        self.count_remain = '1000'
+        self.counts_remain = '1000'
 
         # Interval data report
-        self.count_now = '21'
+        self.count_new = '21'
         # self.tic_nnt = 0
 
         # Summary data report
@@ -376,58 +376,60 @@ class CountGui:
         Set data label text variables with starting data.
         """
 
-        startdata = {**DataIntervals().start_report()}
-        self.dataframe.after(100)
-        self.time_start = startdata['time_start']
-        self.intvl_str = startdata['intvl_str']
-        self.interval = startdata['intvl_int']
-        self.sumry_t = startdata['sumry_t']
-        self.count_start = startdata['count_start']
-        self.tt_mean = startdata['tt_mean']
-        self.tt_hi = startdata['tt_hi']
-        self.tt_lo = startdata['tt_lo']
-        self.tt_sd = startdata['tt_sd']
-        self.tt_total = startdata['tt_total']
-        self.count_lim = startdata['count_lim']
+        # startdata = {**DataIntervals().start_report()}
+        self.dataframe.after(200)
 
+        self.time_start =   self.data['time_start']
+        self.intvl_str =    self.data['intvl_str']
+        self.interval =     self.data['intvl_int']
+        self.sumry_t =      self.data['sumry_t']
+        self.count_start =  self.data['count_start']
+        self.tt_mean =      self.data['tt_mean']
+        self.tt_hi =        self.data['tt_hi']
+        self.tt_lo =        self.data['tt_lo']
+        self.tt_sd =        self.data['tt_sd']
+        self.tt_total =     self.data['tt_total']
+        self.count_lim =    self.data['count_lim']
+
+        self.mainwin.update_idletasks()
         self.show_startdata()
 
     def set_intvldata(self) -> None:
-        """
-        Set interval data from count-tasks data_intervals().
+        """Set interval data from DataIntervals.interval_reports().
 
         :return: Interval values for datatable labels.
         """
 
-        intvldata = {**DataIntervals().interval_reports()}
-        self.dataframe.after(100)
-        self.time_now = intvldata['time_now']
-        self.count_now = intvldata['count_now']
-        self.tt_mean = intvldata['tt_mean']
-        self.tt_lo = intvldata['tt_lo']
-        self.tt_hi = intvldata['tt_hi']
-        self.tt_sd = intvldata['tt_sd']
-        self.tt_total = intvldata['tt_total']
-        self.count_remain = intvldata['count_remain']
+        self.dataframe.after(200)
+        # self.dataframe.after(500)
+        self.time_now =     self.data['time_now']
+        self.count_new =    self.data['count_new']
+        self.tt_mean =      self.data['tt_mean']
+        self.tt_lo =        self.data['tt_lo']
+        self.tt_hi =        self.data['tt_hi']
+        self.tt_sd =        self.data['tt_sd']
+        self.tt_total =     self.data['tt_total']
+        self.counts_remain = self.data['counts_remain']
 
+        self.mainwin.update_idletasks()
         self.show_intvldata()
 
-    def set_sumrydata(self, datadict: dict) -> None:
-        """
-        Set summary data from count-tasks data_intervals().
+    def set_sumrydata(self,) -> None:
+        """ Set summary data from DataIntervals.summary_reports().
 
-        :param datadict: Dict of report data vars with matching keywords.
         :return: Summary values for datatable labels.
         """
+        self.dataframe.after(200)
 
-        self.time_now = datadict['time_now']
-        self.count_uniq = datadict['count_uniq']
-        self.tt_mean = datadict['tt_mean']
-        self.tt_hi = datadict['tt_hi']
-        self.tt_lo = datadict['tt_lo']
-        self.tt_sd = datadict['tt_sd']
-        self.tt_total = datadict['tt_total']
+        self.time_now =     self.data['time_now']
+        self.count_uniq =   self.data['count_uniq']
+        self.tt_mean =      self.data['tt_mean']
+        self.tt_hi =        self.data['tt_hi']
+        self.tt_lo =        self.data['tt_lo']
+        self.tt_sd =        self.data['tt_sd']
+        self.tt_total =     self.data['tt_total']
 
+        self.mainwin.update_idletasks()
         self.show_sumrydata()
 
     # Show methods: define and display labels for data.
@@ -474,12 +476,13 @@ class CountGui:
         self.count_next_l.grid( row=12, column=1, padx=3, sticky=tk.W)
 
         self.mainwin.update_idletasks()
-        # self.mainwin.update()
-        # Redirect back to data/timer method
-        # TODO: Return control back to mainwin GUI after interval timer starts;
-        #  GUI is not responsive when timer running, but will block timer
-        #  when GUI has focus.
-        DataIntervals().interval_reports()
+        # self.mainwin.mainloop()
+        # DataIntervals().interval_reports()
+        interval_thread = Thread(target=DI().interval_reports)
+        interval_thread.start()
+        self.mainwin.mainloop()  # Not sure where to best place this.
+        # .mainloop() is required to main mainwin interactive once DI is
+        # running.
 
     def show_intvldata(self) -> None:
         """
@@ -499,30 +502,30 @@ class CountGui:
         self.sumry_t_l.config(fg=self.deemphasize)
 
         # Interval data, column1
-        self.count_now_l.config(text=self.count_now, fg=self.highlight)
-        self.tt_mean_l.config(text=self.tt_mean, fg=self.highlight)
-        self.tt_sd_l.config(text=self.tt_sd, fg=self.emphasize)
-        self.time_range_l.config(text=time_range, fg=self.emphasize)
-        self.tt_total_l.config(text=self.tt_total, fg=self.emphasize)
+        self.count_new_l.config(    text=self.count_new, fg=self.highlight)
+        self.tt_mean_l.config(      text=self.tt_mean,  fg=self.highlight)
+        self.tt_sd_l.config(        text=self.tt_sd,    fg=self.emphasize)
+        self.time_range_l.config(   text=time_range,    fg=self.emphasize)
+        self.tt_total_l.config(     text=self.tt_total, fg=self.emphasize)
 
         # Summary data, column2, deemphasize font color
-        self.count_uniq_l.config(fg=self.deemphasize)
-        self.ttmean_sumry_l.config(fg=self.deemphasize)
-        self.ttsd_sumry_l.config(fg=self.deemphasize)
+        self.count_uniq_l.config(   fg=self.deemphasize)
+        self.ttmean_sumry_l.config( fg=self.deemphasize)
+        self.ttsd_sumry_l.config(   fg=self.deemphasize)
         self.timerange_sumry_l.config(fg=self.deemphasize)
-        self.ttsum_sumry_l.config(fg=self.deemphasize)
+        self.ttsum_sumry_l.config(  fg=self.deemphasize)
 
         # Previous and until task count times.
-        self.count_now_l.config(text=self.count_now)
-        self.time_now_l.config(text=self.time_now)
-        self.count_next_l.config(text=self.count_next)
+        self.count_new_l.config(    text=self.count_new)
+        self.time_now_l.config(     text=self.time_now)
+        self.count_next_l.config(   text=self.count_next)
 
         # Place new labels (not in show_startdata) in row,column positions.
         # Also place labels whose font emphasis needs to change. ???
-        self.count_now_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.count_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                             columnspan=2)
+        self.count_new_l.grid(      row=4, column=1, padx=10, sticky=tk.EW)
+        self.counts_remain_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
+        self.time_now_l.grid(       row=10, column=1, padx=3, sticky=tk.W,
+                                    columnspan=2)
 
         self.mainwin.update_idletasks()
 
@@ -541,39 +544,39 @@ class CountGui:
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.intvl_str_l.config(fg=self.deemphasize)
-        self.sumry_t_l.config(fg=self.emphasize)
+        self.sumry_t_l.config(  fg=self.emphasize)
 
         # Summary data, column2, emphasize font color
-        self.count_uniq_l.config(text=self.count_uniq, fg=self.highlight)
-        self.ttmean_sumry_l.config(text=self.tt_mean, fg=self.highlight)
-        self.ttsd_sumry_l.config(text=self.tt_sd, fg=self.emphasize)
-        self.timerange_sumry_l.config(text=time_range, fg=self.emphasize)
-        self.ttsum_sumry_l.config(text=self.tt_total, fg=self.emphasize)
+        self.count_uniq_l.config(       text=self.count_uniq, fg=self.highlight)
+        self.ttmean_sumry_l.config(     text=self.tt_mean,  fg=self.highlight)
+        self.ttsd_sumry_l.config(       text=self.tt_sd,    fg=self.emphasize)
+        self.timerange_sumry_l.config(  text=time_range,    fg=self.emphasize)
+        self.ttsum_sumry_l.config(      text=self.tt_total, fg=self.emphasize)
 
         # Interval data, column1, deemphasize font color
-        self.count_start_l.config(text="")
-        self.count_now_l.config(fg=self.deemphasize)
-        self.tt_mean_l.config(fg=self.deemphasize)
-        self.tt_sd_l.config(fg=self.deemphasize)
-        self.time_range_l.config(fg=self.deemphasize)
-        self.tt_total_l.config(fg=self.deemphasize)
+        self.count_start_l.config(  text="")
+        self.count_new_l.config(    fg=self.deemphasize)
+        self.tt_mean_l.config(      fg=self.deemphasize)
+        self.tt_sd_l.config(        fg=self.deemphasize)
+        self.time_range_l.config(   fg=self.deemphasize)
+        self.tt_total_l.config(     fg=self.deemphasize)
 
         # Previous and until task count times.  NECESSARY? b/c dupl of intvl?
-        self.count_now_l.config(text=self.count_now)
-        self.time_now_l.config(text=self.time_now)
-        self.count_next_l.config(text=self.count_next)
+        self.count_new_l.config(    text=self.count_new)
+        self.time_now_l.config(     text=self.time_now)
+        self.count_next_l.config(   text=self.count_next)
 
         # Place labels in row,column positions.
-        self.count_uniq_l.grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
-        self.ttmean_sumry_l.grid(row=5, column=2, padx=10, sticky=tk.EW)
-        self.ttsd_sumry_l.grid(row=6, column=2, padx=10, sticky=tk.EW)
+        self.count_uniq_l.grid(     row=4, column=2, padx=(0,10), sticky=tk.EW)
+        self.ttmean_sumry_l.grid(   row=5, column=2, padx=10, sticky=tk.EW)
+        self.ttsd_sumry_l.grid(     row=6, column=2, padx=10, sticky=tk.EW)
         self.timerange_sumry_l.grid(row=7, column=2, padx=10, sticky=tk.EW)
-        self.ttsum_sumry_l.grid(row=8, column=2, padx=10, sticky=tk.EW)
+        self.ttsum_sumry_l.grid(    row=8, column=2, padx=10, sticky=tk.EW)
 
-        self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                             columnspan=2)
-        self.count_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+        self.time_now_l.grid(       row=10, column=1, padx=3, sticky=tk.W,
+                                    columnspan=2)
+        self.counts_remain_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
+        self.count_next_l.grid(     row=12, column=1, padx=3, sticky=tk.W)
 
         self.mainwin.update_idletasks()
 
@@ -841,7 +844,6 @@ class DataIntervals:
     """
 
     def __init__(self):
-
         self.time_fmt = '%Y-%b-%d %H:%M:%S'
         self.time_start = datetime.now().strftime(self.time_fmt)
         self.time_now = None
@@ -873,15 +875,13 @@ class DataIntervals:
             subprocess.call('', shell=True)
 
         # self.start_report()
-        # self.interval_reports()
 
-    def start_report(self) -> dict:
+    def start_report(self):
         """Report initial task counts and time stats.
 
         :return: Report printed to Terminal and/or log file; data dict
         to CountGui.set_startdata().
         """
-
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
         #     task_names = BC.get_reported('tasks').
@@ -930,8 +930,8 @@ class DataIntervals:
                      'tt_sd':        tt_sd,
                      'tt_total':     tt_total,
                      'count_lim':    COUNT_LIM}
-        # Data returned to CountGui().set_startdata()
-        return startdata
+        # CG(startdata).set_startdata()
+        CG(startdata)
 
     def interval_reports(self):
         """
@@ -1005,7 +1005,7 @@ class DataIntervals:
             elif self.count_new > 0 and self.notrunning is False:
                 self.tic_nnt -= self.tic_nnt
                 # Not the most robust way to get dict values, but it's concise.
-                tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+                tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
                     self.get_timestats(self.count_new, self.ttimes_new).values()
                 report = (
                     f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
@@ -1013,7 +1013,7 @@ class DataIntervals:
                     f'{self.indent}Counts remaining until exit: {self.counts_remain}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
+                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
                 )
                 print(f'\r{self.del_line}{report}')
                 if args.log is True:
@@ -1022,15 +1022,21 @@ class DataIntervals:
 
                 # if args.gui is True:
                 intvldata = {
-                    'time_now':  self.time_now,
-                    'count_now': self.count_new,
+                    # 'time_now':  self.time_now,
+                    # 'count_new': self.count_new,
+                    'time_start': self.time_now,
+                    'count_start': self.count_new,
                     'tt_mean':  tt_mean,
                     'tt_lo':    tt_lo,
                     'tt_hi':    tt_hi,
                     'tt_sd':    tt_sd,
-                    'tt_sum':   tt_sum,
+                    'tt_total': tt_total,
                     'counts_remain': self.counts_remain}
-                # return intvldata
+                CountGui(intvldata).set_intvldata()
+                # TODO: Try using set_startdata as a general template for
+                #  data display. That way can just call CountGui(data) every
+                #  time a data update is needed.
+                # CG(intvldata)
 
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{self.time_now};'
@@ -1039,6 +1045,7 @@ class DataIntervals:
                 if args.log is True:
                     logging.info(report)
 
+            # Need to send data from interval loops to summary method.
             self.summary_reports(loop_num, self.ttimes_smry)
 
     def summary_reports(self, loop_num, ttimes_smry):
@@ -1056,7 +1063,7 @@ class DataIntervals:
             self.ttimes_uniq = set(ttimes_smry)
             count_sumry = len(self.ttimes_uniq)
 
-            tt_sum, tt_mean, tt_sd, tt_lo, tt_hi = \
+            tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
                 self.get_timestats(count_sumry, self.ttimes_uniq).values()
             report = (
                 f'\n{self.time_now}; '
@@ -1064,7 +1071,7 @@ class DataIntervals:
                 f' {SUMMARY_T}: {self.blue}{count_sumry}{self.undo_color}\n'
                 f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
-                f'{self.bigindent}stdev {tt_sd}, total {tt_sum}'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
             )
             print(f'\r{self.del_line}{report}')
             if args.log is True:
@@ -1083,7 +1090,8 @@ class DataIntervals:
                          'tt_lo':       tt_lo,
                          'tt_hi':       tt_hi,
                          'tt_sd':       tt_sd,
-                         'tt_sum':      tt_sum}
+                         'tt_total':    tt_total}
+            CountGui(sumrydata).set_intvldata()
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -1190,7 +1198,7 @@ class DataIntervals:
 
         :param numtasks: The number of elements in tasktimes.
         :param tasktimes: A list, tuple, or set of times, in seconds.
-        :return: Dict keys: tt_sum, tt_mean, tt_sd, tt_min, tt_max; Dict
+        :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max; Dict
         values as: 00:00:00.
         """
         total = self.fmt_sec(int(sum(set(tasktimes))), 'std')
@@ -1200,25 +1208,25 @@ class DataIntervals:
             low = self.fmt_sec(int(min(tasktimes)), 'std')
             high = self.fmt_sec(int(max(tasktimes)), 'std')
             return {
-                'tt_sum': total,
-                'tt_mean': mean,
-                'tt_sd': stdev,
-                'tt_min': low,
-                'tt_max': high}
+                'tt_total': total,
+                'tt_mean':  mean,
+                'tt_sd':    stdev,
+                'tt_min':   low,
+                'tt_max':   high}
         if numtasks == 1:
             return {
-                'tt_sum': total,
-                'tt_mean': total,
-                'tt_sd': 'na',
-                'tt_min': 'na',
-                'tt_max': 'na'}
+                'tt_total': total,
+                'tt_mean':  total,
+                'tt_sd':    'na',
+                'tt_min':   'na',
+                'tt_max':   'na'}
 
         return {
-            'tt_sum': '00:00:00',
-            'tt_mean': '00:00:00',
-            'tt_sd': 'na',
-            'tt_min': 'na',
-            'tt_max': 'na'}
+            'tt_total':     '00:00:00',
+            'tt_mean':      '00:00:00',
+            'tt_sd':        'na',
+            'tt_min':       'na',
+            'tt_max':       'na'}
 
 
 def check_args(parameter) -> None:
@@ -1308,42 +1316,15 @@ if __name__ == '__main__':
         print('Status: ', __status__)
         sys.exit(0)
 
-    # root = tk.Tk()
-    # CG = CountGui(root)
-    # root.mainloop()
-    # ^^^ move tk.Tk to CG __init__. Not necessary to call mainloop() here.
-    # CG = CountGui()
-    # DI = DataIntervals()
-
     # Put tkinter into a thread? Needed for Queueing?
-    # TODO: Code it so that closing Tk mainwin shuts down all threads.
-    queue = Queue()
-    # CG_thread = threading.Thread(target=CountGui, args=(queue,))
-    # DI_thread = threading.Thread(target=DataIntervals, args=(queue,))
-    CG_thread = threading.Thread(target=CountGui)
-    DI_thread = threading.Thread(target=DataIntervals)
-    # CG_thread = threading.Thread(target=CountGui, daemon=True)
-    CG_thread.start()
-    DI_thread.start()
-    # ^^ Having both classes threaded, without calling CG = CountGui(),
-    # allows KeyboardInterrupt exception. Omitting CG_thread does not allow.
-
-    # DI_SEM = threading.Semaphore(10)
-    # start_thread = threading.Thread(target=DataIntervals.start_report)
-    # start_thread.start()
-    # intvl_thread = threading.Thread(target=DataIntervals.interval_reports)
-    # intvl_thread.start()
-    # timer_thread = threading.Thread(target=DataIntervals.intvl_timer)
-    # timer_thread.start()
-
+    # TODO: Code it so that closing Tk mainwin shuts down all threads; use
+    #  daemons and start all? DI method threads from within CountGui.
+    DI = DataIntervals
+    CG = CountGui
     try:
-        CG_thread.join()
-        DI_thread.join()
-        queue.join()
-        # DI_SEM.release()
-        # start_thread.join()
-        # intvl_thread.join()
-        # timer_thread.join()
+        start_thread = Thread(target=DI().start_report)
+        start_thread.start()
+        start_thread.join()  # Where is best place for this join()?
     except KeyboardInterrupt:
         exit_msg = '\n\n  *** Interrupted by user. ***\n  Quitting now... \n\n'
         sys.stdout.write(exit_msg)
