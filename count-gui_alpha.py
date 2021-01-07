@@ -77,11 +77,14 @@ class CountGui:
     """
     GUI displays only start data. Interval data not live.
     """
-
-    def __init__(self, data=None):
+    # TODO: Only set_data() uses these arguments, so move data method out
+    #  to give greater flexibility to GUI and data calls.
+    def __init__(self, data=None, report_kind=None):
 
         self.mainwin = tk.Tk()
-        # self.data = data
+
+        self.report_kind = report_kind
+
         if data is None:
             data = {}
         else:
@@ -94,6 +97,7 @@ class CountGui:
 
         self.mainwin_cfg()
         self.mainwin_widgets()
+        # self.mainwin.update()
 
         # Label fg configuration variables
         self.emphasize = 'grey90'
@@ -115,7 +119,7 @@ class CountGui:
         self.tt_hi = 'None'
         self.tt_total = None
         self.time_now = None
-        self.count_next = "timer not working"
+        self.count_next = "timer is disabled"
         self.counts_remain = None
 
         # Unique to interval data report var
@@ -125,49 +129,33 @@ class CountGui:
         # Unique to summary data report var
         self.count_uniq = None
 
-        # Label names used to show data.
-        self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
-                                     fg='grey90')
-        self.intvl_str_l = tk.Label(self.dataframe, width=20, relief='groove',
-                                    borderwidth=2, bg=self.data_bg)
-        self.sumry_t_l = tk.Label(self.dataframe, width=20,
-                                  relief='groove', borderwidth=2,
-                                  bg=self.data_bg)
-        self.count_start_l =    tk.Label(self.dataframe, bg=self.data_bg)
-        self.count_new_l =      tk.Label(self.dataframe, bg=self.data_bg)
-        self.count_uniq_l =     tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_mean_l =        tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_sd_l =          tk.Label(self.dataframe, bg=self.data_bg)
-        self.time_range_l =     tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_total_l =       tk.Label(self.dataframe, bg=self.data_bg)
-        self.ttmean_sumry_l =   tk.Label(self.dataframe, bg=self.data_bg)
-        self.ttsd_sumry_l =     tk.Label(self.dataframe, bg=self.data_bg)
-        self.timerange_sumry_l = tk.Label(self.dataframe, bg=self.data_bg)
-        self.ttsum_sumry_l =    tk.Label(self.dataframe, bg=self.data_bg)
+        style_data1 = ttk.Style(self.dataframe)
+        style_data1.configure('TLabel', background=self.data_bg,
+                              anchor='center')
+        self.time_start_l = ttk.Label(foreground='grey90')
+        self.intvl_str_l = ttk.Label(width=20, relief='groove', borderwidth=1)
+        self.sumry_t_l =   ttk.Label(width=20, relief='groove', borderwidth=1)
 
-        # Could use style with ttk.Label to remove redundancies, but,
-        # that requires changing "fg" to "foreground" in all show_() methods.
-        # style_data = ttk.Style(self.dataframe)
-        # style_data.configure('TLabel', background=self.data_bg)
-        # self.count_start_l =    ttk.Label()
-        # self.count_new_l =      ttk.Label()
-        # self.count_uniq_l =     ttk.Label()
-        # self.tt_mean_l =        ttk.Label()
-        # self.tt_sd_l =          ttk.Label()
-        # self.time_range_l =     ttk.Label()
-        # self.tt_total_l =       ttk.Label()
-        # self.ttmean_sumry_l =   ttk.Label()
-        # self.ttsd_sumry_l =     ttk.Label()
-        # self.timerange_sumry_l = ttk.Label()
-        # self.ttsum_sumry_l =    ttk.Label()
+        self.count_start_l =    ttk.Label()
+        self.count_new_l =      ttk.Label()
+        self.count_uniq_l =     ttk.Label()
+        self.tt_mean_l =        ttk.Label()
+        self.tt_sd_l =          ttk.Label()
+        self.time_range_l =     ttk.Label()
+        self.tt_total_l =       ttk.Label()
+        self.ttmean_sumry_l =   ttk.Label()
+        self.ttsd_sumry_l =     ttk.Label()
+        self.timerange_sumry_l = ttk.Label()
+        self.ttsum_sumry_l =    ttk.Label()
 
-        style_main = ttk.Style(self.mainwin)
-        style_main.configure('TLabel', background=self.mainwin_bg,
-                             foreground=self.row_fg)
-        self.time_now_l = ttk.Label()
-        self.count_lim_l = ttk.Label()
-        self.count_next_l = ttk.Label()
-        self.counts_remain_l = ttk.Label()
+        self.time_now_l = ttk.Label(self.mainwin, background=self.mainwin_bg,
+                                    foreground=self.row_fg)
+        self.count_lim_l = ttk.Label(self.mainwin,background=self.mainwin_bg,
+                                     foreground=self.row_fg)
+        self.count_next_l = ttk.Label(self.mainwin,background=self.mainwin_bg,
+                                      foreground=self.row_fg)
+        self.counts_remain_l = ttk.Label(self.mainwin,background=self.mainwin_bg,
+                                         foreground=self.row_fg)
 
         # Settings variables with default parser args values.
         self.intvl_arg = tk.IntVar(value=60)
@@ -180,7 +168,8 @@ class CountGui:
         # stubdata are only for testing GUI layout.
         # self.set_stubdata()
 
-        self.set_startdata()  # Accepts dict from CG(data) called in DI method.
+        self.set_data()
+
         # self.mainwin.mainloop()
 
         # tkinter's infinite event loop. "Always call mainloop as the last
@@ -190,9 +179,6 @@ class CountGui:
         # ^^^ may be in if __name__....  or
         # may be handled by self.mainwin.update_idletasks() in show methods.
 
-        # start_thread = Thread(target=DI().start_report)
-        # start_thread.start()
-        # start_thread.join()  # Where is best place for this join()?
 
     def mainwin_cfg(self) -> None:
         """
@@ -338,99 +324,142 @@ class CountGui:
         # self.mainwin.mainloop()
         # self.mainwin.update_idletasks()
 
-    def set_stubdata(self) -> None:
+    # def set_stubdata(self) -> None:
+    #     """
+    #     Test data for GUI table layout.
+    #
+    #     :return: Data for assigning and updating dataframe labels.
+    #     """
+    #
+    #     # Starting report
+    #     self.count_lim = '1008'
+    #     self.time_start = '2020-Nov-10 10:00:10'
+    #     self.intvl_str = '60m'
+    #     self.sumry_t = '1d'
+    #     self.count_start = '24'
+    #
+    #     # Common data reports
+    #     self.tt_mean = '00:25:47'
+    #     self.tt_sd = '00:00:26'
+    #     self.tt_lo = '00:17:26'
+    #     self.tt_hi = '00:25:47'
+    #     self.tt_total = 'All data are stubs'
+    #     self.time_now = '2020-Nov-17 11:14:25'
+    #     self.count_next = '27m'
+    #     self.counts_remain = '1000'
+    #
+    #     # Interval data report
+    #     self.count_new = '21'
+    #     # self.tic_nnt = 0
+    #
+    #     # Summary data report
+    #     self.count_uniq = '123'
+    #
+    #     self.show_startdata()
+
+    def set_data(self) -> None:
+        """Set starting and interval data for data label variables.
         """
-        Test data for GUI table layout.
-
-        :return: Data for assigning and updating dataframe labels.
-        """
-
-        # Starting report
-        self.count_lim = '1008'
-        self.time_start = '2020-Nov-10 10:00:10'
-        self.intvl_str = '60m'
-        self.sumry_t = '1d'
-        self.count_start = '24'
-
-        # Common data reports
-        self.tt_mean = '00:25:47'
-        self.tt_sd = '00:00:26'
-        self.tt_lo = '00:17:26'
-        self.tt_hi = '00:25:47'
-        self.tt_total = 'All data are stubs'
-        self.time_now = '2020-Nov-17 11:14:25'
-        self.count_next = '27m'
-        self.counts_remain = '1000'
-
-        # Interval data report
-        self.count_new = '21'
-        # self.tic_nnt = 0
-
-        # Summary data report
-        self.count_uniq = '123'
-
-        self.show_startdata()
-
-    def set_startdata(self) -> None:
-        """
-        Set data label text variables with starting data.
-        """
-
-        # startdata = {**DataIntervals().start_report()}
+        # print('\nCurrent set_data() thread: ', threading.current_thread())
         self.dataframe.after(200)
 
-        self.time_start =   self.data['time_start']
+        self.time_start =   self.data['time']
+        self.time_now =     self.data['time']
         self.intvl_str =    self.data['intvl_str']
         self.interval =     self.data['intvl_int']
         self.sumry_t =      self.data['sumry_t']
-        self.count_start =  self.data['count_start']
+        self.count_start =  self.data['count']
+        self.count_new =    self.data['count']
+        self.count_uniq =   self.data['count']
         self.tt_mean =      self.data['tt_mean']
         self.tt_hi =        self.data['tt_hi']
         self.tt_lo =        self.data['tt_lo']
         self.tt_sd =        self.data['tt_sd']
         self.tt_total =     self.data['tt_total']
         self.count_lim =    self.data['count_lim']
-
-        self.mainwin.update_idletasks()
-        self.show_startdata()
-
-    def set_intvldata(self) -> None:
-        """Set interval data from DataIntervals.interval_reports().
-
-        :return: Interval values for datatable labels.
-        """
-
-        self.dataframe.after(200)
-        # self.dataframe.after(500)
-        self.time_now =     self.data['time_now']
-        self.count_new =    self.data['count_new']
-        self.tt_mean =      self.data['tt_mean']
-        self.tt_lo =        self.data['tt_lo']
-        self.tt_hi =        self.data['tt_hi']
-        self.tt_sd =        self.data['tt_sd']
-        self.tt_total =     self.data['tt_total']
         self.counts_remain = self.data['counts_remain']
 
-        self.mainwin.update_idletasks()
-        self.show_intvldata()
+        self.mainwin.after(100)
+        # Need to control how data dictionaries from DataInterval methods are
+        # reported in GUI data labels.
+        if self.report_kind == 'start':
+            self.show_startdata()
+        elif self.report_kind == 'interval':
+            self.show_intvldata()
+        elif self.report_kind == 'summary':
+            self.show_sumrydata()
+        else:
+            report_id = self.report_kind
+            print(f'\nNo method called for the flag: {report_id}'
+                  'Exiting...\n')
+            sys.exit(1)
 
-    def set_sumrydata(self,) -> None:
-        """ Set summary data from DataIntervals.summary_reports().
-
-        :return: Summary values for datatable labels.
-        """
-        self.dataframe.after(200)
-
-        self.time_now =     self.data['time_now']
-        self.count_uniq =   self.data['count_uniq']
-        self.tt_mean =      self.data['tt_mean']
-        self.tt_hi =        self.data['tt_hi']
-        self.tt_lo =        self.data['tt_lo']
-        self.tt_sd =        self.data['tt_sd']
-        self.tt_total =     self.data['tt_total']
-
-        self.mainwin.update_idletasks()
-        self.show_sumrydata()
+    # Methods replaced by set_startdata()
+    # def set_startdata(self) -> None:
+    #     """Set data label text variables with starting data.
+    #     """
+    #
+    #     print('\nCurrent set_startdata() thread: ',
+    #           threading.current_thread())
+    #     self.dataframe.after(200)
+    #
+    #     self.time_start =   self.data['time']
+    #     self.intvl_str =    self.data['intvl_str']
+    #     self.interval =     self.data['intvl_int']
+    #     self.sumry_t =      self.data['sumry_t']
+    #     self.count_start =  self.data['count']
+    #     self.tt_mean =      self.data['tt_mean']
+    #     self.tt_hi =        self.data['tt_hi']
+    #     self.tt_lo =        self.data['tt_lo']
+    #     self.tt_sd =        self.data['tt_sd']
+    #     self.tt_total =     self.data['tt_total']
+    #     self.count_lim =    self.data['count_lim']
+    #
+    #     # self.mainwin.update_idletasks()
+    #     self.mainwin.after(100)
+    #     self.show_startdata()
+    #
+    # def set_intvldata(self) -> None:
+    #     """Set interval data from DataIntervals.interval_reports().
+    #
+    #     :return: Interval values for datatable labels.
+    #     """
+    #     print('\nCurrent set_intervaldata() thread: ',
+    #           threading.current_thread())
+    #
+    #     self.dataframe.after(200)
+    #     # self.dataframe.after(500)
+    #     self.time_now =     self.data['time']
+    #     self.count_new =    self.data['count']
+    #     self.tt_mean =      self.data['tt_mean']
+    #     self.tt_lo =        self.data['tt_lo']
+    #     self.tt_hi =        self.data['tt_hi']
+    #     self.tt_sd =        self.data['tt_sd']
+    #     self.tt_total =     self.data['tt_total']
+    #     self.counts_remain = self.data['counts_remain']
+    #
+    #     # self.mainwin.update_idletasks()
+    #     self.mainwin.after(100)
+    #     self.show_intvldata()
+    #
+    # def set_sumrydata(self,) -> None:
+    #     """ Set summary data from DataIntervals.summary_reports().
+    #
+    #     :return: Summary values for datatable labels.
+    #     """
+    #     self.dataframe.after(200)
+    #
+    #     self.time_now =     self.data['time']
+    #     self.count_uniq =   self.data['count']
+    #     self.tt_mean =      self.data['tt_mean']
+    #     self.tt_hi =        self.data['tt_hi']
+    #     self.tt_lo =        self.data['tt_lo']
+    #     self.tt_sd =        self.data['tt_sd']
+    #     self.tt_total =     self.data['tt_total']
+    #
+    #     # self.mainwin.update_idletasks()
+    #     self.mainwin.after(100)
+    #     self.show_sumrydata()
 
     # Show methods: define and display labels for data.
     def show_startdata(self) -> None:
@@ -442,28 +471,35 @@ class CountGui:
 
         # Starting datetime and report times; invariant throughout counts.
         self.time_start_l.config(   text=self.time_start)
-        self.intvl_str_l.config(    text=self.intvl_str, fg=self.emphasize)
-        self.sumry_t_l.config(      text=self.sumry_t, fg=self.deemphasize)
+        self.intvl_str_l.config(    text=self.intvl_str,
+                                    foreground=self.emphasize)
+        self.sumry_t_l.config(      text=self.sumry_t,
+                                    foreground=self.deemphasize)
 
         # Starting count data and times (from past boinc-client hour).
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        self.count_start_l.config(  text=self.count_start, fg=self.highlight)
-        self.tt_mean_l.config(      text=self.tt_mean, fg=self.highlight)
-        self.tt_sd_l.config(        text=self.tt_sd, fg=self.emphasize)
-        self.time_range_l.config(   text=time_range, fg=self.emphasize)
-        self.tt_total_l.config(     text=self.tt_total, fg=self.emphasize)
+        self.count_start_l.configure(text=self.count_start,
+                                     foreground=self.highlight)
+        self.tt_mean_l.configure(    text=self.tt_mean,
+                                     foreground=self.highlight)
+        self.tt_sd_l.configure(      text=self.tt_sd,
+                                     foreground=self.emphasize)
+        self.time_range_l.configure( text=time_range,
+                                     foreground=self.emphasize)
+        self.tt_total_l.configure(   text=self.tt_total,
+                                     foreground=self.emphasize)
 
         # Previous and until task count times.
-        self.time_now_l.config( text='The most recent 1 hr BOINC report')
-        self.count_lim_l.config(text=self.count_lim)
-        self.count_next_l.config(text=self.count_next)
+        self.time_now_l.configure(  text='The most recent 1 hr BOINC report')
+        self.count_lim_l.configure( text=self.count_lim)
+        self.count_next_l.configure(text=self.count_next)
 
         # Place labels in row,column positions.
-        self.time_start_l.grid( row=2, column=1, padx=10, sticky=tk.EW,
+        self.time_start_l.grid( row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                 columnspan=2)
-        self.intvl_str_l.grid(  row=3, column=1, padx=10, sticky=tk.EW)
-        self.sumry_t_l.grid(    row=3, column=2, padx=(0, 10), sticky=tk.EW)
+        self.intvl_str_l.grid(  row=3, column=1, padx=(10, 6), sticky=tk.EW)
+        self.sumry_t_l.grid(    row=3, column=2, padx=(0, 16), sticky=tk.EW)
         self.count_start_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
         self.tt_mean_l.grid(    row=5, column=1, padx=10, sticky=tk.EW)
         self.tt_sd_l.grid(      row=6, column=1, padx=10, sticky=tk.EW)
@@ -475,14 +511,10 @@ class CountGui:
         self.count_lim_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid( row=12, column=1, padx=3, sticky=tk.W)
 
-        self.mainwin.update_idletasks()
-        # self.mainwin.mainloop()
-        # DataIntervals().interval_reports()
         interval_thread = Thread(target=DI().interval_reports)
         interval_thread.start()
-        self.mainwin.mainloop()  # Not sure where to best place this.
-        # .mainloop() is required to main mainwin interactive once DI is
-        # running.
+        # interval_thread.join()
+        self.mainwin.mainloop()  # mainloop required to make window interactive
 
     def show_intvldata(self) -> None:
         """
@@ -490,35 +522,36 @@ class CountGui:
 
         :return: The most recent BOINC and count-tasks data.
         """
-        # show_updatedata includes the interval and summary data columns.
-        # Make a separate show_sumrydata() method?
-        # Both reports are triggered by a common count-tasks interval event.
-        #
 
         # Count and summary interval times
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        self.intvl_str_l.config(fg=self.emphasize)
-        self.sumry_t_l.config(fg=self.deemphasize)
+        self.intvl_str_l.config(foreground=self.emphasize)
+        self.sumry_t_l.config(foreground=self.deemphasize)
 
         # Interval data, column1
-        self.count_new_l.config(    text=self.count_new, fg=self.highlight)
-        self.tt_mean_l.config(      text=self.tt_mean,  fg=self.highlight)
-        self.tt_sd_l.config(        text=self.tt_sd,    fg=self.emphasize)
-        self.time_range_l.config(   text=time_range,    fg=self.emphasize)
-        self.tt_total_l.config(     text=self.tt_total, fg=self.emphasize)
+        self.count_new_l.configure( text=self.count_new,
+                                    foreground=self.highlight)
+        self.tt_mean_l.configure(   text=self.tt_mean,
+                                    foreground=self.highlight)
+        self.tt_sd_l.configure(     text=self.tt_sd,
+                                    foreground=self.emphasize)
+        self.time_range_l.configure(text=time_range,
+                                    foreground=self.emphasize)
+        self.tt_total_l.configure(  text=self.tt_total,
+                                    foreground=self.emphasize)
 
         # Summary data, column2, deemphasize font color
-        self.count_uniq_l.config(   fg=self.deemphasize)
-        self.ttmean_sumry_l.config( fg=self.deemphasize)
-        self.ttsd_sumry_l.config(   fg=self.deemphasize)
-        self.timerange_sumry_l.config(fg=self.deemphasize)
-        self.ttsum_sumry_l.config(  fg=self.deemphasize)
+        self.count_uniq_l.configure(   foreground=self.deemphasize)
+        self.ttmean_sumry_l.configure( foreground=self.deemphasize)
+        self.ttsd_sumry_l.configure(   foreground=self.deemphasize)
+        self.timerange_sumry_l.configure(foreground=self.deemphasize)
+        self.ttsum_sumry_l.configure(  foreground=self.deemphasize)
 
         # Previous and until task count times.
-        self.count_new_l.config(    text=self.count_new)
-        self.time_now_l.config(     text=self.time_now)
-        self.count_next_l.config(   text=self.count_next)
+        self.count_new_l.configure(    text=self.count_new)
+        self.time_now_l.configure(     text=self.time_now)
+        self.count_next_l.configure(   text=self.count_next)
 
         # Place new labels (not in show_startdata) in row,column positions.
         # Also place labels whose font emphasis needs to change. ???
@@ -526,8 +559,9 @@ class CountGui:
         self.counts_remain_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
         self.time_now_l.grid(       row=10, column=1, padx=3, sticky=tk.W,
                                     columnspan=2)
+        print('\nNow in show_intvldata()\n')
 
-        self.mainwin.update_idletasks()
+        self.mainwin.mainloop()
 
     def show_sumrydata(self) -> None:
         """
@@ -535,50 +569,53 @@ class CountGui:
 
         :return: The most recent BOINC and count-tasks data.
         """
-        # show_updatedata includes the interval and summary data columns.
-        # Make a separate show_sumrydata() method?
-        # Both reports are triggered by a common count-tasks interval event.
-        #
 
         # Count and summary interval times
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
-        self.intvl_str_l.config(fg=self.deemphasize)
-        self.sumry_t_l.config(  fg=self.emphasize)
+        self.intvl_str_l.config(foreground=self.deemphasize)
+        self.sumry_t_l.config(  foreground=self.emphasize)
 
         # Summary data, column2, emphasize font color
-        self.count_uniq_l.config(       text=self.count_uniq, fg=self.highlight)
-        self.ttmean_sumry_l.config(     text=self.tt_mean,  fg=self.highlight)
-        self.ttsd_sumry_l.config(       text=self.tt_sd,    fg=self.emphasize)
-        self.timerange_sumry_l.config(  text=time_range,    fg=self.emphasize)
-        self.ttsum_sumry_l.config(      text=self.tt_total, fg=self.emphasize)
+        self.count_uniq_l.configure(    text=self.count_uniq,
+                                        foreground=self.highlight)
+        self.ttmean_sumry_l.configure(  text=self.tt_mean,
+                                        foreground=self.highlight)
+        self.ttsd_sumry_l.configure(    text=self.tt_sd,
+                                        foreground=self.emphasize)
+        self.timerange_sumry_l.configure(text=time_range,
+                                         foreground=self.emphasize)
+        self.ttsum_sumry_l.configure(   text=self.tt_total,
+                                        foreground=self.emphasize)
 
         # Interval data, column1, deemphasize font color
-        self.count_start_l.config(  text="")
-        self.count_new_l.config(    fg=self.deemphasize)
-        self.tt_mean_l.config(      fg=self.deemphasize)
-        self.tt_sd_l.config(        fg=self.deemphasize)
-        self.time_range_l.config(   fg=self.deemphasize)
-        self.tt_total_l.config(     fg=self.deemphasize)
+        self.count_start_l.configure(  text="")
+        self.count_new_l.configure(    foreground=self.deemphasize)
+        self.tt_mean_l.configure(      foreground=self.deemphasize)
+        self.tt_sd_l.configure(        foreground=self.deemphasize)
+        self.time_range_l.configure(   foreground=self.deemphasize)
+        self.tt_total_l.configure(     foreground=self.deemphasize)
 
         # Previous and until task count times.  NECESSARY? b/c dupl of intvl?
-        self.count_new_l.config(    text=self.count_new)
-        self.time_now_l.config(     text=self.time_now)
-        self.count_next_l.config(   text=self.count_next)
+        self.count_new_l.configure(    text=self.count_new)
+        self.time_now_l.configure(     text=self.time_now)
+        self.count_next_l.configure(   text=self.count_next)
 
         # Place labels in row,column positions.
-        self.count_uniq_l.grid(     row=4, column=2, padx=(0,10), sticky=tk.EW)
-        self.ttmean_sumry_l.grid(   row=5, column=2, padx=10, sticky=tk.EW)
-        self.ttsd_sumry_l.grid(     row=6, column=2, padx=10, sticky=tk.EW)
-        self.timerange_sumry_l.grid(row=7, column=2, padx=10, sticky=tk.EW)
-        self.ttsum_sumry_l.grid(    row=8, column=2, padx=10, sticky=tk.EW)
+        # Need to match padx spacing among all column 2 labels elsewhere.
+        self.count_uniq_l.grid(    row=4, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttmean_sumry_l.grid(  row=5, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttsd_sumry_l.grid(    row=6, column=2, padx=(0, 16), sticky=tk.EW)
+        self.timerange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttsum_sumry_l.grid(   row=8, column=2, padx=(0, 16), sticky=tk.EW)
 
-        self.time_now_l.grid(       row=10, column=1, padx=3, sticky=tk.W,
-                                    columnspan=2)
-        self.counts_remain_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
-        self.count_next_l.grid(     row=12, column=1, padx=3, sticky=tk.W)
+        self.time_now_l.grid(      row=10, column=1, padx=3, sticky=tk.W,
+                                   columnspan=2)
+        self.counts_remain_l.grid( row=11, column=1, padx=3, sticky=tk.W)
+        self.count_next_l.grid(    row=12, column=1, padx=3, sticky=tk.W)
 
-        self.mainwin.update_idletasks()
+        # self.mainwin.update_idletasks()
+        self.mainwin.mainloop()
 
     # Methods for menu items and keybinds.
     def quitgui(self) -> None:
@@ -746,11 +783,11 @@ along with this program. If not, see https://www.gnu.org/licenses/
                 'What makes you so successful?',
                 "I've always looked up to you."]
         txt = random.choice(comp)
-        text = tk.Label(self.dataframe, text=txt,  # font=('default', 10),
-                        foreground='DodgerBlue4', background='gold2',
-                        relief='flat', border=0)
-        text.grid(row=2, column=1, columnspan=2, padx=(15, 20), sticky=tk.EW)
-        # To fit well, pady ^here must match pady of the same data label row.
+        text = ttk.Label(text=txt)
+        text.configure(foreground='DodgerBlue4', background='gold2',
+                       relief='flat', border=0)
+        text.grid(row=2, column=1, columnspan=2, padx=(10, 16), sticky=tk.EW)
+        # To fit well, padx ^here must match padx of data label for the row.
         self.dataframe.after(2468, text.destroy)
 
     # Trial features:
@@ -853,9 +890,7 @@ class DataIntervals:
         self.ttimes_smry = []
         self.ttimes_uniq = []
         self.ttimes_used = ['']
-        # self.count_start = None
         self.count_new = None
-        # self.count_sumry = None
         self.tic_nnt = 0
         self.notrunning = False
 
@@ -905,8 +940,9 @@ class DataIntervals:
         print(report)
         if args.log is True:
             report_cleaned = self.ansi_esc.sub('', report)
-            # This is proper string formatting for logging, but f-strings, as
-            # used elsewhere, would be fine for that type use of "logging".
+            # This is proper string formatting for conventional logging,
+            # but f-strings, as used elsewhere, would be fine for how
+            # "logging" is used here.
             logging.info("""%s; Task counter is starting with
 %scount interval (minutes): %s
 %ssummary interval: %s
@@ -919,19 +955,20 @@ class DataIntervals:
                          report_cleaned)
 
         # if args.gui is True: # ...if args.gui is used as parameter.
-        startdata = {'time_start':   self.time_start,
-                     'intvl_str':    INTVL_STR,
-                     'intvl_int':    INTERVAL_M,
-                     'sumry_t':      SUMMARY_T,
-                     'count_start':  count_start,
-                     'tt_mean':      tt_mean,
-                     'tt_lo':        tt_lo,
-                     'tt_hi':        tt_hi,
-                     'tt_sd':        tt_sd,
-                     'tt_total':     tt_total,
-                     'count_lim':    COUNT_LIM}
+        startdata = {'time':        self.time_start,
+                     'intvl_str':   INTVL_STR,
+                     'intvl_int':   INTERVAL_M,
+                     'sumry_t':     SUMMARY_T,
+                     'count':       count_start,
+                     'tt_mean':     tt_mean,
+                     'tt_lo':       tt_lo,
+                     'tt_hi':       tt_hi,
+                     'tt_sd':       tt_sd,
+                     'tt_total':    tt_total,
+                     'count_lim':   COUNT_LIM,
+                     'counts_remain': ""}
         # CG(startdata).set_startdata()
-        CG(startdata)
+        CG(startdata, 'start')
 
     def interval_reports(self):
         """
@@ -943,6 +980,8 @@ class DataIntervals:
         # Synopsis:
         # Do not include starting tasks in interval or summary counts.
         # Remove previous ("used") tasks from current ("new") task metrics.
+        # print('\nCurrent interval_reports() thread: ',
+        #       threading.current_thread())
 
         # intvl_timer() sleeps the for loop between counts.
         for loop_num in range(COUNT_LIM):
@@ -1022,21 +1061,19 @@ class DataIntervals:
 
                 # if args.gui is True:
                 intvldata = {
-                    # 'time_now':  self.time_now,
-                    # 'count_new': self.count_new,
-                    'time_start': self.time_now,
-                    'count_start': self.count_new,
+                    'time': self.time_now,
+                    'count': self.count_new,
                     'tt_mean':  tt_mean,
                     'tt_lo':    tt_lo,
                     'tt_hi':    tt_hi,
                     'tt_sd':    tt_sd,
                     'tt_total': tt_total,
                     'counts_remain': self.counts_remain}
-                CountGui(intvldata).set_intvldata()
-                # TODO: Try using set_startdata as a general template for
-                #  data display. That way can just call CountGui(data) every
-                #  time a data update is needed.
-                # CG(intvldata)
+                CG(intvldata, 'interval')
+                # The problem here is that CG is again run through its
+                # __init__ when we want to just go direct to set_data. Maybe
+                # StringVar are neede for the set_data() variables, somehow.
+                # TODO: Make a better data update method for CG()
 
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{self.time_now};'
@@ -1084,14 +1121,15 @@ class DataIntervals:
             self.ttimes_uniq.clear()
 
             # if args.gui is True:
-            sumrydata = {'time_now':    self.time_now,
-                         'count_uniq':  count_sumry,
-                         'tt_mean':     tt_mean,
-                         'tt_lo':       tt_lo,
-                         'tt_hi':       tt_hi,
-                         'tt_sd':       tt_sd,
-                         'tt_total':    tt_total}
-            CountGui(sumrydata).set_intvldata()
+            sumrydata = {'time':    self.time_now,
+                         'count':   count_sumry,
+                         'tt_mean': tt_mean,
+                         'tt_lo':   tt_lo,
+                         'tt_hi':   tt_hi,
+                         'tt_sd':   tt_sd,
+                         'tt_total': tt_total}
+            # CountGui(sumrydata).set_intvldata()
+            CG(sumrydata, 'summary')
 
     @staticmethod
     def get_min(time_string: str) -> int:
@@ -1322,9 +1360,23 @@ if __name__ == '__main__':
     DI = DataIntervals
     CG = CountGui
     try:
+        # CG()
+        # time.sleep(2)
+        # DI()
+        # DI().start_report()  # use without Thread
+        # di_thread = Thread(target=DI, daemon=True)
+        # di_thread.start()
+        # di_thread.join()
         start_thread = Thread(target=DI().start_report)
         start_thread.start()
         start_thread.join()  # Where is best place for this join()?
+        # intvl_thread = Thread(target=DI().interval_reports, daemon=True)
+        # # intvl_thread.start()
+        # # Don't join() daemon threads
+        # timer_thread = Thread(target=DI().intvl_timer, daemon=True)
+        # # timer_thread.start()
+        # sumry_thread = Thread(target=DI().summary_reports, daemon=True)
+        # # sumry_thread.start()
     except KeyboardInterrupt:
         exit_msg = '\n\n  *** Interrupted by user. ***\n  Quitting now... \n\n'
         sys.stdout.write(exit_msg)
