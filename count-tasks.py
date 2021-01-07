@@ -182,7 +182,7 @@ class DataIntervals:
             # Need a notification when tasks first run out.
             if self.count_new == 0:
                 self.tic_nnt += 1
-                report = (f'\n{self.time_now}; '
+                report = (f'{self.time_now}; '
                           f'No tasks reported in the past {self.tic_nnt}'
                           f' {INTERVAL_M}m interval(s).\n'
                           f'{self.indent}Counts remaining until exit:'

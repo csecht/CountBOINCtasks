@@ -20,6 +20,7 @@ Executes BOINC commands and parsing task data through boinccmd.
 """
 
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -161,21 +162,44 @@ class BoincCommand:
         :param cmd_str: A boinccmd action, command with arguments.
         :return: Data from boinc-client specified in cmd_path.
         """
-        # Works with Python 3.6 and up. shell=True not necessary in Windows.
+        # source: https://stackoverflow.com/questions/33560364/
+        if sys.platform[:3] == 'win':
+            cmd = cmd_str
+        else:
+            cmd = shlex.split(cmd_str)
+        # try:
+        #     if sys.platform[:3] == 'win':
+        #         output = subprocess.run(cmd_str,
+        #                                 stdout=PIPE, encoding='utf8',
+        #                                 check=True).stdout.split('\n')
+        #         return output
+        #     else:
+        #         output = subprocess.Popen(shlex.split(cmd_str),
+        #                                   stdout=PIPE, text=True)
+        #         text = output.communicate()[0].split('\n')
+        #         return text
+        # except subprocess.CalledProcessError as cpe:
+        #     msg = ('If the boinccmd usage message is displayed, then'
+        #            ' boinccmd has an error in its command argument.')
+        #     print(f'\n{msg}\n{cpe}')
+        #     sys.exit(1)
         try:
-            output = subprocess.run(cmd_str,
-                                    shell=True,
-                                    stdout=PIPE,
-                                    encoding='utf8',
-                                    check=True).stdout.split('\n')
-            return output
+            output = subprocess.Popen(cmd, stdout=PIPE, text=True)
+            text = output.communicate()[0].split('\n')
+            return text
         except subprocess.CalledProcessError as cpe:
             msg = ('If the boinccmd usage message is displayed, then'
                    ' boinccmd has an error in its command argument.')
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
-        # TODO: Use subprocess.Popen to avoid shell=True?
 
+        # Works with Python 3.6 and up. shell=True not necessary in Windows.
+        # try:
+            # output = subprocess.run(cmd_str,
+            #                         shell=True,
+            #                         stdout=PIPE,
+            #                         encoding='utf8',
+            #                         check=True).stdout.split('\n')
         # Works with Windows, Python 3.8 and 3.9.
         # if sys.platform[:3] == 'win':
         #     output = subprocess.run(cmd_path,
