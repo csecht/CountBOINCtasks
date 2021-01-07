@@ -167,22 +167,7 @@ class BoincCommand:
             cmd = cmd_str
         else:
             cmd = shlex.split(cmd_str)
-        # try:
-        #     if sys.platform[:3] == 'win':
-        #         output = subprocess.run(cmd_str,
-        #                                 stdout=PIPE, encoding='utf8',
-        #                                 check=True).stdout.split('\n')
-        #         return output
-        #     else:
-        #         output = subprocess.Popen(shlex.split(cmd_str),
-        #                                   stdout=PIPE, text=True)
-        #         text = output.communicate()[0].split('\n')
-        #         return text
-        # except subprocess.CalledProcessError as cpe:
-        #     msg = ('If the boinccmd usage message is displayed, then'
-        #            ' boinccmd has an error in its command argument.')
-        #     print(f'\n{msg}\n{cpe}')
-        #     sys.exit(1)
+
         try:
             output = subprocess.Popen(cmd, stdout=PIPE, text=True)
             text = output.communicate()[0].split('\n')
@@ -192,29 +177,6 @@ class BoincCommand:
                    ' boinccmd has an error in its command argument.')
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
-
-        # Works with Python 3.6 and up. shell=True not necessary in Windows.
-        # try:
-            # output = subprocess.run(cmd_str,
-            #                         shell=True,
-            #                         stdout=PIPE,
-            #                         encoding='utf8',
-            #                         check=True).stdout.split('\n')
-        # Works with Windows, Python 3.8 and 3.9.
-        # if sys.platform[:3] == 'win':
-        #     output = subprocess.run(cmd_path,
-        #                             capture_output=True,
-        #                             text=True,
-        #                             check=True).stdout.split('\n')
-        #     return output
-        # Works with Linux, Python 3.7 and up.
-        # if sys.platform in ('linux', 'darwin'):
-        #     output = subprocess.run(cmd_path,
-        #                             shell=True,
-        #                             capture_output=True,
-        #                             encoding='utf8',
-        #                             check=True).stdout.split('\n')
-        #     return output
 
     def get_reported(self, tag: str, cmd=' --get_old_tasks') -> list:
         """
