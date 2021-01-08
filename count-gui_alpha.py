@@ -511,7 +511,7 @@ class CountGui:
         self.count_lim_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid( row=12, column=1, padx=3, sticky=tk.W)
 
-        interval_thread = Thread(target=DI().interval_reports)
+        interval_thread = Thread(target=DI().interval_reports, daemon=True)
         interval_thread.start()
         # interval_thread.join()
         self.mainwin.mainloop()  # mainloop required to make window interactive
@@ -559,8 +559,6 @@ class CountGui:
         self.counts_remain_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
         self.time_now_l.grid(       row=10, column=1, padx=3, sticky=tk.W,
                                     columnspan=2)
-        print('\nNow in show_intvldata()\n')
-
         self.mainwin.mainloop()
 
     def show_sumrydata(self) -> None:
@@ -625,9 +623,7 @@ class CountGui:
         # redrawn (as threaded) following the print message.
         # Move cursor to beginning of timer line, erase the line, then print.
         print('\r\x1b[K'
-              '\n  --- User has quit the count-tasks GUI. Scheduled counts '
-              'continue... ---'
-              '\n  --- To exit from scheduled task counts, use Ctrl+C. ---\n')
+              '\n  *** User has quit the count-tasks GUI. Exiting...\n')
         self.mainwin.destroy()
 
     @staticmethod
