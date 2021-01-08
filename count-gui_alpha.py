@@ -108,7 +108,7 @@ class CountGui:
         self.count_lim = None
         self.time_start = None
         self.intvl_str = None
-        self.sumry_t = None
+        self.sumry_intvl = None
         self.count_start = None
         self.interval = None
 
@@ -134,18 +134,18 @@ class CountGui:
                               anchor='center')
         self.time_start_l = ttk.Label(foreground='grey90')
         self.intvl_str_l = ttk.Label(width=20, relief='groove', borderwidth=1)
-        self.sumry_t_l =   ttk.Label(width=20, relief='groove', borderwidth=1)
+        self.sumry_intvl_l =   ttk.Label(width=20, relief='groove', borderwidth=1)
 
         self.count_start_l =    ttk.Label()
         self.count_new_l =      ttk.Label()
         self.count_uniq_l =     ttk.Label()
         self.tt_mean_l =        ttk.Label()
         self.tt_sd_l =          ttk.Label()
-        self.time_range_l =     ttk.Label()
+        self.tt_range_l =     ttk.Label()
         self.tt_total_l =       ttk.Label()
         self.ttmean_sumry_l =   ttk.Label()
         self.ttsd_sumry_l =     ttk.Label()
-        self.timerange_sumry_l = ttk.Label()
+        self.ttrange_sumry_l =  ttk.Label()
         self.ttsum_sumry_l =    ttk.Label()
 
         self.time_now_l = ttk.Label(self.mainwin, background=self.mainwin_bg,
@@ -367,7 +367,7 @@ class CountGui:
         self.time_now =     self.data['time']
         self.intvl_str =    self.data['intvl_str']
         self.interval =     self.data['intvl_int']
-        self.sumry_t =      self.data['sumry_t']
+        self.sumry_intvl =  self.data['sumry_intvl']
         self.count_start =  self.data['count']
         self.count_new =    self.data['count']
         self.count_uniq =   self.data['count']
@@ -473,11 +473,11 @@ class CountGui:
         self.time_start_l.config(   text=self.time_start)
         self.intvl_str_l.config(    text=self.intvl_str,
                                     foreground=self.emphasize)
-        self.sumry_t_l.config(      text=self.sumry_t,
-                                    foreground=self.deemphasize)
+        self.sumry_intvl_l.config(text=self.sumry_intvl,
+                                  foreground=self.deemphasize)
 
         # Starting count data and times (from past boinc-client hour).
-        time_range = self.tt_lo + ' -- ' + self.tt_hi
+        tt_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.count_start_l.configure(text=self.count_start,
                                      foreground=self.highlight)
@@ -485,7 +485,7 @@ class CountGui:
                                      foreground=self.highlight)
         self.tt_sd_l.configure(      text=self.tt_sd,
                                      foreground=self.emphasize)
-        self.time_range_l.configure( text=time_range,
+        self.tt_range_l.configure(   text=tt_range,
                                      foreground=self.emphasize)
         self.tt_total_l.configure(   text=self.tt_total,
                                      foreground=self.emphasize)
@@ -499,11 +499,11 @@ class CountGui:
         self.time_start_l.grid( row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                 columnspan=2)
         self.intvl_str_l.grid(  row=3, column=1, padx=(10, 6), sticky=tk.EW)
-        self.sumry_t_l.grid(    row=3, column=2, padx=(0, 16), sticky=tk.EW)
+        self.sumry_intvl_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
         self.count_start_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
         self.tt_mean_l.grid(    row=5, column=1, padx=10, sticky=tk.EW)
         self.tt_sd_l.grid(      row=6, column=1, padx=10, sticky=tk.EW)
-        self.time_range_l.grid( row=7, column=1, padx=10, sticky=tk.EW)
+        self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
         self.tt_total_l.grid(   row=8, column=1, padx=10, sticky=tk.EW)
 
         self.time_now_l.grid(   row=10, column=1, padx=3, sticky=tk.W,
@@ -524,10 +524,10 @@ class CountGui:
         """
 
         # Count and summary interval times
-        time_range = self.tt_lo + ' -- ' + self.tt_hi
+        tt_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.intvl_str_l.config(foreground=self.emphasize)
-        self.sumry_t_l.config(foreground=self.deemphasize)
+        self.sumry_intvl_l.config(foreground=self.deemphasize)
 
         # Interval data, column1
         self.count_new_l.configure( text=self.count_new,
@@ -536,8 +536,8 @@ class CountGui:
                                     foreground=self.highlight)
         self.tt_sd_l.configure(     text=self.tt_sd,
                                     foreground=self.emphasize)
-        self.time_range_l.configure(text=time_range,
-                                    foreground=self.emphasize)
+        self.tt_range_l.configure(text=tt_range,
+                                  foreground=self.emphasize)
         self.tt_total_l.configure(  text=self.tt_total,
                                     foreground=self.emphasize)
 
@@ -545,7 +545,7 @@ class CountGui:
         self.count_uniq_l.configure(   foreground=self.deemphasize)
         self.ttmean_sumry_l.configure( foreground=self.deemphasize)
         self.ttsd_sumry_l.configure(   foreground=self.deemphasize)
-        self.timerange_sumry_l.configure(foreground=self.deemphasize)
+        self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(  foreground=self.deemphasize)
 
         # Previous and until task count times.
@@ -569,10 +569,10 @@ class CountGui:
         """
 
         # Count and summary interval times
-        time_range = self.tt_lo + ' -- ' + self.tt_hi
+        tt_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.intvl_str_l.config(foreground=self.deemphasize)
-        self.sumry_t_l.config(  foreground=self.emphasize)
+        self.sumry_intvl_l.config(foreground=self.emphasize)
 
         # Summary data, column2, emphasize font color
         self.count_uniq_l.configure(    text=self.count_uniq,
@@ -581,8 +581,8 @@ class CountGui:
                                         foreground=self.highlight)
         self.ttsd_sumry_l.configure(    text=self.tt_sd,
                                         foreground=self.emphasize)
-        self.timerange_sumry_l.configure(text=time_range,
-                                         foreground=self.emphasize)
+        self.ttrange_sumry_l.configure( text=tt_range,
+                                        foreground=self.emphasize)
         self.ttsum_sumry_l.configure(   text=self.tt_total,
                                         foreground=self.emphasize)
 
@@ -591,7 +591,7 @@ class CountGui:
         self.count_new_l.configure(    foreground=self.deemphasize)
         self.tt_mean_l.configure(      foreground=self.deemphasize)
         self.tt_sd_l.configure(        foreground=self.deemphasize)
-        self.time_range_l.configure(   foreground=self.deemphasize)
+        self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(     foreground=self.deemphasize)
 
         # Previous and until task count times.  NECESSARY? b/c dupl of intvl?
@@ -604,7 +604,7 @@ class CountGui:
         self.count_uniq_l.grid(    row=4, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttmean_sumry_l.grid(  row=5, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsd_sumry_l.grid(    row=6, column=2, padx=(0, 16), sticky=tk.EW)
-        self.timerange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsum_sumry_l.grid(   row=8, column=2, padx=(0, 16), sticky=tk.EW)
 
         self.time_now_l.grid(      row=10, column=1, padx=3, sticky=tk.W,
@@ -954,7 +954,7 @@ class DataIntervals:
         startdata = {'time':        self.time_start,
                      'intvl_str':   INTVL_STR,
                      'intvl_int':   INTERVAL_M,
-                     'sumry_t':     SUMMARY_T,
+                     'sumry_intvl': SUMMARY_T,
                      'count':       count_start,
                      'tt_mean':     tt_mean,
                      'tt_lo':       tt_lo,
@@ -1350,29 +1350,12 @@ if __name__ == '__main__':
         print('Status: ', __status__)
         sys.exit(0)
 
-    # Put tkinter into a thread? Needed for Queueing?
-    # TODO: Code it so that closing Tk mainwin shuts down all threads; use
-    #  daemons and start all? DI method threads from within CountGui.
     DI = DataIntervals
     CG = CountGui
     try:
-        # CG()
-        # time.sleep(2)
-        # DI()
-        # DI().start_report()  # use without Thread
-        # di_thread = Thread(target=DI, daemon=True)
-        # di_thread.start()
-        # di_thread.join()
         start_thread = Thread(target=DI().start_report)
         start_thread.start()
         start_thread.join()  # Where is best place for this join()?
-        # intvl_thread = Thread(target=DI().interval_reports, daemon=True)
-        # # intvl_thread.start()
-        # # Don't join() daemon threads
-        # timer_thread = Thread(target=DI().intvl_timer, daemon=True)
-        # # timer_thread.start()
-        # sumry_thread = Thread(target=DI().summary_reports, daemon=True)
-        # # sumry_thread.start()
     except KeyboardInterrupt:
         exit_msg = '\n\n  *** Interrupted by user. ***\n  Quitting now... \n\n'
         sys.stdout.write(exit_msg)
