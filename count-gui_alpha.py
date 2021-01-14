@@ -129,12 +129,13 @@ class CountGui:
         style_data1 = ttk.Style(self.dataframe)
         style_data1.configure('TLabel', background=self.data_bg,
                               anchor='center')
+        # Invariate variables
         self.time_start_l = ttk.Label(text=self.time_start, foreground='grey90')
         self.intvl_str_l =   ttk.Label(text=self.intvl_str,
                                        width=20, relief='ridge', borderwidth=2)
         self.sumry_intvl_l = ttk.Label(text=self.sumry_intvl,
                                        width=20, relief='ridge', borderwidth=2)
-
+        # Variable variables
         self.count_start_l =    ttk.Label(text=self.count_start)
         self.count_new_l =      ttk.Label(textvariable=self.count_new)
         self.count_uniq_l =     ttk.Label(textvariable=self.count_uniq)
@@ -362,7 +363,7 @@ class CountGui:
     def set_data(self) -> None:
         """Set starting and interval data for data label variables.
         """
-        # print('\nCurrent set_data() thread: ', threading.current_thread())
+        print('\nCurrent set_data() thread: ', threading.current_thread())
         self.dataframe.after(200)
 
         self.time_start =   self.data['time']
@@ -446,7 +447,7 @@ class CountGui:
         self.count_lim_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
 
-        interval_thread = Thread(target=DI().interval_reports, daemon=True)
+        interval_thread = Thread(target=DI().interval_reports)
         interval_thread.start()
         # interval_thread.join()
         self.mainwin.mainloop()  # mainloop required to make window interactive
@@ -841,6 +842,8 @@ class DataIntervals:
         :return: Report printed to Terminal and/or log file; data dict
         to CountGui.set_startdata().
         """
+        print('\nCurrent start_report() thread: ', threading.current_thread())
+
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
         #     task_names = BC.get_reported('tasks').
@@ -911,6 +914,8 @@ class DataIntervals:
         for loop_num in range(COUNT_LIM):
             # DI_thread.join()
             self.intvl_timer(INTERVAL_M)
+            print('\nCurrent intv_rep() thread: ', threading.current_thread())
+
             # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_left = COUNT_LIM - (loop_num + 1)
@@ -1244,7 +1249,7 @@ if __name__ == '__main__':
     parser.add_argument('--summary',
                         help='Specify time between count summaries,'
                              ' e.g., 12h, 7d (default: %(default)s)',
-                        default='30m',  # TODO: reset default 1d
+                        default='15m',  # TODO: reset default 1d
                         type=check_args, metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
@@ -1281,7 +1286,7 @@ if __name__ == '__main__':
     DI = DataIntervals
     CG = CountGui
     try:
-        start_thread = Thread(target=DI().start_report)
+        start_thread = Thread(target=DI().start_report, daemon=True)
         start_thread.start()
         start_thread.join()  # Where is best place for this join()?
     except KeyboardInterrupt:
