@@ -21,6 +21,7 @@ Provides regular counts and time stats for reported BOINC tasks.
 
 import argparse
 import logging
+import os
 import re
 import statistics as stats
 import subprocess
@@ -425,6 +426,7 @@ def check_args(parameter) -> None:
 
 
 if __name__ == '__main__':
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     # NOTE: --interval and --summary argument formats are different
     #   because summary times can be min, hr, or days, while interval times
     #   are always minutes (60 maximum).
@@ -498,4 +500,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         exit_msg = '\n\n  *** Interrupted by user ***\n  Quitting now...\n\n'
         sys.stdout.write(exit_msg)
-        logging.info(msg=f'\n{datetime.now()}: {exit_msg}')
+        logging.info(msg=f'{exit_msg}...{datetime.now()}\n')
