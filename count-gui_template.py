@@ -186,6 +186,8 @@ class CountGui:
         # The data dictionary is from data_intervals(). set_startdata includes "config()"
         # and calls show_startdata().
         # Set starting data config are same style as config_intvldata.
+        print('\n*** Close program through the GUI, not the Terminal ***'
+              '\n*** NOTE: Interval counts not working in this version. ***\n')
         self.set_startdata()
 
         # tkinter's infinite event loop
@@ -1278,7 +1280,6 @@ if __name__ == '__main__':
     # interval_thread = threading.Thread(target=data_intervals, daemon=True)
     interval_thread = threading.Thread(target=data_intervals)
     interval_thread.start()
-    # CountGui(tk.Tk())
     root = tk.Tk()
     CG = CountGui(root)
     root.mainloop()
@@ -1288,5 +1289,4 @@ if __name__ == '__main__':
         exit_msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
         sys.stdout.write(exit_msg)
         logging.info(msg=f'\n{datetime.now()}: {exit_msg}')
-# The if __name__ line is not required b/c its statements run fine without
-# it, but it seems more pythonic with it.
+
