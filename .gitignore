@@ -1,6 +1,7 @@
 /venv/
 count-tasks_log.txt
 count-tasks.py_log.txt
+unused_bits/count-gui_alpha.py
 /unused_bits/*
 .gitignore
 
