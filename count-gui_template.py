@@ -177,9 +177,6 @@ class CountGui:
         self.sumry_arg = tk.StringVar(value='1d')
         self.cycles_arg = tk.IntVar(value=1008)
 
-        # Experimental
-        self.progress = ttk.Progressbar()
-
         # stubdata are only for testing GUI layout.
         # self.set_stubdata()
 
@@ -1010,7 +1007,7 @@ def get_timestats(count: int, taskt: iter) -> dict:
 
 
 # SEMAPHORE ############ for data_intervals()
-DI_SEM = threading.Semaphore()
+# DI_SEM = threading.Semaphore()
 ########################
 # DI_SEM is released at the end of 'for' cycle counting loop.
 
@@ -1203,11 +1200,12 @@ def data_intervals() -> dict:
             ttimes_smry.clear()
 
     # SEMAPHORE ############
-    DI_SEM.release()
+    # DI_SEM.release()
     ########################
 
 
 # Need data acquisition and timer in Thread so tkinter can run in main thread.
+# TODO: reset interval and summary default times.
 if __name__ == '__main__':
     # NOTE: --interval and --summary argument formats are different
     #   because summary times can be min, hr, or days, while interval times
@@ -1241,7 +1239,8 @@ if __name__ == '__main__':
     parser.add_argument('--summary',
                         help='Specify time between count summaries,'
                              ' e.g., 12h, 7d (default: %(default)s)',
-                        default='1d',
+                        # default='1d',
+                        default='15m',  # for testing
                         type=check_args,
                         metavar='TIMEunit')
     parser.add_argument('--count_lim',
@@ -1278,15 +1277,16 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # interval_thread = threading.Thread(target=data_intervals, daemon=True)
-    interval_thread = threading.Thread(target=data_intervals)
-    interval_thread.start()
+    # interval_thread = threading.Thread(target=data_intervals)
+    # interval_thread.start()  # Not necessary here (or anywhere?)
     root = tk.Tk()
     CG = CountGui(root)
     root.mainloop()
-    try:
-        interval_thread.join()
-    except KeyboardInterrupt:
-        exit_msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
-        sys.stdout.write(exit_msg)
-        logging.info(msg=f'\n{datetime.now()}: {exit_msg}')
+    # try:
+    #     root.mainloop()
+    #     # interval_thread.join()
+    # except KeyboardInterrupt:
+    #     exit_msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
+    #     sys.stdout.write(exit_msg)
+    #     logging.info(msg=f'\n{datetime.now()}: {exit_msg}')
 

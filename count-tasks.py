@@ -196,7 +196,7 @@ class DataIntervals:
                     logging.info(report)
                 if self.notrunning is True:
                     report = (f'\n{self.time_now};'
-                              ' *** Check whether tasks are running. ***')
+                              ' *** Check whether tasks are running. ***\n')
                     print(report)
                     if args.log is True:
                         logging.info(report)
@@ -221,7 +221,7 @@ class DataIntervals:
 
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{self.time_now};'
-                          f' *** Check whether tasks are running. ***')
+                          f' *** Check whether tasks are running. ***\n')
                 print(f'\r{self.del_line}{report}')
                 if args.log is True:
                     logging.info(report)
