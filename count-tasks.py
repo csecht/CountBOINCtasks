@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.8'
+__version__ =   '0.4.9'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -222,13 +222,13 @@ class DataIntervals:
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{self.time_now};'
                           f' *** Check whether tasks are running. ***\n')
-                print(f'\r{self.del_line}{report}')
+                print(f'\r\x1b[A{self.del_line}{report}')
                 if args.log is True:
                     logging.info(report)
 
             self.summary_reports(loop_num, self.ttimes_smry)
 
-    def summary_reports(self, loop_num, ttimes_smry):
+    def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
         """
         Report task counts time stats summaries at timed intervals.
 
