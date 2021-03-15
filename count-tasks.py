@@ -162,7 +162,11 @@ class DataIntervals:
                 self.notrunning = True
                 if 'uploaded' in BC.get_tasks('state') and \
                         'downloaded' not in BC.get_tasks('state'):
-                    BC.project_action(BC.project_url['EINSTEIN'], 'update')
+                    boinc_urls = BC.get_project_url()
+                    # I'm not sure how to handle multiple concurrent Projects.
+                    # If they are all stalled, then updating the first works.
+                    first_project = boinc_urls[0]
+                    BC.project_action(BC.project_url[first_project], 'update')
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.

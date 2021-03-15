@@ -98,14 +98,9 @@ class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
-    # TODO: add function to get name or URL of current Project'
-    #  use --get_project_status.  What if 1+ Projects are running?
-    # ~$ boinccmd --get_project_status
-    # ======== Projects ========
-    # 1) -----------
-    #    name: Einstein@Home
-    #    master URL: http://einstein.phys.uwm.edu/
-    # TODO: FIX urls to be the BOINC task servers
+
+    # TODO: CHECK that urls are the BOINC task servers
+    # Is not currently used.
     project_url = {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
@@ -189,9 +184,9 @@ class BoincCommand:
         """
         Get data from reported boinc-client tasks.
 
-        :param cmd: The boinccmd command for tasks reported to boinc server.
         :param tag: e.g., 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
+        :param cmd: The boinccmd command for tasks reported to boinc server.
         :return: List of specified data parsed from cmd.
         """
 
@@ -217,10 +212,10 @@ class BoincCommand:
         """
         Get data from current boinc-client tasks.
 
-        :param cmd: The boinccmd command to get queued tasks information.
         :param tag: Used by taskXDF: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
-        :return: List of specified data parsed from cmd.
+        :param cmd: The boinccmd command to get queued tasks information.
+        :return: List of tagged data parsed from cmd.
         """
 
         output = self.run_boinc(self.boincpath + cmd)
@@ -234,7 +229,25 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    # Method below not currently used by count_tasks.py.
+    def get_project_url(self, tag='master URL', cmd=' --get_project_status') -> list:
+        """
+        Get current current boinc-client Project URLs.
+
+        :param tag: Only need the name of each Project's boinc server URL.
+        :param cmd: The boinccmd command to get Project information.
+        :return: List of tagged data parsed from cmd.
+        """
+        # NOTE: this does not make use of the project_url dictionary; may make
+        #   it unnecessary.
+        output = self.run_boinc(self.boincpath + cmd)
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+        # This returns list of all Projects for local boinc client. Need to select
+        #   one to run project_action on? Are they listed in alpha order or by
+        #   host usage?  Either grab the first, or have user enter the project_url
+        #   key to get the Project url.
+        data = [line.replace(tag_str, '') for line in output if tag in line]
+        return data
+
     def project_action(self, project: str, action: str):
         """
         Execute a boinc-client action for a specified Project.
