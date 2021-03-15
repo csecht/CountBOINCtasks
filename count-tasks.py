@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.9'
+__version__ =   '0.4.10'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -153,10 +153,16 @@ class DataIntervals:
 
             # Need a flag for when tasks have run out.
             # active_task_state for a running task is 'EXECUTING'.
+            # When communication to server is stalled, all tasks will be
+            #  "Ready to report" with a state of 'uploaded', so try a
+            #  Project update command to prompt clearing the stalled queue.
             tasks_running = BC.get_tasks('active_task_state')
             self.notrunning = False
             if 'EXECUTING' not in tasks_running:
                 self.notrunning = True
+                if 'uploaded' in BC.get_tasks('state') and \
+                        'downloaded' not in BC.get_tasks('state'):
+                    BC.project_action(BC.project_url['EINSTEIN'], 'update')
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.

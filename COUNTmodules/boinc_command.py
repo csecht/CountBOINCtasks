@@ -233,7 +233,7 @@ class BoincCommand:
         Execute a boinc-client action for a specified Project.
 
         :param project: A project_url dict key for a BOINC 'PROJECT'
-        :param action: Use: 'suspend' or 'resume'.
+        :param action: Use: 'suspend', 'resume', or 'update'.
         :return: Execution of specified boinc-client action.
         """
         # Project commands require the Project URL, others commands don't
