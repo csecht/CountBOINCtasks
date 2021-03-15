@@ -98,7 +98,14 @@ class BoincCommand:
     """
     Execute boinc-client commands and parse data.
     """
-    # Project urls are not currently used by count_now-tasks.
+    # TODO: add function to get name or URL of current Project'
+    #  use --get_project_status.  What if 1+ Projects are running?
+    # ~$ boinccmd --get_project_status
+    # ======== Projects ========
+    # 1) -----------
+    #    name: Einstein@Home
+    #    master URL: http://einstein.phys.uwm.edu/
+    # TODO: FIX urls to be the BOINC task servers
     project_url = {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
@@ -107,7 +114,7 @@ class BoincCommand:
         'CLIMATE': 'https://www.cpdn.org/',
         'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
         'COSMOL': 'http://www.cosmologyathome.org/',
-        'EINSTEIN': 'https://einsteinathome.org/',
+        'EINSTEIN': 'http://einstein.phys.uwm.edu/',
         'GERASIM': 'http://gerasim.boinc.ru/',
         'GPUGRID': 'https://www.gpugrid.net/',
         'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
