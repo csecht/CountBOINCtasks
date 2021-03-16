@@ -148,7 +148,7 @@ class BoincCommand:
                          'exit status', 'signal', 'estimated CPU time '
                          'remaining', 'slot', 'PID', 'current CPU time',
                          'CPU time at time_now checkpoint', 'fraction done',
-                         'swap size', 'working set size')
+                         'swap size', 'working set size', 'master URL')
         self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
                              'elapsed time', 'completed time',
                              'get_reported time')
@@ -237,15 +237,21 @@ class BoincCommand:
         :param cmd: The boinccmd command to get Project information.
         :return: List of tagged data parsed from cmd.
         """
-        # NOTE: this does not make use of the project_url dictionary; may make
-        #   it unnecessary.
+        # NOTE: this method does not make use of the project_url dictionary;
+        #   may make project_url dictionary unnecessary.
+
         output = self.run_boinc(self.boincpath + cmd)
+
+        data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
         # This returns list of all Projects for local boinc client. Need to select
         #   one to run project_action on? Are they listed in alpha order or by
         #   host usage?  Either grab the first, or have user enter the project_url
         #   key to get the Project url.
-        data = [line.replace(tag_str, '') for line in output if tag in line]
+        if tag in self.tasktags:
+            data = [line.replace(tag_str, '') for line in output if tag in line]
+            return data
+        print(f'Unrecognized data tag: {tag}')
         return data
 
     def project_action(self, project: str, action: str):
