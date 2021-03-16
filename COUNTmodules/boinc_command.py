@@ -154,7 +154,9 @@ class BoincCommand:
                              'get_reported time')
         self.gettasktags = ('name', 'state', 'scheduler state',
                             'fraction done', 'active_task_state')
-        self.projectcmd = ('suspend', 'resume')
+        self.projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
+                           'nomorework', 'allowmorework', 'detach_when_done',
+                           'dont_detach_when_done')
 
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
@@ -231,23 +233,18 @@ class BoincCommand:
 
     def get_project_url(self, tag='master URL', cmd=' --get_project_status') -> list:
         """
-        Get current current boinc-client Project URLs.
+        Get all current local host boinc-client Project URLs.
 
         :param tag: Only need the name of each Project's boinc server URL.
         :param cmd: The boinccmd command to get Project information.
         :return: List of tagged data parsed from cmd.
         """
-        # NOTE: this method does not make use of the project_url dictionary;
-        #   may make project_url dictionary unnecessary.
 
         output = self.run_boinc(self.boincpath + cmd)
 
         data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
-        # This returns list of all Projects for local boinc client. Need to select
-        #   one to run project_action on? Are they listed in alpha order or by
-        #   host usage?  Either grab the first, or have user enter the project_url
-        #   key to get the Project url.
+
         if tag in self.tasktags:
             data = [line.replace(tag_str, '') for line in output if tag in line]
             return data
@@ -265,7 +262,7 @@ class BoincCommand:
         # Project commands require the Project URL, others commands don't
         if action in self.projectcmd:
             cmd_str = self.boincpath + \
-                      f' --project {self.project_url[{project}]} {action}'
+                      f' --project {self.project_url[project]} {action}'
             return self.run_boinc(cmd_str)
         msg = (f"Unrecognized action: {action}. Expecting one of these: "
                f"{self.projectcmd}")
