@@ -174,6 +174,12 @@ class DataIntervals:
                     first_project = list(BC.project_url.keys())[
                         list(BC.project_url.values()).index(first_local_url)]
                     BC.project_action(first_project, 'update')
+                    notice = (f'\n{self.time_now};'
+                              ' *** ALL TASKS are in uploaded status. ***\n'
+                              f' Have forced an update of Project {first_project}.\n')
+                    print(f'\r\x1b[A{self.del_line}{notice}')
+                    if args.log is True:
+                        logging.info(notice)
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.
