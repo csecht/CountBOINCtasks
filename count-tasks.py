@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.11'
+__version__ =   '0.4.12'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -45,8 +45,8 @@ __status__ =    'Development Status :: 4 - BETA'
 
 BC = boinc_command.BoincCommand()
 # Assume log file is in the CountBOINCtasks-master folder.
-LOGPATH = Path('count-tasks_log.txt')
-# LOGPATH = Path('../count-tasks_log.txt')
+LOGPATH = str(Path('count-tasks_log.txt'))
+# LOGPATH = str(Path('../count-tasks_log.txt'))
 # Here logging is lazily employed to manage the user file of report data.
 logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')
@@ -174,12 +174,11 @@ class DataIntervals:
                     first_project = list(BC.project_url.keys())[
                         list(BC.project_url.values()).index(first_local_url)]
                     BC.project_action(first_project, 'update')
-                    notice = (f'\n{self.time_now};'
-                              ' *** ALL TASKS are in uploaded status. ***\n'
-                              f' Have forced an update of Project {first_project}.\n')
-                    print(f'\r\x1b[A{self.del_line}{notice}')
+                    report = (f'\n{self.time_now};'
+                              f' *** Project {first_project} was updated. ***\n')
+                    print(report)
                     if args.log is True:
-                        logging.info(notice)
+                        logging.info(report)
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.
@@ -521,6 +520,6 @@ if __name__ == '__main__':
     try:
         DataIntervals()
     except KeyboardInterrupt:
-        exit_msg = '\n\n  *** Interrupted by user ***\n  Quitting now...\n\n'
-        sys.stdout.write(exit_msg)
-        logging.info(msg=f'{exit_msg}...{datetime.now()}\n')
+        MSG = '\n\n  *** Interrupted by user ***\n  Quitting now...\n\n'
+        sys.stdout.write(MSG)
+        logging.info(msg=f'{MSG}...{datetime.now()}\n')
