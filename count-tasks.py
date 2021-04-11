@@ -206,7 +206,7 @@ class DataIntervals:
             if self.count_new == 0:
                 self.tic_nnt += 1
                 report = (f'{self.time_now}; '
-                          f'No tasks reported in the past {self.tic_nnt}'
+                          f'NO TASKS reported in the past {self.tic_nnt}'
                           f' {INTERVAL_M}m interval(s).\n'
                           f'{self.indent}Counts remaining until exit:'
                           f' {self.counts_remain}')
