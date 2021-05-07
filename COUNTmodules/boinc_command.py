@@ -214,10 +214,10 @@ class BoincCommand:
         """
         Get data from current boinc-client tasks.
 
-        :param tag: Used by taskXDF: 'name', 'state', 'scheduler
+        :param tag: Examples: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
         :param cmd: The boinccmd command to get queued tasks information.
-        :return: List of tagged data parsed from cmd.
+        :return: List of tagged data parsed from cmd output.
         """
 
         output = self.run_boinc(self.boincpath + cmd)
@@ -231,13 +231,44 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
+    def get_runningtasks(self, tag: str, name_tag: str,
+                         cmd=' --get_simple_gui_info') -> list:
+        """
+        Get data from currently running boinc-client tasks.
+
+        :param tag: boinccmd output line tag, e.g., 'name', 'WU name'.
+        :param name_tag: The task type present used in all target task
+                        names, e.g. O3AS, LATeah, etc.
+        :param cmd: The boinccmd command to get active task information.
+        :return: List of tagged data parsed from cmd. output.
+        """
+        # NOTE that the boinc cmd --get_tasks will also work here.
+        output = self.run_boinc(self.boincpath + cmd)
+
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+        task_name = None
+        data = []
+        # Need to determine whether a task's active_task_state line following its name line
+        #    specifies that it is a running (EXECUTING) task.
+        for line in output:
+            if name_tag in line and tag_str in line:
+                task_name = line.replace(tag_str, '')
+                continue
+            if task_name is not None and 'EXECUTING' in line:
+                data.append(task_name)
+                # Need to clear task name to ensure target task name is paired with its
+                #    own active state and not that of a prior non-EXECUTING task.
+                task_name = None
+        return data
+        # TODO: in taskXDF main script, need to add task data names to a newline-delimited file.
+
     def get_project_url(self, tag='master URL', cmd=' --get_project_status') -> list:
         """
         Get all current local host boinc-client Project URLs.
 
         :param tag: Only need the name of each Project's boinc server URL.
         :param cmd: The boinccmd command to get Project information.
-        :return: List of tagged data parsed from cmd.
+        :return: List of tagged data parsed from cmd output..
         """
 
         output = self.run_boinc(self.boincpath + cmd)

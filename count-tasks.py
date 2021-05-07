@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.12'
+__version__ =   '0.4.13'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -46,7 +46,7 @@ __status__ =    'Development Status :: 4 - BETA'
 BC = boinc_command.BoincCommand()
 # Assume log file is in the CountBOINCtasks-master folder.
 LOGPATH = str(Path('count-tasks_log.txt'))
-# LOGPATH = str(Path('../count-tasks_log.txt'))
+#LOGPATH = str(Path('../count-tasks_log.txt'))
 # Here logging is lazily employed to manage the user file of report data.
 logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')
@@ -464,7 +464,7 @@ if __name__ == '__main__':
                         help='Create log file of results or append to '
                              'existing log',
                         action='store_true',
-                        default=False)
+                        default=True)
     # parser.add_argument('--gui',
     #                     help='Show data in interactive graphics window.',
     #                     action='store_true',
