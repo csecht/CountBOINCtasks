@@ -231,33 +231,33 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    def get_runningtasks(self, tag: str, name_tag: str,
+    def get_runningtasks(self, tag: str, app_type: str,
                          cmd=' --get_simple_gui_info') -> list:
         """
-        Get data from currently running boinc-client tasks.
+        Get names of running boinc-client tasks of the specified app.
 
         :param tag: boinccmd output line tag, e.g., 'name', 'WU name'.
-        :param name_tag: The task type present used in all target task
-                        names, e.g. O3AS, LATeah, etc.
-        :param cmd: The boinccmd command to get active task information.
+        :param app_type: The app type present in all target task names,
+                        e.g. O3AS, LATeah, etc.
+        :param cmd: The boinccmd command to get task information.
         :return: List of tagged data parsed from cmd. output.
         """
-        # NOTE that the boinc cmd --get_tasks will also work here.
+        # NOTE that cmd=' --get_tasks' will also work; get_simple lists only active tasks.
         output = self.run_boinc(self.boincpath + cmd)
 
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a tag line of data.
         task_name = None
         data = []
-        # Need to determine whether a task's active_task_state line following its name line
-        #    specifies that it is a running (EXECUTING) task.
+        # Need to determine whether a task's task state line following its name line
+        #    specifies that it is a running task (active_task_state: EXECUTING).
+        # Each loop, need to clear task name to ensure target task name is paired
+        #    with its active state and not that of a prior non-EXECUTING task.
         for line in output:
-            if name_tag in line and tag_str in line:
+            if app_type in line and tag_str in line:
                 task_name = line.replace(tag_str, '')
                 continue
             if task_name is not None and 'EXECUTING' in line:
                 data.append(task_name)
-                # Need to clear task name to ensure target task name is paired with its
-                #    own active state and not that of a prior non-EXECUTING task.
                 task_name = None
         return data
         # TODO: in taskXDF main script, need to add task data names to a newline-delimited file.

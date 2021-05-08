@@ -58,8 +58,8 @@ BC = boinc_command.BoincCommand()
 # # Assume log file is in the CountBOINCtasks-master folder.
 # # Not sure what determines the relative Project path.
 # #    Depends on copying the module?
-# LOGPATH = Path('../count-tasks_log.txt')
-LOGPATH = Path('../count-tasks_log.txt')
+LOGPATH = str(Path('count-tasks_log.txt'))
+# LOGPATH = str(Path('../count-tasks_log.txt'))
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5x'
 GUI_TITLE = __file__
