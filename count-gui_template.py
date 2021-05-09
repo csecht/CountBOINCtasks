@@ -58,14 +58,14 @@ BC = boinc_command.BoincCommand()
 # # Assume log file is in the CountBOINCtasks-master folder.
 # # Not sure what determines the relative Project path.
 # #    Depends on copying the module?
-LOGPATH = str(Path('count-tasks_log.txt'))
-# LOGPATH = str(Path('../count-tasks_log.txt'))
+LOGPATH = Path('count-tasks_log.txt')
+# LOGPATH = Path('../count-tasks_log.txt')
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5x'
 GUI_TITLE = __file__
 
 # Here logging is lazily employed to manage the file of report data.
-logging.basicConfig(filename=LOGPATH, level=logging.INFO,
+logging.basicConfig(filename=str(LOGPATH), level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 
@@ -82,7 +82,7 @@ class CountGui:
     # icon = tk.PhotoImage(file='Python-icon.png')
     # # icon.image = icon
     # mainwin.iconphoto(True, icon)
-    # mainwin.tk.call('wm', 'iconphoto',  mainwin._w,
+    # mainwin.tk.call('wm', 'iconphoto', mainwin._w,
     #                 tk.PhotoImage(file='Python-icon.png'))
 
     # def __init__(self, mainwin: tk.Tk):
@@ -100,9 +100,9 @@ class CountGui:
         self.mainwin_widgets()
 
         # Label fg configuration variables
-        self.emphasize      = 'grey90'
-        self.highlight      = 'gold'
-        self.deemphasize    = 'grey60'
+        self.emphasize = 'grey90'
+        self.highlight = 'gold'
+        self.deemphasize = 'grey60'
 
         # Starting data report var
         self.count_lim = None
@@ -136,17 +136,17 @@ class CountGui:
                                     borderwidth=2, bg=self.data_bg)
         self.sumry_intvl_l = tk.Label(self.dataframe, width=20, relief='groove',
                                       borderwidth=2, bg=self.data_bg)
-        self.count_start_l =    tk.Label(self.dataframe, bg=self.data_bg)
-        self.count_now_l =      tk.Label(self.dataframe, bg=self.data_bg)
-        self.count_uniq_l =     tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_mean_l =        tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_sd_l =          tk.Label(self.dataframe, bg=self.data_bg)
-        self.time_range_l =     tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_sum_l =         tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_mean_suml =     tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_sd_suml =       tk.Label(self.dataframe, bg=self.data_bg)
-        self.time_range_suml =  tk.Label(self.dataframe, bg=self.data_bg)
-        self.tt_sum_suml =      tk.Label(self.dataframe, bg=self.data_bg)
+        self.count_start_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.count_now_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.count_uniq_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.tt_mean_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.tt_sd_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.time_range_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.tt_sum_l = tk.Label(self.dataframe, bg=self.data_bg)
+        self.tt_mean_suml = tk.Label(self.dataframe, bg=self.data_bg)
+        self.tt_sd_suml = tk.Label(self.dataframe, bg=self.data_bg)
+        self.time_range_suml = tk.Label(self.dataframe, bg=self.data_bg)
+        self.tt_sum_suml = tk.Label(self.dataframe, bg=self.data_bg)
 
         # Could use style with ttk.Label to remove redundancies, but,
         # that requires changing fg to foreground in all the show_() methods.
@@ -286,7 +286,7 @@ class CountGui:
                          accelerator="Ctrl+L")
 
         help_menu = tk.Menu(menu, tearoff=0)
-        menu. add_cascade(    label="Help", menu=help_menu)
+        menu. add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="Tips", state=tk.DISABLED)
         help_menu.add_command(label="Compliment", command=self.compliment,
                               accelerator="Ctrl+Shift+C")
@@ -298,21 +298,21 @@ class CountGui:
 
         view_log_b = ttk.Button(text='View log file',
                                 command=self.show_log)
-        intvl_b = ttk.Button(   text='Interval focus',
-                                command=self.show_intvldata)
-        sumry_b = ttk.Button(   text='Summary focus',
-                                command=self.show_sumrydata)
-        quit_b = ttk.Button(    text="Quit",
-                                command=self.quitgui)
+        intvl_b = ttk.Button(text='Interval focus',
+                             command=self.show_intvldata)
+        sumry_b = ttk.Button(ext='Summary focus',
+                             command=self.show_sumrydata)
+        quit_b = ttk.Button(ext="Quit",
+                            command=self.quitgui)
         # Button used only to test progressbar.
-        test_b = ttk.Button(    text="Run test bar",
-                                command=self.increment_prog)
+        test_b = ttk.Button(text="Run test bar",
+                            command=self.increment_prog)
 
         view_log_b.grid(row=0, column=0, padx=5, pady=5)
-        intvl_b.grid(   row=0, column=1, padx=0, pady=5)
-        sumry_b.grid(   row=0, column=2, padx=(0, 25), pady=5)
-        quit_b.grid(    row=12, column=2, padx=5, sticky=tk.E)
-        test_b.grid(    row=11, column=2,  padx=5, sticky=tk.E)
+        intvl_b.grid(row=0, column=1, padx=0, pady=5)
+        sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
+        quit_b.grid(row=12, column=2, padx=5, sticky=tk.E)
+        test_b.grid(row=11, column=2, padx=5, sticky=tk.E)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -432,39 +432,39 @@ class CountGui:
         """
 
         # Starting datetime and report times; invariant throughout counts.
-        self.time_start_l.config( text=self.time_start)
-        self.intvl_str_l.config(  text=self.intvl_str,   fg=self.emphasize)
+        self.time_start_l.config(text=self.time_start)
+        self.intvl_str_l.config(text=self.intvl_str, fg=self.emphasize)
         self.sumry_intvl_l.config(text=self.sumry_intvl, fg=self.deemphasize)
 
         # Starting count data and times (from past boinc-client hour).
         time_range = self.tt_lo + ' -- ' + self.tt_hi
 
         self.count_start_l.config(text=self.count_start, fg=self.highlight)
-        self.tt_mean_l.config(    text=self.tt_mean,     fg=self.highlight)
-        self.tt_sd_l.config(      text=self.tt_sd,       fg=self.emphasize)
-        self.time_range_l.config( text=time_range,       fg=self.emphasize)
-        self.tt_sum_l.config(     text=self.tt_sum,      fg=self.emphasize)
+        self.tt_mean_l.config(text=self.tt_mean, fg=self.highlight)
+        self.tt_sd_l.config(text=self.tt_sd, fg=self.emphasize)
+        self.time_range_l.config(text=time_range, fg=self.emphasize)
+        self.tt_sum_l.config(text=self.tt_sum, fg=self.emphasize)
 
         # Previous and until task count times.
-        self.time_now_l.config(   text='The most recent 1 hr BOINC report')
-        self.count_lim_l.config(  text=self.count_lim)
-        self.count_next_l.config( text=self.count_next)
+        self.time_now_l.config(text='The most recent 1 hr BOINC report')
+        self.count_lim_l.config(text=self.count_lim)
+        self.count_next_l.config(text=self.count_next)
 
         # Place labels in row,column positions.
-        self.time_start_l.grid( row=2, column=1, padx=10, sticky=tk.EW,
-                                columnspan=2)
-        self.intvl_str_l.grid(  row=3, column=1, padx=10, sticky=tk.EW)
+        self.time_start_l.grid(row=2, column=1, padx=10, sticky=tk.EW,
+                               columnspan=2)
+        self.intvl_str_l.grid(row=3, column=1, padx=10, sticky=tk.EW)
         self.sumry_intvl_l.grid(row=3, column=2, padx=(0, 10), sticky=tk.EW)
         self.count_start_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.tt_mean_l.grid(    row=5, column=1, padx=10, sticky=tk.EW)
-        self.tt_sd_l.grid(      row=6, column=1, padx=10, sticky=tk.EW)
-        self.time_range_l.grid( row=7, column=1, padx=10, sticky=tk.EW)
-        self.tt_sum_l.grid(     row=8, column=1, padx=10, sticky=tk.EW)
+        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
+        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
+        self.time_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
+        self.tt_sum_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
 
-        self.time_now_l.grid(   row=10, column=1, padx=3, sticky=tk.W,
-                                columnspan=2)
-        self.count_lim_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
-        self.count_next_l.grid( row=12, column=1, padx=3, sticky=tk.W)
+        self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+                             columnspan=2)
+        self.count_lim_l.grid(row=11, column=1, padx=3, sticky=tk.W)
+        self.count_next_l.grid(ow=12, column=1, padx=3, sticky=tk.W)
 
     def show_intvldata(self) -> None:
         """
@@ -484,30 +484,30 @@ class CountGui:
         self.sumry_intvl_l.config(fg=self.deemphasize)
 
         # Interval data, column1
-        self.count_now_l.config( text=self.count_now, fg=self.highlight)
-        self.tt_mean_l.config(   text=self.tt_mean,   fg=self.highlight)
-        self.tt_sd_l.config(     text=self.tt_sd,     fg=self.emphasize)
-        self.time_range_l.config(text=time_range,     fg=self.emphasize)
-        self.tt_sum_l.config(    text=self.tt_sum,    fg=self.emphasize)
+        self.count_now_l.config(text=self.count_now, fg=self.highlight)
+        self.tt_mean_l.config(text=self.tt_mean, fg=self.highlight)
+        self.tt_sd_l.config(text=self.tt_sd, fg=self.emphasize)
+        self.time_range_l.config(text=time_range, fg=self.emphasize)
+        self.tt_sum_l.config(text=self.tt_sum, fg=self.emphasize)
 
         # Summary data, column2, deemphasize font color
-        self.count_uniq_l.config(   fg=self.deemphasize)
-        self.tt_mean_suml.config(   fg=self.deemphasize)
-        self.tt_sd_suml.config(     fg=self.deemphasize)
+        self.count_uniq_l.config(fg=self.deemphasize)
+        self.tt_mean_suml.config(fg=self.deemphasize)
+        self.tt_sd_suml.config(fg=self.deemphasize)
         self.time_range_suml.config(fg=self.deemphasize)
-        self.tt_sum_suml.config(    fg=self.deemphasize)
+        self.tt_sum_suml.config(fg=self.deemphasize)
 
         # Previous and until task count times.
-        self.count_now_l.config(  text=self.count_now)
-        self.time_now_l.config(   text=self.time_now)
-        self.count_next_l.config( text=self.count_next)
+        self.count_now_l.config(text=self.count_now)
+        self.time_now_l.config(text=self.time_now)
+        self.count_next_l.config(text=self.count_next)
 
         # Place new labels (not in show_startdata) in row,column positions.
         # Also place labels whose font emphasis needs to change. ???
-        self.count_now_l.grid(     row=4, column=1, padx=10, sticky=tk.EW)
-        self.count_remain_l.grid(  row=11, column=1, padx=3, sticky=tk.W)
-        self.time_now_l.grid(      row=10, column=1, padx=3, sticky=tk.W,
-                                   columnspan=2)
+        self.count_now_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
+        self.count_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
+        self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+                             columnspan=2)
 
     def show_sumrydata(self) -> None:
         """
@@ -527,34 +527,34 @@ class CountGui:
         self.sumry_intvl_l.config(fg=self.emphasize)
 
         # Summary data, column2, emphasize font color
-        self.count_uniq_l.config(   text=self.count_uniq, fg=self.highlight)
-        self.tt_mean_suml.config(   text=self.tt_mean,     fg=self.highlight)
-        self.tt_sd_suml.config(     text=self.tt_sd,       fg=self.emphasize)
-        self.time_range_suml.config(text=time_range,       fg=self.emphasize)
-        self.tt_sum_suml.config(    text=self.tt_sum,      fg=self.emphasize)
+        self.count_uniq_l.config(text=self.count_uniq, fg=self.highlight)
+        self.tt_mean_suml.config(text=self.tt_mean, fg=self.highlight)
+        self.tt_sd_suml.config(text=self.tt_sd, fg=self.emphasize)
+        self.time_range_suml.config(text=time_range, fg=self.emphasize)
+        self.tt_sum_suml.config(text=self.tt_sum, fg=self.emphasize)
 
         # Interval data, column1, deemphasize font color
         self.count_start_l.config(text="")
-        self.count_now_l.config( fg=self.deemphasize)
-        self.tt_mean_l.config(   fg=self.deemphasize)
-        self.tt_sd_l.config(     fg=self.deemphasize)
+        self.count_now_l.config(fg=self.deemphasize)
+        self.tt_mean_l.config(fg=self.deemphasize)
+        self.tt_sd_l.config(fg=self.deemphasize)
         self.time_range_l.config(fg=self.deemphasize)
-        self.tt_sum_l.config(    fg=self.deemphasize)
+        self.tt_sum_l.config(fg=self.deemphasize)
 
         # Previous and until task count times.  NECESSARY? b/c dupl of intvl?
-        self.count_now_l.config( text=self.count_now)
-        self.time_now_l.config(  text=self.time_now)
+        self.count_now_l.config(text=self.count_now)
+        self.time_now_l.config(text=self.time_now)
         self.count_next_l.config(text=self.count_next)
 
         # Place labels in row,column positions.
-        self.count_uniq_l.grid(   row=4, column=2, padx=(0, 10), sticky=tk.EW)
-        self.tt_mean_suml.grid(   row=5, column=2, padx=10, sticky=tk.EW)
-        self.tt_sd_suml.grid(     row=6, column=2, padx=10, sticky=tk.EW)
+        self.count_uniq_l.grid(row=4, column=2, padx=(0, 10), sticky=tk.EW)
+        self.tt_mean_suml.grid(row=5, column=2, padx=10, sticky=tk.EW)
+        self.tt_sd_suml.grid(row=6, column=2, padx=10, sticky=tk.EW)
         self.time_range_suml.grid(row=7, column=2, padx=10, sticky=tk.EW)
-        self.tt_sum_suml.grid(    row=8, column=2, padx=10, sticky=tk.EW)
+        self.tt_sum_suml.grid(row=8, column=2, padx=10, sticky=tk.EW)
 
-        self.time_now_l.grid(  row=10, column=1, padx=3, sticky=tk.W,
-                               columnspan=2)
+        self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+                             columnspan=2)
         self.count_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
 
@@ -756,7 +756,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                         relief='flat',
                         border=0)
         text.grid(row=2, column=1, columnspan=2,
-                  padx=(15, 20),  sticky=tk.EW)
+                  padx=(15, 20), sticky=tk.EW)
         # To fit well, pady ^here must match pady of the same data label row.
         self.dataframe.after(2468, text.destroy)
 
@@ -1006,17 +1006,8 @@ def get_timestats(count: int, taskt: iter) -> dict:
         }
 
 
-# SEMAPHORE ############ for data_intervals()
-# DI_SEM = threading.Semaphore()
-########################
-# DI_SEM is released at the end of 'for' cycle counting loop.
-
-
 # TODO: Either make this a class with methods that feed data to GUI or make
 #  reporting functions that 'return' report data when called from GUI class.
-# TODO: Consider making main program a GUI with terminal display optional,
-#   terminal with GUI opt, or having two programs, GUI only and terminal
-#   only.
 def data_intervals() -> dict:
     """
     Threaded flow for timing intervals and gathering task data.
@@ -1095,7 +1086,6 @@ def data_intervals() -> dict:
         # cg.set_startdata()
 
 # TODO: If use return to pass data tp GUI, then need separate data functions.
-
 
     # Repeated intervals: counts, time stats, and summaries.
     # Synopsis:
@@ -1199,10 +1189,6 @@ def data_intervals() -> dict:
             # Need to reset data list for the next summary interval.
             ttimes_smry.clear()
 
-    # SEMAPHORE ############
-    # DI_SEM.release()
-    ########################
-
 
 # Need data acquisition and timer in Thread so tkinter can run in main thread.
 # TODO: reset interval and summary default times.
@@ -1267,13 +1253,13 @@ if __name__ == '__main__':
 
     if args.about:
         print(__doc__)
-        print('Author: ',    __author__)
+        print('Author: ', __author__)
         print('Copyright: ', __copyright__)
-        print('Credits: ',   *[f'\n      {item}' for item in __credits__])
-        print('License: ',   __license__)
-        print('Version: ',   __version__)
+        print('Credits: ', *[f'\n      {item}' for item in __credits__])
+        print('License: ', __license__)
+        print('Version: ', __version__)
         print('Maintainer: ', __maintainer__)
-        print('Status: ',    __status__)
+        print('Status: ', __status__)
         sys.exit(0)
 
     # interval_thread = threading.Thread(target=data_intervals, daemon=True)
@@ -1289,4 +1275,3 @@ if __name__ == '__main__':
     #     exit_msg = '\n\n  *** Interrupted by user. Quitting now... \n\n'
     #     sys.stdout.write(exit_msg)
     #     logging.info(msg=f'\n{datetime.now()}: {exit_msg}')
-
