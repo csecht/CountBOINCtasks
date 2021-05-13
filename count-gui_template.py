@@ -68,6 +68,8 @@ GUI_TITLE = __file__
 logging.basicConfig(filename=str(LOGPATH), level=logging.INFO,
                     filemode="a", format='%(message)s')
 
+# TODO: Convert to MVC architecture.
+
 
 # The tkinter gui engine that runs as main thread.
 class CountGui:
@@ -844,9 +846,9 @@ along with this program. If not, see https://www.gnu.org/licenses/
 # Functions that are used by data_intervals().
 def check_args(parameter) -> None:
     """
-    Check command line arguments for errors.
+    Check command line --summary argument for errors.
 
-    :param parameter: Used for the --summary parameter.
+    :param parameter: Passed from parser.add_argument 'type' call.
     :return: If no errors, return the parameter string.
     """
 
@@ -1006,8 +1008,6 @@ def get_timestats(count: int, taskt: iter) -> dict:
         }
 
 
-# TODO: Either make this a class with methods that feed data to GUI or make
-#  reporting functions that 'return' report data when called from GUI class.
 def data_intervals() -> dict:
     """
     Threaded flow for timing intervals and gathering task data.
@@ -1015,7 +1015,7 @@ def data_intervals() -> dict:
     :rtype: object
     :return: A dictionary of data be called from CountGui
     """
-
+    # TODO: Make gui the default (with no terminal option?)
     args.gui = True  # For testing only; True allows call to CountGui().
 
     # Initial run: need to set variables for comparisons between intervals.
@@ -1253,13 +1253,13 @@ if __name__ == '__main__':
 
     if args.about:
         print(__doc__)
-        print('Author: ', __author__)
+        print('Author:    ', __author__)
         print('Copyright: ', __copyright__)
-        print('Credits: ', *[f'\n      {item}' for item in __credits__])
-        print('License: ', __license__)
-        print('Version: ', __version__)
-        print('Maintainer: ', __maintainer__)
-        print('Status: ', __status__)
+        print('Credits:   ', *[f'\n      {item}' for item in __credits__])
+        print('License:   ', __license__)
+        print('Version:   ', __version__)
+        print('Maintainer:', __maintainer__)
+        print('Status:    ', __status__)
         sys.exit(0)
 
     # interval_thread = threading.Thread(target=data_intervals, daemon=True)

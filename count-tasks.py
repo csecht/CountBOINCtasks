@@ -206,10 +206,9 @@ class DataIntervals:
             if self.count_new == 0:
                 self.tic_nnt += 1
                 report = (f'{self.time_now}; '
-                          f'NO TASKS reported in the past {self.tic_nnt}'
-                          f' {INTERVAL_M}m interval(s).\n'
-                          f'{self.indent}Counts remaining until exit:'
-                          f' {self.counts_remain}')
+                          f'{self.orng}NO TASKS reported {self.undo_color}in the past'
+                          f' {self.tic_nnt} {INTERVAL_M}m interval(s).\n'
+                          f'{self.indent}Counts remaining until exit: {self.counts_remain}')
                 if self.tic_nnt == 1:
                     print(f'\r{self.del_line}{report}')
                 if self.tic_nnt > 1:
@@ -422,12 +421,12 @@ class DataIntervals:
 
 
 def check_args(parameter) -> None:
-    """Check command line arguments for errors.
+    """Check --summary command line arguments for errors.
 
-    :param parameter: Used for the --summary parameter.
+    :param parameter: Passed from parser.add_argument 'type' call.
     :return: If no errors, return the parameter string.
     """
-
+    # This is used ONLY for the --summary argument. Where is best placement?
     if parameter == "0":
         instruct = "Parameter value cannot be zero."
         raise argparse.ArgumentTypeError(instruct)
@@ -508,13 +507,13 @@ if __name__ == '__main__':
 
     if args.about:
         print(__doc__)
-        print('Author: ',    __author__)
+        print('Author:    ', __author__)
         print('Copyright: ', __copyright__)
-        print('Credits: ',   *[f'\n      {item}' for item in __credits__])
-        print('License: ',   __license__)
-        print('Version: ',   __version__)
-        print('Maintainer: ', __maintainer__)
-        print('Status: ',    __status__)
+        print('Credits:   ', *[f'\n      {item}' for item in __credits__])
+        print('License:   ', __license__)
+        print('Version:   ', __version__)
+        print('Maintainer:', __maintainer__)
+        print('Status:    ', __status__)
         sys.exit(0)
 
     try:
