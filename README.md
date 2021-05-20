@@ -53,17 +53,20 @@ Running the default settings (no optional arguments), will count the
 Example report results, using default settings:
 
 ```
-2021-Jan-02 15:23:36; Number of tasks in the most recent BOINC report: 11
-                      Task Times: mean 00:17:15, range [00:13:52 - 00:20:18],
-                                                 stdev 00:02:20, total 03:09:49
+2021-May-19 16:17:32; Number of tasks in the most recent BOINC report: 16
+                      Task Times: mean 00:22:55, range [00:22:45 - 00:23:03],
+                                                 stdev 00:00:05, total 06:06:46
+                      Total tasks in queue: 90
                       Number of scheduled count intervals: 1008
                       Counts every 60m, summaries every 1d
                       Timed intervals beginning now...
 
-2021-Jan-02 16:23:36; Tasks reported in the past 60m: 13
+2021-May-19 17:17:36; Tasks reported in the past 60m: 16
+                      Task Times: mean 00:22:54, range [00:22:45 - 00:23:01],
+                                                 stdev 00:00:04, total 06:06:36
+                      Total tasks in queue: 74
                       Counts remaining until exit: 1007
-                      Task Times: mean 00:17:48, range [00:13:33 - 00:20:43],
-                                                 stdev 00:03:06, total 01:46:49
+
 10m ||||||||||< ~time to next count
 ```
 

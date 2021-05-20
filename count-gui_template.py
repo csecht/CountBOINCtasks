@@ -69,6 +69,7 @@ logging.basicConfig(filename=str(LOGPATH), level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 # TODO: Convert to MVC architecture.
+# TODO: Add total tasks in queue (from count-tasks.py v.0.4.14)
 
 
 # The tkinter gui engine that runs as main thread.
@@ -302,9 +303,9 @@ class CountGui:
                                 command=self.show_log)
         intvl_b = ttk.Button(text='Interval focus',
                              command=self.show_intvldata)
-        sumry_b = ttk.Button(ext='Summary focus',
+        sumry_b = ttk.Button(text='Summary focus',
                              command=self.show_sumrydata)
-        quit_b = ttk.Button(ext="Quit",
+        quit_b = ttk.Button(text="Quit",
                             command=self.quitgui)
         # Button used only to test progressbar.
         test_b = ttk.Button(text="Run test bar",
@@ -466,7 +467,7 @@ class CountGui:
         self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                              columnspan=2)
         self.count_lim_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        self.count_next_l.grid(ow=12, column=1, padx=3, sticky=tk.W)
+        self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
 
     def show_intvldata(self) -> None:
         """

@@ -226,7 +226,7 @@ class BoincCommand:
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
         # if tag in self.taskXDFtags:  # Not currently used by count_now-tasks.
         if tag in self.tasktags:
-            data = [line.replace(tag_str, '') for line in output if tag in line]
+            data = [line.replace(tag_str, '') for line in output if tag_str in line]
             return data
         print(f'Unrecognized data tag: {tag}')
         return data
