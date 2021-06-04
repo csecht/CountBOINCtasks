@@ -60,6 +60,7 @@ BC = boinc_command.BoincCommand()
 # #    Depends on copying the module?
 LOGPATH = Path('count-tasks_log.txt')
 # LOGPATH = Path('../count-tasks_log.txt')
+ICONPATH = Path('Python-icon.ico')
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5x'
 GUI_TITLE = __file__
@@ -88,7 +89,6 @@ class CountGui:
     # mainwin.tk.call('wm', 'iconphoto', mainwin._w,
     #                 tk.PhotoImage(file='Python-icon.png'))
 
-    # def __init__(self, mainwin: tk.Tk):
     def __init__(self, mainwin: tk.Tk):
 
         # self.datadict = datadict
@@ -206,6 +206,10 @@ class CountGui:
         #   on platform; set for Linux with its largest relative font size.
         self.mainwin.minsize(466, 390)
         self.mainwin.title(GUI_TITLE)
+        # Window icon .ico does not show on Linux Ubuntu, but does on Windows.
+        # if sys.platform[:3] == 'win':
+        if sys.platform.startswith('win'):
+            self.mainwin.iconbitmap(ICONPATH)
 
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
@@ -947,7 +951,7 @@ def intvl_timer(interval: int) -> print:
 
     # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
     # because there is no external input.
-    if sys.platform[:3] == 'win':
+    if sys.platform.startswith('win'):
         subprocess.call('', shell=True)
 
     # Not +1 in range because need only to sleep to END of interval.
@@ -1043,7 +1047,7 @@ def data_intervals() -> dict:
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
     # because any command string is constructed from internal input only.
-    if sys.platform[:3] == 'win':
+    if sys.platform.startswith('win'):
         subprocess.call('', shell=True)
 
     # Report: start information for existing task times and counts.
