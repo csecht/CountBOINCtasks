@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.15'
+__version__ =   '0.4.16'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -150,7 +150,7 @@ class DataIntervals:
         for loop_num in range(COUNT_LIM):
             # DI_thread.join()
             self.intvl_timer(INTERVAL_M)
-            # t.sleep(5)  # DEBUG; or use to bypass intvl_timer.
+            # time.sleep(5)  # DEBUG; or use to bypass intvl_timer.
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
             self.tasks_total = len(BC.get_tasks('name'))
@@ -163,26 +163,30 @@ class DataIntervals:
             tasks_running = BC.get_tasks('active_task_state')
             self.notrunning = False
             if 'EXECUTING' not in tasks_running:
-                self.notrunning = True
-                if 'uploaded' in BC.get_tasks('state') and \
-                        'downloaded' not in BC.get_tasks('state'):
-                    local_boinc_urls = BC.get_project_url()
-                    # I'm not sure how to handle multiple concurrent Projects.
-                    # If they are all stalled, then updating the first works?
-                    # B/c of how BC.project_action is structured, this uses the
-                    #  url to get the Project name ID which is used to get the
-                    #  url needed for the project cmd.  Silly, but uses
-                    #  generalized methods.
-                    first_local_url = local_boinc_urls[0]
-            # https://stackoverflow.com/questions/8023306/get-key-by-value-in-dictionary
-                    first_project = list(BC.project_url.keys())[
-                        list(BC.project_url.values()).index(first_local_url)]
-                    BC.project_action(first_project, 'update')
-                    report = (f'\n{self.time_now};'
-                              f' *** Project {first_project} was updated. ***\n')
-                    print(report)
-                    if args.log is True:
-                        logging.info(report)
+                # Avoid false positives, which happen, by waiting and re-checking.
+                time.sleep(10)
+                tasks_running = BC.get_tasks('active_task_state')
+                if 'EXECUTING' not in tasks_running:
+                    self.notrunning = True
+                    if 'uploaded' in BC.get_tasks('state') and \
+                            'downloaded' not in BC.get_tasks('state'):
+                        local_boinc_urls = BC.get_project_url()
+                        # I'm not sure how to handle multiple concurrent Projects.
+                        # If they are all stalled, then updating the first works?
+                        # B/c of how BC.project_action is structured, this uses the
+                        #  url to get the Project name ID which is used to get the
+                        #  url needed for the project cmd.  Silly, but uses
+                        #  generalized methods.
+                        first_local_url = local_boinc_urls[0]
+                # https://stackoverflow.com/questions/8023306/get-key-by-value-in-dictionary
+                        first_project = list(BC.project_url.keys())[
+                            list(BC.project_url.values()).index(first_local_url)]
+                        BC.project_action(first_project, 'update')
+                        report = (f'\n{self.time_now};'
+                                  f' *** Project {first_project} was updated. ***\n')
+                        print(report)
+                        if args.log is True:
+                            logging.info(report)
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.
