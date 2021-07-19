@@ -23,6 +23,7 @@ import os
 import shlex
 import subprocess
 import sys
+import time
 from pathlib import Path
 from subprocess import PIPE
 
@@ -32,7 +33,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.6.5'
+__version__ = '0.4.7'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -174,6 +175,10 @@ class BoincCommand:
 
         try:
             output = subprocess.Popen(cmd, stdout=PIPE, text=True)
+            # Need to give time for boinc-client to provide stdout(?)
+            # Generally not a problem, but rarely a get_ method
+            # comes up empty handed; perhaps boinc-client was busy?
+            time.sleep(1)
             text = output.communicate()[0].split('\n')
             return text
         except subprocess.CalledProcessError as cpe:
