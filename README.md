@@ -29,15 +29,16 @@ Default settings assume a default location of the BOINC folder from the
      entering the path on the command line.
 ```
 ~/countBOINCtasks-master$ ./count-tasks.py --help
-usage: count-tasks [-h] [--about_gui] [--log] [--interval M] [--summary TIMEunit] [--count_lim N]
+usage: count-tasks.py [-h] [--about] [--log {yes,no}] [--interval M] [--summary TIMEunit] [--count_lim N]
 
 optional arguments:
   -h, --help          show this help message and exit
-  --about_gui             Author, copyright, and GNU license
-  --log               Generates or appends reports to a log file
-  --interval M        Specify Minutes between task counts (default: 60)
+  --about             Author, copyright, and GNU license
+  --log {yes,no}      Create log file of results or append to existing log (default: yes)
+  --interval M        Specify minutes between task counts (default: 60)
   --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
-  --count_lim N       Specify number of count reports until program closes (default: 1008; 0 provides current data)
+  --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data
+
 
 ```
 Options can be abbreviated, e.g., `./count-tasks --l --i 15 --s 1h --c 12`
