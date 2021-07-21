@@ -178,7 +178,7 @@ class BoincCommand:
             # Need to give time for boinc-client to provide stdout(?)
             # Generally not a problem, but rarely a get_ method
             # comes up empty handed; perhaps boinc-client was busy?
-            time.sleep(1)
+            # time.sleep(1)
             text = output.communicate()[0].split('\n')
             return text
         except subprocess.CalledProcessError as cpe:

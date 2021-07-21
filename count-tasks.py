@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.16'
+__version__ =   '0.4.17'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -64,6 +64,7 @@ class DataIntervals:
         self.time_now = None
         self.counts_remain = None
         self.tasks_total = 0
+        self.report = 'None'
         self.ttimes_start = []
         self.ttimes_new = []
         self.ttimes_smry = []
@@ -75,8 +76,8 @@ class DataIntervals:
 
         # # Terminal and log print formatting:
         self.indent = ' ' * 22
-        self.bigindent = ' ' * 49
-        self.del_line = '\x1b[2K'  # Clear the terminal line for a clean print.
+        self.bigindent = ' ' * 34
+        self.del_line = '\x1b[2K'  # Clear entire terminal line for a clean print.
         self.blue = '\x1b[1;38;5;33m'
         self.orng = '\x1b[1;38;5;202m'
         self.undo_color = '\x1b[0m'  # No color, reset to system default.
@@ -94,7 +95,7 @@ class DataIntervals:
     def start_report(self) -> None:
         """Report initial task counts and time stats.
 
-        :return: Terminal printed report; log report if optioned.
+        :return: Terminal printed report; logged report (default).
         """
 
         # As with task names, task times as sec.microsec are unique.
@@ -106,22 +107,32 @@ class DataIntervals:
             count_start, self.ttimes_start).values()
         self.tasks_total = len(BC.get_tasks('name'))
 
-        report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                  f' {self.blue}{count_start}{self.undo_color}\n'
-                  f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
-                  f' range [{tt_lo} - {tt_hi}],\n'
-                  f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                  f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
-                  f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
-                  f'{self.indent}Counts every {INTERVAL_M}m,'
-                  f' summaries every {SUMMARY_T}\n'
-                  f'{self.indent}Timed intervals beginning now...')
-        print(report)
+        if COUNT_LIM > 0:
+            self.report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
+                           f' {self.blue}{count_start}{self.undo_color}\n'
+                           f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                           f' range [{tt_lo} - {tt_hi}],\n'
+                           f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                           f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
+                           f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
+                           f'{self.indent}Counts every {INTERVAL_M}m,'
+                           f' summaries every {SUMMARY_T}\n'
+                           f'Timed intervals beginning now...\n\n')
+        # Need to provide a truncated report for one-off "status" runs.
+        elif COUNT_LIM == 0:
+            self.report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
+                           f' {self.blue}{count_start}{self.undo_color}\n'
+                           f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                           f' range [{tt_lo} - {tt_hi}],\n'
+                           f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                           f'{self.indent}Total tasks in queue: {self.tasks_total}\n')
+        print(self.report)
+
         if args.log is True:
-            report_cleaned = self.ansi_esc.sub('', report)
+            report_cleaned = self.ansi_esc.sub('', self.report)
             # This is proper string formatting for logging, but f-strings
             # would be fine for how "logging" is used here.
-            logging.info("""%s; Task counter is starting with
+            logging.info("""%s; TASK COUNTER START settings
 %scount interval (minutes): %s
 %ssummary interval: %s
 %smax count cycles: %s
@@ -138,9 +149,8 @@ class DataIntervals:
     def interval_reports(self):
         """
         Gather and report task counts and time stats at timed intervals.
-
-        :return: Terminal printed reports. Data for GUI display. Log write if
-        optioned.
+        
+        :return: Terminal printed report; logged report (default).
         """
         # Synopsis:
         # Do not include starting tasks in interval or summary counts.
@@ -216,17 +226,19 @@ class DataIntervals:
                 report = (f'{self.time_now}; '
                           f'{self.orng}NO TASKS reported {self.undo_color}in the past'
                           f' {self.tic_nnt} {INTERVAL_M}m interval(s).\n'
-                          f'{self.indent}Counts remaining until exit: {self.counts_remain}')
+                          f'{self.counts_remain} counts remaining until exit.')
                 if self.tic_nnt == 1:
-                    print(f'\r{self.del_line}{report}')
+                    # print(f'\r{self.del_line}{report}')
+                    print(f'\x1b[1F{self.del_line}{report}')
                 if self.tic_nnt > 1:
                     print(f'\r\x1b[2A{self.del_line}{report}')
                 if args.log is True:
-                    logging.info(report)
+                    report_cleaned = self.ansi_esc.sub('', report)
+                    logging.info(report_cleaned)
                 if self.notrunning is True:
                     report = (f'\n{self.time_now};'
                               ' *** Check whether tasks are running. ***\n')
-                    print(report)
+                    print(f'\x1b[1F{self.del_line}{report}')
                     if args.log is True:
                         logging.info(report)
 
@@ -236,15 +248,18 @@ class DataIntervals:
                 tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
                     self.get_timestats(self.count_new, self.ttimes_new).values()
                 report = (
-                    f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
+                    # f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
+                    f'{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f' {self.blue}{self.count_new}{self.undo_color}\n'
                     f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
-                    f'{self.indent}Counts remaining until exit: {self.counts_remain}'
+                    f'{self.indent}Total tasks in queue: {self.tasks_total}\n\n'
+                    f'{self.counts_remain} counts remaining until exit.'
                 )
-                print(f'\r{self.del_line}{report}')
+                # Need to overwrite 'counts remaining' line of previous report
+                #   with the timer bar, so move cursor 1 line up & delete.
+                print(f'\x1b[1F{self.del_line}{report}')
                 if args.log is True:
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
@@ -252,10 +267,10 @@ class DataIntervals:
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{self.time_now};'
                           f' *** Check whether tasks are running. ***\n')
-                print(f'\r\x1b[A{self.del_line}{report}')
+                # print(f'\r\x1b[A{self.del_line}{report}')
+                print(f'\x1b[1F{self.del_line}{report}')
                 if args.log is True:
                     logging.info(report)
-
             self.summary_reports(loop_num, self.ttimes_smry)
 
     def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
@@ -493,7 +508,8 @@ if __name__ == '__main__':
                         metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
-                             ' exits (default: %(default)d)',
+                             ' exits (default: %(default)d);'
+                             ' 0 provides current data',
                         default=1008,
                         type=int,
                         metavar="N")
