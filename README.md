@@ -37,7 +37,7 @@ optional arguments:
   --log               Generates or appends reports to a log file
   --interval M        Specify Minutes between task counts (default: 60)
   --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
-  --count_lim N       Specify number of count reports until program closes (default: 1008)
+  --count_lim N       Specify number of count reports until program closes (default: 1008; 0 provides current data)
 
 ```
 Options can be abbreviated, e.g., `./count-tasks --l --i 15 --s 1h --c 12`
@@ -53,21 +53,22 @@ Running the default settings (no optional arguments), will count the
 Example report results, using default settings:
 
 ```
-2021-May-19 16:17:32; Number of tasks in the most recent BOINC report: 16
-                      Task Times: mean 00:22:55, range [00:22:45 - 00:23:03],
-                                                 stdev 00:00:05, total 06:06:46
-                      Total tasks in queue: 90
+:~/CountBOINCtasks-master$ ./count-tasks.py
+2021-Jul-21 06:14:14; Number of tasks in the most recent BOINC report: 11
+                      Task Times: mean 00:19:25, range [00:13:14 - 00:21:05],
+                                  stdev 00:02:11, total 03:33:43
+                      Total tasks in queue: 35
                       Number of scheduled count intervals: 1008
                       Counts every 60m, summaries every 1d
-                      Timed intervals beginning now...
+Timed intervals beginning now...
 
-2021-May-19 17:17:36; Tasks reported in the past 60m: 16
-                      Task Times: mean 00:22:54, range [00:22:45 - 00:23:01],
-                                                 stdev 00:00:04, total 06:06:36
-                      Total tasks in queue: 74
-                      Counts remaining until exit: 1007
+2021-Jul-21 07:14:18; Tasks reported in the past 60m: 12
+                      Task Times: mean 00:20:29, range [00:18:47 - 00:24:41],
+                                  stdev 00:01:33, total 04:05:48
+                      Total tasks in queue: 30
 
-10m ||||||||||< ~time to next count
+1007 counts remaining until exit.
+13m ||||||||||< ~time to next count
 ```
 
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.

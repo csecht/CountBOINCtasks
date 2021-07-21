@@ -143,7 +143,7 @@ class DataIntervals:
                          self.indent, args.count_lim,
                          report_cleaned)
 
-        # Begin list "old" tasks to exclude from new tasks.
+        # Begin list of "old" or prior tasks to exclude from new tasks.
         self.ttimes_used.extend(self.ttimes_start)
 
     def interval_reports(self):
