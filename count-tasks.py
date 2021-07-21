@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.17'
+__version__ =   '0.4.18'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -128,11 +128,11 @@ class DataIntervals:
                            f'{self.indent}Total tasks in queue: {self.tasks_total}\n')
         print(self.report)
 
-        if args.log is True:
+        if args.log == 'yes':
             report_cleaned = self.ansi_esc.sub('', self.report)
             # This is proper string formatting for logging, but f-strings
             # would be fine for how "logging" is used here.
-            logging.info("""%s; TASK COUNTER START settings
+            logging.info("""%s; >>> TASK COUNTER START settings <<<
 %scount interval (minutes): %s
 %ssummary interval: %s
 %smax count cycles: %s
@@ -195,7 +195,7 @@ class DataIntervals:
                         report = (f'\n{self.time_now};'
                                   f' *** Project {first_project} was updated. ***\n')
                         print(report)
-                        if args.log is True:
+                        if args.log == 'yes':
                             logging.info(report)
 
             # Need to add all prior tasks to the "used" list. "new" task times
@@ -232,14 +232,14 @@ class DataIntervals:
                     print(f'\x1b[1F{self.del_line}{report}')
                 if self.tic_nnt > 1:
                     print(f'\r\x1b[2A{self.del_line}{report}')
-                if args.log is True:
+                if args.log == 'yes':
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
                 if self.notrunning is True:
                     report = (f'\n{self.time_now};'
                               ' *** Check whether tasks are running. ***\n')
                     print(f'\x1b[1F{self.del_line}{report}')
-                    if args.log is True:
+                    if args.log == 'yes':
                         logging.info(report)
 
             elif self.count_new > 0 and self.notrunning is False:
@@ -260,7 +260,7 @@ class DataIntervals:
                 # Need to overwrite 'counts remaining' line of previous report
                 #   with the timer bar, so move cursor 1 line up & delete.
                 print(f'\x1b[1F{self.del_line}{report}')
-                if args.log is True:
+                if args.log == 'yes':
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
 
@@ -269,7 +269,7 @@ class DataIntervals:
                           f' *** Check whether tasks are running. ***\n')
                 # print(f'\r\x1b[A{self.del_line}{report}')
                 print(f'\x1b[1F{self.del_line}{report}')
-                if args.log is True:
+                if args.log == 'yes':
                     logging.info(report)
             self.summary_reports(loop_num, self.ttimes_smry)
 
@@ -299,7 +299,7 @@ class DataIntervals:
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
             )
             print(f'\r{self.del_line}{report}')
-            if args.log is True:
+            if args.log == 'yes':
                 report_cleaned = self.ansi_esc.sub('', report)
                 logging.info(report_cleaned)
 
@@ -370,13 +370,15 @@ class DataIntervals:
         # Initial timer bar length; 60 fits well with clock times.
         bar_len = 60
         prettybar = ' ' * bar_len
-        # Need to assign for-loop decrement time & total sleep time as seconds.
-        # Need bar segment sleep time, in sec.; is a factor of bar length.
+        # Need bar segment sleep seconds (barseg_s) to be a factor of bar length;
+        #   this sets the for-loop sleep interval and time decrement value.
+        # Remaining seconds are count down from initial total seconds.
         total_s = interval * 60
         barseg_s = round(total_s / bar_len)
         remain_s = total_s
 
         # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
+        # 'xx' here means blinking text.
         whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
         whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
         # reset = '\x1b[0m'  # No color, reset to system default.
@@ -485,9 +487,10 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--log',
                         help='Create log file of results or append to '
-                             'existing log',
-                        action='store_true',
-                        default=True)
+                             'existing log'
+                             ' (default: %(default)s)',
+                        default='yes',
+                        choices=['yes', 'no'])
     # parser.add_argument('--gui',
     #                     help='Show data in interactive graphics window.',
     #                     action='store_true',
