@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.18'
+__version__ =   '0.4.19'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -76,7 +76,7 @@ class DataIntervals:
 
         # # Terminal and log print formatting:
         self.indent = ' ' * 22
-        self.bigindent = ' ' * 33  # Indents the stdev Task time report line.
+        self.bigindent = ' ' * 33  # Indent the Task time stdev report line.
         self.del_line = '\x1b[2K'  # Clear entire terminal line for a clean print.
         self.blue = '\x1b[1;38;5;33m'
         self.orng = '\x1b[1;38;5;202m'
@@ -93,9 +93,11 @@ class DataIntervals:
         self.interval_reports()
 
     def start_report(self) -> None:
-        """Report initial task counts and time stats.
+        """
+        Upon script execution, report counts and time stats of tasks
+        recently reported by BOINC.
 
-        :return: Terminal printed report; logged report (default).
+        :returns: None; generates initial report for Terminal and log.
         """
 
         # As with task names, task times as sec.microsec are unique.
@@ -103,29 +105,32 @@ class DataIntervals:
         #     task_names = BC.get_reported('tasks').
         self.ttimes_start = BC.get_reported('elapsed time')
         count_start = len(self.ttimes_start)
+        # Not the most robust way to get dict values, but it's concise.
         tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
             count_start, self.ttimes_start).values()
         self.tasks_total = len(BC.get_tasks('name'))
 
         if COUNT_LIM > 0:
-            self.report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                           f' {self.blue}{count_start}{self.undo_color}\n'
-                           f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
-                           f' range [{tt_lo} - {tt_hi}],\n'
-                           f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                           f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
-                           f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
-                           f'{self.indent}Counts every {INTERVAL_M}m,'
-                           f' summaries every {SUMMARY_T}\n'
-                           f'Timed intervals beginning now...\n\n')
+            self.report = (
+                f'{self.time_start}; Number of tasks in the most recent BOINC report:'
+                f' {self.blue}{count_start}{self.undo_color}\n'
+                f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
+                f' range [{tt_lo} - {tt_hi}],\n'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
+                f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
+                f'{self.indent}Counts every {INTERVAL_M}m,'
+                f' summaries every {SUMMARY_T}\n'
+                f'Timed intervals beginning now...\n\n')
         # Need to provide a truncated report for one-off "status" runs.
         elif COUNT_LIM == 0:
-            self.report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                           f' {self.blue}{count_start}{self.undo_color}\n'
-                           f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
-                           f' range [{tt_lo} - {tt_hi}],\n'
-                           f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                           f'{self.indent}Total tasks in queue: {self.tasks_total}\n')
+            self.report = (
+                f'{self.time_start}; Number of tasks in the most recent BOINC report:'
+                f' {self.blue}{count_start}{self.undo_color}\n'
+                f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
+                f' range [{tt_lo} - {tt_hi}],\n'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                f'{self.indent}Total tasks in queue: {self.tasks_total}\n')
         print(self.report)
 
         if args.log == 'yes':
@@ -146,11 +151,11 @@ class DataIntervals:
         # Begin list of "old" or prior tasks to exclude from new tasks.
         self.ttimes_used.extend(self.ttimes_start)
 
-    def interval_reports(self):
+    def interval_reports(self) -> None:
         """
         Gather and report task counts and time stats at timed intervals.
         
-        :return: Terminal printed report; logged report (default).
+        :returns: None; generates reports for Terminal and log.
         """
         # Synopsis:
         # Do not include starting tasks in interval or summary counts.
@@ -244,9 +249,8 @@ class DataIntervals:
 
             elif self.count_new > 0 and self.notrunning is False:
                 self.tic_nnt -= self.tic_nnt
-                # Not the most robust way to get dict values, but it's concise.
-                tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
-                    self.get_timestats(self.count_new, self.ttimes_new).values()
+                tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
+                    self.count_new, self.ttimes_new).values()
                 report = (
                     # f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f'{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
@@ -279,8 +283,7 @@ class DataIntervals:
 
         :param loop_num: The for loop number from interval_reports().
         :param ttimes_smry: Cumulative list of task times from interval_reports()
-        :return: Terminal printed reports. Data for GUI display. Log write if
-        optioned.
+        :returns: None; generates summary reports for Terminal and log.
         """
 
         if (loop_num + 1) % SUMRY_FACTOR == 0 and self.notrunning is False:
@@ -310,10 +313,12 @@ class DataIntervals:
 
     @staticmethod
     def get_min(time_string: str) -> int:
-        """Convert time string to minutes.
+        """
+        Convert time string to minutes.
 
         :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
-        :return: Time as integer minutes.
+        :return: Integer minutes for any time length.
+        :raises KeyError: exception for bad unit in time_string
         """
         t_min = {
             'm': 1, 'h': 60, 'd': 1440}
@@ -327,7 +332,8 @@ class DataIntervals:
 
     @staticmethod
     def fmt_sec(secs: int, frmat: str) -> str:
-        """Convert seconds to the specified time format for display.
+        """
+        Convert seconds to the specified time format for display.
 
         :param secs: Time in seconds, any integer except 0.
         :param frmat: Either 'std' or 'short'
@@ -358,14 +364,14 @@ class DataIntervals:
         return note
 
     def intvl_timer(self, interval: int) -> None:
-        """Provide sleep intervals and display countdown timer.
+        """
+        Provide sleep intervals and display countdown timer.
 
         :param interval: Minutes between task counts; range[5-60, by 5's]
-        :return: A terminal/console graphic that displays time remaining.
+        :returns: None; generates a terminal graphic of time remaining.
         """
         # Idea for development from
-        # https://stackoverflow.com/questions/3160699/python-progress-bar
-        # /3162864
+        # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
 
         # Initial timer bar length; 60 fits well with clock times.
         bar_len = 60
@@ -415,8 +421,8 @@ class DataIntervals:
 
         :param numtasks: The number of elements in tasktimes.
         :param tasktimes: A list, tuple, or set of times, in seconds.
-        :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max; Dict
-        values as: 00:00:00.
+        :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max.
+                 Dict values as: 00:00:00.
         """
         total = self.fmt_sec(int(sum(set(tasktimes))), 'std')
         if numtasks > 1:
@@ -446,11 +452,12 @@ class DataIntervals:
             'tt_max': 'na'}
 
 
-def check_args(parameter) -> None:
+def check_args(parameter: str) -> str:
     """Check --summary command line arguments for errors.
 
     :param parameter: Passed from parser.add_argument 'type' call.
-    :return: If no errors, return the parameter string.
+    :return: If no errors, then return the parameter string.
+    :raises ValueError: exception for bad value in parameter
     """
     # This is used ONLY for the --summary argument. Where is best placement?
     if parameter == "0":
