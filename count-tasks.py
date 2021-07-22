@@ -76,7 +76,7 @@ class DataIntervals:
 
         # # Terminal and log print formatting:
         self.indent = ' ' * 22
-        self.bigindent = ' ' * 34
+        self.bigindent = ' ' * 33  # Indents the stdev Task time report line.
         self.del_line = '\x1b[2K'  # Clear entire terminal line for a clean print.
         self.blue = '\x1b[1;38;5;33m'
         self.orng = '\x1b[1;38;5;202m'
@@ -110,7 +110,7 @@ class DataIntervals:
         if COUNT_LIM > 0:
             self.report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
                            f' {self.blue}{count_start}{self.undo_color}\n'
-                           f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                           f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                            f' range [{tt_lo} - {tt_hi}],\n'
                            f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                            f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
@@ -122,7 +122,7 @@ class DataIntervals:
         elif COUNT_LIM == 0:
             self.report = (f'{self.time_start}; Number of tasks in the most recent BOINC report:'
                            f' {self.blue}{count_start}{self.undo_color}\n'
-                           f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                           f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                            f' range [{tt_lo} - {tt_hi}],\n'
                            f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                            f'{self.indent}Total tasks in queue: {self.tasks_total}\n')
@@ -251,7 +251,7 @@ class DataIntervals:
                     # f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f'{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f' {self.blue}{self.count_new}{self.undo_color}\n'
-                    f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                    f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                     f'{self.indent}Total tasks in queue: {self.tasks_total}\n\n'
@@ -292,9 +292,9 @@ class DataIntervals:
                 self.get_timestats(count_sumry, self.ttimes_uniq).values()
             report = (
                 f'\n{self.time_now}; '
-                f'{self.orng}>>> SUMMARY{self.undo_color} count for the past'
+                f'{self.orng}>>> SUMMARY:{self.undo_color} Count for the past'
                 f' {SUMMARY_T}: {self.blue}{count_sumry}{self.undo_color}\n'
-                f'{self.indent}Task Times: mean {self.blue}{tt_mean}{self.undo_color},'
+                f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
             )

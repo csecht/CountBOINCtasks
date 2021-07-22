@@ -39,7 +39,6 @@ optional arguments:
   --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
   --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data
 
-
 ```
 Options can be abbreviated, e.g., `./count-tasks --l --i 15 --s 1h --c 12`
 
@@ -56,16 +55,16 @@ Example report results, using default settings:
 ```
 :~/CountBOINCtasks-master$ ./count-tasks.py
 2021-Jul-21 06:14:14; Number of tasks in the most recent BOINC report: 11
-                      Task Times: mean 00:19:25, range [00:13:14 - 00:21:05],
-                                  stdev 00:02:11, total 03:33:43
+                      Task Time: mean 00:19:25, range [00:13:14 - 00:21:05],
+                                 stdev 00:02:11, total 03:33:43
                       Total tasks in queue: 35
                       Number of scheduled count intervals: 1008
                       Counts every 60m, summaries every 1d
 Timed intervals beginning now...
 
 2021-Jul-21 07:14:18; Tasks reported in the past 60m: 12
-                      Task Times: mean 00:20:29, range [00:18:47 - 00:24:41],
-                                  stdev 00:01:33, total 04:05:48
+                      Task Time: mean 00:20:29, range [00:18:47 - 00:24:41],
+                                 stdev 00:01:33, total 04:05:48
                       Total tasks in queue: 30
 
 1007 counts remaining until exit.
