@@ -101,7 +101,6 @@ class BoincCommand:
     """
 
     # TODO: CHECK that urls are the BOINC task servers
-    # Is not currently used.
     project_url = {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
@@ -175,10 +174,6 @@ class BoincCommand:
 
         try:
             output = subprocess.Popen(cmd, stdout=PIPE, text=True)
-            # Need to give time for boinc-client to provide stdout(?)
-            # Generally not a problem, but rarely a get_ method
-            # comes up empty handed; perhaps boinc-client was busy?
-            # time.sleep(1)
             text = output.communicate()[0].split('\n')
             return text
         except subprocess.CalledProcessError as cpe:
@@ -193,11 +188,14 @@ class BoincCommand:
 
         :param tag: e.g., 'task' returns reported task names.
                     'elapsed time' returns final task times, sec.000000.
+                    Use 'all' to get full output from cmd
         :param cmd: The boinccmd command for tasks reported to boinc server.
         :return: List of specified data parsed from cmd.
         """
 
         output = self.run_boinc(self.boincpath + cmd)
+        if tag is 'all':
+            return output
 
         # Need only data from tagged lines of boinccmd output.
         data = ['stub_boinc_data']
@@ -221,11 +219,14 @@ class BoincCommand:
 
         :param tag: Examples: 'name', 'state', 'scheduler
                     state', 'fraction done', 'active_task_state'
+                    Use 'all' to get full output from cmd
         :param cmd: The boinccmd command to get queued tasks information.
         :return: List of tagged data parsed from cmd output.
         """
 
         output = self.run_boinc(self.boincpath + cmd)
+        if tag is 'all':
+            return output
 
         data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
@@ -242,6 +243,7 @@ class BoincCommand:
         Get names of running boinc-client tasks of the specified app.
 
         :param tag: boinccmd output line tag, e.g., 'name', 'WU name'.
+                    Use 'all' to get full output from cmd
         :param app_type: The app type present in all target task names,
                         e.g. O3AS, LATeah, etc.
         :param cmd: The boinccmd command to get task information.
@@ -249,7 +251,8 @@ class BoincCommand:
         """
         # NOTE that cmd=' --get_tasks' will also work; get_simple lists only active tasks.
         output = self.run_boinc(self.boincpath + cmd)
-
+        if tag is 'all':
+            return output
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a tag line of data.
         task_name = None
         data = []

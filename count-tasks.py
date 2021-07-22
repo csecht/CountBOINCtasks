@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.19'
+__version__ =   '0.4.20'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -169,39 +169,40 @@ class DataIntervals:
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
             self.tasks_total = len(BC.get_tasks('name'))
+            time.sleep(0.5)
 
             # Need a flag for when tasks have run out.
             # active_task_state for a running task is 'EXECUTING'.
             # When communication to server is stalled, all tasks will be
             #  "Ready to report" with a state of 'uploaded', so try a
             #  Project update command to prompt clearing the stalled queue.
-            tasks_running = BC.get_tasks('active_task_state')
+            tasks_activestates = BC.get_tasks('active_task_state')
             self.notrunning = False
-            if 'EXECUTING' not in tasks_running:
-                # Avoid false positives, which happen, by waiting and re-checking.
-                time.sleep(10)
-                tasks_running = BC.get_tasks('active_task_state')
-                if 'EXECUTING' not in tasks_running:
-                    self.notrunning = True
-                    if 'uploaded' in BC.get_tasks('state') and \
-                            'downloaded' not in BC.get_tasks('state'):
-                        local_boinc_urls = BC.get_project_url()
-                        # I'm not sure how to handle multiple concurrent Projects.
-                        # If they are all stalled, then updating the first works?
-                        # B/c of how BC.project_action is structured, this uses the
-                        #  url to get the Project name ID which is used to get the
-                        #  url needed for the project cmd.  Silly, but uses
-                        #  generalized methods.
-                        first_local_url = local_boinc_urls[0]
-                # https://stackoverflow.com/questions/8023306/get-key-by-value-in-dictionary
-                        first_project = list(BC.project_url.keys())[
-                            list(BC.project_url.values()).index(first_local_url)]
-                        BC.project_action(first_project, 'update')
-                        report = (f'\n{self.time_now};'
-                                  f' *** Project {first_project} was updated. ***\n')
-                        print(report)
-                        if args.log == 'yes':
-                            logging.info(report)
+            if 'EXECUTING' not in tasks_activestates:
+                self.notrunning = True
+                time.sleep(1)
+                task_states = BC.get_tasks('state')
+                if 'uploaded' in task_states and 'downloaded' not in task_states:
+                    local_boinc_urls = BC.get_project_url()
+                    # I'm not sure how to handle multiple concurrent Projects.
+                    # If they are all stalled, then updating the first works?
+                    # B/c of how BC.project_action is structured, this uses the
+                    #  url to get the Project name ID which is used to get the
+                    #  url needed for the project cmd.  Silly, but uses
+                    #  generalized methods.
+                    first_local_url = local_boinc_urls[0]
+                    # https://stackoverflow.com/questions/8023306/get-key-by-value-in-dictionary
+                    first_project = list(BC.project_url.keys())[
+                        list(BC.project_url.values()).index(first_local_url)]
+                    time.sleep(1)
+                    BC.project_action(first_project, 'update')
+                    # Need to provide time for BOINC Project server to respond?
+                    time.sleep(70)
+                    report = (f'\n{self.time_now};'
+                              f' *** Project {first_project} was updated. ***\n')
+                    print(report)
+                    if args.log == 'yes':
+                        logging.info(report)
 
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.
@@ -279,7 +280,7 @@ class DataIntervals:
 
     def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
         """
-        Report task counts time stats summaries at timed intervals.
+        Report task counts & time stats summaries at timed intervals.
 
         :param loop_num: The for loop number from interval_reports().
         :param ttimes_smry: Cumulative list of task times from interval_reports()
