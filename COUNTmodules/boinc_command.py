@@ -163,7 +163,7 @@ class BoincCommand:
         Execute a boinc-client command line.
 
         :param cmd_str: A boinccmd action, command with arguments.
-        :return: Data from boinc-client specified in cmd_path.
+        :return: Data from a boinc-client command specified in cmd_str.
         """
         # source: https://stackoverflow.com/questions/33560364/
         if sys.platform[:3] == 'win':
