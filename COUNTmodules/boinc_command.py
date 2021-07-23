@@ -21,11 +21,9 @@ Executes BOINC commands and parsing task data through boinccmd.
 
 import os
 import shlex
-import subprocess
 import sys
-import time
 from pathlib import Path
-from subprocess import PIPE
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020 C. Echt'
@@ -61,6 +59,7 @@ def set_boincpath() -> str:
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
     lin_path = Path('/usr/bin/boinccmd')
+    # On a Mac Terminal, the command line would be /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
     dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
     default_path = {
                     'win': win_path,
@@ -87,7 +86,7 @@ def set_boincpath() -> str:
                               '/boinccmd, depending on your system.\n'
                               'Try again. Exiting now...\n')
             return custom_path
-        # MacOS paths need double-quotes if folder names have spaces.
+        # MacOS paths need double-quotes here if folder names have spaces.
         boinccmd = f'"{default_path[my_os]}"'
         return boinccmd
     print(f"Platform <{my_os}> is not recognized.\n"
@@ -173,12 +172,20 @@ class BoincCommand:
             cmd = shlex.split(cmd_str)
 
         try:
-            output = subprocess.Popen(cmd, stdout=PIPE, text=True)
+            output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
+            boinc_stderr = output.stdout.read()
+            if "can't connect to local host" in boinc_stderr:
+                print(f"\nOOPS! boinccmd error says: {boinc_stderr}"
+                      f"If can't connect to local host, then boinc-client is not running.\n"
+                      f"Exiting now...")
+                sys.exit(1)
             text = output.communicate()[0].split('\n')
             return text
-        except subprocess.CalledProcessError as cpe:
+        # This exception should only be raised by a cmd error when calling one of the
+        #   get_ methods, below.
+        except CalledProcessError as cpe:
             msg = ('If the boinccmd usage message is displayed, then'
-                   ' boinccmd has an error in its command argument.')
+                   ' boinccmd has a bad command argument. Exiting now...')
             print(f'\n{msg}\n{cpe}')
             sys.exit(1)
 
@@ -194,7 +201,7 @@ class BoincCommand:
         """
 
         output = self.run_boinc(self.boincpath + cmd)
-        if tag is 'all':
+        if tag == 'all':
             return output
 
         # Need only data from tagged lines of boinccmd output.
@@ -225,7 +232,7 @@ class BoincCommand:
         """
 
         output = self.run_boinc(self.boincpath + cmd)
-        if tag is 'all':
+        if tag == 'all':
             return output
 
         data = ['stub_boinc_data']
@@ -251,7 +258,7 @@ class BoincCommand:
         """
         # NOTE that cmd=' --get_tasks' will also work; get_simple lists only active tasks.
         output = self.run_boinc(self.boincpath + cmd)
-        if tag is 'all':
+        if tag == 'all':
             return output
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a tag line of data.
         task_name = None
