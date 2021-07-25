@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.20'
+__version__ =   '0.4.21'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -63,7 +63,7 @@ class DataIntervals:
         self.time_start = datetime.now().strftime(self.time_fmt)
         self.time_now = None
         self.counts_remain = None
-        self.tasks_total = 0
+        self.num_tasks = 0
         self.report = 'None'
         self.ttimes_start = []
         self.ttimes_new = []
@@ -108,7 +108,7 @@ class DataIntervals:
         # Not the most robust way to get dict values, but it's concise.
         tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
             count_start, self.ttimes_start).values()
-        self.tasks_total = len(BC.get_tasks('name'))
+        self.num_tasks = len(BC.get_tasks('name'))
 
         if COUNT_LIM > 0:
             self.report = (
@@ -117,7 +117,7 @@ class DataIntervals:
                 f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                f'{self.indent}Total tasks in queue: {self.tasks_total}\n'
+                f'{self.indent}Total tasks in queue: {self.num_tasks}\n'
                 f'{self.indent}Number of scheduled count intervals: {COUNT_LIM}\n'
                 f'{self.indent}Counts every {INTERVAL_M}m,'
                 f' summaries every {SUMMARY_T}\n'
@@ -130,7 +130,7 @@ class DataIntervals:
                 f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                f'{self.indent}Total tasks in queue: {self.tasks_total}\n')
+                f'{self.indent}Total tasks in queue: {self.num_tasks}\n')
         print(self.report)
 
         if args.log == 'yes':
@@ -168,7 +168,7 @@ class DataIntervals:
             # time.sleep(5)  # DEBUG; or use to bypass intvl_timer.
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
-            self.tasks_total = len(BC.get_tasks('name'))
+            self.num_tasks = len(BC.get_tasks('name'))
             time.sleep(0.5)
 
             # Need a flag for when tasks have run out.
@@ -259,7 +259,7 @@ class DataIntervals:
                     f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {self.tasks_total}\n\n'
+                    f'{self.indent}Total tasks in queue: {self.num_tasks}\n\n'
                     f'{self.counts_remain} counts remaining until exit.'
                 )
                 # Need to overwrite 'counts remaining' line of previous report
@@ -390,11 +390,6 @@ class DataIntervals:
         whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
         # reset = '\x1b[0m'  # No color, reset to system default.
         # del_line = '\x1b[2K'  # Clear entire line.
-
-        # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is
-        # safe because there is no external input.
-        if sys.platform[:3] == 'win':
-            subprocess.call('', shell=True)
 
         # Not +1 in range because need only to sleep to END of interval.
         for i in range(bar_len):
