@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.21'
+__version__ =   '0.4.22'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -84,10 +84,10 @@ class DataIntervals:
         # regex from https://stackoverflow.com/questions/14693701/
         self.ansi_esc = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
-        # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is safe
-        # because any command string is constructed from internal input only.
+        # Needed for Windows Cmd Prompt ANSI text formatting.
         if sys.platform[:3] == 'win':
-            subprocess.call('', shell=True)
+            os.system("color")
+            # os.system('')  # <- Alternaative
 
         self.start_report()
         self.interval_reports()
