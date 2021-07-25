@@ -173,13 +173,13 @@ class BoincCommand:
 
         try:
             output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
-            boinc_stderr = output.stdout.read()
-            if "can't connect to local host" in boinc_stderr:
-                print(f"\nOOPS! boinccmd error says: {boinc_stderr}"
-                      f"If can't connect to local host, then boinc-client is not running.\n"
-                      f"Exiting now...")
-                sys.exit(1)
+            # TODO: Evaluate stderr properly when BOINC is running (stderr = None, as [-1], when BOINC running)
             text = output.communicate()[0].split('\n')
+            # if "can't connect to local host" in text:
+            #     print(f"\nOOPS! boinccmd error says: {text}"
+            #           f"If can't connect to local host, then boinc-client is not running.\n"
+            #           f"Exiting now...")
+            #     sys.exit(1)
             return text
         # This exception should only be raised by a cmd error when calling one of the
         #   get_ methods, below.

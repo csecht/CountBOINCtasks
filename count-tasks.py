@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.22'
+__version__ =   '0.4.23'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -154,52 +154,66 @@ class DataIntervals:
     def interval_reports(self) -> None:
         """
         Gather and report task counts and time stats at timed intervals.
-        
+
         :returns: None; generates reports for Terminal and log.
         """
         # Synopsis:
         # Do not include starting tasks in interval or summary counts.
         # Remove previous ("used") tasks from current ("new") task metrics.
 
-        # intvl_timer() sleeps the for loop between counts.
         for loop_num in range(COUNT_LIM):
             # DI_thread.join()
+            # intvl_timer() sleeps the for-loop between counts.
             self.intvl_timer(INTERVAL_M)
             # time.sleep(5)  # DEBUG; or use to bypass intvl_timer.
+
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
-            self.num_tasks = len(BC.get_tasks('name'))
-            time.sleep(0.5)
+            # self.tasks_total = len(BC.get_tasks('name'))
+
+            # Do one boinccmd process call then parse tagged data from all task data
+            #   (instead of calling BC.get_tasks() multiple times in succession).
+            tasks_all = BC.get_tasks('all')
+            # Need the literal task data tags as found in boinccmd stdout;
+            #   the format is same as tag_str in BC.get_tasks().
+            #   Use tuple order to populate variables based on index.
+            tags = ('   name: ',
+                    '   active_task_state: ',
+                    '   state: ')
+            self.num_tasks = len([elem for elem in tasks_all if tags[0] in elem])
+            tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
+                            if tags[1] in elem]
 
             # Need a flag for when tasks have run out.
             # active_task_state for a running task is 'EXECUTING'.
             # When communication to server is stalled, all tasks will be
             #  "Ready to report" with a state of 'uploaded', so try a
             #  Project update command to prompt clearing the stalled queue.
-            tasks_activestates = BC.get_tasks('active_task_state')
+            # tasks_active = BC.get_tasks('active_task_state')
             self.notrunning = False
-            if 'EXECUTING' not in tasks_activestates:
+            if 'EXECUTING' not in tasks_active:
                 self.notrunning = True
-                time.sleep(1)
-                task_states = BC.get_tasks('state')
+                # task_states = BC.get_tasks('state')
+                task_states = [elem.replace(tags[2], '') for elem in tasks_all
+                               if tags[2] in elem]
                 if 'uploaded' in task_states and 'downloaded' not in task_states:
                     local_boinc_urls = BC.get_project_url()
                     # I'm not sure how to handle multiple concurrent Projects.
                     # If they are all stalled, then updating the first works?
-                    # B/c of how BC.project_action is structured, this uses the
+                    # B/c of how BC.project_action is structured, here I use the
                     #  url to get the Project name ID which is used to get the
                     #  url needed for the project cmd.  Silly, but uses
-                    #  generalized methods.
+                    #  generalized methods. Is there a better way?
                     first_local_url = local_boinc_urls[0]
                     # https://stackoverflow.com/questions/8023306/get-key-by-value-in-dictionary
                     first_project = list(BC.project_url.keys())[
                         list(BC.project_url.values()).index(first_local_url)]
-                    time.sleep(1)
+                    # time.sleep(1)
                     BC.project_action(first_project, 'update')
                     # Need to provide time for BOINC Project server to respond?
                     time.sleep(70)
                     report = (f'\n{self.time_now};'
-                              f' *** Project {first_project} was updated. ***\n')
+                              f' *** Project update requested for {first_project}. ***\n')
                     print(report)
                     if args.log == 'yes':
                         logging.info(report)
