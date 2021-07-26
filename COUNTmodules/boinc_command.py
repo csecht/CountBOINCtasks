@@ -54,7 +54,8 @@ def set_boincpath() -> str:
                     custom_path = " ".join(parts)
                     return custom_path
 
-    # Need to accommodate win32 and win36, so slice [:3] for all platforms.
+    # Need to accommodate win32 and win64? so slice [:3] for all platforms.
+    #   Only win, lin, and dar values are accommodated here.
     my_os = sys.platform[:3]
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
@@ -138,7 +139,6 @@ class BoincCommand:
 
     def __init__(self):
         self.boincpath = set_boincpath()
-        # tag and project tuples are not currently used by count_now-tasks.
         self.tasktags = ('name', 'WU name', 'project URL', 'received',
                          'report deadline', 'ready to report', 'state',
                          'scheduler state',  'active_task_state',
@@ -177,10 +177,10 @@ class BoincCommand:
             # When boinc-client is running, the specified cmd option from a get_ method
             #   will fill the first element of the text list with its output. When not
             #   running, boinccmd stderr will fill the first list element.
-            #   Are there other conditions with a stderr: "can't connect to local host"?
+            #   Is stderr "can't connect to local host" exclusive to BOINC not running?
             if "can't connect to local host" in text:
                 print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
-                      f"The BOINC client associated with {cmd[0]} needs to be running.\n"
+                      f"The BOINC client associated with {cmd[0]} is not running.\n"
                       f"Exiting now...")
                 sys.exit(1)
             return text
