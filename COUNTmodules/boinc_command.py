@@ -26,12 +26,12 @@ from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020 C. Echt'
+__copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.7'
+__version__ = '0.4.23'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -173,16 +173,18 @@ class BoincCommand:
 
         try:
             output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
-            # TODO: Evaluate stderr properly when BOINC is running (stderr = None, as [-1], when BOINC running)
             text = output.communicate()[0].split('\n')
-            # if "can't connect to local host" in text:
-            #     print(f"\nOOPS! boinccmd error says: {text}"
-            #           f"If can't connect to local host, then boinc-client is not running.\n"
-            #           f"Exiting now...")
-            #     sys.exit(1)
+            # When boinc-client is running, the specified cmd option from a get_ method
+            #   will fill the first element of the text list with its output. When not
+            #   running, boinccmd stderr will fill the first list element.
+            #   Are there other conditions with a stderr: "can't connect to local host"?
+            if "can't connect to local host" in text:
+                print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
+                      f"The BOINC client associated with {cmd[0]} needs to be running.\n"
+                      f"Exiting now...")
+                sys.exit(1)
             return text
-        # This exception should only be raised by a cmd error when calling one of the
-        #   get_ methods, below.
+        # This exception will only be raised by bad code calling one of the get_ methods.
         except CalledProcessError as cpe:
             msg = ('If the boinccmd usage message is displayed, then'
                    ' boinccmd has a bad command argument. Exiting now...')
