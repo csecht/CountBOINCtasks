@@ -1020,7 +1020,7 @@ def data_intervals() -> dict:
     :rtype: object
     :return: A dictionary of data be called from CountGui
     """
-    # TODO: Make gui the default (with no terminal option?)
+    # TODO: Make gui the default (with no terminal option; log only)
     args.gui = True  # For testing only; True allows call to CountGui().
 
     # Initial run: need to set variables for comparisons between intervals.

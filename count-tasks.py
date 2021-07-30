@@ -58,7 +58,6 @@ class DataIntervals:
     """
 
     def __init__(self):
-
         self.time_fmt = '%Y-%b-%d %H:%M:%S'
         self.time_start = datetime.now().strftime(self.time_fmt)
         self.time_now = None
@@ -87,7 +86,7 @@ class DataIntervals:
         # Needed for Windows Cmd Prompt ANSI text formatting.
         if sys.platform[:3] == 'win':
             os.system("color")
-            # os.system('')  # <- Alternaative
+            # os.system('')  # <- Alternative
 
         self.start_report()
         self.interval_reports()
@@ -162,11 +161,10 @@ class DataIntervals:
         # Remove previous ("used") tasks from current ("new") task metrics.
 
         for loop_num in range(COUNT_LIM):
-            # DI_thread.join()
             # intvl_timer() sleeps the for-loop between counts.
             self.intvl_timer(INTERVAL_M)
+            
             # time.sleep(5)  # DEBUG; or use to bypass intvl_timer.
-
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
             # self.tasks_total = len(BC.get_tasks('name'))
@@ -290,6 +288,8 @@ class DataIntervals:
                 print(f'\x1b[1F{self.del_line}{report}')
                 if args.log == 'yes':
                     logging.info(report)
+
+            # Need to send data from interval loops to summary method.
             self.summary_reports(loop_num, self.ttimes_smry)
 
     def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
@@ -314,7 +314,7 @@ class DataIntervals:
                 f' {SUMMARY_T}: {self.blue}{count_sumry}{self.undo_color}\n'
                 f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
-                f'{self.bigindent}stdev {tt_sd}, total {tt_total}'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n\n\n'
             )
             print(f'\r{self.del_line}{report}')
             if args.log == 'yes':
