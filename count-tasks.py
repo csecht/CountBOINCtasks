@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.23'
+__version__ =   '0.4.24'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -58,6 +58,7 @@ class DataIntervals:
     """
 
     def __init__(self):
+
         self.time_fmt = '%Y-%b-%d %H:%M:%S'
         self.time_start = datetime.now().strftime(self.time_fmt)
         self.time_now = None
@@ -86,7 +87,7 @@ class DataIntervals:
         # Needed for Windows Cmd Prompt ANSI text formatting.
         if sys.platform[:3] == 'win':
             os.system("color")
-            # os.system('')  # <- Alternative
+            # os.system('')  # <- Alternaative
 
         self.start_report()
         self.interval_reports()
@@ -163,8 +164,8 @@ class DataIntervals:
         for loop_num in range(COUNT_LIM):
             # intvl_timer() sleeps the for-loop between counts.
             self.intvl_timer(INTERVAL_M)
-            
             # time.sleep(5)  # DEBUG; or use to bypass intvl_timer.
+
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
             # self.tasks_total = len(BC.get_tasks('name'))
@@ -288,8 +289,6 @@ class DataIntervals:
                 print(f'\x1b[1F{self.del_line}{report}')
                 if args.log == 'yes':
                     logging.info(report)
-
-            # Need to send data from interval loops to summary method.
             self.summary_reports(loop_num, self.ttimes_smry)
 
     def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
