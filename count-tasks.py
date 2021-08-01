@@ -37,7 +37,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.24'
+__version__ =   '0.4.25'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -250,7 +250,8 @@ class DataIntervals:
                     # print(f'\r{self.del_line}{report}')
                     print(f'\x1b[1F{self.del_line}{report}')
                 if self.tic_nnt > 1:
-                    print(f'\r\x1b[2A{self.del_line}{report}')
+                    # print(f'\r\x1b[2A{self.del_line}{report}')
+                    print(f'\x1b[2F{self.del_line}{report}')
                 if args.log == 'yes':
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
@@ -308,7 +309,7 @@ class DataIntervals:
             tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
                 self.get_timestats(count_sumry, self.ttimes_uniq).values()
             report = (
-                f'\n{self.time_now}; '
+                f'{self.time_now}; '
                 f'{self.orng}>>> SUMMARY:{self.undo_color} Count for the past'
                 f' {SUMMARY_T}: {self.blue}{count_sumry}{self.undo_color}\n'
                 f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
