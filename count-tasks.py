@@ -24,7 +24,6 @@ import logging
 import os
 import re
 import statistics as stats
-import subprocess
 import sys
 import time
 from datetime import datetime
