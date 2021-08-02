@@ -461,8 +461,9 @@ class DataIntervals:
             'tt_max': 'na'}
 
 
-def check_args(parameter: str) -> str:
-    """Check --summary command line arguments for errors.
+def check_summary_arg(parameter: str) -> str:
+    """
+    Check --summary command line arguments for errors.
 
     :param parameter: Passed from parser.add_argument 'type' call.
     :return: If no errors, then return the parameter string.
@@ -523,7 +524,7 @@ if __name__ == '__main__':
                         help='Specify time between count summaries,'
                              ' e.g., 12h, 7d (default: %(default)s)',
                         default='1d',
-                        type=check_args,
+                        type=check_summary_arg,
                         metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'

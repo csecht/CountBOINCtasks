@@ -19,6 +19,17 @@ A test GUI for count-tasks.py. Data are not live.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
+__author__ =    'cecht, BOINC ID: 990821'
+__copyright__ = 'Copyright (C) 2020 C. Echt'
+__credits__ =   ['Inspired by rickslab-gpu-utils',
+                 'Keith Myers - Testing, debug']
+__license__ =   'GNU General Public License'
+__version__ =   '0.5x'
+__program_name__ = 'count-tasks.py'
+__maintainer__ = 'cecht'
+__docformat__ = 'reStructuredText'
+__status__ =    'Development Status :: 5 - ALPHA'
+
 import argparse
 import logging
 import random
@@ -43,17 +54,6 @@ except (ImportError, ModuleNotFoundError) as error:
     print('Install 3.7+ or re-install Python and include Tk/Tcl.')
     print(f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
-__author__ =    'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020 C. Echt'
-__credits__ =   ['Inspired by rickslab-gpu-utils',
-                 'Keith Myers - Testing, debug']
-__license__ =   'GNU General Public License'
-__version__ =   '0.5x'
-__program_name__ = 'count-tasks.py'
-__maintainer__ = 'cecht'
-__docformat__ = 'reStructuredText'
-__status__ =    'Development Status :: 5 - ALPHA'
-
 BC = boinc_command.BoincCommand()
 # # Assume log file is in the CountBOINCtasks-master folder.
 # # Not sure what determines the relative Project path.
@@ -70,7 +70,7 @@ logging.basicConfig(filename=str(LOGPATH), level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 # TODO: Convert to MVC architecture.
-# TODO: Add total tasks in queue (from count-tasks.py v.0.4.14)
+# TODO: Add total tasks in queue (as in count-tasks.py)
 
 
 # The tkinter gui engine that runs as main thread.
@@ -849,7 +849,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
 
 
 # Functions that are used by data_intervals().
-def check_args(parameter) -> None:
+def check_summary_arg(parameter) -> None:
     """
     Check command line --summary argument for errors.
 
@@ -1061,7 +1061,7 @@ def data_intervals() -> dict:
               f'{indent}Number of scheduled count intervals: {count_lim}\n'
               f'{indent}Timed intervals beginning now...')
     print(report)
-    if args.log is True:
+    if args.log == 'yes':
         report = ansi_escape.sub('', report)
         # This is proper string formatting for logging, but f-strings, as used
         # elsewhere, are fine for this program's shortcut use of logging.
@@ -1146,7 +1146,7 @@ def data_intervals() -> dict:
                 print(f'\r{del_line}{report}')
             if tic_nnt > 1:
                 print(f'\r\x1b[3A{del_line}{report}')
-            if args.log is True:
+            if args.log == 'yes':
                 logging.info(report)
 
         elif count_now > 0 and notrunning is False:
@@ -1161,7 +1161,7 @@ def data_intervals() -> dict:
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}')
             print(f'\r{del_line}{report}')
-            if args.log is True:
+            if args.log == 'yes':
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
@@ -1169,7 +1169,7 @@ def data_intervals() -> dict:
             tic_nnt -= tic_nnt
             report = f'{time_now}; *** Check whether tasks are running. ***\n'
             print(f'\r{del_line}{report}')
-            if args.log is True:
+            if args.log == 'yes':
                 logging.info(report)
 
         # Report: Summary intervals
@@ -1187,7 +1187,7 @@ def data_intervals() -> dict:
                       f' range [{tt_lo} - {tt_hi}],\n'
                       f'{bigindent}stdev {tt_sd}, total {tt_sum}')
             print(f'\r{del_line}{report}')
-            if args.log is True:
+            if args.log == 'yes':
                 report = ansi_escape.sub('', report)
                 logging.info(report)
 
@@ -1212,9 +1212,10 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--log',
                         help='Create log file of results or append to '
-                             'existing log',
-                        action='store_true',
-                        default=False)
+                             'existing log'
+                             ' (default: %(default)s)',
+                        default='yes',
+                        choices=['yes', 'no'])
     parser.add_argument('--gui',
                         help='Show data in graphics window.',
                         action='store_true',
@@ -1232,7 +1233,7 @@ if __name__ == '__main__':
                              ' e.g., 12h, 7d (default: %(default)s)',
                         # default='1d',
                         default='15m',  # for testing
-                        type=check_args,
+                        type=check_summary_arg,
                         metavar='TIMEunit')
     parser.add_argument('--count_lim',
                         help='Specify number of count reports until program'
