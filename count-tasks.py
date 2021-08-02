@@ -36,7 +36,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.25'
+__version__ =   '0.4.26'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -564,6 +564,9 @@ if __name__ == '__main__':
         DataIntervals()
     except KeyboardInterrupt:
         # For aesthetics, move cursor to beginning of timer line and erase line.
-        MSG = '\r\x1b[K\n\n  *** Interrupted by user ***\n  Quitting now...\n\n'
-        sys.stdout.write(MSG)
-        logging.info(msg=f'{MSG}...{datetime.now()}\n')
+        exit_msg = (f'\r\x1b[K\n\n  *** Interrupted by user ***\n'
+                    f'  Quitting now...{datetime.now()}\n\n')
+        sys.stdout.write(exit_msg)
+        # Need to remove formatting from log text.
+        exit_cleaned = exit_msg.replace('\r\x1b[K\n', '')
+        logging.info(msg=exit_cleaned)
