@@ -19,6 +19,17 @@ Provides regular counts and time stats for reported BOINC tasks.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
+__author__ =    'cecht, BOINC ID: 990821'
+__copyright__ = 'Copyright (C) 2021 C. Echt'
+__credits__ =   ['Inspired by rickslab-gpu-utils',
+                 'Keith Myers - Testing, debug']
+__license__ =   'GNU General Public License'
+__version__ =   '0.4.26'
+__program_name__ = 'count-tasks.py'
+__maintainer__ = 'cecht'
+__docformat__ = 'reStructuredText'
+__status__ =    'Development Status :: 4 - BETA'
+
 import argparse
 import logging
 import os
@@ -30,17 +41,6 @@ from datetime import datetime
 from pathlib import Path
 
 from COUNTmodules import boinc_command
-
-__author__ =    'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C. Echt'
-__credits__ =   ['Inspired by rickslab-gpu-utils',
-                 'Keith Myers - Testing, debug']
-__license__ =   'GNU General Public License'
-__version__ =   '0.4.26'
-__program_name__ = 'count-tasks.py'
-__maintainer__ = 'cecht'
-__docformat__ = 'reStructuredText'
-__status__ =    'Development Status :: 4 - BETA'
 
 BC = boinc_command.BoincCommand()
 # Assume log file is in the CountBOINCtasks-master folder.
@@ -570,3 +570,4 @@ if __name__ == '__main__':
         # Need to remove formatting from log text.
         exit_cleaned = exit_msg.replace('\r\x1b[K\n', '')
         logging.info(msg=exit_cleaned)
+    # TODO: Consider this? https://dev.to/xowap/the-ultimate-python-main-18kn
