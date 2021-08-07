@@ -86,7 +86,7 @@ class DataIntervals:
         # Needed for Windows Cmd Prompt ANSI text formatting.
         if sys.platform[:3] == 'win':
             os.system("color")
-            # os.system('')  # <- Alternaative
+            # os.system('')  # <- Alternative
 
         self.start_report()
         self.interval_reports()
@@ -103,16 +103,16 @@ class DataIntervals:
         #   In future, may want to inspect task names with
         #     task_names = BC.get_reported('tasks').
         self.ttimes_start = BC.get_reported('elapsed time')
-        count_start = len(self.ttimes_start)
+        tcount_start = len(self.ttimes_start)
         # Not the most robust way to get dict values, but it's concise.
         tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
-            count_start, self.ttimes_start).values()
+            tcount_start, self.ttimes_start).values()
         self.num_tasks = len(BC.get_tasks('name'))
 
         if COUNT_LIM > 0:
             self.report = (
                 f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                f' {self.blue}{count_start}{self.undo_color}\n'
+                f' {self.blue}{tcount_start}{self.undo_color}\n'
                 f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -125,7 +125,7 @@ class DataIntervals:
         elif COUNT_LIM == 0:
             self.report = (
                 f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                f' {self.blue}{count_start}{self.undo_color}\n'
+                f' {self.blue}{tcount_start}{self.undo_color}\n'
                 f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                 f' range [{tt_lo} - {tt_hi}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'

@@ -42,6 +42,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from tkinter import messagebox
 
 from COUNTmodules import boinc_command
 
@@ -82,11 +83,11 @@ class CountGui:
 # TODO: Add pretty icon to data_intervals window. These variations don't work:
     # icon = tk.PhotoImage(Image.open('Python-icon.png'))
     # icon.show() # Shows a stand-alone image, so file is okay.
-    # mainwin.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
+    # master.iconphoto(False, tk.PhotoImage(file='Python-icon.png'))
     # icon = tk.PhotoImage(file='Python-icon.png')
     # # icon.image = icon
-    # mainwin.iconphoto(True, icon)
-    # mainwin.tk.call('wm', 'iconphoto', mainwin._w,
+    # master.iconphoto(True, icon)
+    # master.tk.call('wm', 'iconphoto', master._w,
     #                 tk.PhotoImage(file='Python-icon.png'))
 
     def __init__(self, mainwin: tk.Tk):
@@ -162,10 +163,10 @@ class CountGui:
         # self.tt_sd_l =          ttk.Label()
         # self.time_range_l =     ttk.Label()
         # self.tt_sum_l =         ttk.Label()
-        # self.tt_mean_suml =     ttk.Label()
-        # self.tt_sd_suml =       ttk.Label()
-        # self.time_range_suml =  ttk.Label()
-        # self.tt_sum_suml =      ttk.Label()
+        # self.tt_mean_sum_l =     ttk.Label()
+        # self.tt_sd_sum_l =       ttk.Label()
+        # self.time_range_sum_l =  ttk.Label()
+        # self.tt_sum_sum_l =      ttk.Label()
 
         style_main = ttk.Style(self.mainwin)
         style_main.configure('TLabel', background=self.mainwin_bg,
@@ -176,7 +177,6 @@ class CountGui:
         self.count_remain_l = ttk.Label()
 
         # Settings variables with default parser args values.
-        self.intvl_arg = tk.IntVar(value=60)
         self.sumry_arg = tk.StringVar(value='1d')
         self.cycles_arg = tk.IntVar(value=1008)
 
@@ -194,8 +194,8 @@ class CountGui:
         # "Always call mainloop as the last logical line of code in your
         # program." per Bryan Oakly:
         # https://stackoverflow.com/questions/29158220/tkinter-understanding-mainloop
-        # self.mainwin.mainloop()
-        # ^^ NOTE: mainloop is may be instantiated in show_startdata(),
+        # self.master.mainloop()
+        # ^^ NOTE: mainloop may be instantiated in show_startdata(),
         #  for testing purposes. Or may be in if __name__....
 
     def mainwin_cfg(self) -> None:
@@ -615,8 +615,8 @@ along with this program. If not, see https://www.gnu.org/licenses/
         # icon = tk.PhotoImage(file='unused_bits/tiny_icon.png')
         # icon.image = icon
         # aboutwin.iconphoto(True, icon)
-        # Minsize needed for MacOS where Help>About opens tab in mainwin.
-        #   Gives larger MacOS mainwin when tab is closed, but, oh well.
+        # Minsize needed for MacOS where Help>About opens tab in master.
+        #   Gives larger MacOS master when tab is closed, but, oh well.
         aboutwin.minsize(570, 460)
         aboutwin.title('About count-tasks')
         # aboutimg = tk.PhotoImage(file='about.png')  # or 'about.png'
@@ -684,13 +684,13 @@ along with this program. If not, see https://www.gnu.org/licenses/
             shutil.copyfile(LOGPATH, destination)
             success_msg = 'Log file has been copied to ' + str(destination)
             # Main window alert; needed along with notification in new window?
-            # text = tk.Label(self.mainwin, text=msg, font=('default', 10),
+            # text = tk.Label(self.master, text=msg, font=('default', 10),
             #                 foreground='DodgerBlue4', background='gold2',
             #                 relief='flat')
             # text.grid(row=9, column=0, columnspan=3,
             #           padx=5, pady=6,
             #           sticky=tk.EW)
-            # self.mainwin.after(4000, text.destroy)
+            # self.master.after(4000, text.destroy)
 
             # Need a persistent window alert.
             logwin = tk.Toplevel()
@@ -782,18 +782,28 @@ along with this program. If not, see https://www.gnu.org/licenses/
         set_win = tk.Toplevel(relief='raised', bd=3)
         set_win.title('Settings (inactive)')
         set_win.attributes('-topmost', True)
+        def on_exit():
+            exit_msg = 'All settings need to be valid to exit with "Confirm" button.'
+            messagebox.showinfo(title='Exit settings window with Confirm button',
+                                detail=exit_msg,
+                                parent=set_win)
+        set_win.protocol('WM_DELETE_WINDOW', on_exit)
         # set_win.call('wm', 'attributes', '.', '-topmost', '1')
         setting_bg = 'SkyBlue4'
         setting_fg = 'LightCyan2'
         set_win.configure(bg=setting_bg)
         style = ttk.Style()
         style.configure('TLabel', background=setting_bg, foreground=setting_fg)
-
+        def close_window():
+            set_win.destroy()
         # Have user pick an interval time for count cycles and reports.
-        intvl_time = ttk.Combobox(set_win, textvariable=self.intvl_arg,
+        intvl_time = ttk.Combobox(set_win,
+                                  state='readonly',
+                                  # textvariable=self.intvl_arg,
                                   width=2)
-        intvl_time['values'] = (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60)
-        intvl_time.state(['readonly'])
+        intvl_time['values'] = (60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5)
+        # Set default interval time to the first indexed value.
+        intvl_time.current(0)
         intvl_time.grid(column=1, row=0)
         intvl_label1 = ttk.Label(set_win, text='Count interval')
         intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
@@ -820,14 +830,23 @@ along with this program. If not, see https://www.gnu.org/licenses/
         cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
 
         # Have user pick whether to use a log file.
-        chooselog = tk.Checkbutton(set_win, bg=setting_bg, borderwidth=0)
+        do_log = tk.BooleanVar(value=True)
+        chooselog = tk.Checkbutton(set_win, variable=do_log,
+                                   bg=setting_bg, borderwidth=0,
+                                   )
+        # print("this is chooselog value:", do_log.get())
         chooselog.grid(column=1, row=3, padx=0, sticky=tk.W)
         log_label = ttk.Label(set_win, text='Log results to file')
         log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
         # use args.log is True here, somewhere?
 
-        # What command to use to activate settings? How to pass values to args?
-        use_settings = ttk.Button(set_win, text='Confirm settings')
+        # TODO: Make button command method to get() and set() new settings.
+        # TODO: Need to close set_win when use_settings button pressed.
+        use_settings = ttk.Button(set_win, text='Confirm',
+                                  command=close_window)
+                                  # command=lambda: print(
+                                  #     'Settings:\n', 'Do log?:', do_log.get(),
+                                  #     '\nMax # cycles:', cycles.get()))
         use_settings.grid(column=2, row=3, padx=10, pady=10, sticky=tk.E)
 
     # TODO: Integrate Progressbar widget with count-tasks intvl_timer
