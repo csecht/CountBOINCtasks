@@ -343,14 +343,17 @@ class DataIntervals:
         except KeyError as err:
             err_msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
             raise KeyError(err_msg) from err
+        except ValueError as verr:
+            err_msg = f'Invalid value unit: {val} '
+            raise ValueError(err_msg) from verr
 
     @staticmethod
-    def fmt_sec(secs: int, frmat: str) -> str:
+    def frmat_sec(secs: int, time_format: str) -> str:
         """
         Convert seconds to the specified time format for display.
 
         :param secs: Time in seconds, any integer except 0.
-        :param frmat: Either 'std' or 'short'
+        :param time_format: Either 'std' or 'short'
         :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
         """
         # Time conversion concept from Niko
@@ -362,8 +365,8 @@ class DataIntervals:
         day, _h = divmod(_h, 24)
         note = ('fmt_sec error: Enter secs as seconds, fmt (format) as either'
                 f" 'std' or 'short'. Arguments as entered: secs={secs}, "
-                f"format={frmat}.")
-        if frmat == 'short':
+                f"format={time_format}.")
+        if time_format == 'short':
             if secs >= 86400:
                 return f'{day:1d}d'  # option, add {h:01d}h'
             if 86400 > secs >= 3600:
@@ -371,7 +374,7 @@ class DataIntervals:
             if 3600 > secs >= 60:
                 return f'{_m:01d}m'  # option, add :{s:01d}s
             return f'{_s:01d}s'
-        if frmat == 'std':
+        if time_format == 'std':
             if secs >= 86400:
                 return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
             return f'{_h:02d}:{_m:02d}:{_s:02d}'
@@ -409,11 +412,11 @@ class DataIntervals:
             remain_bar = prettybar[i:]
             num_segments = len(remain_bar)
             print(f"\r{self.del_line}{whitexx_on_red}"
-                  f"{self.fmt_sec(remain_s, 'short')}{remain_bar}"
+                  f"{self.frmat_sec(remain_s, 'short')}{remain_bar}"
                   f"{self.undo_color}|< ~time to next count", end='')
             if num_segments == 1:
                 print(f"\r{self.del_line}{whitexx_on_grn}"
-                      f"{self.fmt_sec(remain_s, 'short')}{remain_bar}"
+                      f"{self.frmat_sec(remain_s, 'short')}{remain_bar}"
                       f"{self.undo_color}|< ~time to next count", end='')
             remain_s = (remain_s - barseg_s)
             # Need to clear the progress bar line for a clean report print.
@@ -433,12 +436,12 @@ class DataIntervals:
         :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max.
                  Dict values as: 00:00:00.
         """
-        total = self.fmt_sec(int(sum(set(tasktimes))), 'std')
+        total = self.frmat_sec(int(sum(set(tasktimes))), 'std')
         if numtasks > 1:
-            mean = self.fmt_sec(int(stats.mean(set(tasktimes))), 'std')
-            stdev = self.fmt_sec(int(stats.stdev(set(tasktimes))), 'std')
-            low = self.fmt_sec(int(min(tasktimes)), 'std')
-            high = self.fmt_sec(int(max(tasktimes)), 'std')
+            mean = self.frmat_sec(int(stats.mean(set(tasktimes))), 'std')
+            stdev = self.frmat_sec(int(stats.stdev(set(tasktimes))), 'std')
+            low = self.frmat_sec(int(min(tasktimes)), 'std')
+            high = self.frmat_sec(int(max(tasktimes)), 'std')
             return {
                 'tt_total': total,
                 'tt_mean': mean,
