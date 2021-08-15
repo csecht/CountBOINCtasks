@@ -103,7 +103,7 @@ class CountViewer(tk.Frame):
     The Viewer communicates with Modeler via 'share' objects handled
     through the Controller class. All GUI widgets go here.
     """
-    
+
     def __init__(self, master, share):
         super().__init__(master)
         self.share = share
@@ -116,12 +116,12 @@ class CountViewer(tk.Frame):
         self.master_bg = 'SkyBlue4'  # also used for row header labels.
 
         self.dataframe = tk.Frame()
-        
+
         # Label foreground configuration variables
         self.emphasize = 'grey90'
         self.highlight = 'gold'
         self.deemphasize = 'grey60'
-        
+
         # Log print formatting:
         self.report = 'none'
         self.indent = ' ' * 22
@@ -129,7 +129,7 @@ class CountViewer(tk.Frame):
 
         # self.settings() & self.check_and_set var:
         self.close_settings = 'None'
-        
+
         # Basic run parameters/settings; passed between Viewer and Modeler.
         # Defaults set in Modeler.default_settings; changed in settings(),
         #   except time_start.
@@ -143,7 +143,7 @@ class CountViewer(tk.Frame):
             'cycles_max': tk.StringVar(),
             'do_log': tk.IntVar()
         }
-        
+
         # Common data var for reporting; passed between Viewer and Modeler
         self.share.tkdata = {
             # Common data reports var
@@ -163,7 +163,7 @@ class CountViewer(tk.Frame):
             'count_uniq': tk.IntVar(),
             'num_tasks': tk.IntVar()
         }
-    
+
         # TODO: Figure out why ttk.Style wasn't working; changed all to tk.Label()
         # style_data = ttk.Style(self.dataframe)
         # style_data.configure('TLabel', foreground=self.row_fg,
@@ -202,7 +202,7 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg)
         self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                       textvariable=self.share.tkdata['tt_total'])
-        
+
         self.time_now_l = tk.Label(textvariable=self.share.tkdata['time_now'],
                                    background=self.master_bg, foreground=self.row_fg)
         self.count_next_l = tk.Label(textvariable=self.share.tkdata['count_next'],
@@ -214,7 +214,7 @@ class CountViewer(tk.Frame):
         # Text for compliment is configured in compliment_me()
         self.share.compliment_txt = tk.Label(fg='orange', bg=self.master_bg,
                                              relief='flat', border=0)
-        
+
         self.config_master()
         self.master_widgets()
         # Need to set window position here (not in config_master),so it doesn't
@@ -239,7 +239,7 @@ class CountViewer(tk.Frame):
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
         ttk.Style().theme_use('alt')
-        
+
         # Set up universal and OS-specific keybindings and menus
         self.master.bind_all('<Escape>', quit_gui)
         cmdkey = ''
@@ -250,14 +250,14 @@ class CountViewer(tk.Frame):
         self.master.bind(f'<{f"{cmdkey}"}-q>', quit_gui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
         self.master.bind("<Control-l>", lambda q: self.show_log())
-        
+
         # Make data rows and columns stretch with window drag size.
         # Don't vertically stretch separator rows.
         rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13)
         for _r in rows2config:
             self.master.columnconfigure(1, weight=1)
         self.master.columnconfigure(2, weight=1)
-        
+
         # Set up frame to display data. Putting frame here instead of in
         # master_widgets gives proper alignment of row headers and data.
         self.dataframe.configure(borderwidth=3, relief='sunken',
@@ -267,10 +267,10 @@ class CountViewer(tk.Frame):
         framerows = (2, 3, 4, 5, 6, 7, 8)
         for row in framerows:
             self.dataframe.rowconfigure(row, weight=1)
-        
+
         self.dataframe.columnconfigure(1, weight=1)
         self.dataframe.columnconfigure(2, weight=1)
-        
+
         # Fill in headers for data rows.
         row_header = {'Counting since': 2,
                       'Count interval': 3,
@@ -288,18 +288,18 @@ class CountViewer(tk.Frame):
             tk.Label(self.master, text=f'{header}',
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
-    
+
     def master_widgets(self) -> None:
         """
         Layout menus, buttons, separators, row labels in main window.
         """
-        
+
         # creating a menu instance
         menu = tk.Menu(self.master)
         self.master.config(menu=menu)
-        
+
         # Add pull-down menus
-        
+
         os_accelerator = ''
         if MY_OS in 'lin, win':
             os_accelerator = 'Ctrl'
@@ -315,7 +315,7 @@ class CountViewer(tk.Frame):
                          #   b/c can't override MacOS native Command+Q;
                          #   and don't want Ctrl+Q displayed or used.
                          accelerator=f'{os_accelerator}+Q')
-        
+
         view = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.show_log,
@@ -326,11 +326,11 @@ class CountViewer(tk.Frame):
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
-        
+
         # Create button widgets:
         style_button = ttk.Style(self.master)
         style_button.configure('TButton', background='grey80', anchor='center')
-        
+
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
         intvl_b = ttk.Button(text='Interval data', command=self.show_intervaldata)
         self.sumry_b = ttk.Button(text='Summary data', command=self.show_sumrydata)
@@ -342,7 +342,7 @@ class CountViewer(tk.Frame):
         style_sep.configure('TFrame', background=self.master_bg)
         sep1 = ttk.Frame(relief="raised", height=6)
         sep2 = ttk.Frame(relief="raised", height=6)
-        
+
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
         viewlog_b.grid(row=0, column=0, padx=5, pady=5)
         intvl_b.grid(row=0, column=1, padx=0, pady=5)
@@ -449,7 +449,7 @@ class CountViewer(tk.Frame):
         logging.info(self.report)
 
         # self.show_intervaldata()
-        
+
     # TODO: Consider whether need to re-grid labels for intervals. Just use
     #  configure and master.update() ?  Is StringVar enough to update data?
     def show_intervaldata(self) -> None:
@@ -457,29 +457,29 @@ class CountViewer(tk.Frame):
         Show interval and summary metrics for most recently read BOINC
         task data.
         """
-        
+
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
-        
+
         # Interval data, column1
         self.count_new_l.configure(foreground=self.highlight)
         self.tt_mean_l.configure(foreground=self.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
-        
+
         # Summary data, column2, deemphasize font color
         self.count_uniq_l.configure(foreground=self.deemphasize)
         self.ttmean_sumry_l.configure(foreground=self.deemphasize)
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
-        
+
         # Previous and until task count times.
         self.count_new_l.configure(text=self.count_new)
         self.time_now_l.configure(text=self.time_now)
         self.count_next_l.configure(text=self.share.tkdata['count_next'].get())
-        
+
         # Place new labels (not in show_startdata) in row,column positions.
         # Also place labels whose font emphasis needs to change. ???
         self.count_new_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
@@ -502,10 +502,10 @@ class CountViewer(tk.Frame):
 
         # Count and summary interval times
         tt_range = f'{self.tt_min.get()} -- {self.tt_max.get()}'
-        
+
         self.interval_t_l.config(foreground=self.deemphasize)
         self.summary_t_l.config(foreground=self.emphasize)
-        
+
         # Summary data, column2, emphasize font color
         self.count_uniq_l.configure(foreground=self.highlight)
         self.ttmean_sumry_l.configure(foreground=self.highlight)
@@ -513,7 +513,7 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.configure(text=tt_range,
                                        foreground=self.emphasize)
         self.ttsum_sumry_l.configure(foreground=self.emphasize)
-        
+
         # Interval data, column1, deemphasize font color
         self.count_start_l.configure(foreground=self.deemphasize)
         self.count_new_l.configure(foreground=self.deemphasize)
@@ -521,8 +521,8 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
-    
-        
+
+
         # Place labels in row,column positions.
         # Need to match padx spacing among all column 2 labels elsewhere.
         self.count_uniq_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
@@ -530,16 +530,16 @@ class CountViewer(tk.Frame):
         self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
-        
+
         self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                              columnspan=2)
         self.counts_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.count_next_l.grid(row=12, column=1, padx=3, sticky=tk.W)
         self.num_tasks_l.grid(row=13, column=1, padx=3, sticky=tk.W)
-        
+
         # self.master.update_idletasks()
         # master.mainloop()
-    
+
     # Methods for menu items and keybinds.
     @staticmethod
     def show_log() -> None:
@@ -548,7 +548,7 @@ class CountViewer(tk.Frame):
 
         :return: Read-only log file as scrolled text.
         """
-        
+
         try:
             with open(LOGPATH, 'r') as log:
                 logwin = tk.Toplevel()
@@ -576,7 +576,7 @@ class CountViewer(tk.Frame):
             logtext.insert(tk.INSERT, headsup)
             logtext.grid(row=0, column=0, sticky=tk.NSEW)
             logtext.focus_set()
-    
+
     @staticmethod
     def backup_log() -> None:
         """
@@ -584,7 +584,7 @@ class CountViewer(tk.Frame):
 
         :return: A new or overwritten backup file.
         """
-        
+
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGPATH) is True:
             shutil.copyfile(LOGPATH, destination)
@@ -602,7 +602,7 @@ class CountViewer(tk.Frame):
             # print('\n', warn_main, warn_detail)
             messagebox.showwarning(title='Archive warning',
                                    message=warn_main, detail=warn_detail)
-    
+
     def settings(self) -> None:
         """
         Toplevel window called from menu File>Settings.
@@ -660,7 +660,7 @@ class CountViewer(tk.Frame):
         # Have user select interval times for counting and summary cycles.
         self.intvl_choice = ttk.Combobox(self.settings_win, state='readonly', width=4,
                                          textvariable=self.share.setting['interval_t'])
-                                    
+                    
         self.intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
                                        '30m', '25m', '20m', '15m', '10m', '5m')
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
@@ -705,7 +705,7 @@ class CountViewer(tk.Frame):
         # Default button should display all default values in real time.
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
-        
+
         self.return_button = ttk.Button(self.settings_win, text='Return',
                                         command=self.settings_win.destroy)
         # Need to disable button to force user to first "Confirm" settings,
@@ -769,7 +769,7 @@ class CountModeler:
 
     def __init__(self, share):
         self.share = share
-        
+
         # self.time_now = None
         # self.counts_remain = None
         self.num_tasks = 0
@@ -781,13 +781,13 @@ class CountModeler:
         self.count_new = None
         self.tic_nnt = 0
         self.notrunning = False
-        
+
         # Log file print formatting:
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
 
         self.get_start_data()
-    
+
     def default_settings(self) -> None:
         """Set or reset default run parameters in setting dictionary.
         """
@@ -798,7 +798,7 @@ class CountModeler:
         self.share.setting['summary_t'].set('1d')
         self.share.setting['cycles_max'].set('1008')
         self.share.setting['do_log'].set(1)
-        
+
         # alternative names, for debugging or just in case...
         # self.share.interval_t = '60m'
         # self.share['sumry_t_val'].set(1)
@@ -806,7 +806,7 @@ class CountModeler:
         # self.share.summary_t = '1d'
         # self.share.cycles_max = '1008'
         # self.share.do_log = 1
-    
+
     def get_start_data(self):
         """Gather initial data to track tasks and times.
         """
@@ -849,7 +849,7 @@ class CountModeler:
         # Synopsis:
         # Do not include starting tasks in interval or summary counts.
         # Remove previous ("used") tasks from current ("new") task metrics.
-        
+
         for loop_num in range(self.share.setting['cycles_max'].get()):
             # intvl_timer() sleeps the for-loop between counts.
             interval_minutes = int(self.share.setting['interval_t'].get()[:-1])
@@ -868,7 +868,7 @@ class CountModeler:
             self.num_tasks = len([elem for elem in tasks_all if tags[0] in elem])
             tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
                             if tags[1] in elem]
-            
+
             # Need a flag for when tasks have run out.
             # active_task_state for a running task is 'EXECUTING'.
             # When communication to server is stalled, all tasks will be
@@ -903,14 +903,14 @@ class CountModeler:
                     print(report)
                     if self.share.setting['do_log'].get() == 1:
                         logging.info(report)
-            
+
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval,
             #  (which initially is from get_start_data().)
             self.ttimes_used.extend(self.ttimes_new)
-            
+
             ttimes_sent = BC.get_reported('elapsed time')
-            
+
             # Need to re-set prior ttimes_new, then repopulate it with newly
             #   reported tasks.
             self.ttimes_new.clear()
@@ -941,7 +941,7 @@ class CountModeler:
             self.share.tkdata['tt_sd'].set(self.share.tt_sd)
             self.share.tkdata['tt_range'].set(self.share.tt_range)
             self.share.tkdata['tt_total'].set(self.share.tt_total)
-            
+
             # TODO: Add this to show_intervaldata() for Viewer and logging option,
             #  as in show_startdata() (using data set in get_interval_data()
             # Report: Regular intervals
@@ -975,7 +975,7 @@ class CountModeler:
                     print(f'\x1b[1F{self.del_line}{report}')
                     if self.share.setting['do_log'].get() == 1:
                         logging.info(report)
-            
+
             elif self.count_new > 0 and self.notrunning is False:
                 self.tic_nnt -= self.tic_nnt
                 tt_total, tt_mean, tt_sd, tt_min, tt_max = self.get_timestats(
@@ -1001,14 +1001,14 @@ class CountModeler:
                 if self.share.setting['do_log'].get() == 1:
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
-            
+
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{time_now};'
                           f' *** Check whether tasks are running. ***\n')
                 print(f'\x1b[1F{self.del_line}{report}')
                 if self.share.setting['do_log'].get() == 1:
                     logging.info(report)
-            
+
             elif self.count_new > 0 and self.notrunning is True:
                 report = (f'\n{time_now};'
                           f' *** Check whether tasks are running. ***\n')
@@ -1017,7 +1017,7 @@ class CountModeler:
                 if self.share.setting['do_log'].get() == 1:
                     logging.info(report)
             self.summary_reports(loop_num, self.ttimes_smry)
-    
+
     def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
         """
         Report task counts time stats summaries at timed intervals.
@@ -1035,7 +1035,7 @@ class CountModeler:
             # Need unique tasks for stats and counting.
             self.share.ttimes_uniq = set(ttimes_smry)
             self.share.count_sumry = len(self.ttimes_uniq)
-            
+
             # tt_total, tt_mean, tt_sd, tt_min, tt_max = \
             #     self.get_timestats(count_sumry, self.ttimes_uniq).values()
             tt_total, tt_mean, tt_sd, tt_min, tt_max = self.share.gettimestats('summary').values()
@@ -1053,7 +1053,7 @@ class CountModeler:
             if self.share.setting['do_log'].get() == 1:
                 report_cleaned = self.ansi_esc.sub('', report)
                 logging.info(report_cleaned)
-            
+
             # Need to reset data lists, in interval_reports(), for the next
             # summary interval.
             self.ttimes_smry.clear()
@@ -1090,7 +1090,7 @@ class CountModeler:
         """
         # Time conversion concept from Niko
         # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
-        
+
         _m, _s = divmod(secs, 60)
         _h, _m = divmod(_m, 60)
         day, _h = divmod(_h, 24)
@@ -1110,7 +1110,7 @@ class CountModeler:
         return ('Enter secs as integer, time_format (format) as either'
                 f" 'std' or 'short'. Arguments as entered: secs={secs}, "
                 f"format={time_format}.")
-    
+
     def intvl_timer(self, interval: int) -> None:
         """Provide sleep intervals and display countdown timer.
 
@@ -1120,7 +1120,7 @@ class CountModeler:
         # Idea for development from
         # https://stackoverflow.com/questions/3160699/python-progress-bar
         # /3162864
-        
+
         # Initial timer bar length; 60 fits well with clock times.
         bar_len = 60
         prettybar = ' ' * bar_len
@@ -1129,18 +1129,18 @@ class CountModeler:
         total_s = interval * 60
         barseg_s = round(total_s / bar_len)
         remain_s = total_s
-        
+
         # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
         whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
         whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
         reset = '\x1b[0m'  # No color, reset to system default.
         del_line = '\x1b[2K'  # Clear entire line.
-        
+
         # Needed for Windows Cmd Prompt ANSI text formatting. shell=True is
         # safe because there is no external input.
         if sys.platform[:3] == 'win':
             subprocess.call('', shell=True)
-        
+
         # Not +1 in range because need only to sleep to END of interval.
         for i in range(bar_len):
             remain_bar = prettybar[i:]
@@ -1157,10 +1157,10 @@ class CountModeler:
             if num_segments == 0:
                 # print(f'\r\x1b[A{del_line}')
                 print(f'\r{self.del_line}')
-            
+
             # t.sleep(.5)  # DEBUG
             time.sleep(barseg_s)
-    
+
     def get_timestats(self, numtasks: int, tasktimes: iter) -> dict:
         """
         Sum and run statistics from times, as sec (integers or floats).
@@ -1204,10 +1204,10 @@ class CountController(tk.Tk):
     """
     The Controller through which other MVC Classes can interact.
     """
-    
+
     def __init__(self):
         super().__init__()
-        
+
         # Need to fix window size to prevent an annoying window redraw each time
         #   font size changes the width of the result Entry() widgets and Frame().
         # Pixels here are set to fit a 52 character width, W, Entry() and are
@@ -1223,11 +1223,11 @@ class CountController(tk.Tk):
         elif MY_OS == 'dar':
             self.minsize(550, 390)
             self.maxsize(745, 380)
-        
+
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
         CountViewer(master=container, share=self)
-    
+
     def defaultsettings(self) -> None:
         """
         Is called for start report and whenever user opts to
@@ -1239,7 +1239,7 @@ class CountController(tk.Tk):
     def getmin(self, timestring: str) -> int:
         """
         Converts a time string into minutes.
-        
+
         :param timestring: value+unit, e.g. 60m, 12h, or 2d.
         :return: converted minutes as integer
         """
@@ -1277,7 +1277,7 @@ class CountController(tk.Tk):
         :param args: Needed for keybinding
         """
         CountFyi(share=self).compliment_me()
-    
+
     def about(self):
         """Is called from Viewer Help menu.
         """
@@ -1288,10 +1288,10 @@ class CountFyi:
     """
     Modules to provide user information and help.
     """
-    
+
     def __init__(self, share):
         self.share = share
-    
+
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu.
 
@@ -1333,13 +1333,13 @@ class CountFyi:
         ]
         praise = random.choice(compliments)
         self.share.compliment_txt.config(text=praise)
-        
+
         def refresh():
             self.share.compliment_txt.config(text="")
             app.update_idletasks()
-        
+
         self.share.compliment_txt.after(2222, refresh)
-    
+
     # TODO:
     @staticmethod
     def about() -> None:
@@ -1372,7 +1372,7 @@ along with this program. If not, see https://www.gnu.org/licenses/
                             Keith Myers - Testing, debug
                 Development Status: 4 - Beta
                 Version:    """)
-        
+
         num_lines = about.count('\n')
         aboutwin = tk.Toplevel()
         aboutwin.minsize(570, 460)
