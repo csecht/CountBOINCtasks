@@ -52,7 +52,7 @@ try:
     from tkinter import messagebox
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
-    print('Passphrase.py requires tkinter, which is included with some Python 3.7+'
+    print('gcount_tasks.py requires tkinter, which is included with some Python 3.7+'
           '\ndistributions, such as from Active State.'
           '\nInstall 3.7+ or re-install Python and include Tk/Tcl.'
           '\nDownloads available from python.org'
@@ -60,7 +60,7 @@ except (ImportError, ModuleNotFoundError) as error:
           f'\nSee also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 6):
-    print('passphrase.py requires at least Python 3.6.')
+    print('Program requires at least Python 3.6.')
     sys.exit(1)
 
 MY_OS = sys.platform[:3]
@@ -334,8 +334,7 @@ class CountViewer(tk.Frame):
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
         intvl_b = ttk.Button(text='Interval data', command=self.show_intervaldata)
         self.sumry_b = ttk.Button(text='Summary data', command=self.show_sumrydata)
-        # Need to self. these b/c their state is changed in other methods.
-        self.quit_b = ttk.Button(text='Quit', command=quit_gui)
+        quit_b = ttk.Button(text='Quit', command=quit_gui)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -352,7 +351,7 @@ class CountViewer(tk.Frame):
         # Intervening rows are gridded in show_startdata()
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
         # self.start_b.grid(row=13, column=2, padx=(0, 5), sticky=tk.E)
-        self.quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
+        quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
         self.share.compliment_txt.grid(row=14, column=1, columnspan=3,
                                        padx=(30, 0), pady=5, sticky=tk.W)
 
@@ -374,10 +373,7 @@ class CountViewer(tk.Frame):
 
         # Need self.share... b/c ttimes_start is used in get_interval_data()
         self.share.ttimes_start = BC.get_reported('elapsed time')
-        # Need self... for 'local' var to scope the type:int in do_log condition.
         self.count_start = len(self.share.ttimes_start)
-        # interval_t and summary_t values are configured in __init__
-        #   as textvariables b/c they need real-time updating if settings() called.
         self.time_start_l.config(text=self.time_start)
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
@@ -389,13 +385,12 @@ class CountViewer(tk.Frame):
         # Starting count data and times (from past boinc-client hour).
         # Textvariables are configured in __init__; their values
         #   (along with self.share.tt_range) are set in get_start_data()
-        #   called via Controller getstartdata().
+        #    and called via Controller getstartdata().
         self.tt_mean_l.configure(foreground=self.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
 
-        # Previous and until task count times.
         # This start_info label is a one-off; in same grid position as time_now_l.
         start_info_l = ttk.Label(self.master,
                                  text='The most recent 1 hr BOINC report',
@@ -456,7 +451,7 @@ class CountViewer(tk.Frame):
         # self.show_intervaldata()
         
     # TODO: Consider whether need to re-grid labels for intervals. Just use
-    #  configure and master.update() ?  Need StringVar to update data?
+    #  configure and master.update() ?  Is StringVar enough to update data?
     def show_intervaldata(self) -> None:
         """
         Show interval and summary metrics for most recently read BOINC
@@ -684,7 +679,6 @@ class CountViewer(tk.Frame):
                                          values=('day', 'hr', 'min'), width=4)
         self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
 
-
         sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
         sumry_label2 = ttk.Label(self.settings_win, text='time unit')
 
@@ -754,7 +748,7 @@ class CountViewer(tk.Frame):
             info = "Summary time must be greater than interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
-        if interval_m < summary_m:
+        elif interval_m < summary_m:
             self.return_button.state(["!disabled"])
 
         if self.share.setting['do_log'].get() == 1 and interval_m < summary_m:
