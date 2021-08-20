@@ -384,9 +384,7 @@ class CountViewer(tk.Frame):
         # Need to begin by user confirming settings, which will call
         # show_start_data() to populate master window with settings and data.
         self.share.defaultsettings()
-        # TODO: Figure out how to have settings overlay master window, not above it.
         self.settings()
-        # show_start_data() will not run until user closes settings() window.
         self.show_start_data()
 
     # The show_ methods define and display data for master window and logging.
@@ -478,6 +476,11 @@ class CountViewer(tk.Frame):
                     f'{self.indent}Total tasks in queue: {num_tasks}\n')
         logging.info(self.report)
 
+        # TODO: need a checkpoint/gatekeeper to call show_interval_data()
+        #  (and start timer) only after settings() window closes.
+        # TODO: Determine whether all of CountModler() should be threaded, or
+        #  only get_interval_data() (and get_summary_data()?)
+        
         # self.show_interval_data()
 
     def show_interval_data(self) -> None:
@@ -891,7 +894,6 @@ class CountViewer(tk.Frame):
 
         # Note: self.share.setting['do_log'] is set automatically by Checkbutton.
         # Note: self.share.setting['interval_t'] is set in settings().
-        # self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
         # Need to set summary_t here b/c it's from 2 sumry widgets in settings()
         summary_t = self.sumry_t_value.get() + self.sumry_t_unit.get()[:1]
         self.share.setting['summary_t'].set(summary_t)
@@ -1121,7 +1123,6 @@ class CountModeler:
         """
         # Get values from CountViewer.settings()
         summary_m = self.get_min(self.share.setting['summary_t'].get())
-        # interval_m = int(self.share.setting['interval_t'].get()[:-1])
         summary_factor = summary_m // self.share.interval_m
         if (loop_num + 1) % summary_factor == 0 and self.share.notrunning is False:
             # Need unique tasks for stats and counting.
