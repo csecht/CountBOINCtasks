@@ -314,6 +314,10 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
 
+        tk.Label(self.master, text='<--Notices',
+                 bg=self.master_bg, fg=self.row_fg
+                 ).grid(row=14, column=2, padx=(0, 5), sticky=tk.E)
+
     def master_widgets(self) -> None:
         """
         Layout menus, buttons, separators, row labels in main window.
@@ -358,7 +362,7 @@ class CountViewer(tk.Frame):
         style_button.configure('TButton', background='grey80', anchor='center')
 
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
-        intvl_b = ttk.Button(text='Interval data', command=self.show_interval_data)
+        self.intvl_b = ttk.Button(text='Interval data', command=self.show_interval_data)
         self.sumry_b.configure(text='Summary data', command=self.show_summary_data)
         quit_b = ttk.Button(text='Quit', command=quit_gui)
 
@@ -371,7 +375,7 @@ class CountViewer(tk.Frame):
 
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
         viewlog_b.grid(row=0, column=0, padx=5, pady=5)
-        intvl_b.grid(row=0, column=1, padx=0, pady=5)
+        self.intvl_b.grid(row=0, column=1, padx=0, pady=5)
         self.sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in show_start_data()
@@ -396,9 +400,12 @@ class CountViewer(tk.Frame):
         Called from 'Return' Button() in settings() window.
         """
         # Need to define starting settings and BOINC data, via Controller.
+        # self.settings_win.destroy()
         self.share.getstartdata()
 
-        # Need to keep sumry_b disabled until after 1st summary interval.
+        # Need to keep intvl_b & sumry_b disabled until after 1st count
+        # and summary intervals.
+        self.intvl_b.config(state=tk.DISABLED)
         self.sumry_b.config(state=tk.DISABLED)
 
         # Need self.share... whenever var is used in other MVC classes.
@@ -420,10 +427,10 @@ class CountViewer(tk.Frame):
         self.tt_total_l.configure(foreground=self.emphasize)
 
         # This start_info label is a one-off; in same grid position as time_now_l.
-        start_info_l = ttk.Label(self.master,
-                                 text='The most recent 1 hr BOINC report',
-                                 background=self.master_bg,
-                                 foreground=self.row_fg)
+        self.start_info_l = ttk.Label(self.master,
+                                      text='The most recent 1 hr BOINC report',
+                                      background=self.master_bg,
+                                      foreground=self.row_fg)
 
         # Grid the labels; sorted by row.
         # TODO: grid is used here and other show_() to set new label values
@@ -437,8 +444,8 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
         self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
         self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
-        start_info_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                          columnspan=2)
+        self.start_info_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+                               columnspan=2)
         self.time_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.cycles_max_l.grid(row=12, column=1, padx=3, sticky=tk.W)
         self.num_tasks_l.grid(row=13, column=1, padx=3, sticky=tk.W)
@@ -490,6 +497,7 @@ class CountViewer(tk.Frame):
         if optioned.
         Called from settings.close_settings()
         """
+        self.settings_win.destroy()
         self.share.getintervaldata()
 
         # TODO: CHECK FLOW: show_interval_data() should be called every
@@ -519,6 +527,7 @@ class CountViewer(tk.Frame):
         # Place new labels (replace those in show_start_data) in row,column positions.
         # Also place labels whose font emphasis needs to change. ???
         self.task_count_new_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
+        self.start_info_l.grid_remove()
         self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                              columnspan=2)
         self.counts_remain_l.grid(row=11, column=1, padx=3, sticky=tk.W)
@@ -541,7 +550,7 @@ class CountViewer(tk.Frame):
                                       'Clear notice with Ctrl_Shift-C.')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=14, column=0, columnspan=3,
-                                     padx=(30, 0), pady=5, sticky=tk.W)
+                                     padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         elif not notrunning and tic_nnt > 0:
             self.share.notice_txt.set(f'NO TASKS reported in past '
@@ -549,7 +558,7 @@ class CountViewer(tk.Frame):
                                       f'(Clear notice with Ctrl_Shift-C)')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=14, column=0, columnspan=3,
-                                     padx=(30, 0), pady=5, sticky=tk.W)
+                                     padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         elif notrunning:
             self.share.notice_txt.set('NO TASKS WERE RUNNING; check BOINC Manager\n'
@@ -557,11 +566,11 @@ class CountViewer(tk.Frame):
             # Notice grids in compliment_me spot; initial grid implementation
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=14, column=0, columnspan=3,
-                                     padx=(30, 0), pady=5, sticky=tk.W)
+                                     padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         # When things are normal, notice_txt will be removed on next interval.
         else:
-            self.share.notice_txt.set('')
+            # self.share.notice_txt.set('')
             self.share.notice_l.grid_remove()  # Necessary?
 
         # Need to log regular intervals for the do_log option
@@ -644,7 +653,6 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
-
 
         # Place labels in row,column positions.
         # Need to match padx spacing among all column 2 labels elsewhere.
@@ -774,22 +782,25 @@ class CountViewer(tk.Frame):
             max_label.grid(column=0, columnspan=3, row=4,
                            padx=10, pady=(0, 5), sticky=tk.E)
 
-        def close_settings():
+        def exit_settings():
             """
-            The only way to close the settings window. Activates or
-            disables interval cycles.
+            Activates or disables interval cycles.
             Called from 'Return' button.
             """
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
+                self.intvl_b.config(state=tk.DISABLED)
                 self.share.notice_txt.set('STATUS REPORT ONLY. '
                                           '(Clear notice with Ctrl_Shift-C)')
                 # Notice grids in compliment_me spot; initial grid implementation
                 self.share.notice_l.grid(row=14, column=0, columnspan=3,
-                                         padx=(30, 0), pady=5, sticky=tk.W)
-
-            self.settings_win.destroy()
+                                         padx=5, pady=5, sticky=tk.W)
+                self.settings_win.destroy()
+            else:
+                # self.show_interval_data()
+                # self.show_start_data()
+                self.settings_win.destroy()
 
         # Have user select interval times for counting and summary cycles.
         self.intvl_choice.configure(state='readonly', width=4,
@@ -843,11 +854,11 @@ class CountViewer(tk.Frame):
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
             
-        self.return_button.configure(text='Return', command=close_settings)
+        self.return_button.configure(text='Return', command=exit_settings)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
-        #    'Return' button is enabled (!disabled) in check_and_set().
-        self.return_button.state(["disabled"])
+        #    'Return' button is enabled (tk.NORMAL) in check_and_set().
+        self.return_button.config(state=tk.DISABLED)
 
         # Grid all window widgets; sorted by row.
         self.intvl_choice.grid(column=1, row=0)
@@ -899,12 +910,12 @@ class CountViewer(tk.Frame):
         self.share.setting['summary_t'].set(summary_t)
         summary_m = self.share.getmin(summary_t)
         if self.share.interval_m >= summary_m:
-            self.return_button.state(["disabled"])
+            self.return_button.config(state=tk.DISABLED)
             info = "Summary time must be greater than interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
         elif self.share.interval_m < summary_m:
-            self.return_button.state(["!disabled"])
+            self.return_button.config(state=tk.NORMAL)
 
         if self.share.setting['do_log'].get() == 1 and self.share.interval_m < summary_m:
             time_now = datetime.now().strftime(TIME_FORMAT)
@@ -1007,7 +1018,8 @@ class CountModeler:
         #  cycle to update get_interval_data() and log reporting.
         self.share.notice['notrunning'].set(0)
         cycles_max = self.share.setting['cycles_max'].get()
-        self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        if cycles_max != '0':
+            self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.notice['tic_nnt'].set(0)
 
         for loop_num in range(cycles_max):
@@ -1015,10 +1027,19 @@ class CountModeler:
             self.share.loop_num = loop_num
             # Need to re-define self.share.interval_m here in case it was
             #   changed in settings() during intervals?
-
+            print('DEBUG made it to line 1020\n')
             # countdown_timer() sleeps the for-loop between counts .
-            self.countdown_timer(self.share.interval_m)
+            # self.countdown_timer(self.share.interval_m)
             # time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
+
+            # Set current time to the stringvariable for row "The last count was:",
+            #  which displays the self.time_now_l Label.
+            self.share.tkdata['time_now'].set(datetime.now().strftime(TIME_FORMAT))
+
+            # Do not enable interval button, which calls show_interval_data, until
+            #   after first interval completes; no need for 'if 1st loop_num'.
+            #   Button is disabled in show_start_data.
+            self.share.intvl_b.config(state=tk.NORMAL)
 
             # Do one boinccmd process call then parse tagged data from all task data
             #   (instead of calling BC.get_tasks() multiple times in succession).
@@ -1264,26 +1285,24 @@ class CountController(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # Need to fix window size to prevent an annoying window redraw each time
-        #   font size changes the width of the result Entry() widgets and Frame().
-        # Pixels here are set to fit a 52 character width, W, Entry() and are
-        #   OS-specific. (Var constant W = 52 is arbitrary, but I like it.)
+        # Need window sizes to make room for multi-line notices,
+        # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         # TODO: adjust OS-specific min/max size and position.
         if MY_OS == 'lin':
-            self.minsize(550, 390)
-            self.maxsize(780, 390)
+            self.minsize(550, 350)
+            self.maxsize(780, 420)
             # Need geometry so that master window will be under settings()
             # Toplevel window at startup.
             # These x, y coordinates are default window placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
             self.minsize(550, 390)
-            self.maxsize(702, 380)
+            self.maxsize(702, 390)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
             self.minsize(550, 390)
-            self.maxsize(745, 380)
+            self.maxsize(745, 390)
             self.geometry('+96+134')
 
         # pylint: disable=assignment-from-no-return
