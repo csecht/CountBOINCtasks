@@ -232,7 +232,7 @@ class CountViewer(tk.Frame):
         self.share.compliment_txt = tk.Label(fg='orange', bg=self.master_bg,
                                              relief='flat', border=0)
         # This label will share grid with complement_txt to display user notices.
-        self.notice_l = tk.Label(textvariable=self.share.notice_txt,
+        self.share.notice_l = tk.Label(textvariable=self.share.notice_txt,
                                  fg='salmon', bg=self.master_bg,
                                  relief='flat', border=0)
 
@@ -374,7 +374,7 @@ class CountViewer(tk.Frame):
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
         # self.start_b.grid(row=13, column=2, padx=(0, 5), sticky=tk.E)
         quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
-        self.share.compliment_txt.grid(row=14, column=1, columnspan=3,
+        self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
                                        padx=(30, 0), pady=5, sticky=tk.W)
 
         # Need to begin by user confirming settings, which will call
@@ -475,33 +475,17 @@ class CountViewer(tk.Frame):
                     f'{self.indent}Total tasks in queue: {num_tasks}\n')
         logging.info(self.report)
 
-        # TODO: FIX - no window draws when show_interval_data() runs:
-        # TODO: TEST cycles_max == 0
-        # TODO: CHECK FLOW: show_interval_data() should be called every interval
-        #  cycle to update get_interval_data() and log reporting.
-        # # NOTE: This is only call to show_interval data.
-        # # Need to report on intervals, otherwise provide one-off status
-        # #    report when optioned in startup settings().
-        # if self.share.setting['cycles_max'].get() > 0:
-        #     self.show_interval_data()
-        # else:
-        #     self.share.setting['interval_t'].set('DISABLED')
-        #     self.share.setting['summary_t'].set('DISABLED')
-        #     self.share.notice_txt.set('STATUS REPORT ONLY\n'
-        #                               'Clear this notice with Ctrl_Shift-C.')
-        #     # Notice grids in compliment_me spot; initial grid implementation
-        #     self.notice_l.grid(row=14, column=1, columnspan=3,
-        #                        padx=(30, 0), pady=5, sticky=tk.W)
-        #
-        #     app.update_idletasks()
-
     def show_interval_data(self) -> None:
         """
         Show interval and summary metrics for recently reported BOINC
         task data. Provide notices for aberrant task status. Log to file
         if optioned.
+        Called from settings.close_settings()
         """
         self.share.getintervaldata()
+
+        # TODO: CHECK FLOW: show_interval_data() should be called every
+        #  interval cycle to update get_interval_data() and log reporting.
 
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
@@ -548,31 +532,29 @@ class CountViewer(tk.Frame):
             self.share.notice_txt.set('PROJECT UPDATE REQUESTED; see log file.\n'
                                       'Clear notice with Ctrl_Shift-C.')
             self.share.compliment_txt.grid_remove()  # Necessary?
-            self.notice_l.grid(row=14, column=1, columnspan=3,
-                               padx=(30, 0), pady=5, sticky=tk.W)
+            self.share.notice_l.grid(row=14, column=0, columnspan=3,
+                                     padx=(30, 0), pady=5, sticky=tk.W)
             app.update_idletasks()
-
-            # TODO: does compliment_txt grid need to be removed? or
-            #  can the two grids just overlay each other when called?
         elif not notrunning and tic_nnt > 0:
             self.share.notice_txt.set(f'NO TASKS reported in past '
                                       f'{tic_nnt} count(s).\n'
                                       'Clear notice with Ctrl_Shift-C.')
             self.share.compliment_txt.grid_remove()  # Necessary?
-            self.notice_l.grid(row=14, column=1, columnspan=3,
-                               padx=(30, 0), pady=5, sticky=tk.W)
+            self.share.notice_l.grid(row=14, column=0, columnspan=3,
+                                     padx=(30, 0), pady=5, sticky=tk.W)
+            app.update_idletasks()
         elif notrunning:
             self.share.notice_txt.set('NO TASKS WERE RUNNING; check BOINC Manager\n'
                                       'Clear notice with Ctrl_Shift-C.')
             # Notice grids in compliment_me spot; initial grid implementation
             self.share.compliment_txt.grid_remove()  # Necessary?
-            self.notice_l.grid(row=14, column=1, columnspan=3,
-                               padx=(30, 0), pady=5, sticky=tk.W)
+            self.share.notice_l.grid(row=14, column=0, columnspan=3,
+                                     padx=(30, 0), pady=5, sticky=tk.W)
             app.update_idletasks()
         # When things are normal, notice_txt will be removed on next interval.
         else:
             self.share.notice_txt.set('')
-            self.notice_l.grid_remove()  # Necessary?
+            self.share.notice_l.grid_remove()  # Necessary?
 
         # Need to log regular intervals for the do_log option
         if self.share.setting['do_log'].get() == 1:
@@ -786,12 +768,24 @@ class CountViewer(tk.Frame):
 
         def close_settings():
             """
-            The only way to close the settings window.
+            The only way to close the settings window. Activates or
+            disables interval cycles. Is initial call to interval_data.
             Called from 'Return' button.
             """
-            # x = self.settings_win.winfo_x()
-            # y = self.settings_win.winfo_y()
-            # self.master.geometry(f'+{x}+{y}')
+            if self.share.setting['cycles_max'].get() > 0:
+                # TODO: FIX - show_interval_data freezes up.
+                # self.show_interval_data()
+                pass
+            else:
+                self.share.setting['interval_t'].set('DISABLED')
+                self.share.setting['summary_t'].set('DISABLED')
+                self.share.notice_txt.set('STATUS REPORT ONLY. '
+                                          '(Clear notice with Ctrl_Shift-C)')
+                # Notice grids in compliment_me spot; initial grid implementation
+                self.share.notice_l.grid(row=14, column=0, columnspan=3,
+                                         padx=(30, 0), pady=5, sticky=tk.W)
+
+                # app.update_idletasks()
             self.settings_win.destroy()
 
         # Have user select interval times for counting and summary cycles.
@@ -873,7 +867,13 @@ class CountViewer(tk.Frame):
         from settings() to their textvariable dict values, and log to
         file if optioned. Called from settings() Confirm button.
         """
-        self.share.setting['cycles_max'].set(self.cycles_max_entry.get().lstrip('0'))
+        # Need to remove leading zeros, but allow a zero entry.
+        cycles_max = self.cycles_max_entry.get()
+        if cycles_max != '0':
+            self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
+        else:
+            self.share.setting['cycles_max'].set(0)
+
         # Note: self.share.setting['do_log'] is set automatically by Checkbutton.
         # Note: self.share.setting['interval_t'] is set in settings().
         # self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
@@ -1090,7 +1090,7 @@ class CountModeler:
             self.share.tkdata['tt_range'].set(tt_range)
             self.share.tkdata['tt_total'].set(tt_total)
 
-        # self.share.showintervaldata()
+        self.share.showintervaldata()
 
     # TODO: make into get_summary_data, like get_interval_data
     def get_summary_data(self, loop_num: int, ttimes_smry: list) -> None:
@@ -1380,10 +1380,9 @@ class CountFyi:
         ]
         praise = random.choice(compliments)
         self.share.compliment_txt.config(text=praise)
-        # TODO: is this required in case self.share.notice_txt used same grid?
-        if self.share.notice_txt.get() == '':
-            self.share.compliment_txt.grid(row=14, column=1, columnspan=3,
-                                           padx=(30, 0), pady=5, sticky=tk.W)
+        self.share.notice_l.grid_remove()
+        self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
+                                       padx=(30, 0), pady=5, sticky=tk.W)
 
         def refresh():
             self.share.compliment_txt.config(text="")
