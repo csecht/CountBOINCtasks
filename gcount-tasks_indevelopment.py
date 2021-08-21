@@ -175,7 +175,7 @@ class CountViewer(tk.Frame):
         # style_data.configure('TLabel', foreground=self.row_fg,
         #                       background=self.data_bg, anchor='center')
 
-        # Settings window widgets:
+        # settings() window widgets:
         self.settings_win = tk.Toplevel(relief='raised', bd=3)
         self.intvl_choice = ttk.Combobox(self.settings_win)
         self.sumry_t_value = ttk.Entry(self.settings_win)
@@ -184,11 +184,13 @@ class CountViewer(tk.Frame):
         self.log_choice = tk.Checkbutton(self.settings_win)
         self.showdata_button = ttk.Button(self.settings_win)
 
-        # Set summary button attribute here b/c need to enable/disable in
-        #   different modules.
+        # Master window widgets:
+        # Set interval summary focus button attributes here b/c need to
+        # enable/disable in different modules.
+        self.share.intvl_b = ttk.Button()
         self.share.sumry_b = ttk.Button()
 
-        # Labels for settings display in master window; configure in show_start_data():
+        # Labels for settings values in master window; configure in show_start_data():
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
                                      fg='grey90')
         self.interval_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
@@ -359,7 +361,7 @@ class CountViewer(tk.Frame):
         style_button.configure('TButton', background='grey80', anchor='center')
 
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
-        self.share.intvl_b = ttk.Button(text='Interval data', command=self.show_interval_data)
+        self.share.intvl_b.configure(text='Interval data', command=self.show_interval_data)
         self.share.sumry_b.configure(text='Summary data', command=self.show_summary_data)
         quit_b = ttk.Button(text='Quit', command=quit_gui)
 
@@ -383,8 +385,8 @@ class CountViewer(tk.Frame):
                                        padx=(30, 0), pady=5, sticky=tk.W)
 
         # Need this condition so starting sequence isn't repeated when subsequent
-        #  _show methods are called; interval_t will be defined, thus
-        #  skipping start methods
+        #  _show methods are called; when they are called, interval_t will be
+        #  defined, thus skipping start methods.
         if not self.share.setting['interval_t'].get():
             self.startup()
 
@@ -772,7 +774,7 @@ class CountViewer(tk.Frame):
         def test_dig_entry(entry_string, action_type):
             """
             Only digits are accepted and displayed in Entry field.
-            Used with .register() to configure Entry validatecommand.
+            Used with .register() to configure Entry kw validatecommand.
             """
             # source: https://stackoverflow.com/questions/4140437/
             if action_type == '1':  # action type is "insert"
@@ -786,11 +788,14 @@ class CountViewer(tk.Frame):
             max_label.grid(column=0, columnspan=3, row=4,
                            padx=10, pady=(0, 5), sticky=tk.E)
 
-        def close_and_show():
+        def check_close_show():
             """
-            Activates or disables interval cycles.
-            Called from 'Return' button.
+            Calls check_and_set(), activates or disables interval cycles,
+            closes settings window, and calls show_start_data().
+            Called from showdata_button.
             """
+            self.check_and_set()
+
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
@@ -802,7 +807,6 @@ class CountViewer(tk.Frame):
                                          padx=5, pady=5, sticky=tk.W)
                 self.settings_win.destroy()
                 self.show_start_data()
-
             else:
                 # self.show_interval_data()
                 self.settings_win.destroy()
@@ -861,7 +865,7 @@ class CountViewer(tk.Frame):
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
 
-        self.showdata_button.configure(text='Show data', command=close_and_show)
+        self.showdata_button.configure(text='Show data', command=check_close_show)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
         #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
@@ -889,11 +893,11 @@ class CountViewer(tk.Frame):
         """
         Confirm that summary time > interval time, set all settings
         from settings() to their textvariable dict values, and log to
-        file if optioned. Called from settings() Confirm button.
+        file if optioned. Called from settings.close_and_show() via
+        Confirm button.
         """
-        # TODO: Need to reconfirm each time a setting is changes, not just first time.
+        self.showdata_button.config(state=tk.DISABLED)
         # Need to remove leading zeros, but allow a zero entry.
-        #   Get and strip as string then set as integer.
         #   Replace empty Entry with default values.
         cycles_max = self.cycles_max_entry.get()
         sumry_value = self.sumry_t_value.get()
@@ -902,10 +906,10 @@ class CountViewer(tk.Frame):
         elif cycles_max != '0':
             self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
         # Allow zero entry for 1-off status report.
-        elif cycles_max == 0:
+        elif cycles_max == '0':
             self.share.setting['cycles_max'].set(0)
-
-        if not sumry_value or sumry_value == '0':
+        # if sumry_value == 0 then it is caught by interval_m comparison.
+        if not sumry_value:
             self.share.setting['sumry_t_value'].set(1)
         elif sumry_value != '0':
             self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
