@@ -22,8 +22,7 @@ Alpha ver: interval counts not active.
 # ^^ Info for --about invocation argument >>
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
-__credits__ = ['Inspired by rickslab-gpu-utils',
-               'Keith Myers - Testing, debug']
+__credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __version__ = '0.0.3'
 __program_name__ = 'count-tasks.py'
@@ -327,7 +326,6 @@ class CountViewer(tk.Frame):
         self.master.config(menu=menu)
 
         # Add pull-down menus
-
         os_accelerator = ''
         if MY_OS in 'lin, win':
             os_accelerator = 'Ctrl'
@@ -432,15 +430,14 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
 
-        # This start_info label is a one-off; in same grid position as time_now_l.
+        # This start_info label is a one-off; is same grid position as
+        # time_now_l in show_interval_data
         self.start_info_l = ttk.Label(self.master,
                                       text='The most recent 1 hr BOINC report',
                                       background=self.master_bg,
                                       foreground=self.row_fg)
 
-        # Grid the labels; sorted by row.
-        # TODO: grid is used here and other show_() to set new label values
-        #  with a window redraw. Is that needed when textvariables and share.var are used?
+        # Initial gridding of labels; sorted by row.
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
@@ -973,14 +970,6 @@ class CountModeler:
         #   passed from get_interval_data().
         self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
 
-        # alternative names, for debugging or just in case...
-        # self.share.interval_t = '60m'
-        # self.share['sumry_t_value'].set(1)
-        # self.share['sumry_t_unit'].set('day')
-        # self.share.summary_t = '1d'
-        # self.share.cycles_max = '1008'
-        # self.share.do_log = 1
-
     def get_start_data(self):
         """Gather initial data to track tasks and times.
         """
@@ -1014,9 +1003,6 @@ class CountModeler:
         self.share.tkdata['tt_sd'].set(tt_sd)
         self.share.tkdata['tt_range'].set(tt_range)
         self.share.tkdata['tt_total'].set(tt_total)
-        # TODO: this flow through Controller with settings.exit_settings
-        #  is not working b/c only num_tasks tkdata shows. Call is through
-        #  to get_ttime_stats made.
 
     def get_interval_data(self) -> None:
         """
