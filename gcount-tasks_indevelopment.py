@@ -186,7 +186,7 @@ class CountViewer(tk.Frame):
 
         # Set summary button attribute here b/c need to enable/disable in
         #   different modules.
-        self.sumry_b = ttk.Button()
+        self.share.sumry_b = ttk.Button()
 
         # Labels for settings display in master window; configure in show_start_data():
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
@@ -359,8 +359,8 @@ class CountViewer(tk.Frame):
         style_button.configure('TButton', background='grey80', anchor='center')
 
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
-        self.intvl_b = ttk.Button(text='Interval data', command=self.show_interval_data)
-        self.sumry_b.configure(text='Summary data', command=self.show_summary_data)
+        self.share.intvl_b = ttk.Button(text='Interval data', command=self.show_interval_data)
+        self.share.sumry_b.configure(text='Summary data', command=self.show_summary_data)
         quit_b = ttk.Button(text='Quit', command=quit_gui)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
@@ -372,8 +372,8 @@ class CountViewer(tk.Frame):
 
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
         viewlog_b.grid(row=0, column=0, padx=5, pady=5)
-        self.intvl_b.grid(row=0, column=1, padx=0, pady=5)
-        self.sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
+        self.share.intvl_b.grid(row=0, column=1, padx=0, pady=5)
+        self.share.sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in show_start_data()
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
@@ -409,8 +409,8 @@ class CountViewer(tk.Frame):
 
         # Need to keep intvl_b & sumry_b buttons disabled until after 1st count
         # and summary intervals.
-        self.intvl_b.config(state=tk.DISABLED)
-        self.sumry_b.config(state=tk.DISABLED)
+        self.share.intvl_b.config(state=tk.DISABLED)
+        self.share.sumry_b.config(state=tk.DISABLED)
 
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=self.time_start)
@@ -633,7 +633,7 @@ class CountViewer(tk.Frame):
         """
         self.share.getsummarydata(self.share.loop_num, self.ttimes_smry)
 
-        self.sumry_b.config(state=tk.NORMAL)
+        self.share.sumry_b.config(state=tk.NORMAL)
 
         # Count and summary interval times
         tt_range = f'{self.tt_min.get()} -- {self.tt_max.get()}'
@@ -794,7 +794,7 @@ class CountViewer(tk.Frame):
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
-                self.intvl_b.config(state=tk.DISABLED)
+                self.share.intvl_b.config(state=tk.DISABLED)
                 self.share.notice_txt.set('STATUS REPORT ONLY. '
                                           '(Clear notice with Ctrl_Shift-C)')
                 # Notice grids in compliment_me spot; initial grid implementation
@@ -1037,7 +1037,10 @@ class CountModeler:
             self.share.intvl_b.config(state=tk.NORMAL)
 
             # Do one boinccmd process call then parse tagged data from all task data
-            #   (instead of calling BC.get_tasks() multiple times in succession).
+            #   (instead of calling BC.get_tasks() multiple times in succession): i.e.
+            # self.num_tasks = len(BC.get_tasks('name'))
+            # tasks_active = BC.get_tasks('active_task_state')
+            # task_states = BC.get_tasks('state')
             tasks_all = BC.get_tasks('all')
             # Need the literal task data tags as found in boinccmd stdout;
             #   the format is same as tag_str in BC.get_tasks().
@@ -1054,14 +1057,10 @@ class CountModeler:
             # When communication to server is stalled, all tasks will be
             #  "Ready to report" with a state of 'uploaded', so try a
             #  Project update command to prompt clearing the stalled queue.
-            # tasks_active = BC.get_tasks('active_task_state')
-            # self.share.notrunning = False
-            # self.share.proj_stalled = False
             self.share.notice['notrunning'].set(False)
             self.share.notice['proj_stalled'].set(False)
             if 'EXECUTING' not in tasks_active:
                 self.share.notice['notrunning'].set(True)
-                # task_states = BC.get_tasks('state')
                 task_states = [elem.replace(tags[2], '') for elem in tasks_all
                                if tags[2] in elem]
                 if 'uploaded' in task_states and 'downloaded' not in task_states:
