@@ -82,7 +82,6 @@ GUI_TITLE = 'BOINC task counter'
 logging.basicConfig(filename=str(LOGPATH), level=logging.INFO, filemode="a",
                     format='%(message)s')
 
-
 # Functions used by count-tasks, but not part of MVC structure %%%%%%%%%%%%%%%%%
 # pylint: disable=unused-argument
 def quit_gui(event=None) -> None:
@@ -135,7 +134,7 @@ class CountViewer(tk.Frame):
         # Defaults set in Modeler.default_settings; changed in settings(),
         #   except time_start.
         self.share.setting = {
-            'time_start': tk.StringVar(),
+            # 'time_start': tk.StringVar(),
             'interval_t': tk.StringVar(),
             'sumry_t_value': tk.IntVar(),
             'sumry_t_unit': tk.StringVar(),
@@ -184,12 +183,12 @@ class CountViewer(tk.Frame):
         self.sumry_t_unit = ttk.Combobox(self.settings_win)
         self.cycles_max_entry = ttk.Entry(self.settings_win)
         self.log_choice = tk.Checkbutton(self.settings_win)
-        self.return_button = ttk.Button(self.settings_win)
+        self.showdata_button = ttk.Button(self.settings_win)
 
         # Set summary button attribute here b/c need to enable/disable in
         #   different modules.
         self.sumry_b = ttk.Button()
-        
+
         # Labels for settings display in master window; configure in show_start_data():
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
                                      fg='grey90')
@@ -385,11 +384,21 @@ class CountViewer(tk.Frame):
         self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
                                        padx=(30, 0), pady=5, sticky=tk.W)
 
-        # Need to begin by user confirming settings, which will call
-        # show_start_data() to populate master window with settings and data.
+        # Need this condition so starting sequence isn't repeated when subsequent
+        #  _show methods are called; interval_t will be defined, thus
+        #  skipping start methods
+        if not self.share.setting['interval_t'].get():
+            self.startup()
+
+    def startup(self) -> None:
+        """
+        Sets default settings stringvariables, sets initial BOINC tasks data,
+        and opens settings window; once user confirms valid run settings,
+        show_start_data() will be called to display data.
+        """
         self.share.defaultsettings()
+        self.share.getstartdata()
         self.settings()
-        self.show_start_data()
 
     # The show_ methods define and display data for master window and logging.
     def show_start_data(self) -> None:
@@ -399,11 +408,8 @@ class CountViewer(tk.Frame):
         metrics for the most recent BOINC report.
         Called from 'Return' Button() in settings() window.
         """
-        # Need to define starting settings and BOINC data, via Controller.
-        # self.settings_win.destroy()
-        self.share.getstartdata()
 
-        # Need to keep intvl_b & sumry_b disabled until after 1st count
+        # Need to keep intvl_b & sumry_b buttons disabled until after 1st count
         # and summary intervals.
         self.intvl_b.config(state=tk.DISABLED)
         self.sumry_b.config(state=tk.DISABLED)
@@ -487,7 +493,7 @@ class CountViewer(tk.Frame):
         #  (and start timer) only after settings() window closes.
         # TODO: Determine whether all of CountModler() should be threaded, or
         #  only get_interval_data() (and get_summary_data()?)
-        
+
         # self.show_interval_data()
 
     def show_interval_data(self) -> None:
@@ -584,7 +590,7 @@ class CountViewer(tk.Frame):
             cycles_max = self.share.setting['cycles_max'].get()
             time_now = datetime.now().strftime(TIME_FORMAT)
             counts_remain = cycles_max - (self.share.loop_num + 1)
-        
+
             if notrunning:
                 report = (f'\n{time_now};'
                           ' *** NO TASKS RUNNING. Check BOINC Manager.***\n')
@@ -629,7 +635,7 @@ class CountViewer(tk.Frame):
         :return: Multi-interval averaged task data.
         """
         self.share.getsummarydata(self.share.loop_num, self.ttimes_smry)
-        
+
         self.sumry_b.config(state=tk.NORMAL)
 
         # Count and summary interval times
@@ -661,7 +667,7 @@ class CountViewer(tk.Frame):
         self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
-        
+
         # TODO: Are these re-grids needed when using textvariables? Prolly NO
         self.time_now_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                              columnspan=2)
@@ -754,6 +760,7 @@ class CountViewer(tk.Frame):
                    '"Return" is allowed once "Confirm" is clicked.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
+
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
         # Functions for Combobox selections.
@@ -782,7 +789,7 @@ class CountViewer(tk.Frame):
             max_label.grid(column=0, columnspan=3, row=4,
                            padx=10, pady=(0, 5), sticky=tk.E)
 
-        def exit_settings():
+        def close_and_show():
             """
             Activates or disables interval cycles.
             Called from 'Return' button.
@@ -797,15 +804,18 @@ class CountViewer(tk.Frame):
                 self.share.notice_l.grid(row=14, column=0, columnspan=3,
                                          padx=5, pady=5, sticky=tk.W)
                 self.settings_win.destroy()
+                self.show_start_data()
+
             else:
                 # self.show_interval_data()
-                # self.show_start_data()
                 self.settings_win.destroy()
+                self.show_start_data()
+                # self.share.getstartdata()
 
         # Have user select interval times for counting and summary cycles.
         self.intvl_choice.configure(state='readonly', width=4,
                                     textvariable=self.share.setting['interval_t'])
-                    
+
         self.intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
                                        '30m', '25m', '20m', '15m', '10m', '5m')
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
@@ -853,12 +863,12 @@ class CountViewer(tk.Frame):
         # Default button should display all default values in real time.
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
-            
-        self.return_button.configure(text='Return', command=exit_settings)
+
+        self.showdata_button.configure(text='Show data', command=close_and_show)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
-        #    'Return' button is enabled (tk.NORMAL) in check_and_set().
-        self.return_button.config(state=tk.DISABLED)
+        #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
+        self.showdata_button.config(state=tk.DISABLED)
 
         # Grid all window widgets; sorted by row.
         self.intvl_choice.grid(column=1, row=0)
@@ -876,7 +886,7 @@ class CountViewer(tk.Frame):
         self.log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
         confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
         default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
-        self.return_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
+        self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
 
     def check_and_set(self):
         """
@@ -884,12 +894,12 @@ class CountViewer(tk.Frame):
         from settings() to their textvariable dict values, and log to
         file if optioned. Called from settings() Confirm button.
         """
+        # TODO: Need to reconfirm each time a setting is changes, not just first time.
         # Need to remove leading zeros, but allow a zero entry.
         #   Get and strip as string then set as integer.
         #   Replace empty Entry with default values.
         cycles_max = self.cycles_max_entry.get()
         sumry_value = self.sumry_t_value.get()
-        # TODO: Can some of this error checking be done in test_dig_entry()?
         if not cycles_max:
             self.share.setting['cycles_max'].set(1008)
         elif cycles_max != '0':
@@ -910,12 +920,12 @@ class CountViewer(tk.Frame):
         self.share.setting['summary_t'].set(summary_t)
         summary_m = self.share.getmin(summary_t)
         if self.share.interval_m >= summary_m:
-            self.return_button.config(state=tk.DISABLED)
+            self.showdata_button.config(state=tk.DISABLED)
             info = "Summary time must be greater than interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
         elif self.share.interval_m < summary_m:
-            self.return_button.config(state=tk.NORMAL)
+            self.showdata_button.config(state=tk.NORMAL)
 
         if self.share.setting['do_log'].get() == 1 and self.share.interval_m < summary_m:
             time_now = datetime.now().strftime(TIME_FORMAT)
@@ -949,8 +959,6 @@ class CountModeler:
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
 
-        self.get_start_data()
-
     def default_settings(self) -> None:
         """Set or reset default run parameters in setting dictionary.
         """
@@ -976,7 +984,6 @@ class CountModeler:
     def get_start_data(self):
         """Gather initial data to track tasks and times.
         """
-        # self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
 
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
@@ -996,7 +1003,6 @@ class CountModeler:
 
         # Need to parse data returned from get_ttime_stats().
         startdict = self.get_ttime_stats(self.share.task_count_start, ttimes_start)
-        # TODO: Need to use self.share.var for reporting dict values anywhere?
         tt_mean = startdict['tt_mean']
         tt_max = startdict['tt_max']
         tt_min = startdict['tt_min']
@@ -1008,6 +1014,9 @@ class CountModeler:
         self.share.tkdata['tt_sd'].set(tt_sd)
         self.share.tkdata['tt_range'].set(tt_range)
         self.share.tkdata['tt_total'].set(tt_total)
+        # TODO: this flow through Controller with settings.exit_settings
+        #  is not working b/c only num_tasks tkdata shows. Call is through
+        #  to get_ttime_stats made.
 
     def get_interval_data(self) -> None:
         """
@@ -1340,19 +1349,19 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).get_interval_data()
 
-    def getsummarydata(self, *args) -> None:
-        """
-        Is called from Viewer.show_summary_data(),
-        in which get_ttime_stats() returns dictionary of time statistics.
-        """
-        CountModeler(share=self).get_summary_data()
+    # def getsummarydata(self, *args) -> None:
+    #     """
+    #     Is called from Viewer.show_summary_data(),
+    #     in which get_ttime_stats() returns dictionary of time statistics.
+    #     """
+    #     CountModeler(share=self).get_summary_data()
 
-    # def showintervaldata(self, *args) -> None:
-    #     """
-    #     Is called from Modeler.get_interval_data() to update vars each
-    #     interval loop cycle.
-    #     """
-    #     CountViewer(share=self).show_interval_data()
+    def showstartdata(self, *args) -> None:
+        """
+        Is called from Modeler.get_start_data().
+        """
+        # CountViewer(share=self).show_start_data()
+        CountViewer(master=args, share=self).show_start_data()
 
     # pylint: disable=unused-argument
     def complimentme(self, *args) -> None:
@@ -1484,11 +1493,11 @@ if __name__ == "__main__":
         app = CountController()
         app.title("Count BOINC tasks")
         app.mainloop()
-        # interval_thread = threading.Thread(
-        #     target=CountModeler, daemon=True)
-        # interval_thread.start()
+        # TODO: Consider: allow cmd line arg of 0 count interval for a 
+        #  1-off status report that bypasses the settings window.
+
         # TODO: start thread here or in get_start_data() or get_interval_data()
-        #    before cycles loop? Or have Modeler be a Thread class, 
+        #    before cycles loop? Or have Modeler be a Thread class,
         #    see https://thispointer.com/create-a-thread-using-class-in-python/
     except KeyboardInterrupt:
         exit_msg = (f'\n\n  *** Interrupted by user ***\n'
