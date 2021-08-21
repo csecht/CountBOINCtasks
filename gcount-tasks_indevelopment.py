@@ -4,7 +4,7 @@
 A tkinter-based GUI version of count-tasks.py using a MVC architecture.
 Alpha ver: interval counts not active.
 
-    Copyright (C) 2020 C. Echt
+    Copyright (C) 2021 C. Echt
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,11 +21,11 @@ Alpha ver: interval counts not active.
 """
 # ^^ Info for --about invocation argument >>
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020 C. Echt'
+__copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
