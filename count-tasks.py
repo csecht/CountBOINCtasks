@@ -2,9 +2,9 @@
 
 """
 CountBOINCtasks provides task counts and time statistics at timed
-intervals for tasks recently reported to BOINC servers.
-                Download the most recent version from:
-                https://github.com/csecht/CountBOINCtasks
+intervals for tasks most recently reported to BOINC servers.
+Download the current version from:
+https://github.com/csecht/CountBOINCtasks
 
     Copyright (C) 2021 C. Echt
 

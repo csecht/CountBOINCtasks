@@ -2,6 +2,11 @@
 
 """
 A tkinter-based GUI version of count-tasks.py using a MVC architecture.
+CountBOINCtasks provides task counts and time statistics at timed
+intervals for tasks most recently reported to BOINC servers.
+
+Download the current version from:
+https://github.com/csecht/CountBOINCtasks
 Alpha ver: interval counts not active.
 
     Copyright (C) 2021 C. Echt
@@ -13,18 +18,18 @@ Alpha ver: interval counts not active.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See the GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
-# ^^ Info for --about invocation argument >>
+# ^^ Info for --about invocation argument or __doc__>>
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -306,8 +311,8 @@ class CountViewer(tk.Frame):
                       'total': 8,
                       'Last count was:': 10,
                       'Next count in:': 11,
-                      '# counts to go:': 12,
-                      'Total # tasks:': 13
+                      'Counts to go:': 12,
+                      'Tasks in queue:': 13
                       }
         for header, rownum in row_header.items():
             tk.Label(self.master, text=f'{header}',
@@ -374,7 +379,7 @@ class CountViewer(tk.Frame):
 
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
         viewlog_b.grid(row=0, column=0, padx=5, pady=5)
-        self.share.intvl_b.grid(row=0, column=1, padx=0, pady=5)
+        self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
         self.share.sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in show_start_data()
@@ -1017,8 +1022,9 @@ class CountModeler:
         #  cycle to update get_interval_data() and log reporting.
         self.share.notice['notrunning'].set(0)
         cycles_max = self.share.setting['cycles_max'].get()
-        if cycles_max != '0':
-            self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        # if cycles_max != '0':
+        #     self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.notice['tic_nnt'].set(0)
 
         for loop_num in range(cycles_max):
@@ -1026,7 +1032,7 @@ class CountModeler:
             self.share.loop_num = loop_num
             # Need to re-define self.share.interval_m here in case it was
             #   changed in settings() during intervals?
-            print('DEBUG made it to line 1020\n')
+            # print('DEBUG made it to line 1030\n')
             # countdown_timer() sleeps the for-loop between counts .
             # self.countdown_timer(self.share.interval_m)
             # time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
@@ -1224,9 +1230,9 @@ class CountModeler:
                 f"time_format={time_format}.\n")
 
     def countdown_timer(self, interval: int) -> None:
-        """Provide sleep intervals for get_interval_data().
+        """Provide timed sleep intervals for get_interval_data().
 
-        :param interval: Minutes between task counts; range[5-60, by 5's]
+        :param interval: Integer minutes between task counts.
         """
         secs = interval * 60
         # Use 'short' as argument for approximate time, as units: d, h, m, s.
@@ -1412,12 +1418,13 @@ class CountFyi:
             'The Nobel Committee has been trying to reach you.',
             'The Academy is asking for your CV.', 'You look great!',
             'The President seeks your council.', 'Thank you so much!',
+            'The Prime Minister seeks your council'
         ]
         praise = random.choice(compliments)
         self.share.compliment_txt.config(text=praise)
         self.share.notice_l.grid_remove()
         self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
-                                       padx=(30, 0), pady=5, sticky=tk.W)
+                                       padx=(50, 0), pady=5, sticky=tk.W)
 
         def refresh():
             self.share.compliment_txt.config(text="")
@@ -1433,47 +1440,26 @@ class CountFyi:
 
         :return: Information window.
         """
-        # msg separators use em dashes.
-        about = ("""
-CountBOINCtasks provides task counts and time statistics at set
-intervals for tasks that have been reported to BOINC servers.
-Download the most recent version from:
-https://github.com/csecht/CountBOINCtasks
-————————————————————————————————————————————————————————————————————
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.\n
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.\n
-You should have received a copy of the GNU General Public License
-along with this program. If not, see https://www.gnu.org/licenses/
-————————————————————————————————————————————————————————————————————\n
-                Author:     cecht, BOINC ID: 990821
-                Copyright:  Copyright (C) 2020 C. Echt
-                Credits:    Inspired by rickslab-gpu-utils,
-                            Keith Myers - Testing, debug
-                Development Status: 4 - Beta
-                Version:    """)
-
-        num_lines = about.count('\n')
         aboutwin = tk.Toplevel()
-        aboutwin.minsize(570, 460)
+        aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
                   'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
                   'dark olive green', 'grey2', 'grey25', 'DodgerBlue4',
                   'DarkOrchid4']
         bkg = random.choice(colour)
-        abouttxt = tk.Text(aboutwin, width=72, height=num_lines + 2,
+        num_doc_lines = __doc__.count('\n') + 2
+        abouttxt = tk.Text(aboutwin, width=75, height=num_doc_lines + 7,
                            background=bkg, foreground='grey98',
                            relief='groove', borderwidth=5, padx=5)
-        abouttxt.insert('1.0', about + PROGRAM_VER)
-        # Center text preceding the Author, etc. details.
-        abouttxt.tag_add('text1', '1.0', float(num_lines - 5))
-        abouttxt.tag_configure('text1', justify='center')
+        abouttxt.insert('1.0', f'{__doc__}\n'
+                        f'Author:    {__author__}\n'
+                        f'Copyright: {__copyright__}\n'
+                        f'Credits:   {__credits__}\n'
+                        f'License:   {__license__}\n'
+                        f'Version:   {__version__}\n'
+                        f'Maintainer:{__maintainer__}\n'
+                        f'Status:    {__status__})\n')
         abouttxt.pack()
 
 
