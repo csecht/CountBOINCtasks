@@ -48,7 +48,7 @@ from COUNTmodules import boinc_command
 BC = boinc_command.BoincCommand()
 # Assume log file is in the CountBOINCtasks-master folder.
 LOGPATH = str(Path('count-tasks_log.txt'))
-# LOGPATH = str(Path('../count-tasks_log.txt'))
+# LOGFILE = str(Path('../count-tasks_log.txt'))
 # Here logging is lazily employed to manage the user file of report data.
 logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')

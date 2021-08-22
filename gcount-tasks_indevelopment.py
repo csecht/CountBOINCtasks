@@ -71,11 +71,11 @@ MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
 TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
 BC = boinc_command.BoincCommand()
-# # Assume log file is in the CountBOINCtasks-master folder.
-# # Not sure what determines the relative Project path.
-# #    Depends on copying the module?
-# LOGPATH = Path('../count-tasks_log.txt')
-LOGPATH = Path('count-tasks_log.txt')
+# Log file should be in the CountBOINCtasks-master folder.
+# Not sure what determines the relative Project path.
+#    Depends on copying the module in PyCharm project?
+# LOGFILE = Path('../count-tasks_log.txt')
+LOGFILE = Path('count-tasks_log.txt')
 CWD = Path.cwd()
 BKUPFILE = 'count-tasks_log(copy).txt'
 PROGRAM_VER = '0.5x'
@@ -83,8 +83,9 @@ PROGRAM_VER = '0.5x'
 GUI_TITLE = 'BOINC task counter'
 
 # Here logging is lazily employed to manage the file of report data.
-logging.basicConfig(filename=str(LOGPATH), level=logging.INFO, filemode="a",
+logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                     format='%(message)s')
+
 
 # Functions used by count-tasks, but not part of MVC structure %%%%%%%%%%%%%%%%%
 # pylint: disable=unused-argument
@@ -101,7 +102,7 @@ def quit_gui(event=None) -> None:
 # END Functions used by count-tasks, but not part of MVC structure %%%%%%%%%%%%%
 
 
-# The tkinter gui engine that runs as main thread.
+# The tkinter GUI engine that runs as main thread.
 class CountViewer(tk.Frame):
     """
     The Viewer communicates with Modeler via 'share' objects handled
@@ -130,9 +131,6 @@ class CountViewer(tk.Frame):
         self.report = 'none'
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
-
-        # self.settings() & self.check_and_set var:
-        self.close_settings = 'None'
 
         # Basic run parameters/settings; passed between Viewer and Modeler.
         # Defaults set in Modeler.default_settings; changed in settings(),
@@ -405,6 +403,210 @@ class CountViewer(tk.Frame):
         self.share.getstartdata()
         self.settings()
 
+    def settings(self) -> None:
+        """
+        A Toplevel window called from master_widgets() at startup.
+        Use to confirm default parameters or set new ones for: count and
+        summary interval times, counting limit, and log file option.
+        """
+        # Toplevel window basics
+        # Need self. b/c window parent is used for a messagebox in check_and_set().
+        self.settings_win.title('Set run parameters')
+        self.settings_win.attributes('-topmost', True)
+        self.settings_win.resizable(False, False)
+
+        # Colors should match those of master/parent window.
+        settings_fg = 'LightCyan2'
+        settings_bg = 'SkyBlue4'
+        self.settings_win.configure(bg=settings_bg)
+        style = ttk.Style()
+        style.configure('TLabel', background=settings_bg, foreground=settings_fg)
+
+        # Need to disable default window Exit; only allow exit from active Confirm button.
+        # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
+        #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
+        def no_exit_on_x():
+            msg = ('Please exit window with "Return" button.\n'
+                   '"Return" is allowed once "Confirm" is clicked.')
+            messagebox.showinfo(title='Confirm before closing', detail=msg,
+                                parent=self.settings_win)
+
+        self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
+
+        # Functions for Combobox selections.
+        def set_intvl_selection(*args):
+            self.share.setting['interval_t'].set(self.intvl_choice.get())
+
+        def set_sumry_unit(*args):
+            self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
+
+        # Need to restrict entries to only digits,
+        #   MUST use action type parameter to allow user to delete first number they enter.
+        def test_dig_entry(entry_string, action_type):
+            """
+            Only digits are accepted and displayed in Entry field.
+            Used with .register() to configure Entry kw validatecommand.
+            """
+            # source: https://stackoverflow.com/questions/4140437/
+            if action_type == '1':  # action type is "insert"
+                if not entry_string.isdigit():
+                    return False
+            return True
+
+        def explain_zero_max():
+            max_label = ttk.Label(self.settings_win, foreground='orange',
+                                  text='Enter 0 to disable counting cycles.')
+            max_label.grid(column=0, columnspan=3, row=4,
+                           padx=10, pady=(0, 5), sticky=tk.E)
+
+        def check_close_show():
+            """
+            Calls check_and_set(), activates or disables interval cycles,
+            closes settings window, and calls show_start_data().
+            Called from showdata_button.
+            """
+            self.check_and_set()
+
+            if self.share.setting['cycles_max'].get() == 0:
+                self.share.setting['interval_t'].set('DISABLED')
+                self.share.setting['summary_t'].set('DISABLED')
+                self.share.intvl_b.config(state=tk.DISABLED)
+                self.share.notice_txt.set('STATUS REPORT ONLY. '
+                                          '(Clear notice with Ctrl_Shift-C)')
+                # Notice grids in compliment_me spot; initial grid implementation
+                self.share.notice_l.grid(row=14, column=0, columnspan=3,
+                                         padx=5, pady=5, sticky=tk.W)
+                self.settings_win.destroy()
+                self.show_start_data()
+            else:
+                # self.show_interval_data()
+                self.settings_win.destroy()
+                self.show_start_data()
+                # self.share.getstartdata()
+
+        # Have user select interval times for counting and summary cycles.
+        self.intvl_choice.configure(state='readonly', width=4,
+                                    textvariable=self.share.setting['interval_t'])
+
+        self.intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
+                                       '30m', '25m', '20m', '15m', '10m', '5m')
+        self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
+
+        intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
+        intvl_label2 = ttk.Label(self.settings_win, text='minutes')
+
+        self.sumry_t_value.configure(
+            validate='key', width=4,
+            textvariable=self.share.setting['sumry_t_value'],
+            validatecommand=(
+                self.sumry_t_value.register(test_dig_entry), '%P', '%d'))
+
+        self.sumry_t_unit.configure(state='readonly',
+                                    textvariable=self.share.setting['sumry_t_unit'],
+                                    values=('day', 'hr', 'min'), width=4)
+        self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
+
+        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
+        sumry_label2 = ttk.Label(self.settings_win, text='time unit')
+
+        # Specify number limit of counting cycles to run before program exits.
+        self.cycles_max_entry.configure(
+            validate='key', width=4,
+            textvariable=self.share.setting['cycles_max'],
+            validatecommand=(
+                self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
+
+        cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
+        cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
+
+        cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
+                                         command=explain_zero_max)
+
+        # Need a user option to log results to file.
+        # 'do_log' value is BooleanVar() & kw variable automatically sets it.
+        self.log_choice.configure(variable=self.share.setting['do_log'],
+                                  bg=settings_bg, borderwidth=0)
+        log_label = ttk.Label(self.settings_win, text='Log results to file')
+
+        confirm_button = ttk.Button(self.settings_win, text='Confirm',
+                                    command=self.check_and_set)
+
+        # Default button should display all default values in real time.
+        default_button = ttk.Button(self.settings_win, text='Use defaults',
+                                    command=self.share.defaultsettings)
+
+        self.showdata_button.configure(text='Show data', command=check_close_show)
+        # Need to disable button to force user to first "Confirm" settings,
+        #    even when using default settings: it is a 2-click closing.
+        #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
+        self.showdata_button.config(state=tk.DISABLED)
+
+        # Grid all window widgets; sorted by row.
+        self.intvl_choice.grid(column=1, row=0)
+        intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
+        intvl_label2.grid(column=2, row=0, padx=5, pady=10, sticky=tk.W)
+        sumry_label1.grid(column=0, row=1, padx=(10, 5), pady=10, sticky=tk.E)
+        self.sumry_t_value.grid(column=1, row=1)
+        sumry_label2.grid(column=2, row=1, padx=5, pady=10, sticky=tk.E)
+        self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
+        cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
+        cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
+        self.cycles_max_entry.grid(column=1, row=2)
+        cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
+        log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
+        self.log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
+        confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
+        default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
+        self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
+
+    def check_and_set(self):
+        """
+        Confirm that summary time > interval time, set all settings
+        from settings() to their textvariable dict values, and log to
+        file if optioned. Called from settings.close_and_show() via
+        Confirm button.
+        """
+        self.showdata_button.config(state=tk.DISABLED)
+        # Need to remove leading zeros, but allow a zero entry.
+        #   Replace empty Entry with default values.
+        cycles_max = self.cycles_max_entry.get()
+        sumry_value = self.sumry_t_value.get()
+        if not cycles_max:
+            self.share.setting['cycles_max'].set(1008)
+        elif cycles_max != '0':
+            self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
+        # Allow zero entry for 1-off status report.
+        elif cycles_max == '0':
+            self.share.setting['cycles_max'].set(0)
+        # if sumry_value == 0 then it is caught by interval_m comparison.
+        if not sumry_value:
+            self.share.setting['sumry_t_value'].set(1)
+        elif sumry_value != '0':
+            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
+
+        # Note: self.share.setting['do_log'] is set automatically by Checkbutton.
+        # Note: self.share.setting['interval_t'] is set in settings().
+        # Need to set summary_t here b/c it's from 2 sumry widgets in settings()
+        summary_t = self.sumry_t_value.get() + self.sumry_t_unit.get()[:1]
+        self.share.setting['summary_t'].set(summary_t)
+        summary_m = self.share.getmin(summary_t)
+        if self.share.interval_m >= summary_m:
+            self.showdata_button.config(state=tk.DISABLED)
+            info = "Summary time must be greater than interval time"
+            messagebox.showerror(title='Invalid entry', detail=info,
+                                 parent=self.settings_win)
+        elif self.share.interval_m < summary_m:
+            self.showdata_button.config(state=tk.NORMAL)
+
+        if self.share.setting['do_log'].get() == 1 and self.share.interval_m < summary_m:
+            time_now = datetime.now().strftime(TIME_FORMAT)
+            logging.info(
+                f"{time_now}  >>> Settings confirmed <<<\n"
+                f"{self.indent}Interval time: {self.share.setting['interval_t'].get()}\n"
+                f"{self.indent}Summary time: {self.share.setting['summary_t'].get()}\n"
+                f"{self.indent}Max. counts before auto-exit: {self.share.setting['cycles_max'].get()}\n"
+            )
+
     # The show_ methods define and display data for master window and logging.
     def show_start_data(self) -> None:
         """
@@ -505,7 +707,6 @@ class CountViewer(tk.Frame):
         Show interval and summary metrics for recently reported BOINC
         task data. Provide notices for aberrant task status. Log to file
         if optioned.
-        Called from settings.close_settings()
         """
         self.settings_win.destroy()
         self.share.getintervaldata()
@@ -692,7 +893,7 @@ class CountViewer(tk.Frame):
         """
 
         try:
-            with open(LOGPATH, 'r') as log:
+            with open(LOGFILE, 'r') as log:
                 logwin = tk.Toplevel()
                 logwin.minsize(665, 520)
                 # logwin.attributes('-topmost', 1)  # for Windows, needed?
@@ -704,7 +905,7 @@ class CountViewer(tk.Frame):
                 logtext.grid(row=0, column=0, sticky=tk.NSEW)
                 logtext.focus_set()
         except FileNotFoundError:
-            warn_main = f'Log {LOGPATH} cannot be found.'
+            warn_main = f'Log {LOGFILE} cannot be found.'
             warn_detail = ('Log file should be in folder:\n'
                            f'{CWD}\n'
                            'Has it been moved or renamed?')
@@ -721,226 +922,21 @@ class CountViewer(tk.Frame):
         """
 
         destination = Path.home() / BKUPFILE
-        if Path.is_file(LOGPATH) is True:
-            shutil.copyfile(LOGPATH, destination)
+        if Path.is_file(LOGFILE) is True:
+            shutil.copyfile(LOGFILE, destination)
             success_msg = 'Log file has been copied to: '
             success_detail = str(destination)
             # print(success_msg)
             messagebox.showinfo(title='Archive completed',
                                 message=success_msg, detail=success_detail)
         else:
-            warn_main = f'Log {LOGPATH} cannot be archived'
+            warn_main = f'Log {LOGFILE} cannot be archived'
             warn_detail = ('Log file should be in folder:\n'
                            f'{CWD}\n'
                            'Has it been moved or renamed?')
             # print('\n', warn_main, warn_detail)
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
-
-    def settings(self) -> None:
-        """
-        A Toplevel window called from master_widgets() at startup.
-        Use to confirm default parameters or set new ones for: count and
-        summary interval times, counting limit, and log file option.
-        """
-        # Toplevel window basics
-        # Need self. b/c window parent is used for a messagebox in check_and_set().
-        self.settings_win.title('Set run parameters')
-        self.settings_win.attributes('-topmost', True)
-        self.settings_win.resizable(False, False)
-
-        # Colors should match those of master/parent window.
-        settings_fg = 'LightCyan2'
-        settings_bg = 'SkyBlue4'
-        self.settings_win.configure(bg=settings_bg)
-        style = ttk.Style()
-        style.configure('TLabel', background=settings_bg, foreground=settings_fg)
-
-        # Need to disable default window Exit; only allow exit from active Confirm button.
-        # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
-        #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
-        def no_exit_on_x():
-            msg = ('Please exit window with "Return" button.\n'
-                   '"Return" is allowed once "Confirm" is clicked.')
-            messagebox.showinfo(title='Confirm before closing', detail=msg,
-                                parent=self.settings_win)
-
-        self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
-
-        # Functions for Combobox selections.
-        def set_intvl_selection(*args):
-            self.share.setting['interval_t'].set(self.intvl_choice.get())
-
-        def set_sumry_unit(*args):
-            self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
-
-        # Need to restrict entries to only digits,
-        #   MUST use action type parameter to allow user to delete first number they enter.
-        def test_dig_entry(entry_string, action_type):
-            """
-            Only digits are accepted and displayed in Entry field.
-            Used with .register() to configure Entry kw validatecommand.
-            """
-            # source: https://stackoverflow.com/questions/4140437/
-            if action_type == '1':  # action type is "insert"
-                if not entry_string.isdigit():
-                    return False
-            return True
-
-        def explain_zero_max():
-            max_label = ttk.Label(self.settings_win, foreground='orange',
-                                  text='Enter 0 to disable counting cycles.')
-            max_label.grid(column=0, columnspan=3, row=4,
-                           padx=10, pady=(0, 5), sticky=tk.E)
-
-        def check_close_show():
-            """
-            Calls check_and_set(), activates or disables interval cycles,
-            closes settings window, and calls show_start_data().
-            Called from showdata_button.
-            """
-            self.check_and_set()
-
-            if self.share.setting['cycles_max'].get() == 0:
-                self.share.setting['interval_t'].set('DISABLED')
-                self.share.setting['summary_t'].set('DISABLED')
-                self.share.intvl_b.config(state=tk.DISABLED)
-                self.share.notice_txt.set('STATUS REPORT ONLY. '
-                                          '(Clear notice with Ctrl_Shift-C)')
-                # Notice grids in compliment_me spot; initial grid implementation
-                self.share.notice_l.grid(row=14, column=0, columnspan=3,
-                                         padx=5, pady=5, sticky=tk.W)
-                self.settings_win.destroy()
-                self.show_start_data()
-            else:
-                # self.show_interval_data()
-                self.settings_win.destroy()
-                self.show_start_data()
-                # self.share.getstartdata()
-
-        # Have user select interval times for counting and summary cycles.
-        self.intvl_choice.configure(state='readonly', width=4,
-                                    textvariable=self.share.setting['interval_t'])
-
-        self.intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
-                                       '30m', '25m', '20m', '15m', '10m', '5m')
-        self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
-
-        intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
-        intvl_label2 = ttk.Label(self.settings_win, text='minutes')
-
-        self.sumry_t_value.configure(
-            validate='key', width=4,
-            textvariable=self.share.setting['sumry_t_value'],
-            validatecommand=(
-                self.sumry_t_value.register(test_dig_entry), '%P', '%d'))
-
-        self.sumry_t_unit.configure(state='readonly',
-                                    textvariable=self.share.setting['sumry_t_unit'],
-                                    values=('day', 'hr', 'min'), width=4)
-        self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
-
-        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
-        sumry_label2 = ttk.Label(self.settings_win, text='time unit')
-
-        # Specify number limit of counting cycles to run before program exits.
-        # TODO: setup widget attributes in __init__
-        self.cycles_max_entry.configure(
-            validate='key', width=4,
-            textvariable=self.share.setting['cycles_max'],
-            validatecommand=(
-                self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
-
-        cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
-        cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
-
-        cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
-                                         command=explain_zero_max)
-
-        # Need a user option to log results to file.
-        # 'do_log' value is BooleanVar() & kw variable automatically sets it.
-        self.log_choice.configure(variable=self.share.setting['do_log'],
-                                  bg=settings_bg, borderwidth=0)
-        log_label = ttk.Label(self.settings_win, text='Log results to file')
-
-        confirm_button = ttk.Button(self.settings_win, text='Confirm',
-                                    command=self.check_and_set)
-
-        # Default button should display all default values in real time.
-        default_button = ttk.Button(self.settings_win, text='Use defaults',
-                                    command=self.share.defaultsettings)
-
-        self.showdata_button.configure(text='Show data', command=check_close_show)
-        # Need to disable button to force user to first "Confirm" settings,
-        #    even when using default settings: it is a 2-click closing.
-        #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
-        self.showdata_button.config(state=tk.DISABLED)
-
-        # Grid all window widgets; sorted by row.
-        self.intvl_choice.grid(column=1, row=0)
-        intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
-        intvl_label2.grid(column=2, row=0, padx=5, pady=10, sticky=tk.W)
-        sumry_label1.grid(column=0, row=1, padx=(10, 5), pady=10, sticky=tk.E)
-        self.sumry_t_value.grid(column=1, row=1)
-        sumry_label2.grid(column=2, row=1, padx=5, pady=10, sticky=tk.E)
-        self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
-        cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
-        cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
-        self.cycles_max_entry.grid(column=1, row=2)
-        cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
-        log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
-        self.log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
-        confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
-        default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
-        self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
-
-    def check_and_set(self):
-        """
-        Confirm that summary time > interval time, set all settings
-        from settings() to their textvariable dict values, and log to
-        file if optioned. Called from settings.close_and_show() via
-        Confirm button.
-        """
-        self.showdata_button.config(state=tk.DISABLED)
-        # Need to remove leading zeros, but allow a zero entry.
-        #   Replace empty Entry with default values.
-        cycles_max = self.cycles_max_entry.get()
-        sumry_value = self.sumry_t_value.get()
-        if not cycles_max:
-            self.share.setting['cycles_max'].set(1008)
-        elif cycles_max != '0':
-            self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
-        # Allow zero entry for 1-off status report.
-        elif cycles_max == '0':
-            self.share.setting['cycles_max'].set(0)
-        # if sumry_value == 0 then it is caught by interval_m comparison.
-        if not sumry_value:
-            self.share.setting['sumry_t_value'].set(1)
-        elif sumry_value != '0':
-            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
-
-        # Note: self.share.setting['do_log'] is set automatically by Checkbutton.
-        # Note: self.share.setting['interval_t'] is set in settings().
-        # Need to set summary_t here b/c it's from 2 sumry widgets in settings()
-        summary_t = self.sumry_t_value.get() + self.sumry_t_unit.get()[:1]
-        self.share.setting['summary_t'].set(summary_t)
-        summary_m = self.share.getmin(summary_t)
-        if self.share.interval_m >= summary_m:
-            self.showdata_button.config(state=tk.DISABLED)
-            info = "Summary time must be greater than interval time"
-            messagebox.showerror(title='Invalid entry', detail=info,
-                                 parent=self.settings_win)
-        elif self.share.interval_m < summary_m:
-            self.showdata_button.config(state=tk.NORMAL)
-
-        if self.share.setting['do_log'].get() == 1 and self.share.interval_m < summary_m:
-            time_now = datetime.now().strftime(TIME_FORMAT)
-            logging.info(
-                f"{time_now}  >>> Settings confirmed <<<\n"
-                f"{self.indent}Interval time: {self.share.setting['interval_t'].get()}\n"
-                f"{self.indent}Summary time: {self.share.setting['summary_t'].get()}\n"
-                f"{self.indent}Max. counts before auto-exit: {self.share.setting['cycles_max'].get()}\n"
-            )
 
 
 # The engine that gets BOINC data and runs timed reports.
@@ -1432,7 +1428,6 @@ class CountFyi:
 
         self.share.compliment_txt.after(2222, refresh)
 
-    # TODO:
     @staticmethod
     def about() -> None:
         """
