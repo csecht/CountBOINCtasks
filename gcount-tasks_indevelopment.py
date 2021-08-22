@@ -30,7 +30,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __version__ = '0.0.4'
-__program_name__ = 'count-tasks.py'
+__program_name__ = 'gcount-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 5 - ALPHA'
@@ -66,7 +66,6 @@ except (ImportError, ModuleNotFoundError) as error:
 if sys.version_info < (3, 6):
     print('Program requires at least Python 3.6.')
     sys.exit(1)
-
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
 TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
@@ -78,8 +77,7 @@ BC = boinc_command.BoincCommand()
 LOGFILE = Path('count-tasks_log.txt')
 CWD = Path.cwd()
 BKUPFILE = 'count-tasks_log(copy).txt'
-PROGRAM_VER = '0.5x'
-# GUI_TITLE = __file__
+# GUI_TITLE = __file__  # <- for development
 GUI_TITLE = 'BOINC task counter'
 
 # Here logging is lazily employed to manage the file of report data.
@@ -165,7 +163,6 @@ class CountViewer(tk.Frame):
         }
 
         # Used in show_interval_data() and FYI.compliment_me()
-        self.share.notice_txt = tk.StringVar()  # temp
         self.share.notice = {
             'notice_txt': tk.StringVar(),
             'notrunning': tk.BooleanVar(),
@@ -239,7 +236,7 @@ class CountViewer(tk.Frame):
         self.share.compliment_txt = tk.Label(fg='orange', bg=self.master_bg,
                                              relief='flat', border=0)
         # This label will share grid with complement_txt to display user notices.
-        self.share.notice_l = tk.Label(textvariable=self.share.notice_txt,
+        self.share.notice_l = tk.Label(textvariable=self.share.notice['notice_txt'],
                                        fg='salmon', bg=self.master_bg,
                                        relief='flat', border=0)
 
@@ -471,8 +468,8 @@ class CountViewer(tk.Frame):
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.intvl_b.config(state=tk.DISABLED)
-                self.share.notice_txt.set('STATUS REPORT ONLY. '
-                                          '(Clear notice with Ctrl_Shift-C)')
+                self.share.notice['notice_txt'].set(
+                    'STATUS REPORT ONLY. (Clear notice with Ctrl_Shift-C)')
                 # Notice grids in compliment_me spot; initial grid implementation
                 self.share.notice_l.grid(row=14, column=0, columnspan=3,
                                          padx=5, pady=5, sticky=tk.W)
@@ -757,23 +754,25 @@ class CountViewer(tk.Frame):
         proj_stalled = self.share.notice['proj_stalled'].get()
         tic_nnt = int(self.share.notice['tic_nnt'].get())
         if notrunning and proj_stalled:
-            self.share.notice_txt.set('PROJECT UPDATE REQUESTED; see log file.\n'
-                                      'Clear notice with Ctrl_Shift-C.')
+            self.share.notice['notice_txt'].set(
+                'PROJECT UPDATE REQUESTED; see log file.\n'
+                'Clear notice with Ctrl_Shift-C.')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=14, column=0, columnspan=3,
                                      padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         elif not notrunning and tic_nnt > 0:
-            self.share.notice_txt.set(f'NO TASKS reported in past '
-                                      f'{tic_nnt} count(s). '
-                                      f'(Clear notice with Ctrl_Shift-C)')
+            self.share.notice['notice_txt'].set(
+                f'NO TASKS reported in past {tic_nnt} count(s).'
+                f' (Clear notice with Ctrl_Shift-C)')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=14, column=0, columnspan=3,
                                      padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         elif notrunning:
-            self.share.notice_txt.set('NO TASKS WERE RUNNING; check BOINC Manager\n'
-                                      'Clear notice with Ctrl_Shift-C.')
+            self.share.notice['notice_txt'].set(
+                'NO TASKS WERE RUNNING; check BOINC Manager\n'
+                'Clear notice with Ctrl_Shift-C.')
             # Notice grids in compliment_me spot; initial grid implementation
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=14, column=0, columnspan=3,
@@ -781,7 +780,6 @@ class CountViewer(tk.Frame):
             app.update_idletasks()
         # When things are normal, notice_txt will be removed on next interval.
         else:
-            # self.share.notice_txt.set('')
             self.share.notice_l.grid_remove()  # Necessary?
 
         # Need to log regular intervals for the do_log option
