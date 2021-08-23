@@ -711,20 +711,16 @@ class CountViewer(tk.Frame):
     def show_interval_data(self) -> None:
         """
         Show interval and summary metrics for recently reported BOINC
-        task data. Provide notices for aberrant task status. Log to file
+        task data. Highlight interval data and de-emphasize summary data.
+        Provide notices for aberrant task status. Log to file
         if optioned.
         """
         # settings() 'Show data' button will flow directly to here.
         self.settings_win.destroy()
         # Note: after settings() 'Show data' btn is clicked, start data
         #   displays and getintervaldata() is immediately called, but
-        #   interval data sets only after countdown_timer() runs.
-        # TODO: NO! start data will NOT display b/c of immediate interval sleep
-        #  THAT's why need to put timer in threaded background.
+        #   interval data sets only after countdown_timer() ends cycle.
         self.share.getintervaldata()
-
-        # TODO: CHECK FLOW: show_interval_data() should be called every
-        #  interval cycle to update get_interval_data() and log reporting.
 
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
@@ -843,9 +839,9 @@ class CountViewer(tk.Frame):
     # TODO: EDIT this like the other show_ methods
     def show_summary_data(self) -> None:
         """
-        Show and emphasize summary count-tasks data in GUI window.
-
-        :return: Multi-interval averaged task data.
+        Show summary and interval metrics for recently reported BOINC
+        task data. Highlight summary data and de-emphasize interval data.
+        Log to file if optioned.
         """
         self.share.getsummarydata(self.share.loop_num, self.ttimes_smry)
 
@@ -1019,8 +1015,7 @@ class CountModeler:
         """
         Gather recurring interval data for task status and times.
         """
-        # TODO: CHECK FLOW: show_interval_data() should be called every interval
-        #  cycle to update get_interval_data() and log reporting.
+
         self.share.notice['notrunning'].set(0)
         cycles_max = self.share.setting['cycles_max'].get()
         # if cycles_max != '0':
@@ -1031,10 +1026,8 @@ class CountModeler:
         for loop_num in range(cycles_max):
             # Need to pass loop_num to Viewer.show_interval_data() for log option.
             self.share.loop_num = loop_num
-            print('loop number:', loop_num)  # DEBUG/TESTING
+            print('testing: loop number:', loop_num)  # DEBUG/TESTING
 
-            # Set current time to the stringvariable for row "The last count was:",
-            #  which displays the self.time_next_cnt_l Label.
             self.share.tkdata['time_last_cnt'].set(datetime.now().strftime(TIME_FORMAT))
 
             # # countdown_timer() sleeps the for-loop between counts.
@@ -1043,8 +1036,9 @@ class CountModeler:
 
             time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
 
-            # Do not enable interval button, which calls show_interval_data, until
-            #   after first interval completes; no need for 'if 1st loop_num'.
+            # Do not enable interval button, which calls show_interval_data,
+            #   until after first interval completes;
+            #   No need need for "if" condition?
             #   Button is disabled at start in show_start_data.
             self.share.intvl_b.config(state=tk.NORMAL)
 
@@ -1423,7 +1417,8 @@ class CountFyi:
             'The Nobel Committee has been trying to reach you.',
             'The Academy is asking for your CV.', 'You look great!',
             'The President seeks your council.', 'Thank you so much!',
-            'The Prime Minister seeks your council'
+            'The Prime Minister seeks your council.', 'Crunchers rule!',
+            'Crunchers are the best sort of people.'
         ]
         praise = random.choice(compliments)
         self.share.compliment_txt.config(text=praise)
