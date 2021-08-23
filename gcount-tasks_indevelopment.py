@@ -143,9 +143,9 @@ class CountViewer(tk.Frame):
             'do_log': tk.IntVar()
         }
 
-        # Common data var for reporting; passed between Viewer and Modeler
+        # Common data var for display; passed between Viewer and Modeler
         self.share.tkdata = {
-            # Common data reports var
+            # Common data
             'tt_mean': tk.StringVar(),
             'tt_sd': tk.StringVar(),
             'tt_min': tk.StringVar(),
@@ -155,9 +155,9 @@ class CountViewer(tk.Frame):
             'time_last_cnt': tk.StringVar(),
             'counts_remain': tk.IntVar(),
             'time_next_cnt': tk.StringVar(),
-            # Unique to interval data report var
+            # Unique to interval data
             'count_new': tk.IntVar(),
-            # Unique to summary data report var
+            # Unique to summary data
             'count_uniq': tk.IntVar(),
             'num_tasks': tk.IntVar()
         }
@@ -581,7 +581,7 @@ class CountViewer(tk.Frame):
             self.share.setting['cycles_max'].set(1008)
         elif cycles_max != '0':
             self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
-        # Allow zero entry for 1-off status report.
+        # Allow zero entry for 1-off status of task data.
         elif cycles_max == '0':
             self.share.setting['cycles_max'].set(0)
         # Need to set counts_remain for window display;
@@ -940,23 +940,18 @@ class CountViewer(tk.Frame):
                                    message=warn_main, detail=warn_detail)
 
 
-# The engine that gets BOINC data and runs timed reports.
+# The engine that gets BOINC data and runs timed data counts.
 class CountModeler:
     """
-    Timed interval counting, analysis, and reporting of BOINC task data.
+    Timed interval counting and analysis of BOINC task data.
     """
 
     def __init__(self, share):
         self.share = share
 
         self.num_tasks = 0
-        # self.report = 'None'
         self.ttimes_new = []
-        # self.ttimes_smry = []
-        # self.ttimes_uniq = []
         self.ttimes_used = ['']  # Need a null string in list.
-        # self.share.task_count_new = None
-        # self.share.notrunning = False  # Necessary? Desirable to init share var?
 
         # Log file print formatting:
         self.indent = ' ' * 22
@@ -1034,7 +1029,7 @@ class CountModeler:
             # TODO: Make Thread timer; lock which Viewer or Controller functions?
             # self.countdown_timer(self.share.interval_m)
 
-            time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
+            time.sleep(900)  # DEBUG; or use to bypass countdown_timer.
 
             # Do not enable interval button, which calls show_interval_data,
             #   until after first interval completes;
@@ -1314,8 +1309,7 @@ class CountController(tk.Tk):
 
     def defaultsettings(self) -> None:
         """
-        Is called for start report and whenever user opts to
-        change back to default run parameters: report interval,
+        Is called for starting settings of: report interval,
         summary interval, counting limit, log file option.
         """
         CountModeler(share=self).default_settings()
@@ -1435,9 +1429,9 @@ class CountFyi:
     @staticmethod
     def about() -> None:
         """
-        Basic information for count-tasks; called from GUI Help menu.
+        Basic information for gcount-tasks; called from Help menu.
 
-        :return: Information window.
+        :return: Toplevel window.
         """
         aboutwin = tk.Toplevel()
         aboutwin.resizable(False, False)
@@ -1448,9 +1442,9 @@ class CountFyi:
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
-        abouttxt = tk.Text(aboutwin, width=75, height=num_doc_lines + 7,
-                           background=bkg, foreground='grey98',
-                           relief='groove', borderwidth=5, padx=5)
+        abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 7,
+                           bg=bkg, fg='grey98', relief='groove',
+                           borderwidth=5, padx=25)
         abouttxt.insert('1.0', f'{__doc__}\n'
                         f'Author:    {__author__}\n'
                         f'Copyright: {__copyright__}\n'
@@ -1458,7 +1452,7 @@ class CountFyi:
                         f'License:   {__license__}\n'
                         f'Version:   {__version__}\n'
                         f'Maintainer:{__maintainer__}\n'
-                        f'Status:    {__status__})\n')
+                        f'Status:    {__status__}\n')
         abouttxt.pack()
 
 
@@ -1468,7 +1462,7 @@ if __name__ == "__main__":
         app.title("Count BOINC tasks")
         app.mainloop()
         # TODO: Consider: allow cmd line arg of 0 count interval for a 
-        #  1-off status report that bypasses the settings window.
+        #  1-off status count that bypasses the settings window.
 
         # TODO: start thread here or in get_start_data() or get_interval_data()
         #    before cycles loop? Or have Modeler be a Thread class,
