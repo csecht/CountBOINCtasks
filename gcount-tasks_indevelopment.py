@@ -185,10 +185,13 @@ class CountViewer(tk.Frame):
         self.showdata_button = ttk.Button(self.settings_win)
 
         # Master window widgets:
-        # Set interval summary focus button attributes here b/c need to
-        # enable/disable in different modules.
-        self.share.intvl_b = ttk.Button()
-        self.share.sumry_b = ttk.Button()
+        # Set interval & summary focus button attributes here b/c need to
+        #   configure them in different modules.
+        # Interval focus button starts with name 'Starting data'; re-configured
+        #   to 'Interval data', with command, after first interval completes.
+        self.share.intvl_b = ttk.Button(text='Starting data')
+        self.share.sumry_b = ttk.Button(text='Summary data',
+                                        command=self.show_summary_data)
 
         # Labels for settings values in master window; configure in show_start_data():
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
@@ -364,13 +367,11 @@ class CountViewer(tk.Frame):
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
 
-        # Create button widgets:
+        # Create or configure button widgets:
         style_button = ttk.Style(self.master)
         style_button.configure('TButton', background='grey80', anchor='center')
 
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
-        self.share.intvl_b.configure(text='Interval data', command=self.show_interval_data)
-        self.share.sumry_b.configure(text='Summary data', command=self.show_summary_data)
         quit_b = ttk.Button(text='Quit', command=quit_gui)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
@@ -470,13 +471,14 @@ class CountViewer(tk.Frame):
             closes settings window, and calls show_start_data().
             Called from showdata_button.
             """
+            # Need a final check in case something changes since initial
+            #   check_and_set().
             self.check_and_set()
 
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.tkdata['counts_remain'].set(0)
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
-                self.share.intvl_b.config(state=tk.DISABLED)
                 self.share.notice['notice_txt'].set(
                     'STATUS REPORT ONLY. (Clear notice with Ctrl_Shift-C)')
                 # Notice grids in compliment_me spot; initial grid implementation
@@ -485,10 +487,8 @@ class CountViewer(tk.Frame):
                 self.settings_win.destroy()
                 self.show_start_data()
             else:
-                # self.show_interval_data()
                 self.settings_win.destroy()
                 self.show_start_data()
-                # self.share.getstartdata()
 
         # Have user select interval times for counting and summary cycles.
         self.intvl_choice.configure(state='readonly', width=4,
@@ -523,7 +523,7 @@ class CountViewer(tk.Frame):
                 self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
 
         cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
-        cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
+        # cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
 
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
@@ -558,7 +558,7 @@ class CountViewer(tk.Frame):
         cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
         cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
         self.cycles_max_entry.grid(column=1, row=2)
-        cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
+        # cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
         log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
         self.log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
         confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
@@ -573,10 +573,34 @@ class CountViewer(tk.Frame):
         Confirm button.
         """
         self.showdata_button.config(state=tk.DISABLED)
+
+        # Note: self.share.setting['interval_t'] is set in settings().
+        self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
+
+        sumry_value = self.sumry_t_value.get()
+        self.share.setting['sumry_t_value'].set(sumry_value)
+        # if sumry_value == 0 then it is caught by interval_m comparison.
+        if not sumry_value:
+            self.share.setting['sumry_t_value'].set(1)
+        elif sumry_value != '0':
+            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
+
+        # Need to set summary_t here as concat of two sumry_t_ element strings,
+        #   then convert to minutes to use in comparison.
+        summary_t = str(self.share.setting['sumry_t_value'].get()) + self.sumry_t_unit.get()[:1]
+        self.share.setting['summary_t'].set(summary_t)
+        summary_m = self.share.getmin(summary_t)
+        if self.share.interval_m >= summary_m:
+            self.showdata_button.config(state=tk.DISABLED)
+            info = "Summary time must be greater than interval time"
+            messagebox.showerror(title='Invalid entry', detail=info,
+                                 parent=self.settings_win)
+        elif self.share.interval_m < summary_m:
+            self.showdata_button.config(state=tk.NORMAL)
+
         # Need to remove leading zeros, but allow a zero entry.
         #   Replace empty Entry with default values.
         cycles_max = self.cycles_max_entry.get()
-        sumry_value = self.sumry_t_value.get()
         if cycles_max == '':
             self.share.setting['cycles_max'].set(1008)
         elif cycles_max != '0':
@@ -589,34 +613,18 @@ class CountViewer(tk.Frame):
         self.share.tkdata['counts_remain'].set(
             self.share.setting['cycles_max'].get())
 
-        # if sumry_value == 0 then it is caught by interval_m comparison.
-        if not sumry_value:
-            self.share.setting['sumry_t_value'].set(1)
-        elif sumry_value != '0':
-            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
-
         # Note: self.share.setting['do_log'] is set automatically by Checkbutton.
-        # Note: self.share.setting['interval_t'] is set in settings().
-        # Need to set summary_t here b/c it's from 2 sumry widgets in settings()
-        summary_t = self.sumry_t_value.get() + self.sumry_t_unit.get()[:1]
-        self.share.setting['summary_t'].set(summary_t)
-        summary_m = self.share.getmin(summary_t)
-        if self.share.interval_m >= summary_m:
-            self.showdata_button.config(state=tk.DISABLED)
-            info = "Summary time must be greater than interval time"
-            messagebox.showerror(title='Invalid entry', detail=info,
-                                 parent=self.settings_win)
-        elif self.share.interval_m < summary_m:
-            self.showdata_button.config(state=tk.NORMAL)
-
-        if self.share.setting['do_log'].get() == 1 and self.share.interval_m < summary_m:
-            time_now = datetime.now().strftime(TIME_FORMAT)
-            logging.info(
-                f"{time_now}  >>> Settings confirmed <<<\n"
-                f"{self.indent}Interval time: {self.share.setting['interval_t'].get()}\n"
-                f"{self.indent}Summary time: {self.share.setting['summary_t'].get()}\n"
-                f"{self.indent}Max. counts before auto-exit: {self.share.setting['cycles_max'].get()}\n"
-            )
+        # NOTE: For development only. Settings info is logged in show_start_data().
+        # if self.share.setting['do_log'].get() == 1 and self.share.interval_m < summary_m:
+        #     time_now = datetime.now().strftime(TIME_FORMAT)
+        #     logging.info(
+        #         f"{time_now}  >>> Settings confirmed <<<\n"
+        #         f"{self.indent}Interval time:"
+        #         f" {self.share.setting['interval_t'].get()}\n"
+        #         f"{self.indent}Summary time:"
+        #         f" {self.share.setting['summary_t'].get()}\n"
+        #         f"{self.indent}Max. counts before auto-exit:"
+        #         f" {self.share.setting['cycles_max'].get()}\n")
 
     # The show_ methods define and display data for master window and logging.
     def show_start_data(self) -> None:
@@ -629,7 +637,6 @@ class CountViewer(tk.Frame):
 
         # Need to keep intvl_b & sumry_b buttons disabled until after 1st count
         # and summary intervals.
-        self.share.intvl_b.config(state=tk.DISABLED)
         self.share.sumry_b.config(state=tk.DISABLED)
 
         # Need self.share... whenever var is used in other MVC classes.
@@ -682,7 +689,7 @@ class CountViewer(tk.Frame):
             cycles_max = self.share.setting['cycles_max'].get()
             if cycles_max > 0:
                 self.report = (
-                    ">>> TASK COUNTER START settings <<<\n"
+                    '\n>>> TASK COUNTER START settings <<<\n'
                     f'{self.time_start}; Number of tasks in the most recent BOINC report:'
                     f' {self.share.task_count_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
@@ -721,6 +728,13 @@ class CountViewer(tk.Frame):
         #   displays and getintervaldata() is immediately called, but
         #   interval data sets only after countdown_timer() ends cycle.
         self.share.getintervaldata()
+
+        # Do not enable interval button, which calls show_interval_data,
+        #   until after first interval completes;
+        #   No need need for "if" condition?
+        #   Button at start is named 'Starting data' in show_start_data().
+        self.share.intvl_b.config(text='Interval data',
+                                  command=self.show_interval_data)
 
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
@@ -1013,15 +1027,12 @@ class CountModeler:
 
         self.share.notice['notrunning'].set(0)
         cycles_max = self.share.setting['cycles_max'].get()
-        # if cycles_max != '0':
-        #     self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.notice['tic_nnt'].set(0)
 
         for loop_num in range(cycles_max):
             # Need to pass loop_num to Viewer.show_interval_data() for log option.
             self.share.loop_num = loop_num
-            print('testing: loop number:', loop_num)  # DEBUG/TESTING
 
             self.share.tkdata['time_last_cnt'].set(datetime.now().strftime(TIME_FORMAT))
 
@@ -1029,13 +1040,9 @@ class CountModeler:
             # TODO: Make Thread timer; lock which Viewer or Controller functions?
             # self.countdown_timer(self.share.interval_m)
 
-            time.sleep(900)  # DEBUG; or use to bypass countdown_timer.
-
-            # Do not enable interval button, which calls show_interval_data,
-            #   until after first interval completes;
-            #   No need need for "if" condition?
-            #   Button is disabled at start in show_start_data.
-            self.share.intvl_b.config(state=tk.NORMAL)
+            print('testing: loop number:', loop_num)  # DEBUG/TESTING
+            time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
+            # time.sleep(self.share.interval_m * 60)  # DEBUG/TESTING
 
             counts_remain = cycles_max - (self.share.loop_num + 1)
             self.share.tkdata['counts_remain'].set(counts_remain)
@@ -1127,8 +1134,6 @@ class CountModeler:
             self.share.tkdata['tt_sd'].set(tt_sd)
             self.share.tkdata['tt_range'].set(tt_range)
             self.share.tkdata['tt_total'].set(tt_total)
-
-        # self.share.showintervaldata()
 
     # TODO: make into get_summary_data, like get_interval_data
     def get_summary_data(self, loop_num: int, ttimes_smry: list) -> None:
