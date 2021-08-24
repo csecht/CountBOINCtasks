@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 __program_name__ = 'gcount-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -155,11 +155,13 @@ class CountViewer(tk.Frame):
             'time_last_cnt': tk.StringVar(),
             'counts_remain': tk.IntVar(),
             'time_next_cnt': tk.StringVar(),
+            'num_tasks': tk.IntVar(),
+            # Unique to start data
+            'tcount_start': tk.IntVar(),
             # Unique to interval data
-            'count_new': tk.IntVar(),
+            'tcount_new': tk.IntVar(),
             # Unique to summary data
-            'count_uniq': tk.IntVar(),
-            'num_tasks': tk.IntVar()
+            'tcount_uniq': tk.IntVar(),
         }
 
         # Used in show_interval_data() and FYI.compliment_me()
@@ -206,11 +208,12 @@ class CountViewer(tk.Frame):
                                      bg=self.master_bg, fg=self.row_fg)
 
         # Labels for BOINC data; gridded in their respective show_methods().
-        self.task_count_start_l = tk.Label(self.dataframe, width=3, bg=self.data_bg)
+        self.task_count_start_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                           textvariable=self.share.tkdata['tcount_start'])
         self.task_count_new_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                         textvariable=self.share.tkdata['count_new'])
-        self.count_uniq_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                     textvariable=self.share.tkdata['count_uniq'])
+                                         textvariable=self.share.tkdata['tcount_new'])
+        self.task_count_uniq_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                          textvariable=self.share.tkdata['tcount_uniq'])
         self.tt_mean_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                   textvariable=self.share.tkdata['tt_mean'])
         self.tt_sd_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
@@ -635,16 +638,14 @@ class CountViewer(tk.Frame):
         Called from settings.check_close_show() with 'Show data' button.
         """
 
-        # Need to keep intvl_b & sumry_b buttons disabled until after 1st count
-        # and summary intervals.
+        # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
 
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=self.time_start)
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
-        self.task_count_start_l.config(text=self.share.task_count_start,
-                                       foreground=self.highlight)
+        self.task_count_start_l.config(foreground=self.highlight)
         # count_next Label is config __init__ and set in countdown_timer().
         # num_tasks Label is config __init__ and set in get_start_data().
 
@@ -681,6 +682,7 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get() == 1:
             interval_t = self.share.setting['interval_t'].get()
             summary_t = self.share.setting['summary_t'].get()
+            tcount_start = self.share.tkdata['tcount_start'].get()
             tt_mean = self.share.tkdata['tt_mean'].get()
             tt_sd = self.share.tkdata['tt_sd'].get()
             tt_range = self.share.tkdata['tt_range'].get()
@@ -691,7 +693,7 @@ class CountViewer(tk.Frame):
                 self.report = (
                     '\n>>> TASK COUNTER START settings <<<\n'
                     f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                    f' {self.share.task_count_start}\n'
+                    f' {tcount_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
                     f' range [{tt_range}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -703,11 +705,12 @@ class CountViewer(tk.Frame):
             # Need to provide a truncated report for one-off "status" runs.
             elif cycles_max == 0:
                 self.report = (
-                    f'{self.time_start}; Number of tasks in the most recent BOINC report:'
-                    f' {self.share.task_count_start}\n'
-                    f'{self.indent}Task Time: mean {self.share.tt_mean},'
-                    f' range [{range}],\n'
-                    f'{self.bigindent}stdev {self.share.tt_sd}, total {self.share.tt_total}\n'
+                    f'{self.time_start}; STATUS REPORT\n'
+                    f'{self.indent}Number of tasks in the most recent BOINC report:'
+                    f' {tcount_start}\n'
+                    f'{self.indent}Task Time: mean {tt_mean},'
+                    f' range [{tt_range}],\n'
+                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                     f'{self.indent}Total tasks in queue: {num_tasks}\n')
         logging.info(self.report)
 
@@ -747,7 +750,7 @@ class CountViewer(tk.Frame):
         self.tt_total_l.configure(foreground=self.emphasize)
 
         # Summary data, column2, deemphasize font color
-        self.count_uniq_l.configure(foreground=self.deemphasize)
+        self.task_count_uniq_l.configure(foreground=self.deemphasize)
         self.ttmean_sumry_l.configure(foreground=self.deemphasize)
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
@@ -809,7 +812,7 @@ class CountViewer(tk.Frame):
             tt_range = self.share.tkdata['tt_range'].get()
             tt_total = self.share.tkdata['tt_total'].get()
             num_tasks = self.share.tkdata['num_tasks'].get()
-            task_count_new = self.share.tkdata['count_new'].get()
+            task_count_new = self.share.tkdata['tcount_new'].get()
             cycles_max = self.share.setting['cycles_max'].get()
             time_now = datetime.now().strftime(TIME_FORMAT)
             counts_remain = cycles_max - (self.share.loop_num + 1)
@@ -868,7 +871,7 @@ class CountViewer(tk.Frame):
         self.summary_t_l.config(foreground=self.emphasize)
 
         # Summary data, column2, emphasize font color
-        self.count_uniq_l.configure(foreground=self.highlight)
+        self.task_count_uniq_l.configure(foreground=self.highlight)
         self.ttmean_sumry_l.configure(foreground=self.highlight)
         self.ttsd_sumry_l.configure(foreground=self.emphasize)
         self.ttrange_sumry_l.configure(text=tt_range,
@@ -885,7 +888,7 @@ class CountViewer(tk.Frame):
 
         # Place labels in row,column positions.
         # Need to match padx spacing among all column 2 labels elsewhere.
-        self.count_uniq_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
+        self.task_count_uniq_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
@@ -902,9 +905,8 @@ class CountViewer(tk.Frame):
     @staticmethod
     def show_log() -> None:
         """
-        Create a separate window to view the log file.
-
-        :return: Read-only log file as scrolled text.
+        Create a separate window to view the log file, read-only,
+        scrolled text. Called from File menu.
         """
 
         try:
@@ -931,27 +933,35 @@ class CountViewer(tk.Frame):
     @staticmethod
     def backup_log() -> None:
         """
-        Copy the log file to the home folder; called from File menu.
+        Copy the log file to the home folder. Overwrites current file.
+        Called from File menu.
 
         :return: A new or overwritten backup file.
         """
 
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGFILE) is True:
-            shutil.copyfile(LOGFILE, destination)
-            success_msg = 'Log file has been copied to: '
-            success_detail = str(destination)
-            # print(success_msg)
-            messagebox.showinfo(title='Archive completed',
-                                message=success_msg, detail=success_detail)
+            try:
+                shutil.copyfile(LOGFILE, destination)
+                success_msg = 'Log file has been copied to: '
+                success_detail = str(destination)
+                # print(success_msg)
+                messagebox.showinfo(title='Archive completed',
+                                    message=success_msg, detail=success_detail)
+            except PermissionError:
+                print("Log file backup: Permission denied.")
+            except shutil.SameFileError:
+                print("Log file backup: Source and destination are the same file.")
+            except IsADirectoryError:
+                print("Log file backup: Destination is a directory.")
         else:
             warn_main = f'Log {LOGFILE} cannot be archived'
             warn_detail = ('Log file should be in folder:\n'
                            f'{CWD}\n'
                            'Has it been moved or renamed?')
-            # print('\n', warn_main, warn_detail)
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
+            # print('\n', warn_main, warn_detail)
 
 
 # The engine that gets BOINC data and runs timed data counts.
@@ -996,18 +1006,15 @@ class CountModeler:
         # Begin list "old" tasks to exclude from new tasks; list is used
         #   in get_interval_data() to track tasks across intervals.
         self.ttimes_used.extend(ttimes_start)
-
-        # Need self.share.task_count_start b/c is used for
-        #   text= in Viewer __init__ label.
-        # task_count_start used as param in get_ttime_stats() via Controller.
-        self.share.task_count_start = len(ttimes_start)
+        self.share.tkdata['tcount_start'].set(len(ttimes_start))
 
         # num_tasks Label config and grid are defined in Viewer __init__:
         #  set value here for use in show_start_data()
         self.share.tkdata['num_tasks'].set(len(BC.get_tasks('name')))
 
         # Need to parse data returned from get_ttime_stats().
-        startdict = self.get_ttime_stats(self.share.task_count_start, ttimes_start)
+        startdict = self.get_ttime_stats(
+            self.share.tkdata['tcount_start'].get(), ttimes_start)
         tt_mean = startdict['tt_mean']
         tt_max = startdict['tt_max']
         tt_min = startdict['tt_min']
@@ -1111,7 +1118,7 @@ class CountModeler:
             # self.ttimes_smry.extend(self.ttimes_new)
             task_count_new = len(set(self.ttimes_new))
             # Need to values in self.share.tkdata dict for use in Viewer.
-            self.share.tkdata['count_new'].set(task_count_new)
+            self.share.tkdata['tcount_new'].set(task_count_new)
             self.share.tkdata['num_tasks'].set(self.num_tasks)
 
             # Record when no new tasks were reported in past interval;
