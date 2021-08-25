@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -467,7 +467,7 @@ class CountViewer(tk.Frame):
             max_label.grid(column=0, columnspan=3, row=4,
                            padx=10, pady=(0, 5), sticky=tk.E)
 
-        def check_close_show():
+        def check_show_close():
             """
             Calls check_and_set(), activates or disables interval cycles,
             closes settings window, and calls show_start_data().
@@ -486,11 +486,11 @@ class CountViewer(tk.Frame):
                 # Notice grids in compliment_me spot; initial grid implementation
                 self.share.notice_l.grid(row=14, column=0, columnspan=3,
                                          padx=5, pady=5, sticky=tk.W)
-                self.settings_win.destroy()
                 self.show_start_data()
+                self.settings_win.destroy()
             else:
-                self.settings_win.destroy()
                 self.show_start_data()
+                self.settings_win.destroy()
 
         # Have user select interval times for counting and summary cycles.
         self.intvl_choice.configure(state='readonly', width=4,
@@ -543,7 +543,7 @@ class CountViewer(tk.Frame):
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
 
-        self.showdata_button.configure(text='Show data', command=check_close_show)
+        self.showdata_button.configure(text='Show data', command=check_show_close)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
         #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
@@ -715,7 +715,7 @@ class CountViewer(tk.Frame):
         logging.info(self.report)
 
         # TODO:  test show_ get_interval_data with a button
-        ttk.Button(text='intvl data', command=self.show_interval_data).grid()
+        ttk.Button(text='test intvl data', command=self.show_interval_data).grid()
         # self.show_interval_data()
 
     def show_interval_data(self) -> None:
@@ -725,8 +725,7 @@ class CountViewer(tk.Frame):
         Provide notices for aberrant task status. Log to file
         if optioned.
         """
-        # settings() 'Show data' button will flow directly to here.
-        self.settings_win.destroy()
+
         # Note: after settings() 'Show data' btn is clicked, start data
         #   displays and getintervaldata() is immediately called, but
         #   interval data sets only after countdown_timer() ends cycle.
@@ -1049,8 +1048,8 @@ class CountModeler:
             # self.countdown_timer(self.share.interval_m)
 
             print('testing: loop number:', loop_num)  # DEBUG/TESTING
-            time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
-            # time.sleep(self.share.interval_m * 60)  # DEBUG/TESTING
+            # time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
+            time.sleep(self.share.interval_m * 60)  # DEBUG/TESTING
 
             counts_remain = cycles_max - (self.share.loop_num + 1)
             self.share.tkdata['counts_remain'].set(counts_remain)
