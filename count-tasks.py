@@ -164,9 +164,9 @@ class DataIntervals:
         # Remove previous ("used") tasks from current ("new") task metrics.
 
         for loop_num in range(COUNT_LIM):
-            # countdown_timer() sleeps the for-loop between counts.
+            # countdown_clock() sleeps the for-loop between counts.
             self.intvl_timer(INTERVAL_M)
-            # time.sleep(5)  # DEBUG; or use to bypass countdown_timer.
+            # time.sleep(5)  # DEBUG; or use to bypass countdown_clock.
 
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)

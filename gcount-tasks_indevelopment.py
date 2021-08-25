@@ -4,9 +4,6 @@
 A tkinter-based GUI version of count-tasks.py using a MVC architecture.
 CountBOINCtasks provides task counts and time statistics at timed
 intervals for tasks most recently reported to BOINC servers.
-
-Download the current version from:
-https://github.com/csecht/CountBOINCtasks
 Alpha ver: interval counts not active.
 
     Copyright (C) 2021 C. Echt
@@ -31,6 +28,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
 __version__ = '0.0.5'
 __program_name__ = 'gcount-tasks.py'
+__project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 5 - ALPHA'
@@ -63,8 +61,8 @@ except (ImportError, ModuleNotFoundError) as error:
           '\nOn Linux-Ubuntu you may need: sudo apt install python3-tk'
           f'\nSee also: https://tkdocs.com/tutorial/install.html \n{error}')
 
-if sys.version_info < (3, 6):
-    print('Program requires at least Python 3.6.')
+if sys.version_info < (3, 7):
+    print('Program requires at least Python 3.7.')
     sys.exit(1)
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
@@ -189,9 +187,11 @@ class CountViewer(tk.Frame):
         # Master window widgets:
         # Set interval & summary focus button attributes here b/c need to
         #   configure them in different modules.
-        # Interval focus button starts with name 'Starting data'; re-configured
-        #   to 'Interval data', with command, after first interval completes.
-        self.share.intvl_b = ttk.Button(text='Starting data')
+        # start_b will be in same grid position as intvl_b, which will be
+        #   gridded  after first interval completes.
+        self.share.start_b = ttk.Button(text='Starting data')
+        self.share.intvl_b = ttk.Button(text='Interval data',
+                                        command=self.show_interval_data)
         self.share.sumry_b = ttk.Button(text='Summary data',
                                         command=self.show_summary_data)
 
@@ -386,7 +386,7 @@ class CountViewer(tk.Frame):
 
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
         viewlog_b.grid(row=0, column=0, padx=5, pady=5)
-        self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
+        self.share.start_b.grid(row=0, column=1, padx=(20, 0), pady=5)
         self.share.sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in show_start_data()
@@ -757,6 +757,7 @@ class CountViewer(tk.Frame):
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
 
         # Place new labels (replace those in show_start_data) in row,column positions.
+        self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
         self.task_count_new_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
         self.start_info_l.grid_remove()  # <- was at row=10, column=1.
         self.time_last_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
@@ -1099,10 +1100,13 @@ class CountModeler:
                     # Need to provide time for BOINC Project server to respond?
                     time.sleep(70)
 
-            # NOTE: Do not include starting tasks in interval and summary counts?
+            # NOTE: Starting tasks are not included in interval and summary
+            #   counts, but starting task times are used here to evaluate
+            #   "new" tasks.
             # Need to add all prior tasks to the "used" list.
-            #  "new" task times are carried over from the prior interval,
-            #  which for initial loop_num is from get_start_data().
+            #  "new" task times are carried over from the prior interval;
+            #  For first loop_num, self.ttimes_used was populated in
+            #    get_start_data().
             self.ttimes_used.extend(self.ttimes_new)
 
             ttimes_sent = BC.get_reported('elapsed time')
@@ -1441,9 +1445,8 @@ class CountFyi:
     @staticmethod
     def about() -> None:
         """
-        Basic information for gcount-tasks; called from Help menu.
-
-        :return: Toplevel window.
+        Basic information for gcount-tasks;
+        Toplevel window called from Help menu.
         """
         aboutwin = tk.Toplevel()
         aboutwin.resizable(False, False)
@@ -1454,17 +1457,18 @@ class CountFyi:
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
-        abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 7,
+        abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
                            bg=bkg, fg='grey98', relief='groove',
                            borderwidth=5, padx=25)
         abouttxt.insert('1.0', f'{__doc__}\n'
-                        f'Author:    {__author__}\n'
-                        f'Copyright: {__copyright__}\n'
-                        f'Credits:   {__credits__}\n'
-                        f'License:   {__license__}\n'
-                        f'Version:   {__version__}\n'
-                        f'Maintainer:{__maintainer__}\n'
-                        f'Status:    {__status__}\n')
+                               f'Author:    {__author__}\n'
+                               f'Copyright: {__copyright__}\n'
+                               f'Credits:   {__credits__}\n'
+                               f'License:   {__license__}\n'
+                               f'Maintainer:{__maintainer__}\n'
+                               f'URL:       {__project_url__}\n'
+                               f'Version:   {__version__}\n'
+                               f'Status:    {__status__}\n')
         abouttxt.pack()
 
 
