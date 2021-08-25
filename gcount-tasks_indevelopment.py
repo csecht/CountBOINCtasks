@@ -108,7 +108,6 @@ class CountViewer(tk.Frame):
     def __init__(self, master, share):
         super().__init__(master)
         self.share = share
-        self.time_start = datetime.now().strftime(TIME_FORMAT)
 
         # Set colors for row labels and data display
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
@@ -637,12 +636,13 @@ class CountViewer(tk.Frame):
         metrics for the most recent BOINC report.
         Called from settings.check_close_show() with 'Show data' button.
         """
+        time_start = datetime.now().strftime(TIME_FORMAT)
 
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
 
         # Need self.share... whenever var is used in other MVC classes.
-        self.time_start_l.config(text=self.time_start)
+        self.time_start_l.config(text=time_start)
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_start_l.config(foreground=self.highlight)
@@ -692,7 +692,7 @@ class CountViewer(tk.Frame):
             if cycles_max > 0:
                 self.report = (
                     '\n>>> TASK COUNTER START settings <<<\n'
-                    f'{self.time_start}; Number of tasks in the most recent BOINC report:'
+                    f'{time_start}; Number of tasks in the most recent BOINC report:'
                     f' {tcount_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
                     f' range [{tt_range}],\n'
@@ -705,7 +705,7 @@ class CountViewer(tk.Frame):
             # Need to provide a truncated report for one-off "status" runs.
             elif cycles_max == 0:
                 self.report = (
-                    f'{self.time_start}; STATUS REPORT\n'
+                    f'{time_start}; STATUS REPORT\n'
                     f'{self.indent}Number of tasks in the most recent BOINC report:'
                     f' {tcount_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
