@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+#!/usr/bin/env python3
 
 """
 A tkinter-based GUI version of count-tasks.py using a MVC architecture.
@@ -36,10 +36,9 @@ __status__ = 'Development Status :: 5 - ALPHA'
 import logging
 import random
 import shutil
+import signal
 import statistics as stats
-import subprocess
 import sys
-import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -81,6 +80,9 @@ GUI_TITLE = 'BOINC task counter'
 # Here logging is lazily employed to manage the file of report data.
 logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                     format='%(message)s')
+
+# Use this to allow clean Terminal screen exit, but bypasses KeyInterrupt msg.
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
 # Functions used by count-tasks, but not part of MVC structure %%%%%%%%%%%%%%%%%
@@ -591,7 +593,7 @@ class CountViewer(tk.Frame):
         #   then convert to minutes to use in comparison.
         summary_t = str(self.share.setting['sumry_t_value'].get()) + self.sumry_t_unit.get()[:1]
         self.share.setting['summary_t'].set(summary_t)
-        summary_m = self.share.getmin(summary_t)
+        summary_m = self.share.getminutes(summary_t)
         if self.share.interval_m >= summary_m:
             self.showdata_button.config(state=tk.DISABLED)
             info = "Summary time must be greater than interval time"
@@ -1329,7 +1331,7 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).default_settings()
 
-    def getmin(self, timestring: str) -> int:
+    def getminutes(self, timestring: str) -> int:
         """
         Converts a time string into minutes.
 
@@ -1476,14 +1478,11 @@ if __name__ == "__main__":
         app = CountController()
         app.title("Count BOINC tasks")
         app.mainloop()
-        # TODO: Consider: allow cmd line arg of 0 count interval for a 
+        # TODO: Consider: allow cmd line arg of 0 count interval for a
         #  1-off status count that bypasses the settings window.
-
-        # TODO: start thread here or in get_start_data() or get_interval_data()
-        #    before cycles loop? Or have Modeler be a Thread class,
-        #    see https://thispointer.com/create-a-thread-using-class-in-python/
     except KeyboardInterrupt:
         exit_msg = (f'\n\n  *** Interrupted by user ***\n'
                     f'  Quitting now...{datetime.now()}\n\n')
-        sys.stdout.write(exit_msg)
+        print(exit_msg)
+        # sys.stdout.write(exit_msg)
         logging.info(msg=exit_msg)
