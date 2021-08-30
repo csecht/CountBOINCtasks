@@ -28,14 +28,13 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 2 - Pre-Alpha'
 
-import asyncio
 import logging
 import random
 import signal
@@ -72,8 +71,6 @@ MY_OS = sys.platform[:3]
 TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
 BC = boinc_command.BoincCommand()
 # Log file should be in the CountBOINCtasks-master folder.
-# Not sure what determines the relative Project path.
-#    Depends on copying the module in PyCharm project?
 # LOGFILE = Path('../count-tasks_log.txt')
 LOGFILE = Path('count-tasks_log.txt')
 CWD = Path.cwd()
@@ -85,24 +82,8 @@ GUI_TITLE = 'BOINC task counter'
 logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                     format='%(message)s')
 
-# Use this to allow clean Terminal Ctrl-C exit, but bypasses KeyInterrupt msg.
+# Use this to allow clean Terminal Ctrl-C exit; bypasses __name__ KeyInterrupt msg.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-
-# Functions used by count-tasks, but not part of MVC structure %%%%%%%%%%%%%%%%%
-# pylint: disable=unused-argument
-# def quit_gui(event=None) -> None:
-#     """Safe and informative exit from the program.
-#
-#     :param event: Needed for keybindings.
-#     :type event: Direct call from keybindings.
-#     """
-#     print('\n  *** User has quit the program. ***\n Exiting...\n')
-#     app.destroy()
-#     sys.exit(0)
-
-
-# END Functions used by count-tasks, but not part of MVC structure %%%%%%%%%%%%%
 
 
 # The tkinter GUI engine that runs as main thread.
@@ -156,7 +137,7 @@ class CountViewer(tk.Frame):
             'tt_max': tk.StringVar(),
             'tt_range': tk.StringVar(),
             'tt_total': tk.StringVar(),
-            'time_last_cnt': tk.StringVar(),
+            'time_prev_cnt': tk.StringVar(),
             'cycles_remain': tk.IntVar(),
             'time_next_cnt': tk.StringVar(),
             'num_tasks': tk.IntVar(),
@@ -180,9 +161,9 @@ class CountViewer(tk.Frame):
         #   configure them in different modules.
         # start_b will be in same grid position as intvl_b, which will be
         #   gridded  after first interval completes.
-        style = ttk.Style(self.master)
-        # style.configure('Start.TButton', background='black')
-        # style.map('Start.TButton', foreground=[('disabled', 'gold')])
+        # style = ttk.Style(self.master)  # TESTING
+        # style.configure('Start.TButton', background='black')  # TESTING
+        # style.map('Start.TButton', foreground=[('disabled', 'gold')])  # TESTING
         self.share.start_b = ttk.Button(text='Starting data')  #, state=tk.DISABLED)
         self.share.intvl_b = ttk.Button(text='Interval data',
                                         command=self.emphasize_intvl_data)
@@ -227,13 +208,13 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg)
         self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                       textvariable=self.share.data['tt_total'])
-        # This start_info label is a one-off; is same grid position as time_last_cnt_l.
-        self.start_info_l = ttk.Label(self.master,
-                                      text='The most recent 1 hr BOINC report',
-                                      background=self.master_bg,
-                                      foreground=self.row_fg)
-        self.time_last_cnt_l = tk.Label(
-            textvariable=self.share.data['time_last_cnt'],
+        # This start_info label is a one-off; is same grid position as time_prev_cnt_l.
+        # self.start_info_l = ttk.Label(self.master,
+        #                               text='The most recent 1 hr BOINC report',
+        #                               background=self.master_bg,
+        #                               foreground=self.row_fg)
+        self.time_prev_cnt_l = tk.Label(
+            textvariable=self.share.data['time_prev_cnt'],
             bg=self.master_bg, fg=self.row_fg)
         self.time_next_cnt_l = tk.Label(
             textvariable=self.share.data['time_next_cnt'],
@@ -261,14 +242,14 @@ class CountViewer(tk.Frame):
     
     def config_master(self) -> None:
         """
-        Master frame configuration, keybindings, frames, menus,
-        and row headers.
+        Master frame configuration, keybindings, frames, and row headers.
         """
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
         # self.master.minsize(466, 365)
         self.master.title(GUI_TITLE)
-        # Need to color in all of master Frame, and use light grey border.
+        # Need to color in all of master Frame, and use light grey border;
+        #    changes to near white for click-drag.
         self.master.configure(bg=self.master_bg,
                               highlightthickness=3,
                               highlightcolor='grey75',
@@ -333,7 +314,7 @@ class CountViewer(tk.Frame):
     
     def master_widgets(self) -> None:
         """
-        Layout menus, buttons, and separators in master frame.
+        Master frame menus, buttons, and separators.
         """
         
         # creating a menu instance
@@ -395,12 +376,12 @@ class CountViewer(tk.Frame):
         self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
                                        padx=(30, 0), pady=5, sticky=tk.W)
         
-        # Need this condition so startup sequence isn't called when subsequent
-        #  notify_and_log() method is called b/c interval_t will be set,
-        #  thus skipping starting sequence. Starting sequence: startup(),
+        # Need if condition so startup sequence isn't called when subsequent
+        #  notify_and_log() method is called; interval_t will be set, so
+        #  starting sequence will be skipped. Starting sequence: startup(),
         #  default_settings(), get_start_data(), settings(), check_and_set(),
-        #  settings.check_show_close(), show_start_data().
-        # TODO: ^^^ There must be a cleaner way to do start sequence ^^^
+        #  settings.check_show_close(), show_start_data() -> intvl_thread.
+        # TODO: ^^^ There must be a cleaner way to structure start functions.
         if not self.share.setting['interval_t'].get():
             self.startup()
     
@@ -408,8 +389,8 @@ class CountViewer(tk.Frame):
         """
         Set default stringvariable settings, set initial BOINC task
         data, and open settings window; once user confirms valid run
-        settings, show_start_data() will be called to display data, which
-        immediately starts interval timer (if not a status-only run).
+        settings, show_start_data() is called to display data and
+        immediately start timed intervals (if not a status-only run).
         """
         self.share.defaultsettings()
         self.share.getstartdata()
@@ -418,7 +399,7 @@ class CountViewer(tk.Frame):
     def settings(self) -> None:
         """
         A Toplevel window called from master_widgets() at startup.
-        Use to confirm default parameters or set new ones for: count and
+        Use to confirm default parameters or set new ones for count and
         summary interval times, counting limit, and log file option.
         """
         # Toplevel window basics
@@ -500,7 +481,7 @@ class CountViewer(tk.Frame):
                 self.settings_win.destroy()
         
         # Have user select interval times for counting and summary cycles.
-        intvl_choice.configure(state='readonly', width=4,
+        intvl_choice.configure(state='readonly', width=4, height=12,
                                textvariable=self.share.setting['interval_t'])
         
         intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
@@ -624,25 +605,11 @@ class CountViewer(tk.Frame):
         #   is decremented in notify_and_log() to track cycle number.
         self.share.data['cycles_remain'].set(
             self.share.setting['cycles_max'].get())
-        
-        # Note: self.share.setting['do_log'] is set automatically by Checkbutton.
-        # NOTE: For development only. Settings info is logged in show_start_data().
-        # if self.share.setting['do_log'].get() == 1 and interval_m < summary_m:
-        #     time_now = datetime.now().strftime(TIME_FORMAT)
-        #     logging.info(
-        #         f"{time_now}  >>> Settings confirmed <<<\n"
-        #         f"{self.indent}Interval time:"
-        #         f" {self.share.setting['interval_t'].get()}\n"
-        #         f"{self.indent}Summary time:"
-        #         f" {self.share.setting['summary_t'].get()}\n"
-        #         f"{self.indent}Max. counts before auto-exit:"
-        #         f" {self.share.setting['cycles_max'].get()}\n")
-    
-    # The show_ methods define and display data for master window and logging.
+
     def show_start_data(self) -> None:
         """
-        Populate starting count-tasks data labels in master window.
-        Log data to file if optioned. Shows default settings and task
+        Config and grid data labels in master window; show start data.
+        Log data to file if optioned. Show default settings and task
         metrics for the most recent BOINC report.
         Called from settings.check_close_show() with 'Show data' button.
         """
@@ -663,6 +630,7 @@ class CountViewer(tk.Frame):
         
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=time_start)
+        self.share.data['time_prev_cnt'].set('The most recent 1 hr BOINC report')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.highlight)
@@ -678,8 +646,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
         
-        # Initial gridding of data labels; sorted by row.
-        # This time_start_l is a one-off; is same grid position as time_last_cnt_l.
+        # Initial gridding of data labels, start & intervals; sorted by row.
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
@@ -689,10 +656,8 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
         self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
         self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
-        # start_info_l used only at start, then replaced by time_last_cnt_l in
-        #   notify_and_log().
-        self.start_info_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                               columnspan=2)
+        self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+                                  columnspan=2)
         self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.cycles_remain_l.grid(row=12, column=1, padx=3, sticky=tk.W)
         self.num_tasks_l.grid(row=13, column=1, padx=3, sticky=tk.W)
@@ -779,9 +744,8 @@ class CountViewer(tk.Frame):
         #   after first interval completes;
         self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
         self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.start_info_l.grid_remove()  # <- was at row=10, column=1.
-        self.time_last_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                                  columnspan=2)
+        # self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+        #                           columnspan=2)
         
         # TODO: Are these re-grids needed when using textvariables? Prolly NO
         # self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
@@ -820,7 +784,7 @@ class CountViewer(tk.Frame):
         self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
         
         # TODO: Are these re-grids needed when using textvariables? Prolly NO
-        # self.time_last_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+        # self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
         #                           columnspan=2)
         # self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         # self.cycles_remain_l.grid(row=12, column=1, padx=3, sticky=tk.W)
@@ -1000,7 +964,9 @@ class CountModeler:
                 time.sleep(1)
                 interval_s -= 1
             
-            self.share.data['time_last_cnt'].set(datetime.now().strftime(TIME_FORMAT))
+            # Do not need to show year-date in time b/c it's never more than 1hr.
+            self.share.data['time_prev_cnt'].set(
+                datetime.now().strftime('%H:%M:%S'))
             
             # Need to set cycles_remain before set_interval_data() is called.
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
@@ -1585,5 +1551,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         exit_msg = (f'\n\n  *** Interrupted by user ***\n'
                     f'  Quitting now...{datetime.now()}\n\n')
-        sys.stdout.write(exit_msg)
+        # sys.stdout.write(exit_msg)
+        print(exit_msg)
         logging.info(msg=exit_msg)
