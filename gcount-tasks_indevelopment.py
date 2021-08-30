@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -291,17 +291,18 @@ class CountViewer(tk.Frame):
                       'Time, last count:': 10,
                       'Time, next count:': 11,
                       'Counts remaining:': 12,
-                      'Tasks in queue:': 13
+                      'Tasks in queue:': 13,
+                      'Notices:': 14
                       }
         for header, rownum in row_header.items():
             tk.Label(self.master, text=f'{header}',
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         
-        tk.Label(self.master, text='<--Notices',
-                 bg=self.master_bg, fg=self.row_fg
-                 ).grid(row=14, column=2, padx=(0, 5), sticky=tk.E)
-    
+        # tk.Label(self.master, text='<--Notices',
+        #          bg=self.master_bg, fg=self.row_fg
+        #          ).grid(row=14, column=2, padx=(0, 5), sticky=tk.E)
+
     def master_widgets(self) -> None:
         """
         Master frame menus, buttons, and separators.
@@ -347,7 +348,7 @@ class CountViewer(tk.Frame):
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
         # TODO: Consider dispensing with Quit button; just use key and menu.
         #   if so, then move 'notices' row header to col=1.
-        quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
+        # quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
         
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -364,7 +365,7 @@ class CountViewer(tk.Frame):
         # Intervening rows are gridded in show_start_data()
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
         # self.start_b.grid(row=13, column=2, padx=(0, 5), sticky=tk.E)
-        quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
+        # quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
         self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
                                        padx=(30, 0), pady=5, sticky=tk.W)
         
@@ -464,7 +465,7 @@ class CountViewer(tk.Frame):
                 self.share.notice_txt.set(
                     'STATUS REPORT ONLY. (Clear notice with Ctrl_Shift-C)')
                 # Notice grids in compliment_me spot; initial grid implementation
-                self.share.notice_l.grid(row=14, column=0, columnspan=3,
+                self.share.notice_l.grid(row=14, column=1, columnspan=3,
                                          padx=5, pady=5, sticky=tk.W)
                 self.show_start_data()
                 self.settings_win.destroy()
@@ -1497,7 +1498,7 @@ class CountFyi:
         praise = random.choice(compliments)
         self.share.compliment_txt.config(text=praise)
         self.share.notice_l.grid_remove()
-        self.share.compliment_txt.grid(row=14, column=0, columnspan=3,
+        self.share.compliment_txt.grid(row=14, column=1, columnspan=3,
                                        padx=(50, 0), pady=5, sticky=tk.W)
         
         def refresh():
