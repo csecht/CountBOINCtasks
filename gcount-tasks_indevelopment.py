@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -64,7 +64,7 @@ except (ImportError, ModuleNotFoundError) as error:
           f'\nSee also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 7):
-    print('Program requires at least Python 3.7.')
+    print('Program requires Python 3.7 or later.')
     sys.exit(1)
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
@@ -82,7 +82,7 @@ GUI_TITLE = 'BOINC task counter'
 logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                     format='%(message)s')
 
-# Use this to allow clean Terminal Ctrl-C exit; bypasses __name__ KeyInterrupt msg.
+# Use this for a clean exit from Terminal; bypasses __name__ KeyInterrupt msg.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
@@ -92,7 +92,8 @@ class CountViewer(tk.Frame):
     The Viewer communicates with Modeler via 'share' objects handled
     through the Controller class. All GUI widgets go here.
     """
-    
+    print('gcount-tasks now running...')
+
     def __init__(self, master, share):
         super().__init__(master)
         self.share = share
@@ -160,7 +161,7 @@ class CountViewer(tk.Frame):
         # Set interval & summary focus button attributes here b/c need to
         #   configure them in different modules.
         # start_b will be in same grid position as intvl_b, which will be
-        #   gridded  after first interval completes.
+        #   gridded after first interval completes; re-grid in set_interval_data().
         # style = ttk.Style(self.master)  # TESTING
         # style.configure('Start.TButton', background='black')  # TESTING
         # style.map('Start.TButton', foreground=[('disabled', 'gold')])  # TESTING
@@ -169,13 +170,7 @@ class CountViewer(tk.Frame):
                                         command=self.emphasize_intvl_data)
         self.share.sumry_b = ttk.Button(text='Summary data',
                                         command=self.emphasize_sumry_data)
-        
-        # TODO: Figure out why ttk.Style wasn't working for Labels;
-        #  changed all Labels to tk.Label()
-        # style_data = ttk.Style(self.dataframe)
-        # style_data.configure('TLabel', foreground=self.row_fg,
-        #                       background=self.data_bg, anchor='center')
-        
+
         # Labels for settings values in master window; configure in show_start_data():
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg,
                                      fg='grey90')
@@ -208,11 +203,6 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg)
         self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                       textvariable=self.share.data['tt_total'])
-        # This start_info label is a one-off; is same grid position as time_prev_cnt_l.
-        # self.start_info_l = ttk.Label(self.master,
-        #                               text='The most recent 1 hr BOINC report',
-        #                               background=self.master_bg,
-        #                               foreground=self.row_fg)
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
             bg=self.master_bg, fg=self.row_fg)
@@ -228,7 +218,7 @@ class CountViewer(tk.Frame):
         # Text for compliment is configured in compliment_me()
         self.share.compliment_txt = tk.Label(fg='orange', bg=self.master_bg,
                                              relief='flat', border=0)
-        # This label will share grid with complement_txt to display user notices.
+        # Notice label will share grid with complement_txt to display notices.
         self.share.notice_l = tk.Label(
             textvariable=self.share.notice_txt,
             fg='salmon', bg=self.master_bg, relief='flat', border=0)
@@ -355,6 +345,8 @@ class CountViewer(tk.Frame):
         style_button.configure('TButton', background='grey80', anchor='center')
         # NOTE: Start, Interval, & Summary button attributes are in __init__.
         viewlog_b = ttk.Button(text='View log file', command=self.show_log)
+        # TODO: Consider dispensing with Quit button; just use key and menu.
+        #   if so, then move 'notices' row header to col=1.
         quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
         
         # For colored separators, use ttk.Frame instead of ttk.Separator.
@@ -944,22 +936,25 @@ class CountModeler:
         for loop_num in range(cycles_max):
             if loop_num == cycles_max:
                 self.share.intvl_thread.cancel()
+            if loop_num == 1:
+                # Need to change button name and function from Start to Interval
+                #   after 1st interval sleep completes and intvt data displays.
+                #  It would be better if statement were in Viewer, but simpler
+                #  to put it here with easy reference to loop_num.
+                self.share.start_b.grid_remove()
+                self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
             
             # Need to sleep loops between counts; is threaded.
             # time.sleep(interval_m * 60)  # DEBUG/TESTING
             # time.sleep(300)  # DEBUG/TESTING
             interval_s = interval_m * 60
-            time_remain = '00:00'
+            # time_remain = '00:00'
             while interval_s:
                 if loop_num == cycles_max:
                     break
                 _m, _s = divmod(interval_s, 60)
                 _h, _m = divmod(_m, 60)
-                if 3600 >= interval_s > 60:
-                    time_remain = f'{_m:02d}:{_s:02d}'
-                    # time_format = f'{_m:01d}m'
-                if interval_s <= 60:
-                    time_remain = f'{_s}s'
+                time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1)
                 interval_s -= 1
