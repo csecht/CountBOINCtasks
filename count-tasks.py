@@ -71,7 +71,7 @@ class DataIntervals:
         self.ttimes_new = []
         self.ttimes_smry = []
         self.ttimes_uniq = []
-        self.ttimes_used = ['']
+        self.ttimes_used = [''] # Need a null string for list to be extended.
         self.count_new = None
         self.tic_nnt = 0
         self.notrunning = False
@@ -164,9 +164,9 @@ class DataIntervals:
         # Remove previous ("used") tasks from current ("new") task metrics.
 
         for loop_num in range(COUNT_LIM):
-            # countdown_clock() sleeps the for-loop between counts.
+            # intvl_timer() sleeps this loop between counts.
             self.intvl_timer(INTERVAL_M)
-            # time.sleep(5)  # DEBUG; or use to bypass countdown_clock.
+            # time.sleep(5)  # DEBUG; or use to bypass intvl_timer.
 
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
@@ -292,6 +292,7 @@ class DataIntervals:
                 print(f'\x1b[1F{self.del_line}{report}')
                 if args.log == 'yes':
                     logging.info(report)
+
             self.summary_reports(loop_num, self.ttimes_smry)
 
     def summary_reports(self, loop_num: int, ttimes_smry: list) -> None:
@@ -386,6 +387,7 @@ class DataIntervals:
     def intvl_timer(self, interval: int) -> None:
         """
         Provide sleep intervals and display countdown timer.
+        Called from interval_reports().
 
         :param interval: Minutes between task counts; range[5-60, by 5's]
         :returns: None; generates a terminal graphic of time remaining.
@@ -411,6 +413,8 @@ class DataIntervals:
         # del_line = '\x1b[2K'  # Clear entire line.
 
         # Not +1 in range because need only to sleep to END of interval.
+        # When range ends, sleep segments end and interval_reports() continues
+        #   with the rest of its for-loop statements.
         for i in range(bar_len):
             remain_bar = prettybar[i:]
             num_segments = len(remain_bar)
