@@ -6,8 +6,6 @@ intervals for tasks most recently reported to BOINC servers. This is
 a tkinter-based GUI version of count-tasks.py using a MVC architecture;
 inspiration: Brian Oakley; https://stackoverflow.com/questions/32864610/
 
-Pre-Alpha ver: summary counts not active.
-
     Copyright (C) 2021 C. Echt
 
     This program is free software: you can redistribute it and/or modify
@@ -151,6 +149,9 @@ class CountViewer(tk.Frame):
             'tt_total_sumry': tk.StringVar(),
         }
 
+        # Used in set_start_data() and set_interval_data()
+        self.share.ttimes_used = ['']
+
         # Used in notify_and_log()
         self.share.notice_txt = tk.StringVar()
 
@@ -226,7 +227,7 @@ class CountViewer(tk.Frame):
         # Notice label will share grid with complement_txt to display notices.
         self.share.notice_l = tk.Label(
             textvariable=self.share.notice_txt,
-            fg='salmon', bg=self.master_bg, relief='flat', border=0)
+            fg='khaki', bg=self.master_bg, relief='flat', border=0)
         
         self.config_master()
         self.master_widgets()
@@ -293,8 +294,8 @@ class CountViewer(tk.Frame):
                       'stdev': 6,
                       'range': 7,
                       'total': 8,
-                      'Time, last count:': 10,
-                      'Time, next count:': 11,
+                      'Time of last count:': 10,
+                      'Next count in:': 11,
                       # 'Counts remaining:': 11,
                       'Tasks in queue:': 12,
                       'Notices:': 13
@@ -372,11 +373,12 @@ class CountViewer(tk.Frame):
         self.share.compliment_txt.grid(row=13, column=1, columnspan=3,
                                        padx=(5, 0), pady=5, sticky=tk.W)
         
-        # Need if condition so startup sequence isn't called when subsequent
-        #  notify_and_log() method is called; interval_t will be set, so
+        # Need if condition so startup sequence isn't recalled when subsequent
+        #  Viewer methods are called; interval_t will be set, so
         #  starting sequence will be skipped. Starting sequence: startup(),
-        #  default_settings(), set_start_data(), settings(), check_and_set(),
-        #  settings.check_show_close(), display_data() -> intvl_thread.
+        #  default_settings(), settings(), check_and_set(),
+        #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
+        #  intvl_thread for M.set_interval_data().
         # TODO: ^^^ There must be a cleaner way to structure start functions.
         if not self.share.setting['interval_t'].get():
             self.startup()
@@ -389,9 +391,9 @@ class CountViewer(tk.Frame):
         immediately start timed intervals (if not a status-only run).
         """
         self.share.defaultsettings()
-        self.share.getstartdata()
+        # self.share.setstartdata()
         self.settings()
-    
+
     def settings(self) -> None:
         """
         A Toplevel window called from master_widgets() at startup.
@@ -466,9 +468,9 @@ class CountViewer(tk.Frame):
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.notice_txt.set(
-                    'STATUS REPORT ONLY. (Clear notice with Ctrl_Shift-C)')
+                    'STATUS REPORT ONLY. (Ctrl_Shift-C clears notice.)')
                 # Notice grids in compliment_me spot; initial grid implementation
-                self.share.notice_l.grid(row=13, column=1, columnspan=3,
+                self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                          padx=5, pady=5, sticky=tk.W)
                 self.display_data()
                 self.settings_win.destroy()
@@ -551,7 +553,7 @@ class CountViewer(tk.Frame):
         confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
         default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
         self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
-    
+
     def check_and_set(self):
         """
         Confirm that summary time > interval time, set all settings
@@ -610,13 +612,13 @@ class CountViewer(tk.Frame):
         Called from settings.check_close_show() with 'Show data' button.
         """
         time_start = datetime.now().strftime(TIME_FORMAT)
-        
-        # print(datetime.now(), ' TESTING: Now in Viewer.display_data()')
+        self.share.setstartdata()
+
         # Thread is started here b/c this method is called only once.
         # NOTE: Watch for race conditions b/c stringsvars used by Viewer
         #  will be set in set_interval_data().
         # There are no thread.join(), so use daemon.
-        if self.share.setting['cycles_max'].get() != 0:
+        if self.share.setting['cycles_max'].get() > 0:
             self.share.intvl_thread = threading.Thread(
                 target=self.share.setintervaldata, daemon=True)
             self.share.intvl_thread.start()
@@ -636,7 +638,7 @@ class CountViewer(tk.Frame):
         # Starting count data and times (from past boinc-client hour).
         # Textvariables are configured in __init__; their values
         #   (along with self.share.tt_range) are set in set_start_data()
-        #    and called via Controller getstartdata().
+        #    and called via Controller setstartdata().
         self.tt_mean_l.configure(foreground=self.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
@@ -842,14 +844,11 @@ class CountModeler:
     def __init__(self, share):
         self.share = share
         
-        # print(datetime.now(), 'TESTING: Now in Modeler __init__')
-        
         self.th_lock = threading.Lock()
         
-        self.ttimes_new = []
         self.ttimes_smry = []
         self.ttimes_uniq = []
-        self.ttimes_used = [''] # Need a null string to first extended list.
+        # self.ttimes_used = [''] # Need a null string to first extended list.
         self.count_new = None
         self.tic_nnt = 0
         self.notrunning = False
@@ -863,7 +862,6 @@ class CountModeler:
     def default_settings(self) -> None:
         """Set or reset default run parameters in the setting dictionary.
         """
-        # print(datetime.now(), 'TESTING: Now in Modeler default_settings()')
         
         self.share.setting['interval_t'].set('60m')
         self.share.setting['interval_m'].set(60)
@@ -878,16 +876,13 @@ class CountModeler:
         Gather initial data of tasks and their times; set data dict
         stringvars.
         """
-        # print(datetime.now(), 'TESTING: Now in Modeler set_start_data()')
-        
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
         #     task_names = BC.get_reported('tasks').
         ttimes_start = BC.get_reported('elapsed time')
         # Begin list used/old tasks to exclude from new tasks; list is used
         #   in set_interval_data() to track tasks across intervals.
-        # self.ttimes_used = ['']  # Need null string for .extend()
-        self.ttimes_used.extend(ttimes_start)
+        self.share.ttimes_used.extend(ttimes_start)
         self.share.data['task_count'].set(len(ttimes_start))
         
         # num_tasks_all Label config and grid are defined in Viewer __init__:
@@ -912,40 +907,37 @@ class CountModeler:
     def set_interval_data(self) -> None:
         """
         Update and evaluate data for task status and times, set
-        data dict and notice stringvars.
-        Calls notify_and_log.
+        data dict and notice stringvars, run interval timer.
+        Called as Thread from display_data().
+        Calls: get_ttime_stats(), get_minutes(), notify_and_log().
         """
-        # print(datetime.now(), ' TESTING: Now in set_interval_data()')
-        # if self.share.intvl_thread.is_alive():
-        #     print(" TESTING, self.share.intvl_thread is alive")
-        
+        ttimes_new = []
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
-        for loop_num in range(cycles_max):
-            if loop_num == cycles_max:
-                self.share.intvl_thread.cancel()
-            if loop_num == 1:
+        for cycle in range(cycles_max):
+            # if cycle == cycles_max + 1:
+            #     self.share.intvl_thread.cancel()
+            if cycle == 1:
                 # Need to change button name and function from Start to Interval
-                #   after 1st interval sleep completes and intvl data displays.
+                #   after initial cycle[0] completes and intvl data displays.
                 #  It would be better if statement were in Viewer, but simpler
-                #  to put it here with easy reference to loop_num.
+                #  to put it here with easy reference to cycle.
                 self.share.start_b.grid_remove()
                 self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
             
-            # Need to sleep loops between counts; is threaded.
+            # Need to sleep cycles between counts and display a countdown timer.
             # time.sleep(interval_m * 60)  # DEBUG/TESTING
-            # time.sleep(300)  # DEBUG/TESTING
-            interval_s = interval_m * 60
-            # time_remain = '00:00'
-            while interval_s:
-                if loop_num == cycles_max:
+            # time.sleep(200)  # DEBUG/TESTING
+            interval_sec = interval_m * 60
+            for _sec in range(interval_sec + 1):
+                if cycle == cycles_max:
                     break
-                _m, _s = divmod(interval_s, 60)
+                _m, _s = divmod(interval_sec, 60)
                 _h, _m = divmod(_m, 60)
                 time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1)
-                interval_s -= 1
+                interval_sec -= 1
             
             # Do not need to show year-date in time b/c it's never more than 1hr.
             self.share.data['time_prev_cnt'].set(
@@ -954,9 +946,6 @@ class CountModeler:
             # Need to set cycles_remain before set_interval_data() is called.
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
-            
-            # print(datetime.now(), ' TESTING: this is loop number:', loop_num)
-            # print('       TESTING: this is cycles remaining:', cycles_remain)
             
             # Do one boinccmd process call then parse tagged data from all
             # task data, instead of multiple BC.get_tasks() calls.
@@ -972,11 +961,12 @@ class CountModeler:
             tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
                             if tags[1] in elem]
 
-            # Need a flag for when tasks have run out.
-            # active_task_state for a running task is 'EXECUTING'.
+            # Need to reset flags for when tasks have run out and
+            # project has stalled.
+            # (active_task_state for a running task is 'EXECUTING'.)
             # When communication to server is stalled, all tasks will be
             #  "Ready to report" with a state of 'uploaded', so try a
-            # #  Project update command to prompt clearing the stalled queue.
+            #   Project update command to prompt clearing the stalled queue.
             self.notrunning = False
             self.proj_stalled = False
             if 'EXECUTING' not in tasks_active:
@@ -1010,31 +1000,35 @@ class CountModeler:
             #   "new" tasks.
             # Need to add all prior tasks to the "used" list.
             #  "new" task times are carried over from the prior interval;
-            #  For first loop_num, ttimes_used was set in set_start_data().
-            self.ttimes_used.extend(self.ttimes_new)
-            ttimes_sent = BC.get_reported('elapsed time')
+            #  For first cycle, ttimes_used was set in set_start_data().
+            # print(f'cycle:{cycle}, share.ttimes_used:{self.share.ttimes_used}\n'
+            #       f'prev ttimes_new:{ttimes_new}')  # DEBUG
+            self.share.ttimes_used.extend(ttimes_new)
+            ttimes_reported = BC.get_reported('elapsed time')
             
             # Need to re-set prior ttimes_new, then repopulate it with newly
             #   reported tasks.
-            self.ttimes_new.clear()
-            self.ttimes_new = [task for task in ttimes_sent if task
-                               not in self.ttimes_used]
-            self.ttimes_new.extend(self.ttimes_new)
-            # Add new tasks to summary list for later analysis.
-            self.ttimes_smry.extend(self.ttimes_new)
-            task_count_new = len(set(self.ttimes_new))
+            ttimes_new.clear()
+            ttimes_new = [task for task in ttimes_reported if task
+                          not in self.share.ttimes_used]
+            # print(f'cycle:{cycle}, curr ttimes_new:{ttimes_new}\n')  # DEBUG
+
+            # Counting a set() may not be necessary if new list works as
+            #   intended, but better to err toward thoroughness and clarity.
+            task_count_new = len(set(ttimes_new))
             self.share.data['task_count'].set(task_count_new)
+            # Add new tasks to summary list for later analysis.
+            self.ttimes_smry.extend(ttimes_new)
             
             # Record when no new tasks were reported in past interval;
             #   Needed in notify_and_log().
-            self.tic_nnt = 0
             if task_count_new == 0:
                 self.tic_nnt += 1
             # elif task_count_new > 0 and not self.share.notice['notrunning'].get():
             elif task_count_new > 0 and not self.notrunning:
-                self.tic_nnt += 0
+                self.tic_nnt = 0
             # Need to parse data returned from get_ttime_stats().
-            intervaldict = self.get_ttime_stats(task_count_new, self.ttimes_new)
+            intervaldict = self.get_ttime_stats(task_count_new, ttimes_new)
             tt_mean = intervaldict['tt_mean']
             tt_max = intervaldict['tt_max']
             tt_min = intervaldict['tt_min']
@@ -1052,7 +1046,7 @@ class CountModeler:
             summary_m = self.get_minutes(self.share.setting['summary_t'].get())
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
             summary_factor = summary_m // interval_m
-            if (loop_num + 1) % summary_factor == 0 and self.notrunning is False:
+            if (cycle + 1) % summary_factor == 0 and self.notrunning is False:
                 self.report_summary = True
                 # Need to activate disabled Summary data button for summary data;
                 #  only need for 1st summary, but, oh well, here we go again...
@@ -1060,10 +1054,10 @@ class CountModeler:
 
                 # Need unique tasks for stats and counting.
                 self.ttimes_uniq = set(self.ttimes_smry)
-                tcount_sumry = len(set(self.ttimes_smry))
-                self.share.data['task_count_sumry'].set(tcount_sumry)
+                task_count_sumry = len(self.ttimes_uniq)
+                self.share.data['task_count_sumry'].set(task_count_sumry)
 
-                summarydict = self.get_ttime_stats(tcount_sumry, self.ttimes_uniq)
+                summarydict = self.get_ttime_stats(task_count_sumry, self.ttimes_uniq)
                 tt_mean = summarydict['tt_mean']
                 tt_max = summarydict['tt_max']
                 tt_min = summarydict['tt_min']
@@ -1090,7 +1084,6 @@ class CountModeler:
         Provide notices for aberrant task status. Optional log to file.
         Called from set_interval_data().
         """
-        # print(datetime.now(), 'TESTING: Now in Modeler notify_and_log()')
         
         # Post notices for task or BOINC status that might need user attention.
         # NOTE: Values for notrunning, proj_stalled and tic_nnt are set and
@@ -1105,27 +1098,27 @@ class CountModeler:
             # TODO: add text re sleep(70) and interval suspension...
             self.share.notice_txt.set(
                 'PROJECT UPDATE REQUESTED; see log file.\n'
-                'Clear notice with Ctrl_Shift-C.')
+                '(Ctrl_Shift-C clears notice.)')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.EW)
+                                     padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         elif not self.notrunning and self.tic_nnt > 0:
             self.share.notice_txt.set(
-                f'NO TASKS reported in past {self.tic_nnt} count(s).'
-                f' (Clear notice with Ctrl_Shift-C)')
+                f'NO TASKS reported in past {self.tic_nnt} count(s).\n'
+                '(Ctrl_Shift-C clears notice.)')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.EW)
+                                     padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         elif self.notrunning:
             self.share.notice_txt.set(
                 'NO TASKS WERE RUNNING; check BOINC Manager\n'
-                'Clear notice with Ctrl_Shift-C.')
+                '(Ctrl_Shift-C clears notice.)')
             # Notice grids in compliment_me spot; initial grid implementation
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.EW)
+                                     padx=5, pady=5, sticky=tk.W)
             app.update_idletasks()
         # When things are normal, notice_txt will be removed on next interval.
         else:
@@ -1330,11 +1323,11 @@ class CountController(tk.Tk):
         # Need OS-specific master window sizes b/c of different default font widths.
         # TODO: adjust OS-specific min/max size and geometry.
         if MY_OS == 'lin':
-            self.minsize(550, 300)
+            self.minsize(550, 320)
             self.maxsize(780, 400)
             # Need geometry so that master window will be under settings()
             # Toplevel window at startup.
-            # These x, y coordinates are default window placement on Ubuntu desktop.
+            # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
             self.minsize(550, 390)
@@ -1351,8 +1344,8 @@ class CountController(tk.Tk):
     
     def defaultsettings(self) -> None:
         """
-        Is called for starting settings of: report interval,
-        summary interval, counting limit, log file option.
+        Starting settings of: report interval, summary interval,
+        counting limit, and log file option.
         """
         CountModeler(share=self).default_settings()
     
@@ -1365,16 +1358,15 @@ class CountController(tk.Tk):
         """
         return CountModeler(share=self).get_minutes(timestring)
     
-    def getstartdata(self, *args) -> None:
+    def setstartdata(self, *args) -> None:
         """
-        Is called from Viewer.display_data().
+        Is called from Viewer.startup().
         """
         CountModeler(share=self).set_start_data()
     
     def formatsec(self, seconds: int, time_format: str) -> None:
         """
         Coverts seconds to formatted time string.
-        Is called from CountTime...
 
         :param seconds: Time in seconds, any integer except 0.
         :param time_format: Either 'std' or 'short'
@@ -1386,7 +1378,7 @@ class CountController(tk.Tk):
     # pylint: disable=unused-argument
     def setintervaldata(self, *args) -> None:
         """
-        Is called from Viewer.notify_and_log(),
+        Is called from Viewer.display_data(),
         in which get_ttime_stats() returns dictionary of time statistics.
         """
         CountModeler(share=self).set_interval_data()
