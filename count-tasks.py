@@ -72,7 +72,7 @@ class DataIntervals:
         self.ttimes_smry = []
         self.ttimes_uniq = []
         self.ttimes_used = [''] # Need a null string for list to be extended.
-        self.count_new = None
+        self.task_count_new = None
         self.tic_nnt = 0
         self.notrunning = False
 
@@ -222,19 +222,18 @@ class DataIntervals:
             # Need to add all prior tasks to the "used" list. "new" task times
             #  here are carried over from the prior interval.
             self.ttimes_used.extend(self.ttimes_new)
-
-            ttimes_sent = BC.get_reported('elapsed time')
+            ttimes_reported = BC.get_reported('elapsed time')
 
             # Need to re-set prior ttimes_new, then repopulate it with newly
             #   reported tasks.
             self.ttimes_new.clear()
-            self.ttimes_new = [task for task in ttimes_sent if task
+            self.ttimes_new = [task for task in ttimes_reported if task
                                not in self.ttimes_used]
-            # Add new tasks to summary list for later analysis.
             # Counting a set() may not be necessary if new list works as
             #   intended, but better to err toward thoroughness and clarity.
+            self.task_count_new = len(set(self.ttimes_new))
+            # Add new tasks to summary list for later analysis.
             self.ttimes_smry.extend(self.ttimes_new)
-            self.count_new = len(set(self.ttimes_new))
 
             # Report: Regular intervals
             # Suppress full report for no new tasks, which are expected for
@@ -242,7 +241,7 @@ class DataIntervals:
             # Overwrite successive NNT reports for a tidy terminal window;
             #   move cursor up two lines before overwriting: \x1b[2A.
             # Need a notification when tasks first run out.
-            if self.count_new == 0:
+            if self.task_count_new == 0:
                 self.tic_nnt += 1
                 report = (f'{self.time_now}; '
                           f'{self.orng}NO TASKS reported {self.undo_color}in the past'
@@ -264,14 +263,15 @@ class DataIntervals:
                     if args.log == 'yes':
                         logging.info(report)
 
-            elif self.count_new > 0 and self.notrunning is False:
-                self.tic_nnt -= self.tic_nnt
+            elif self.task_count_new > 0 and self.notrunning is False:
+                # self.tic_nnt -= self.tic_nnt
+                self.tic_nnt = 0
                 tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
-                    self.count_new, self.ttimes_new).values()
+                    self.task_count_new, self.ttimes_new).values()
                 report = (
                     # f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f'{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
-                    f' {self.blue}{self.count_new}{self.undo_color}\n'
+                    f' {self.blue}{self.task_count_new}{self.undo_color}\n'
                     f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
                     f' range [{tt_lo} - {tt_hi}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -285,7 +285,7 @@ class DataIntervals:
                     report_cleaned = self.ansi_esc.sub('', report)
                     logging.info(report_cleaned)
 
-            elif self.count_new > 0 and self.notrunning is True:
+            elif self.task_count_new > 0 and self.notrunning is True:
                 report = (f'\n{self.time_now};'
                           f' *** Check whether tasks are running. ***\n')
                 # print(f'\r\x1b[A{self.del_line}{report}')
