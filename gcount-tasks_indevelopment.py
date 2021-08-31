@@ -26,12 +26,12 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.10'
+__version__ = '0.0.20'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
-__status__ = 'Development Status :: 2 - Pre-Alpha'
+__status__ = 'Development Status :: 3 - Alpha'
 
 import logging
 import random
@@ -170,6 +170,8 @@ class CountViewer(tk.Frame):
         # style = ttk.Style(self.master)  # TESTING
         # style.configure('Start.TButton', background='black')  # TESTING
         # style.map('Start.TButton', foreground=[('disabled', 'gold')])  # TESTING
+        # TODO: Try: widening buttons to span full width of col1 or col1;
+        #  width=20, then make padx=2 in .grid()
         self.share.start_b = ttk.Button(text='Starting data')  #, state=tk.DISABLED)
         self.share.intvl_b = ttk.Button(text='Interval data',
                                         command=self.emphasize_intvl_data)
@@ -342,6 +344,7 @@ class CountViewer(tk.Frame):
                          # MacOS: can't display Cmd+L b/c won't override native cmd.
                          accelerator="Ctrl+L")
         help_menu = tk.Menu(menu, tearoff=0)
+        # TODO: Add tip to explain what Start, Interval & Summary buttons do.
         menu.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
@@ -779,19 +782,25 @@ class CountViewer(tk.Frame):
         Create a separate window to view the log file, read-only,
         scrolled text. Called from File menu.
         """
-        
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 79
+        elif MY_OS == 'dar':
+            os_width = 72
+
         try:
             with open(LOGFILE, 'r') as log:
                 logwin = tk.Toplevel()
-                logwin.minsize(665, 520)
-                # logwin.attributes('-topmost', 1)  # for Windows, needed?
                 logwin.title('count-tasks_log.txt')
-                logtext = ScrolledText(logwin, width=79, height=30,
+                logwin.minsize(665, 520)
+                logwin.focus_set()
+
+                logtext = ScrolledText(logwin, width=os_width, height=30,
                                        bg='grey85', relief='raised', padx=5)
                 logtext.insert(tk.INSERT, log.read())
                 logtext.see('end')
-                logtext.grid(row=0, column=0, sticky=tk.NSEW)
-                logtext.focus_set()
+                logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+                # logtext.grid(row=0, column=0, sticky=tk.NSEW)
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} cannot be found.'
             warn_detail = ('Log file should be in folder:\n'
@@ -907,8 +916,9 @@ class CountModeler:
     def set_interval_data(self) -> None:
         """
         Update and evaluate data for task status and times, set
-        data dict and notice stringvars, run interval timer.
-        Called as Thread from display_data().
+        data dict and notice stringvars. Run interval timer. Display
+        regular and summary interval data.
+        Called as Thread from V.display_data().
         Calls: get_ttime_stats(), get_minutes(), notify_and_log().
         """
         ttimes_new = []
@@ -928,8 +938,9 @@ class CountModeler:
             # Need to sleep cycles between counts and display a countdown timer.
             # time.sleep(interval_m * 60)  # DEBUG/TESTING
             # time.sleep(200)  # DEBUG/TESTING
+            # TODO: May need range(interval_sec) and +1 on final cycle.
             interval_sec = interval_m * 60
-            for _sec in range(interval_sec + 1):
+            for _sec in range(interval_sec):
                 if cycle == cycles_max:
                     break
                 _m, _s = divmod(interval_sec, 60)
@@ -938,10 +949,10 @@ class CountModeler:
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1)
                 interval_sec -= 1
-            
+
             # Do not need to show year-date in time b/c it's never more than 1hr.
             self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%H:%M:%S'))
+                datetime.now().strftime('%A %H:%M:%S'))
             
             # Need to set cycles_remain before set_interval_data() is called.
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
@@ -1047,12 +1058,14 @@ class CountModeler:
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
             summary_factor = summary_m // interval_m
             if (cycle + 1) % summary_factor == 0 and self.notrunning is False:
+                # Flag used in notify_and_log() for logging.
                 self.report_summary = True
                 # Need to activate disabled Summary data button for summary data;
                 #  only need for 1st summary, but, oh well, here we go again...
                 self.share.sumry_b.config(state=tk.NORMAL)
 
                 # Need unique tasks for stats and counting.
+                # TODO: try ttimes_uniq (scope to if statement) & no .clear()
                 self.ttimes_uniq = set(self.ttimes_smry)
                 task_count_sumry = len(self.ttimes_uniq)
                 self.share.data['task_count_sumry'].set(task_count_sumry)
