@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.24'
+__version__ = '0.0.25'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1478,8 +1478,8 @@ class CountFyi:
 
         self.share.compliment_txt.after(3000, refresh)
 
-    # @staticmethod
-    def about(self) -> None:
+    @staticmethod
+    def about() -> None:
         """
         Basic information for gcount-tasks;
         Toplevel window called from Help menu.
@@ -1493,22 +1493,22 @@ class CountFyi:
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
-        # self.abouttxt = 'stub'
+        abouttxt = ''
         if MY_OS == 'lin':
-            self.abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                                    bg=bkg, fg='grey98', relief='groove',
-                                    borderwidth=5, padx=25)
+            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
+                               bg=bkg, fg='grey98', relief='groove',
+                               borderwidth=5, padx=25)
         elif MY_OS == 'win':
-            self.abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                                    font='TkTextFont',
-                                    bg=bkg, fg='grey98', relief='groove',
-                                    borderwidth=5, padx=25)
+            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
+                               font='TkTextFont',
+                               bg=bkg, fg='grey98', relief='groove',
+                               borderwidth=5, padx=25)
         elif MY_OS == 'dar':
-            self.abouttxt = tk.Text(aboutwin, width=54, height=num_doc_lines + 8,
-                                    font='TkTextFont',
-                                    bg=bkg, fg='grey98', relief='groove',
-                                    borderwidth=5, padx=25)
-        self.abouttxt.insert(1.0, f'{__doc__}\n'
+            abouttxt = tk.Text(aboutwin, width=54, height=num_doc_lines + 8,
+                               font='TkTextFont',
+                               bg=bkg, fg='grey98', relief='groove',
+                               borderwidth=5, padx=25)
+        abouttxt.insert(1.0, f'{__doc__}\n'
                              f'Author:    {__author__}\n'
                              f'Copyright: {__copyright__}\n'
                              f'Credits:   {__credits__}\n'
@@ -1516,7 +1516,7 @@ class CountFyi:
                              f'URL:       {__project_url__}\n'
                              f'Version:   {__version__}\n'
                              f'Status:    {__status__}\n')
-        self.abouttxt.pack()
+        abouttxt.pack()
 
 
 if __name__ == "__main__":
