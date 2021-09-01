@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.20'
+__version__ = '0.0.21'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -368,7 +368,6 @@ class CountViewer(tk.Frame):
         # viewlog_b.grid(row=0, column=0, padx=5, pady=5)
         viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
         self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
-        # TODO: adjust y position of sumry_b & check intvl_b position relative to it.
         self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in display_data()
@@ -632,7 +631,8 @@ class CountViewer(tk.Frame):
         
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=time_start)
-        self.share.data['time_prev_cnt'].set('The most recent 1 hr BOINC report')
+        self.share.data['time_prev_cnt'].set(
+            'The most recent BOINC report when program started')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.highlight)
@@ -791,18 +791,25 @@ class CountViewer(tk.Frame):
             os_width = 72
 
         try:
-            with open(LOGFILE, 'r') as log:
+            with open(LOGFILE, 'r') as file:
                 logwin = tk.Toplevel()
                 logwin.title('count-tasks_log.txt')
                 logwin.minsize(665, 520)
                 logwin.focus_set()
-
                 logtext = ScrolledText(logwin, width=os_width, height=30,
                                        bg='grey85', relief='raised', padx=5)
-                logtext.insert(tk.INSERT, log.read())
+                logtext.insert(tk.INSERT, file.read())
                 logtext.see('end')
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-                # logtext.grid(row=0, column=0, sticky=tk.NSEW)
+
+                def reload():
+                    with open(LOGFILE, 'r') as new_text:
+                        logtext.delete(1.0, tk.END)
+                        logtext.insert(tk.INSERT, new_text.read())
+                        logtext.see('end')
+                        logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+                ttk.Button(logwin, text='Reload', command=reload).pack()
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} cannot be found.'
             warn_detail = ('Log file should be in folder:\n'
@@ -858,8 +865,6 @@ class CountModeler:
         self.th_lock = threading.Lock()
         
         self.ttimes_smry = []
-        # self.ttimes_uniq = []
-        # self.ttimes_used = [''] # Need a null string to first extended list.
         self.count_new = None
         self.tic_nnt = 0
         self.notrunning = False
@@ -941,7 +946,7 @@ class CountModeler:
             # Need to sleep cycles between counts and display a countdown timer.
             # time.sleep(interval_m * 60)  # DEBUG/TESTING
             # time.sleep(200)  # DEBUG/TESTING
-            # TODO: May need range(interval_sec) and +1 on final cycle; count sec.
+            # TODO: count sec. elapsed to see if accurate.
             interval_sec = interval_m * 60
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
@@ -1068,7 +1073,6 @@ class CountModeler:
                 self.share.sumry_b.config(state=tk.NORMAL)
 
                 # Need unique tasks for stats and counting.
-                # TODO: try ttimes_uniq (scope to if statement) & no .clear()
                 ttimes_uniq = set(self.ttimes_smry)
                 task_count_sumry = len(ttimes_uniq)
                 self.share.data['task_count_sumry'].set(task_count_sumry)
