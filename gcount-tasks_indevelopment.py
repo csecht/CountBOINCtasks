@@ -165,17 +165,17 @@ class CountViewer(tk.Frame):
         # Master window widgets:
         # Set interval & summary focus button attributes here b/c need to
         #   configure them in different modules.
-        # start_b will be in same grid position as intvl_b, which will be
-        #   gridded after first interval completes; re-grid in set_interval_data().
-        # style = ttk.Style(self.master)  # TESTING
-        # style.configure('Start.TButton', background='black')  # TESTING
-        # style.map('Start.TButton', foreground=[('disabled', 'gold')])  # TESTING
-        # TODO: Try: widening buttons to span full width of col1 or col1;
-        #  width=20, then make padx=2 in .grid()
-        self.share.start_b = ttk.Button(text='Starting data')  #, state=tk.DISABLED)
-        self.share.intvl_b = ttk.Button(text='Interval data',
+        # start_b will be replaced with ttk intvl_b after first interval
+        # completes; it is re-grid in set_interval_data().
+        # start_b is tk.B b/c it accepts disabledforeground kw.
+        # TODO: Check whether MacOS recognizes tk activebackground)
+        # TODO: Work up OS-specific button widths.
+        self.share.start_b = tk.Button(text='Starting data', width=18,
+                                       disabledforeground='grey10',
+                                       state=tk.DISABLED)
+        self.share.intvl_b = ttk.Button(text='Interval data', width=18,
                                         command=self.emphasize_intvl_data)
-        self.share.sumry_b = ttk.Button(text='Summary data',
+        self.share.sumry_b = ttk.Button(text='Summary data', width=20,
                                         command=self.emphasize_sumry_data)
 
         # Labels for settings values in master window; configure in display_data():
@@ -365,37 +365,38 @@ class CountViewer(tk.Frame):
         sep2 = ttk.Frame(relief="raised", height=6)
         
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
-        viewlog_b.grid(row=0, column=0, padx=5, pady=5)
-        self.share.start_b.grid(row=0, column=1, padx=(20, 0), pady=5)
-        self.share.sumry_b.grid(row=0, column=2, padx=(0, 25), pady=5)
+        # viewlog_b.grid(row=0, column=0, padx=5, pady=5)
+        viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
+        self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
+        # TODO: adjust y position of sumry_b & check intvl_b position relative to it.
+        self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in display_data()
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
-        # self.start_b.grid(row=13, column=2, padx=(0, 5), sticky=tk.E)
         # quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
         self.share.compliment_txt.grid(row=13, column=1, columnspan=3,
                                        padx=(5, 0), pady=5, sticky=tk.W)
         
         # Need if condition so startup sequence isn't recalled when subsequent
         #  Viewer methods are called; interval_t will be set, so
-        #  starting sequence will be skipped. Starting sequence: startup(),
+        #  starting sequence will be skipped. Starting sequence:
         #  default_settings(), settings(), check_and_set(),
         #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
         #  intvl_thread for M.set_interval_data().
         # TODO: ^^^ There must be a cleaner way to structure start functions.
         if not self.share.setting['interval_t'].get():
-            self.startup()
-    
-    def startup(self) -> None:
-        """
-        Set default stringvariable settings, set initial BOINC task
-        data, and open settings window; once user confirms valid run
-        settings, display_data() is called to display data and
-        immediately start timed intervals (if not a status-only run).
-        """
-        self.share.defaultsettings()
-        # self.share.setstartdata()
-        self.settings()
+            # self.startup()
+            self.share.defaultsettings()
+            self.settings()
+    # def startup(self) -> None:
+    #     """
+    #     Set default stringvariable settings, set initial BOINC task
+    #     data, and open settings window; once user confirms valid run
+    #     settings, display_data() is called to display data and
+    #     immediately start timed intervals (if not a status-only run).
+    #     """
+    #     self.share.defaultsettings()
+    #     self.settings()
 
     def settings(self) -> None:
         """
@@ -637,7 +638,8 @@ class CountViewer(tk.Frame):
         self.task_count_l.config(foreground=self.highlight)
         # count_next Label is config __init__ and set in set_interval_time().
         # num_tasks_all Label is config __init__ and set in set_start_data().
-        
+        # TODO: ^^ Consider having num_tasks_all update more frequently
+        #  than interval_t; every 5 min? Work into countdown clock?
         # Starting count data and times (from past boinc-client hour).
         # Textvariables are configured in __init__; their values
         #   (along with self.share.tt_range) are set in set_start_data()
@@ -856,7 +858,7 @@ class CountModeler:
         self.th_lock = threading.Lock()
         
         self.ttimes_smry = []
-        self.ttimes_uniq = []
+        # self.ttimes_uniq = []
         # self.ttimes_used = [''] # Need a null string to first extended list.
         self.count_new = None
         self.tic_nnt = 0
@@ -933,12 +935,13 @@ class CountModeler:
                 #  It would be better if statement were in Viewer, but simpler
                 #  to put it here with easy reference to cycle.
                 self.share.start_b.grid_remove()
-                self.share.intvl_b.grid(row=0, column=1, padx=(20, 0), pady=5)
+                self.share.intvl_b.grid(row=0, column=1,
+                                        padx=(16, 0), pady=(8, 4))
             
             # Need to sleep cycles between counts and display a countdown timer.
             # time.sleep(interval_m * 60)  # DEBUG/TESTING
             # time.sleep(200)  # DEBUG/TESTING
-            # TODO: May need range(interval_sec) and +1 on final cycle.
+            # TODO: May need range(interval_sec) and +1 on final cycle; count sec.
             interval_sec = interval_m * 60
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
@@ -1066,11 +1069,11 @@ class CountModeler:
 
                 # Need unique tasks for stats and counting.
                 # TODO: try ttimes_uniq (scope to if statement) & no .clear()
-                self.ttimes_uniq = set(self.ttimes_smry)
-                task_count_sumry = len(self.ttimes_uniq)
+                ttimes_uniq = set(self.ttimes_smry)
+                task_count_sumry = len(ttimes_uniq)
                 self.share.data['task_count_sumry'].set(task_count_sumry)
 
-                summarydict = self.get_ttime_stats(task_count_sumry, self.ttimes_uniq)
+                summarydict = self.get_ttime_stats(task_count_sumry, ttimes_uniq)
                 tt_mean = summarydict['tt_mean']
                 tt_max = summarydict['tt_max']
                 tt_min = summarydict['tt_min']
@@ -1086,7 +1089,7 @@ class CountModeler:
                 # Need to reset data list, in interval_reports(), for the next
                 # summary interval.
                 self.ttimes_smry.clear()
-                self.ttimes_uniq.clear()
+                # ttimes_uniq.clear()
 
             self.notify_and_log()
     
@@ -1143,6 +1146,12 @@ class CountModeler:
             eoc_detail = f'End time: {eoc_time}'
             messagebox.showinfo(title="COUNTING COMPLETED",
                                 message=eoc_msg, detail=eoc_detail)
+
+            self.share.notice_txt.set(
+                f'{cycles_max} counts completed at {eoc_time}')
+            self.share.compliment_txt.grid_remove()  # Necessary?
+            self.share.notice_l.grid(row=13, column=1, columnspan=2,
+                                     padx=5, pady=5, sticky=tk.W)
         
         # Need to log regular intervals for the do_log option
         if self.share.setting['do_log'].get() == 1:
