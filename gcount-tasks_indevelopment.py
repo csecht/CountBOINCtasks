@@ -1327,7 +1327,6 @@ class CountController(tk.Tk):
         # Need window sizes to make room for multi-line notices,
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
-        # TODO: adjust OS-specific min/max size and geometry.
         if MY_OS == 'lin':
             self.minsize(550, 320)
             self.maxsize(780, 400)
@@ -1340,8 +1339,8 @@ class CountController(tk.Tk):
             self.maxsize(702, 400)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
-            self.minsize(550, 390)
-            self.maxsize(745, 390)
+            self.minsize(550, 350)
+            self.maxsize(745, 400)
             self.geometry('+96+134')
 
         # pylint: disable=assignment-from-no-return
