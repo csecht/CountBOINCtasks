@@ -35,8 +35,8 @@ __status__ = 'Development Status :: 3 - Alpha'
 
 import logging
 import random
-import signal
 import shutil
+import signal
 import statistics as stats
 import sys
 import threading
@@ -54,9 +54,9 @@ try:
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
     print('gcount_tasks.py requires tkinter, which is included with some Python 3.7+'
-          '\ndistributions, such as from Active State.'
+          '\ndistributions, e.g., Active State.'
           '\nInstall 3.7+ or re-install Python and include Tk/Tcl.'
-          '\nDownloads available from python.org'
+          '\nPython downloads are available from python.org'
           '\nOn Linux-Ubuntu you may need: sudo apt install python3-tk'
           f'\nSee also: https://tkdocs.com/tutorial/install.html \n{error}')
 
@@ -94,30 +94,27 @@ class CountViewer(tk.Frame):
     def __init__(self, master, share):
         super().__init__(master)
         self.share = share
+        self.dataframe = tk.Frame()
 
-        # Set colors for row labels and data display
+        # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
         self.data_bg = 'grey40'  # background for data labels and frame
         self.master_bg = 'SkyBlue4'  # also used for row header labels.
-
-        self.dataframe = tk.Frame()
-
-        # Label foreground configuration variables
+        # Label foreground configuration vars.
         self.emphasize = 'grey90'
         self.highlight = 'gold'
         self.deemphasize = 'grey60'
 
-        # Log print formatting:
+        # Log text formatting vars:
         self.report = 'none'
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
 
-        # Basic run parameters/settings; passed between Viewer and Modeler.
-        # Defaults set in Modeler.default_settings; changed in settings(),
-        #   except time_start.
+        # Basic run parameters/settings passed between Viewer and Modeler.
+        # Defaults, from in Modeler.default_settings, can be changed in
+        # settings().
         self.share.setting = {
-            # 'time_start': tk.StringVar(),
             'interval_t': tk.StringVar(),
             'interval_m': tk.IntVar(),
             'sumry_t_value': tk.IntVar(),
@@ -154,7 +151,7 @@ class CountViewer(tk.Frame):
         # Used in notify_and_log()
         self.share.notice_txt = tk.StringVar()
 
-        # settings() window widgets:
+        # settings() toplevel window widgets:
         self.settings_win = tk.Toplevel(relief='raised', bd=3)
         self.sumry_t_value = ttk.Entry(self.settings_win)
         self.sumry_t_unit = ttk.Combobox(self.settings_win)
@@ -166,7 +163,7 @@ class CountViewer(tk.Frame):
         #   configure them in different modules.
         # start_b will be replaced with ttk intvl_b after first interval
         # completes; it is re-grid in set_interval_data().
-        # start_b is tk.B b/c it accepts disabledforeground kw.
+        # start_b is tk.B b/c that accepts disabledforeground keyword.
         # TODO: Check whether MacOS recognizes tk activebackground)
         # TODO: Work up OS-specific button widths.
         self.share.start_b = tk.Button(text='Starting data', width=18,
@@ -389,7 +386,7 @@ class CountViewer(tk.Frame):
         #  default_settings(), settings(), check_and_set(),
         #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
         #  intvl_thread for M.set_interval_data().
-        # TODO: ^^^ There must be a cleaner way to structure start functions.
+        # ^^^ There must be a cleaner way to structure start functions?
         if not self.share.setting['interval_t'].get():
             # self.startup()
             self.share.defaultsettings()
@@ -655,8 +652,8 @@ class CountViewer(tk.Frame):
 
         # Initial gridding of data labels, start & intervals; sorted by row.
         # TODO: Suss why window height increases a few pixels when these are
-        #  gridded vs. initial/settings blank no-data, display.
-        #  It causes an obnoxious jump in size
+        #  gridded vs. initial (pre-settings()) blank no-data display.
+        #  It causes an obnoxious jump in frame/window size
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
@@ -1092,7 +1089,6 @@ class CountModeler:
         cycles_max = self.share.setting['cycles_max'].get()
 
         if self.notrunning and self.proj_stalled:
-            # TODO: add text re sleep(70) and interval suspension...
             self.share.notice_txt.set(
                 'PROJECT UPDATE REQUESTED; see log file.\n'
                 '(Ctrl_Shift-C clears notice.)')
