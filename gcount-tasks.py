@@ -26,12 +26,12 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.25'
+__version__ = '0.1.0'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
-__status__ = 'Development Status :: 3 - Alpha'
+__status__ = 'Development Status :: 2 - Beta'
 
 import logging
 import random
