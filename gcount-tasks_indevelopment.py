@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.21'
+__version__ = '0.0.22'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -344,8 +344,17 @@ class CountViewer(tk.Frame):
                          # MacOS: can't display Cmd+L b/c won't override native cmd.
                          accelerator="Ctrl+L")
         help_menu = tk.Menu(menu, tearoff=0)
-        # TODO: Add tip to explain what Start, Interval & Summary buttons do.
+        info = tk.Menu(self.master, tearoff=0)
         menu.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_cascade(label='Info...', menu=info)
+        info.add_command(label='- Interval and Summary data buttons'
+                               ' switch visual emphasis...')
+        info.add_command(label='    ...those buttons activate once their data post.')
+        info.add_command(label='- Number of "Tasks in queue" updates every interval.')
+        info.add_command(label='- See count and notices history with "View log".')
+        info.add_command(label='- Use "Backup log file" to preserve that history'
+                               ' before updating program from GitHub.')
+
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
@@ -769,14 +778,6 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
-
-        # Place labels in row,column positions.
-        # Need to match padx spacing among all column 2 labels elsewhere.
-        # self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
-        # self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
-        # self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
-        # self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
-        # self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
 
     @staticmethod
     def show_log() -> None:
