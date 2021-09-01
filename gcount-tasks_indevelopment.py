@@ -779,7 +779,7 @@ class CountViewer(tk.Frame):
             with open(LOGFILE, 'r') as file:
                 logwin = tk.Toplevel()
                 logwin.title('count-tasks_log.txt')
-                if MY_OS == 'lin':
+                if MY_OS in 'lin, dar':
                     logwin.minsize(665, 200)
                 elif MY_OS == 'win':
                     logwin.minsize(800, 200)
@@ -1478,8 +1478,8 @@ class CountFyi:
 
         self.share.compliment_txt.after(3000, refresh)
 
-    @staticmethod
-    def about() -> None:
+    # @staticmethod
+    def about(self) -> None:
         """
         Basic information for gcount-tasks;
         Toplevel window called from Help menu.
@@ -1493,26 +1493,30 @@ class CountFyi:
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
-        abouttxt = ''
+        # self.abouttxt = 'stub'
         if MY_OS == 'lin':
-            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                               bg=bkg, fg='grey98', relief='groove',
-                               borderwidth=5, padx=25)
-        if MY_OS == 'win':
-            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                               font='TkTextFont',
-                               bg=bkg, fg='grey98', relief='groove',
-                               borderwidth=5, padx=25)
-
-        abouttxt.insert('1.0', f'{__doc__}\n'
-                               f'Author:    {__author__}\n'
-                               f'Copyright: {__copyright__}\n'
-                               f'Credits:   {__credits__}\n'
-                               f'License:   {__license__}\n'
-                               f'URL:       {__project_url__}\n'
-                               f'Version:   {__version__}\n'
-                               f'Status:    {__status__}\n')
-        abouttxt.pack()
+            self.abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
+                                    bg=bkg, fg='grey98', relief='groove',
+                                    borderwidth=5, padx=25)
+        elif MY_OS == 'win':
+            self.abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
+                                    font='TkTextFont',
+                                    bg=bkg, fg='grey98', relief='groove',
+                                    borderwidth=5, padx=25)
+        elif MY_OS == 'dar':
+            self.abouttxt = tk.Text(aboutwin, width=54, height=num_doc_lines + 8,
+                                    font='TkTextFont',
+                                    bg=bkg, fg='grey98', relief='groove',
+                                    borderwidth=5, padx=25)
+        self.abouttxt.insert(1.0, f'{__doc__}\n'
+                             f'Author:    {__author__}\n'
+                             f'Copyright: {__copyright__}\n'
+                             f'Credits:   {__credits__}\n'
+                             f'License:   {__license__}\n'
+                             f'URL:       {__project_url__}\n'
+                             f'Version:   {__version__}\n'
+                             f'Status:    {__status__}\n')
+        self.abouttxt.pack()
 
 
 if __name__ == "__main__":
