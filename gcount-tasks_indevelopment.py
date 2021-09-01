@@ -352,8 +352,7 @@ class CountViewer(tk.Frame):
         info.add_command(label='    ...those buttons activate once their data post.')
         info.add_command(label='- Number of "Tasks in queue" updates every interval.')
         info.add_command(label='- See count and notices history with "View log".')
-        info.add_command(label='- Use "Backup log file" to preserve that history'
-                               ' before updating program from GitHub.')
+        info.add_command(label='- "Backup log file" places a copy in your Home folder.')
 
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
@@ -396,15 +395,6 @@ class CountViewer(tk.Frame):
             # self.startup()
             self.share.defaultsettings()
             self.settings()
-    # def startup(self) -> None:
-    #     """
-    #     Set default stringvariable settings, set initial BOINC task
-    #     data, and open settings window; once user confirms valid run
-    #     settings, display_data() is called to display data and
-    #     immediately start timed intervals (if not a status-only run).
-    #     """
-    #     self.share.defaultsettings()
-    #     self.settings()
 
     def settings(self) -> None:
         """
