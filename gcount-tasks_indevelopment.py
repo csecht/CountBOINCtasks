@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.22'
+__version__ = '0.0.23'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -357,7 +357,7 @@ class CountViewer(tk.Frame):
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
-        
+
         # Create or configure button widgets:
         style_button = ttk.Style(self.master)
         style_button.configure('TButton', background='grey80', anchor='center')
@@ -670,8 +670,8 @@ class CountViewer(tk.Frame):
         self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                                   columnspan=2)
         self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        # Place cycles_remain value in same cell at the header, but shifted right;
-        #  if grid in column=3, then it creates new column to right of dataframe.
+        # Place cycles_remain value in same cell as its header, but shifted right,
+        #  b/c if instead grid in column=3, then new column added to right of dataframe.
         self.cycles_remain_l.grid(row=11, column=2, padx=(125, 0), sticky=tk.W)
         self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
         
@@ -703,11 +703,11 @@ class CountViewer(tk.Frame):
                     f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
                     f'{self.indent}Counts every {interval_t},'
                     f' summaries every {summary_t}\n'
-                    f'Timed intervals beginning now...\n\n')
+                    f'Timed intervals beginning now...\n')
             # Need to provide a truncated report for one-off "status" runs.
             elif cycles_max == 0:
                 self.report = (
-                    f'{time_start}; STATUS REPORT\n'
+                    f'\n{time_start}; STATUS REPORT\n'
                     f'{self.indent}Number of tasks in the most recent BOINC report:'
                     f' {tcount_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
@@ -715,11 +715,6 @@ class CountViewer(tk.Frame):
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                     f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
         logging.info(self.report)
-        
-        # TESTING buttons, for development
-        # ttk.Button(text='intvl notify', command=self.share.notifyandlog).grid()
-        # ttk.Button(text='intvl data', command=self.share.setintervaldata).grid()
-        # app.maxsize(780, 550)
 
     # Methods for buttons, menu items, keybinds.
     def emphasize_intvl_data(self) -> None:
@@ -830,10 +825,10 @@ class CountViewer(tk.Frame):
                                     message=success_msg, detail=success_detail)
             except PermissionError:
                 print("Log file backup: Permission denied.")
-            except shutil.SameFileError:
-                print("Log file backup: Source and destination are the same file.")
             except IsADirectoryError:
                 print("Log file backup: Destination is a directory.")
+            except shutil.SameFileError:
+                print("Log file backup: Source and destination are the same file.")
         else:
             warn_main = f'Log {LOGFILE} cannot be archived'
             warn_detail = ('Log file should be in folder:\n'
@@ -914,9 +909,10 @@ class CountModeler:
     def set_interval_data(self) -> None:
         """
         Update and evaluate data for task status and times, set
-        data dict and notice stringvars. Run interval timer. Display
-        regular and summary interval data.
-        Called as Thread from V.display_data().
+        data dict and notice stringvars. Run interval timer.
+        Display regular and summary interval data.
+        Called as Thread from V.display_data() so that other tkinter
+        widgets can be used during interval time.
         Calls: get_ttime_stats(), get_minutes(), notify_and_log().
         """
         ttimes_new = []
@@ -928,13 +924,13 @@ class CountModeler:
             if cycle == 1:
                 # Need to change button name and function from Start to Interval
                 #   after initial cycle[0] completes and intvl data displays.
-                #  It would be better if statement were in Viewer, but simpler
+                #  It might be better if statement were in Viewer, but simpler
                 #  to put it here with easy reference to cycle.
                 self.share.start_b.grid_remove()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
             
-            # Need to sleep cycles between counts and display a countdown timer.
+            # Need to sleep between counts and also display a countdown timer.
             # time.sleep(interval_m * 60)  # DEBUG/TESTING
             # time.sleep(200)  # DEBUG/TESTING
             # TODO: count sec. elapsed to see if accurate.
@@ -973,19 +969,16 @@ class CountModeler:
 
             # Need to reset flags for when tasks have run out and
             # project has stalled.
-            # (active_task_state for a running task is 'EXECUTING'.)
             # When communication to server is stalled, all tasks will be
-            #  "Ready to report" with a state of 'uploaded', so try a
-            #   Project update command to prompt clearing the stalled queue.
+            #  "Ready to report" with a state of 'uploaded', so this forces a
+            #   Project update to prompt clearing the stalled upload.
             self.notrunning = False
             self.proj_stalled = False
             if 'EXECUTING' not in tasks_active:
-                # self.share.notice['notrunning'].set(True)
                 self.notrunning = True
                 task_states = [elem.replace(tags[2], '') for elem in tasks_all
                                if tags[2] in elem]
                 if 'uploaded' in task_states and 'downloaded' not in task_states:
-                    # self.share.notice['proj_stalled'].set(True)
                     self.proj_stalled = True
                     local_boinc_urls = BC.get_project_url()
                     # I'm not sure how to handle multiple concurrent Projects.
@@ -997,7 +990,6 @@ class CountModeler:
                     first_local_url = local_boinc_urls[0]
                     self.share.first_project = list(BC.project_url.keys())[
                         list(BC.project_url.values()).index(first_local_url)]
-                    # time.sleep(1)
                     BC.project_action(self.share.first_project, 'update')
                     # Need to provide time for BOINC Project server to respond?
                     # The long sleep needs to suspend set_interval_data() thread;
@@ -1010,9 +1002,7 @@ class CountModeler:
             #   "new" tasks.
             # Need to add all prior tasks to the "used" list.
             #  "new" task times are carried over from the prior interval;
-            #  For first cycle, ttimes_used was set in set_start_data().
-            # print(f'cycle:{cycle}, share.ttimes_used:{self.share.ttimes_used}\n'
-            #       f'prev ttimes_new:{ttimes_new}')  # DEBUG
+            #  For cycle[0], ttimes_used was set in set_start_data().
             self.share.ttimes_used.extend(ttimes_new)
             ttimes_reported = BC.get_reported('elapsed time')
             
@@ -1021,7 +1011,6 @@ class CountModeler:
             ttimes_new.clear()
             ttimes_new = [task for task in ttimes_reported if task
                           not in self.share.ttimes_used]
-            # print(f'cycle:{cycle}, curr ttimes_new:{ttimes_new}\n')  # DEBUG
 
             # Counting a set() may not be necessary if new list works as
             #   intended, but better to err toward thoroughness and clarity.
@@ -1037,7 +1026,7 @@ class CountModeler:
             # elif task_count_new > 0 and not self.share.notice['notrunning'].get():
             elif task_count_new > 0 and not self.notrunning:
                 self.tic_nnt = 0
-            # Need to parse data returned from get_ttime_stats().
+            # Need to robustly parse data returned from get_ttime_stats().
             intervaldict = self.get_ttime_stats(task_count_new, ttimes_new)
             tt_mean = intervaldict['tt_mean']
             tt_max = intervaldict['tt_max']
@@ -1081,10 +1070,8 @@ class CountModeler:
                 self.share.data['tt_range_sumry'].set(tt_range)
                 self.share.data['tt_total_sumry'].set(tt_total)
 
-                # Need to reset data list, in interval_reports(), for the next
-                # summary interval.
+                # Need to reset data list for the next summary interval.
                 self.ttimes_smry.clear()
-                # ttimes_uniq.clear()
 
             self.notify_and_log()
     
@@ -1100,7 +1087,7 @@ class CountModeler:
         # NOTE: Values for notrunning, proj_stalled and tic_nnt are set and
         # reset in set_interval_data(); proj_stalled is True when tasks
         # neither running or "downloaded" and all are "uploaded";
-        #   forcing a Project update may prompt the server to action.
+        #   b/c forcing a Project update may prompt the server to action.
         # The notice_l grid overlays the complement_txt grid.
         
         cycles_max = self.share.setting['cycles_max'].get()
@@ -1192,7 +1179,7 @@ class CountModeler:
             # self.share.notrunning is False; that is, everything normal.
             elif self.tic_nnt == 0:
                 report = (
-                    f'{time_now}; Tasks reported in the past {interval_t}:'
+                    f'\n{time_now}; Tasks reported in the past {interval_t}:'
                     f' {task_count_new}\n'
                     f'{self.indent}Task Time: mean {tt_mean}, range [{tt_range}],\n'
                     f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -1203,10 +1190,10 @@ class CountModeler:
 
             if self.report_summary:
                 report = (
-                    f'{time_now}; >>> SUMMARY: Count for the past'
+                    f'\n{time_now}; >>> SUMMARY: Count for the past'
                     f' {summary_t}: {tcount_sum}\n'
                     f'{self.indent}Task Time: mean {ttmean_sum}, range [{ttrange_sum}],\n'
-                    f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n\n\n'
+                    f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
                 )
                 logging.info(report)
                 # Need to reset flag that was assigned True in set_interval_data().
