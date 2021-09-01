@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.0.23'
+__version__ = '0.0.24'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -542,7 +542,10 @@ class CountViewer(tk.Frame):
         self.sumry_t_value.grid(column=1, row=1)
         sumry_label2.grid(column=2, row=1, padx=5, pady=10, sticky=tk.E)
         self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
-        cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
+        if MY_OS == 'lin':
+            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
+        if MY_OS == 'win':
+            cycles_query_button.grid(column=0, row=2, padx=(60, 0), sticky=tk.W)
         cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
         self.cycles_max_entry.grid(column=1, row=2)
         # cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
@@ -776,9 +779,13 @@ class CountViewer(tk.Frame):
             with open(LOGFILE, 'r') as file:
                 logwin = tk.Toplevel()
                 logwin.title('count-tasks_log.txt')
-                logwin.minsize(665, 520)
+                if MY_OS == 'lin':
+                    logwin.minsize(665, 200)
+                elif MY_OS == 'win':
+                    logwin.minsize(800, 200)
                 logwin.focus_set()
                 logtext = ScrolledText(logwin, width=os_width, height=30,
+                                       font='TkFixedFont',
                                        bg='grey85', relief='raised', padx=5)
                 logtext.insert(tk.INSERT, file.read())
                 logtext.see('end')
@@ -786,7 +793,7 @@ class CountViewer(tk.Frame):
 
                 def reload():
                     with open(LOGFILE, 'r') as new_text:
-                        logtext.delete(1.0, tk.END)
+                        logtext.delete(tk.INSERT, tk.END)
                         logtext.insert(tk.INSERT, new_text.read())
                         logtext.see('end')
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
@@ -1329,8 +1336,8 @@ class CountController(tk.Tk):
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
-            self.minsize(550, 390)
-            self.maxsize(702, 390)
+            self.minsize(500, 350)
+            self.maxsize(702, 400)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
             self.minsize(550, 390)
@@ -1486,15 +1493,22 @@ class CountFyi:
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
-        abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                           bg=bkg, fg='grey98', relief='groove',
-                           borderwidth=5, padx=25)
+        abouttxt = ''
+        if MY_OS == 'lin':
+            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
+                               bg=bkg, fg='grey98', relief='groove',
+                               borderwidth=5, padx=25)
+        if MY_OS == 'win':
+            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
+                               font='TkTextFont',
+                               bg=bkg, fg='grey98', relief='groove',
+                               borderwidth=5, padx=25)
+
         abouttxt.insert('1.0', f'{__doc__}\n'
                                f'Author:    {__author__}\n'
                                f'Copyright: {__copyright__}\n'
                                f'Credits:   {__credits__}\n'
                                f'License:   {__license__}\n'
-                               f'Maintainer:{__maintainer__}\n'
                                f'URL:       {__project_url__}\n'
                                f'Version:   {__version__}\n'
                                f'Status:    {__status__}\n')
