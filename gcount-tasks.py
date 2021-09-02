@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -101,6 +101,7 @@ class CountViewer(tk.Frame):
         self.row_fg = 'LightCyan2'  # foreground for row labels
         self.data_bg = 'grey40'  # background for data labels and frame
         self.master_bg = 'SkyBlue4'  # also used for row header labels.
+        self.notice_fg = 'khaki'
         # Label foreground configuration vars.
         self.emphasize = 'grey90'
         self.highlight = 'gold'
@@ -212,20 +213,21 @@ class CountViewer(tk.Frame):
             bg=self.master_bg, fg=self.row_fg)
         self.time_next_cnt_l = tk.Label(
             textvariable=self.share.data['time_next_cnt'],
-            bg=self.master_bg, fg=self.row_fg)
+            bg=self.master_bg, fg=self.notice_fg)
         self.cycles_remain_l = tk.Label(
             textvariable=self.share.data['cycles_remain'],
             bg=self.master_bg, fg=self.row_fg)
         self.num_tasks_all_l = tk.Label(
             textvariable=self.share.data['num_tasks_all'],
             bg=self.master_bg, fg=self.row_fg)
-        # Text for compliment is configured in compliment_me()
-        self.share.compliment_txt = tk.Label(fg='orange', bg=self.master_bg,
-                                             relief='flat', border=0)
+        # Text for compliment_txt is configured in compliment_me()
+        self.share.compliment_txt = tk.Label(
+            fg=self.notice_fg, bg=self.master_bg,
+            relief='flat', border=0)
         # Notice label will share grid with complement_txt to display notices.
         self.share.notice_l = tk.Label(
             textvariable=self.share.notice_txt,
-            fg='khaki', bg=self.master_bg, relief='flat', border=0)
+            fg=self.notice_fg, bg=self.master_bg, relief='flat', border=0)
 
         self.config_master()
         self.master_widgets()
@@ -921,9 +923,8 @@ class CountModeler:
         ttimes_new = []
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
+        # tstart = time.perf_counter()  # TESTING
         for cycle in range(cycles_max):
-            # if cycle == cycles_max + 1:
-            #     self.share.intvl_thread.cancel()
             if cycle == 1:
                 # Need to change button name and function from Start to Interval
                 #   after initial cycle[0] completes and intvl data displays.
@@ -934,11 +935,13 @@ class CountModeler:
                                         padx=(16, 0), pady=(8, 4))
 
             # Need to sleep between counts and also display a countdown timer.
-            # time.sleep(interval_m * 60)  # DEBUG/TESTING
-            # time.sleep(200)  # DEBUG/TESTING
-            # TODO: count sec. elapsed to see if accurate.
+            # time.sleep(60)  # DEBUG/TESTING
+            # interval_sec = 1  # DEBUG/TESTING
             interval_sec = interval_m * 60
+            # tstart = time.perf_counter()  # TESTING
             for _sec in range(interval_sec):
+                # Decrementing before sleep() displays final time 00:00.
+                interval_sec -= 1
                 if cycle == cycles_max:
                     break
                 _m, _s = divmod(interval_sec, 60)
@@ -946,9 +949,11 @@ class CountModeler:
                 time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1)
-                interval_sec -= 1
-
-            # Do not need to show year-date in time b/c it's never more than 1hr.
+            # elapsed = time.perf_counter() - tstart  # TESTING
+            # print(f'Clock interval ran for: {elapsed}')  # TESTING
+            # NOTE: ^^ A 5 min interval runs in 05:00.28; -> 3+ sec/hr
+            # TODO: Consider enforcing true interval time with datetime.now diff.
+            # Best to show day and time.
             self.share.data['time_prev_cnt'].set(
                 datetime.now().strftime('%A %H:%M:%S'))
 
@@ -1077,7 +1082,8 @@ class CountModeler:
                 self.ttimes_smry.clear()
 
             self.notify_and_log()
-
+        # elapsed = time.perf_counter() - tstart  # TESTING
+        # print(f'cycles_max range ran for: {elapsed}')  # TESTING
     def notify_and_log(self) -> None:
         """
         Display interval and summary metrics for recently reported BOINC
@@ -1126,14 +1132,8 @@ class CountModeler:
 
         if self.share.data['cycles_remain'].get() == 0:
             eoc_time = datetime.now().strftime(TIME_FORMAT)
-            eoc_msg = f'{cycles_max} counts, done.\n'
-            eoc_detail = f'End time: {eoc_time}'
-            # TODO: message does not show in Windows
-            messagebox.showinfo(title="COUNTING COMPLETED",
-                                message=eoc_msg, detail=eoc_detail)
-
             self.share.notice_txt.set(
-                f'{cycles_max} counts completed at {eoc_time}')
+                f'{cycles_max} counts completed {eoc_time}')
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                      padx=5, pady=5, sticky=tk.W)
@@ -1494,9 +1494,7 @@ class CountFyi:
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
         os_width = 0
-        if MY_OS == 'lin':
-            os_width = 72
-        elif MY_OS == 'win':
+        if MY_OS in 'lin, win':
             os_width = 62
         elif MY_OS == 'dar':
             os_width = '54'

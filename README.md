@@ -92,12 +92,24 @@ NOTE: Summary counts may be less than the sum of individual counts because
     reported tasks, the `--interval` option has a 60 minutes maximum count
      interval.
 
-TIP: To get the only the most recent task count and time metrics without
+TIP: To get only the most recent task count and time metrics without
  running count intervals, run:  `count-tasks.py --c 0`
- 
+
+### Graphical GUI version: gcount-tasks.py
+Download and run as described under Usage, but launch with these Terminal 
+commands:
+<ul>
+<li>for Linux or Mac OS: ./count-tasks.py</li>
+<li>for Windows: python count-tasks.py</li>
+</ul>
+The graphical version does not yet accept command line options.
+
+![gcount-tasks](gcount-tasks_scrnshot.png)
+
 ### Development Plans
+* Add command line options for running gcount-tasks.py
+* Make standalone versions of gcount-tasks for Windows and MacOS
 * Improve Python code
-* Add GUI
 
 ### Known Issues
 * BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different 
