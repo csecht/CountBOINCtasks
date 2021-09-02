@@ -379,8 +379,9 @@ class CountViewer(tk.Frame):
         # Intervening rows are gridded in display_data()
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
         # quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
-        self.share.compliment_txt.grid(row=13, column=1, columnspan=3,
-                                       padx=(5, 0), pady=5, sticky=tk.W)
+        # compliment_txt grids in "Notices": row, same position as notices_txt_l.
+        self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
+                                       padx=5, pady=5, sticky=tk.W)
 
         # Need if condition so startup sequence isn't recalled when subsequent
         #  Viewer methods are called; interval_t will be set, so
@@ -469,9 +470,9 @@ class CountViewer(tk.Frame):
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.notice_txt.set(
                     'STATUS REPORT ONLY. (Ctrl_Shift-C clears notice.)')
-                # Notice grids in compliment_me spot; initial grid implementation
+                # compliment_txt grids in same position; initial grid implementation
                 self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                         padx=5, pady=5, sticky=tk.W)
+                                         pady=5, sticky=tk.W)
                 self.display_data()
                 self.settings_win.destroy()
             else:
@@ -567,9 +568,9 @@ class CountViewer(tk.Frame):
         self.showdata_button.config(state=tk.DISABLED)
 
         # Note: self.share.setting['interval_t'] is set in settings().
-        intvl_m = int(self.share.setting['interval_t'].get()[:-1])
-        self.share.setting['interval_m'].set(intvl_m)
-        interval_m = self.share.setting['interval_m'].get()
+        interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        self.share.setting['interval_m'].set(interval_m)
+        # interval_m = self.share.setting['interval_m'].get()
 
         sumry_value = self.sumry_t_value.get()
         self.share.setting['sumry_t_value'].set(sumry_value)
@@ -583,7 +584,7 @@ class CountViewer(tk.Frame):
         #   then convert to minutes to use in comparison.
         summary_t = str(self.share.setting['sumry_t_value'].get()) + self.sumry_t_unit.get()[:1]
         self.share.setting['summary_t'].set(summary_t)
-        summary_m = self.share.getminutes(summary_t)
+        summary_m = int(self.share.getminutes(summary_t))
         if interval_m >= summary_m:
             self.showdata_button.config(state=tk.DISABLED)
             info = "Summary time must be greater than interval time"
@@ -917,7 +918,7 @@ class CountModeler:
         data dict and notice stringvars. Run interval timer.
         Display regular and summary interval data.
         Called as Thread from V.display_data() so that other tkinter
-        widgets can be used during interval time.
+        widgets can be used during interval sleep time.
         Calls: get_ttime_stats(), get_minutes(), notify_and_log().
         """
         ttimes_new = []
@@ -949,7 +950,7 @@ class CountModeler:
                 clock_curr = time.time()
                 if clock_curr > (clock_begin + target_sec):
                     self.share.data['time_next_cnt'].set('00:00')
-                    print(f'forced end to interval_sec range')
+                    # print(f'forced end to interval_sec range')
                     break
                 interval_sec -= 1
                 _m, _s = divmod(interval_sec, 60)
@@ -1397,14 +1398,6 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).set_interval_data()
 
-    def notifyandlog(self, *args) -> None:
-        """
-        Is called from set_interval_data().
-
-        :param args: Stub positional parameter needed for Viewer calls.
-        """
-        CountModeler(share=self).notify_and_log()
-
     # pylint: disable=unused-argument
     def quitgui(self, *args) -> None:
         """Close down program. Called from button, menu, and keybinding.
@@ -1434,7 +1427,7 @@ class CountFyi:
         self.share = share
 
     def compliment_me(self) -> None:
-        """A silly diversion; called from Help menu.
+        """A silly diversion; called from Help menu and keybinding.
 
         :return: Transient label to make one smile.
         """
@@ -1477,8 +1470,10 @@ class CountFyi:
         praise = random.choice(compliments)
         self.share.compliment_txt.config(text=praise)
         self.share.notice_l.grid_remove()
+        # Need to re-grid initial master_widgets gridding b/c its grid may
+        #   have been removed by a notice_txt_l call.
         self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
-                                       padx=5, pady=5, sticky=tk.EW)
+                                       pady=5, sticky=tk.W)
 
         def refresh():
             self.share.compliment_txt.config(text="")
