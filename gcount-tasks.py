@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -349,7 +349,7 @@ class CountViewer(tk.Frame):
                                ' switch visual emphasis...')
         info.add_command(label='    ...those buttons activate once their data post.')
         info.add_command(label='- Number of "Tasks in queue" updates every interval.')
-        info.add_command(label='- See count and notices history with "View log".')
+        info.add_command(label='- Review count and notice history with "View log".')
         info.add_command(label='- "Backup log file" places a copy in your Home folder.')
 
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
@@ -938,23 +938,30 @@ class CountModeler:
             # time.sleep(60)  # DEBUG/TESTING
             # interval_sec = 1  # DEBUG/TESTING
             interval_sec = interval_m * 60
+            target_sec = interval_m * 60.0
             # tstart = time.perf_counter()  # TESTING
+            # Limit total time of interval to actual time (Epoch seconds) b/c
+            # each sleeped interval runs a bit longer than target interval time.
+            clock_begin = time.time()
             for _sec in range(interval_sec):
-                # Decrementing before sleep() displays final time 00:00.
-                interval_sec -= 1
                 if cycle == cycles_max:
                     break
+                clock_curr = time.time()
+                if clock_curr > (clock_begin + target_sec):
+                    self.share.data['time_next_cnt'].set('00:00')
+                    print(f'forced end to interval_sec range')
+                    break
+                interval_sec -= 1
                 _m, _s = divmod(interval_sec, 60)
                 _h, _m = divmod(_m, 60)
                 time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
-                time.sleep(1)
+                time.sleep(1.0)
             # elapsed = time.perf_counter() - tstart  # TESTING
-            # print(f'Clock interval ran for: {elapsed}')  # TESTING
-            # NOTE: ^^ A 5 min interval runs in 05:00.28; -> 3+ sec/hr
-            # TODO: Consider enforcing true interval time with datetime.now diff.
+            # print(f'Interval sleep lasted for: {elapsed}')  # TESTING
+            # NOTE: ^^ A 60 min interval runs in 3600.386432355037 sec.
 
-            # Best to show day and time.
+            # Best to show day with time.
             self.share.data['time_prev_cnt'].set(
                 datetime.now().strftime('%A %H:%M:%S'))
 
