@@ -953,6 +953,7 @@ class CountModeler:
             # print(f'Clock interval ran for: {elapsed}')  # TESTING
             # NOTE: ^^ A 5 min interval runs in 05:00.28; -> 3+ sec/hr
             # TODO: Consider enforcing true interval time with datetime.now diff.
+
             # Best to show day and time.
             self.share.data['time_prev_cnt'].set(
                 datetime.now().strftime('%A %H:%M:%S'))
