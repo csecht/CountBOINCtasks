@@ -1128,6 +1128,7 @@ class CountModeler:
             eoc_time = datetime.now().strftime(TIME_FORMAT)
             eoc_msg = f'{cycles_max} counts, done.\n'
             eoc_detail = f'End time: {eoc_time}'
+            # TODO: message does not show in Windows
             messagebox.showinfo(title="COUNTING COMPLETED",
                                 message=eoc_msg, detail=eoc_detail)
 
@@ -1492,24 +1493,19 @@ class CountFyi:
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
-        abouttxt = ''
+        os_width = 0
         if MY_OS == 'lin':
-            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                               bg=bkg, fg='grey98', relief='groove',
-                               borderwidth=5, padx=25)
+            os_width = 72
         elif MY_OS == 'win':
-            abouttxt = tk.Text(aboutwin, width=72, height=num_doc_lines + 8,
-                               font='TkTextFont',
-                               bg=bkg, fg='grey98', relief='groove',
-                               borderwidth=5, padx=25)
+            os_width = 62
         elif MY_OS == 'dar':
-            abouttxt = tk.Text(aboutwin, width=54, height=num_doc_lines + 8,
-                               font='TkTextFont',
-                               bg=bkg, fg='grey98', relief='groove',
-                               borderwidth=5, padx=25)
+            os_width = '54'
+        abouttxt = tk.Text(aboutwin, font='TkTextFont',
+                           width=os_width, height=num_doc_lines + 7,
+                           bg=bkg, fg='grey98', relief='groove',
+                           borderwidth=5, padx=25)
         abouttxt.insert(1.0, f'{__doc__}\n'
                              f'Author:    {__author__}\n'
-                             f'Copyright: {__copyright__}\n'
                              f'Credits:   {__credits__}\n'
                              f'License:   {__license__}\n'
                              f'URL:       {__project_url__}\n'
@@ -1523,8 +1519,6 @@ if __name__ == "__main__":
         app = CountController()
         app.title("Count BOINC tasks")
         app.mainloop()
-        # TODO: Consider: allow cmd line arg of 0 count interval for a
-        #  1-off status count that bypasses the settings window.
     except KeyboardInterrupt:
         exit_msg = (f'\n\n  *** Interrupted by user ***\n'
                     f'  Quitting now...{datetime.now()}\n\n')
