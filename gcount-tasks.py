@@ -49,8 +49,7 @@ from COUNTmodules import boinc_command
 try:
     import tkinter as tk
     import tkinter.font
-    from tkinter import messagebox
-    from tkinter import ttk
+    from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
     print('gcount_tasks.py requires tkinter, which is included with some\n'
