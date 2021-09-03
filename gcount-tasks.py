@@ -794,8 +794,6 @@ class CountViewer(tk.Frame):
         file = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
-        # Update note: settings() is only run upon startup.
-        # file.add_command(label='Settings...', command=self.settings)
         file.add_separator()
         file.add_command(label='Quit', command=self.share.quitgui,
                          # MacOS doesn't display this accelerator
@@ -875,7 +873,7 @@ class CountViewer(tk.Frame):
         # In macOS, topmost places Combobox selections BEHIND the window.
         #    So allow app window to remain topmost and offset settings_win
         elif MY_OS == 'dar':
-            # self.settings_win.focus()
+            self.settings_win.focus()  # TODO: Doesn't work. FIX.
             self.settings_win.geometry('+640+134')
         self.settings_win.resizable(False, False)
 
@@ -952,7 +950,7 @@ class CountViewer(tk.Frame):
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.notice_txt.set(
                     'STATUS REPORT ONLY. (Ctrl_Shift-C clears notice.)')
-                # compliment_txt grids in same position; initial grid implementation
+                # compliment_txt grids in same position.
                 self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                          pady=5, sticky=tk.W)
                 self.display_data()
