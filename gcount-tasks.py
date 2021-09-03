@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -436,14 +436,15 @@ class CountViewer(tk.Frame):
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
 
         # Need to restrict entries to only digits,
-        #   MUST use action type parameter to allow user to delete first number they enter.
+        #   MUST use action type parameter to allow user to delete first number
+        #   entered when wants to re-enter following backspace deletion.
         def test_dig_entry(entry_string, action_type):
             """
             Only digits are accepted and displayed in Entry field.
             Used with .register() to configure Entry kw validatecommand.
             """
             # source: https://stackoverflow.com/questions/4140437/
-            if action_type == '1':  # action type is "insert"
+            if action_type == '1':  # action type 1 is "insert"
                 if not entry_string.isdigit():
                     return False
             return True
@@ -518,7 +519,7 @@ class CountViewer(tk.Frame):
                                          command=explain_zero_max)
 
         # Need a user option to log results to file.
-        # 'do_log' value is BooleanVar() & kw variable automatically sets it.
+        # 'do_log' value is BooleanVar() & kw "variable" automatically sets it.
         log_choice.configure(variable=self.share.setting['do_log'],
                              bg=settings_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
@@ -581,8 +582,8 @@ class CountViewer(tk.Frame):
             self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
 
         # Need to set summary_t here as concat of two sumry_t_ element strings,
-        #   then convert to minutes to use in comparison.
-        summary_t = str(self.share.setting['sumry_t_value'].get()) + self.sumry_t_unit.get()[:1]
+        #   then convert to minutes to use in comparisons.
+        summary_t = f"{self.share.setting['sumry_t_value'].get()}{self.sumry_t_unit.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
         summary_m = int(self.share.getminutes(summary_t))
         if interval_m >= summary_m:
@@ -600,7 +601,7 @@ class CountViewer(tk.Frame):
             self.share.setting['cycles_max'].set(1008)
         elif cycles_max != '0':
             self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
-        # Allow zero entry for 1-off status of task data.
+        # Allow zero entry for 1-off status report of task data.
         elif cycles_max == '0':
             self.share.setting['cycles_max'].set(0)
         # Need to set initial cycles_remain to cycles_max b/c
@@ -619,8 +620,6 @@ class CountViewer(tk.Frame):
         self.share.setstartdata()
 
         # Thread is started here b/c this method is called only once.
-        # NOTE: Watch for race conditions b/c stringsvars used by Viewer
-        #  will be set in set_interval_data().
         # There are no thread.join(), so use daemon.
         if self.share.setting['cycles_max'].get() > 0:
             self.share.intvl_thread = threading.Thread(
@@ -641,6 +640,7 @@ class CountViewer(tk.Frame):
         # num_tasks_all Label is config __init__ and set in set_start_data().
         # TODO: ^^ Consider having num_tasks_all update more frequently
         #  than interval_t; every 5 min? Work into countdown clock?
+
         # Starting count data and times (from past boinc-client hour).
         # Textvariables are configured in __init__; their values
         #   (along with self.share.tt_range) are set in set_start_data()
@@ -656,10 +656,10 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
 
-        # Initial gridding of data labels, start & intervals; sorted by row.
         # TODO: Suss why window height increases a few pixels when these are
         #  gridded vs. initial (pre-settings()) blank no-data display.
         #  It causes an obnoxious jump in frame/window size
+        # Initial gridding of data labels, start & intervals; sorted by row.
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
@@ -936,13 +936,11 @@ class CountModeler:
                                         padx=(16, 0), pady=(8, 4))
 
             # Need to sleep between counts and also display a countdown timer.
-            # time.sleep(60)  # DEBUG/TESTING
             # interval_sec = 1  # DEBUG/TESTING
+            # Limit total time of interval to actual time (Epoch seconds) b/c
+            # each sleep cycle runs a little longer than target interval.
             interval_sec = interval_m * 60
             target_sec = interval_m * 60.0
-            # tstart = time.perf_counter()  # TESTING
-            # Limit total time of interval to actual time (Epoch seconds) b/c
-            # each sleeped interval runs a bit longer than target interval time.
             clock_begin = time.time()
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
@@ -950,7 +948,6 @@ class CountModeler:
                 clock_curr = time.time()
                 if clock_curr > (clock_begin + target_sec):
                     self.share.data['time_next_cnt'].set('00:00')
-                    # print(f'forced end to interval_sec range')
                     break
                 interval_sec -= 1
                 _m, _s = divmod(interval_sec, 60)
@@ -958,23 +955,19 @@ class CountModeler:
                 time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1.0)
-            # elapsed = time.perf_counter() - tstart  # TESTING
-            # print(f'Interval sleep lasted for: {elapsed}')  # TESTING
-            # NOTE: ^^ A 60 min interval runs in 3600.386432355037 sec.
 
-            # Best to show day with time.
-            self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%A %H:%M:%S'))
-
-            # Need to set cycles_remain before set_interval_data() is called.
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
 
-            # Do one boinccmd process call then parse tagged data from all
+            # Best to show weekday with time.
+            self.share.data['time_prev_cnt'].set(
+                datetime.now().strftime('%A %H:%M:%S'))
+
+            # Do one boinccmd call then parse tagged data from all
             # task data, instead of multiple BC.get_tasks() calls.
             tasks_all = BC.get_tasks('all')
             # Need the literal task data tags as found in boinccmd stdout;
-            #   the format is same as tag_str in BC.get_tasks().
+            #   the format are same as tag_str in BC.get_tasks().
             #   Use tuple index to populate variables.
             tags = ('   name: ',
                     '   active_task_state: ',
@@ -985,9 +978,9 @@ class CountModeler:
                             if tags[1] in elem]
 
             # Need to reset flags for when tasks have run out and
-            # project has stalled.
+            #   project has stalled.
             # When communication to server is stalled, all tasks will be
-            #  "Ready to report" with a state of 'uploaded', so this forces a
+            #  "Ready to report" with a state of 'uploaded', so force a
             #   Project update to prompt clearing the stalled upload.
             self.notrunning = False
             self.proj_stalled = False
@@ -1040,7 +1033,6 @@ class CountModeler:
             #   Needed in notify_and_log().
             if task_count_new == 0:
                 self.tic_nnt += 1
-            # elif task_count_new > 0 and not self.share.notice['notrunning'].get():
             elif task_count_new > 0 and not self.notrunning:
                 self.tic_nnt = 0
             # Need to robustly parse data returned from get_ttime_stats().
@@ -1058,15 +1050,15 @@ class CountModeler:
             self.share.data['tt_total'].set(tt_total)
 
             # SUMMARY DATA ####################################################
-            # NOTE: summary tabulations are only for interval data, not starting data.
+            # NOTE: Starting data are not included in summary tabulations.
             summary_m = self.get_minutes(self.share.setting['summary_t'].get())
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
             summary_factor = summary_m // interval_m
             if (cycle + 1) % summary_factor == 0 and self.notrunning is False:
                 # Flag used in notify_and_log() for logging.
                 self.report_summary = True
-                # Need to activate disabled Summary data button for summary data;
-                #  only need for 1st summary, but, oh well, here we go again...
+                # Need to activate disabled Summary data button now; only need
+                #  statement for 1st summary, but, oh well, here we go again...
                 self.share.sumry_b.config(state=tk.NORMAL)
 
                 # Need unique tasks for stats and counting.
@@ -1091,8 +1083,7 @@ class CountModeler:
                 self.ttimes_smry.clear()
 
             self.notify_and_log()
-        # elapsed = time.perf_counter() - tstart  # TESTING
-        # print(f'cycles_max range ran for: {elapsed}')  # TESTING
+
     def notify_and_log(self) -> None:
         """
         Display interval and summary metrics for recently reported BOINC
@@ -1188,7 +1179,7 @@ class CountModeler:
                 logging.info(report)
 
             # This should be same as: task_count_new > 0 and
-            # self.share.notrunning is False; that is, everything normal.
+            #   self.share.notrunning is False; that is, everything normal.
             elif self.tic_nnt == 0:
                 report = (
                     f'\n{time_now}; Tasks reported in the past {interval_t}:'
@@ -1208,7 +1199,7 @@ class CountModeler:
                     f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
                 )
                 logging.info(report)
-                # Need to reset flag that was assigned True in set_interval_data().
+                # Need to reset flag to toggle summary logging.
                 self.report_summary = False
 
             if self.share.data['cycles_remain'].get() == 0:
@@ -1246,7 +1237,6 @@ class CountModeler:
         """
         # Time conversion concept from Niko
         # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
-
         _m, _s = divmod(secs, 60)
         _h, _m = divmod(_m, 60)
         day, _h = divmod(_h, 24)
@@ -1276,8 +1266,6 @@ class CountModeler:
         :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
                  Dict values as: 00:00:00.
         """
-        # NOTE: If change item number or order, statements that unpack values
-        #  will need editing.
         total = self.format_sec(int(sum(set(tasktimes))), 'std')
         if numtasks > 1:
             mean = self.format_sec(int(stats.mean(set(tasktimes))), 'std')
@@ -1305,7 +1293,8 @@ class CountModeler:
             'tt_min': 'na',
             'tt_max': 'na'}
 
-    # pylint: disable=unused-argument
+    # Not the most logical place for this method, but it works well here if
+    #   need to write to the log file.
     def quit_gui(self, event=None) -> None:
         """
         Safe and informative exit from the program.
@@ -1314,11 +1303,8 @@ class CountModeler:
         :param event: Needed for keybindings.
         :type event: Direct call from keybindings.
         """
-        # Not the most logical place for this method, but it needs to be in a
-        #  Class to call .cancel() thread; didn't seem that a new Quit Class
-        #  was warranted.
         time_now = datetime.now().strftime(TIME_FORMAT)
-        quit_msg = f'\n{time_now}:  *** User has quit the program. ***\n Exiting...\n'
+        quit_msg = f'\n{time_now}: *** User has quit the program. ***\n Exiting...\n'
         print(quit_msg)
         if self.share.setting['do_log'].get() == 1:
             logging.info(quit_msg)
