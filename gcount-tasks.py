@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -631,8 +631,6 @@ class CountViewer(tk.Frame):
         # start_b will be replaced with ttk intvl_b after first interval
         # completes; it is re-grid in set_interval_data().
         # start_b is tk.B b/c that accepts disabledforeground keyword.
-        # TODO: Check whether MacOS recognizes tk activebackground)
-        # TODO: Work up OS-specific button widths.
         self.share.start_b = tk.Button(text='Starting data', width=18,
                                        disabledforeground='grey10',
                                        state=tk.DISABLED)
@@ -641,9 +639,12 @@ class CountViewer(tk.Frame):
         self.share.sumry_b = ttk.Button(text='Summary data', width=20,
                                         command=self.emphasize_sumry_data)
 
-        # Labels for settings values in master window; configure in display_data():
-        self.time_start_l = tk.Label(self.dataframe, text='Waiting to start...',
-                                     bg=self.data_bg, fg='grey90')
+        # Labels for settings values in master window; configure in display_data().
+        #  Data in these labels are invariant for duration of run.
+        # NOTE: self.time_start_l label is initially configured for text and
+        #   gridded in settings() to show a startup message, then reconfigured
+        #   in display_data() for the time_start.
+        self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg, fg='grey90')
         self.interval_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
                                      textvariable=self.share.setting['interval_t'],
                                      relief='groove', bg=self.data_bg)
@@ -888,6 +889,15 @@ class CountViewer(tk.Frame):
         intvl_choice = ttk.Combobox(self.settings_win)
         log_choice = tk.Checkbutton(self.settings_win)
 
+        # Need a message in main window to prompt user to enter settings.
+        #   In display_data() it will be re-gridded with time_start-l when
+        #   settings_win closes. In Linux and Windows the msg will be covered
+        #   by settings_win, but it's there if user drags settings_win away.
+        #   In macOS, it will be helpful b/c setting_win cannot (?) set focus.
+        self.time_start_l.configure(text='Waiting for settings...')
+        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
+                               columnspan=2)
+
         # Need to disable default window Exit; only allow exit from active Confirm button.
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
         #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
@@ -1131,8 +1141,7 @@ class CountViewer(tk.Frame):
         #  gridded vs. initial (pre-settings()) blank no-data display.
         #  It causes an obnoxious jump in frame/window size
         # Initial gridding of data labels, start & intervals; sorted by row.
-        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
-                               columnspan=2)
+        # NOTE: time_start_label is gridded in settings(): row=2, column=1 ...
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
         self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
         self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
