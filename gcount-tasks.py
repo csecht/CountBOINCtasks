@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -53,12 +53,12 @@ try:
     from tkinter import ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
-    print('gcount_tasks.py requires tkinter, which is included with some Python 3.7+'
-          '\ndistributions, e.g., Active State.'
-          '\nInstall 3.7+ or re-install Python and include Tk/Tcl.'
-          '\nPython downloads are available from python.org'
-          '\nOn Linux-Ubuntu you may need: sudo apt install python3-tk'
-          f'\nSee also: https://tkdocs.com/tutorial/install.html \n{error}')
+    print('gcount_tasks.py requires tkinter, which is included with some\n'
+          'Python 3.7+distributions.\n'
+          'Install the most recent version or re-install Python and include Tk/Tcl.\n'
+          'Python downloads are available from python.org\n'
+          'On Linux-Ubuntu you may need: sudo apt install python3-tk\n'
+          f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 7):
     print('Program requires Python 3.7 or later.')
@@ -81,768 +81,6 @@ logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
 
 # Use this for a clean exit from Terminal; bypasses __name__ KeyInterrupt msg.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-
-# The tkinter GUI engine that runs as main thread.
-class CountViewer(tk.Frame):
-    """
-    The Viewer communicates with Modeler via 'share' objects handled
-    through the Controller class. All GUI widgets go here.
-    """
-    print('gcount-tasks now running...')
-
-    def __init__(self, master, share):
-        super().__init__(master)
-        self.share = share
-        self.dataframe = tk.Frame()
-
-        # Set colors for row labels and data display.
-        # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
-        self.row_fg = 'LightCyan2'  # foreground for row labels
-        self.data_bg = 'grey40'  # background for data labels and frame
-        self.master_bg = 'SkyBlue4'  # also used for row header labels.
-        self.notice_fg = 'khaki'
-        # Label foreground configuration vars.
-        self.emphasize = 'grey90'
-        self.highlight = 'gold'
-        self.deemphasize = 'grey60'
-
-        # Log text formatting vars:
-        self.report = 'none'
-        self.indent = ' ' * 22
-        self.bigindent = ' ' * 33
-
-        # Basic run parameters/settings passed between Viewer and Modeler.
-        # Defaults, from in Modeler.default_settings, can be changed in
-        # settings().
-        self.share.setting = {
-            'interval_t': tk.StringVar(),
-            'interval_m': tk.IntVar(),
-            'sumry_t_value': tk.IntVar(),
-            'sumry_t_unit': tk.StringVar(),
-            'summary_t': tk.StringVar(),
-            'cycles_max': tk.IntVar(),
-            'do_log': tk.IntVar()
-        }
-
-        # Common data var for display; passed between Viewer and Modeler
-        self.share.data = {
-            # Start and Interval data
-            'task_count': tk.IntVar(),
-            'tt_mean': tk.StringVar(),
-            'tt_sd': tk.StringVar(),
-            'tt_range': tk.StringVar(),
-            'tt_total': tk.StringVar(),
-            # General data
-            'time_prev_cnt': tk.StringVar(),
-            'cycles_remain': tk.IntVar(),
-            'time_next_cnt': tk.StringVar(),
-            'num_tasks_all': tk.IntVar(),
-            # Summary data
-            'task_count_sumry': tk.IntVar(),
-            'tt_mean_sumry': tk.StringVar(),
-            'tt_sd_sumry': tk.StringVar(),
-            'tt_range_sumry': tk.StringVar(),
-            'tt_total_sumry': tk.StringVar(),
-        }
-
-        # Used in set_start_data() and set_interval_data()
-        self.share.ttimes_used = ['']
-
-        # Used in notify_and_log()
-        self.share.notice_txt = tk.StringVar()
-
-        # settings() toplevel window widgets:
-        self.settings_win = tk.Toplevel(relief='raised', bd=3)
-        self.sumry_t_value = ttk.Entry(self.settings_win)
-        self.sumry_t_unit = ttk.Combobox(self.settings_win)
-        self.cycles_max_entry = ttk.Entry(self.settings_win)
-        self.showdata_button = ttk.Button(self.settings_win)
-
-        # Master window widgets:
-        # Set interval & summary focus button attributes here b/c need to
-        #   configure them in different modules.
-        # start_b will be replaced with ttk intvl_b after first interval
-        # completes; it is re-grid in set_interval_data().
-        # start_b is tk.B b/c that accepts disabledforeground keyword.
-        # TODO: Check whether MacOS recognizes tk activebackground)
-        # TODO: Work up OS-specific button widths.
-        self.share.start_b = tk.Button(text='Starting data', width=18,
-                                       disabledforeground='grey10',
-                                       state=tk.DISABLED)
-        self.share.intvl_b = ttk.Button(text='Interval data', width=18,
-                                        command=self.emphasize_intvl_data)
-        self.share.sumry_b = ttk.Button(text='Summary data', width=20,
-                                        command=self.emphasize_sumry_data)
-
-        # Labels for settings values in master window; configure in display_data():
-        self.time_start_l = tk.Label(self.dataframe, text='Waiting to start...',
-                                     bg=self.data_bg, fg='grey90')
-        self.interval_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
-                                     textvariable=self.share.setting['interval_t'],
-                                     relief='groove', bg=self.data_bg)
-        self.summary_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
-                                    textvariable=self.share.setting['summary_t'],
-                                    relief='groove', bg=self.data_bg)
-        self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
-                                     bg=self.master_bg, fg=self.row_fg)
-
-        # Labels for BOINC data; gridded in their respective show_methods().
-        self.task_count_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                     textvariable=self.share.data['task_count'])
-        self.tt_mean_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                  textvariable=self.share.data['tt_mean'])
-        self.tt_sd_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                textvariable=self.share.data['tt_sd'])
-        self.tt_range_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                   textvariable=self.share.data['tt_range'])
-        self.tt_total_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                   textvariable=self.share.data['tt_total'])
-        self.task_count_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                           textvariable=self.share.data['task_count_sumry'])
-        self.ttmean_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                       textvariable=self.share.data['tt_mean_sumry'])
-        self.ttsd_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                     textvariable=self.share.data['tt_sd_sumry'])
-        self.ttrange_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                        textvariable=self.share.data['tt_range_sumry'])
-        self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                      textvariable=self.share.data['tt_total_sumry'])
-        self.time_prev_cnt_l = tk.Label(
-            textvariable=self.share.data['time_prev_cnt'],
-            bg=self.master_bg, fg=self.row_fg)
-        self.time_next_cnt_l = tk.Label(
-            textvariable=self.share.data['time_next_cnt'],
-            bg=self.master_bg, fg=self.notice_fg)
-        self.cycles_remain_l = tk.Label(
-            textvariable=self.share.data['cycles_remain'],
-            bg=self.master_bg, fg=self.row_fg)
-        self.num_tasks_all_l = tk.Label(
-            textvariable=self.share.data['num_tasks_all'],
-            bg=self.master_bg, fg=self.row_fg)
-        # Text for compliment_txt is configured in compliment_me()
-        self.share.compliment_txt = tk.Label(
-            fg=self.notice_fg, bg=self.master_bg,
-            relief='flat', border=0)
-        # Notice label will share grid with complement_txt to display notices.
-        self.share.notice_l = tk.Label(
-            textvariable=self.share.notice_txt,
-            fg=self.notice_fg, bg=self.master_bg, relief='flat', border=0)
-
-        self.config_master()
-        self.master_widgets()
-        # Need to set window position here (not in config_master),so it doesn't
-        #    shift when PassModeler.config_results() is called b/c different
-        #    from app position.
-        # self.master.geometry('+96+134')  # or app.geometry('+96+134')
-
-    def config_master(self) -> None:
-        """
-        Master frame configuration, keybindings, frames, and row headers.
-        """
-        # Background color of container Frame is configured in __init__
-        # OS-specific window size ranges set in Controller __init__
-        # self.master.minsize(466, 365)
-        self.master.title(GUI_TITLE)
-        # Need to color in all of master Frame, and use light grey border;
-        #    changes to near white for click-drag.
-        self.master.configure(bg=self.master_bg,
-                              highlightthickness=3,
-                              highlightcolor='grey75',
-                              highlightbackground='grey95')
-
-        # Theme controls entire window theme, but only for ttk.Style objects.
-        # Options: classic, alt, clam, default, aqua(MacOS only)
-        ttk.Style().theme_use('alt')
-
-        # Set up universal and OS-specific keybindings and menus
-        self.master.bind_all('<Escape>', self.share.quitgui)
-        cmdkey = ''
-        if MY_OS in 'lin, win':
-            cmdkey = 'Control'
-        elif MY_OS == 'dar':
-            cmdkey = 'Command'
-        self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
-        self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", lambda q: self.show_log())
-
-        # Make data rows and columns stretch with window drag size.
-        # Don't vertically stretch separator rows.
-        rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13)
-        for _r in rows2config:
-            self.master.columnconfigure(1, weight=1)
-        self.master.columnconfigure(2, weight=1)
-
-        # Set up frame to display data. Putting frame here instead of in
-        # master_widgets gives proper alignment of row headers and data.
-        self.dataframe.configure(borderwidth=3, relief='sunken',
-                                 bg=self.data_bg)
-        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
-                            padx=(5, 10), sticky=tk.NSEW)
-        framerows = (2, 3, 4, 5, 6, 7, 8)
-        for row in framerows:
-            self.dataframe.rowconfigure(row, weight=1)
-
-        self.dataframe.columnconfigure(1, weight=1)
-        self.dataframe.columnconfigure(2, weight=1)
-
-        # Fill in headers for data rows.
-        row_header = {'Counting since': 2,
-                      'Count interval': 3,
-                      '# tasks reported': 4,
-                      'Task times:  mean': 5,
-                      'stdev': 6,
-                      'range': 7,
-                      'total': 8,
-                      'Time of last count:': 10,
-                      'Next count in:': 11,
-                      # 'Counts remaining:': 11,
-                      'Tasks in queue:': 12,
-                      'Notices:': 13
-                      }
-        for header, rownum in row_header.items():
-            tk.Label(self.master, text=f'{header}',
-                     bg=self.master_bg, fg=self.row_fg
-                     ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
-        # Need to accommodate two headers in same row.
-        tk.Label(self.master, text='Counts remaining:',
-                 bg=self.master_bg, fg=self.row_fg
-                 ).grid(row=11, column=2, sticky=tk.W)
-
-    def master_widgets(self) -> None:
-        """
-        Master frame menus, buttons, and separators.
-        """
-
-        # creating a menu instance
-        menu = tk.Menu(self.master)
-        self.master.config(menu=menu)
-
-        # Add pull-down menus
-        os_accelerator = ''
-        if MY_OS in 'lin, win':
-            os_accelerator = 'Ctrl'
-        elif MY_OS == 'dar':
-            os_accelerator = 'Command'
-        file = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="File", menu=file)
-        file.add_command(label="Backup log file", command=self.backup_log)
-        # Update note: settings() is only run upon startup.
-        # file.add_command(label='Settings...', command=self.settings)
-        file.add_separator()
-        file.add_command(label='Quit', command=self.share.quitgui,
-                         # MacOS doesn't display this accelerator
-                         #   b/c can't override MacOS native Command+Q;
-                         #   and don't want Ctrl+Q displayed or used.
-                         accelerator=f'{os_accelerator}+Q')
-
-        view = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="View", menu=view)
-        view.add_command(label="Log file", command=self.show_log,
-                         # MacOS: can't display Cmd+L b/c won't override native cmd.
-                         accelerator="Ctrl+L")
-        help_menu = tk.Menu(menu, tearoff=0)
-        info = tk.Menu(self.master, tearoff=0)
-        menu.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_cascade(label='Info...', menu=info)
-        info.add_command(label='- Interval and Summary data buttons'
-                               ' switch visual emphasis...')
-        info.add_command(label='    ...those buttons activate once their data post.')
-        info.add_command(label='- Number of "Tasks in queue" updates every interval.')
-        info.add_command(label='- Review count and notice history with "View log".')
-        info.add_command(label='- "Backup log file" places a copy in your Home folder.')
-
-        help_menu.add_command(label="Compliment", command=self.share.complimentme,
-                              accelerator="Ctrl+Shift+C")
-        help_menu.add_command(label="About", command=self.share.about)
-
-        # Create or configure button widgets:
-        style_button = ttk.Style(self.master)
-        style_button.configure('TButton', background='grey80', anchor='center')
-        # NOTE: Start, Interval, & Summary button attributes are in __init__.
-        viewlog_b = ttk.Button(text='View log file', command=self.show_log)
-        # quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
-
-        # For colored separators, use ttk.Frame instead of ttk.Separator.
-        # Initialize then configure style for separator color.
-        style_sep = ttk.Style(self.master)
-        style_sep.configure('TFrame', background=self.master_bg)
-        sep1 = ttk.Frame(relief="raised", height=6)
-        sep2 = ttk.Frame(relief="raised", height=6)
-
-        # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
-        # viewlog_b.grid(row=0, column=0, padx=5, pady=5)
-        viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
-        self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
-        self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
-        sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
-        # Intervening rows are gridded in display_data()
-        sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
-        # quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
-        # compliment_txt grids in "Notices": row, same position as notices_txt_l.
-        self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
-                                       padx=5, pady=5, sticky=tk.W)
-
-        # Need if condition so startup sequence isn't recalled when subsequent
-        #  Viewer methods are called; interval_t will be set, so
-        #  starting sequence will be skipped. Starting sequence:
-        #  default_settings(), settings(), check_and_set(),
-        #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
-        #  intvl_thread for M.set_interval_data().
-        # ^^^ There must be a cleaner way to structure start functions?
-        if not self.share.setting['interval_t'].get():
-            # self.startup()
-            self.share.defaultsettings()
-            self.settings()
-
-    def settings(self) -> None:
-        """
-        A Toplevel window called from master_widgets() at startup.
-        Use to confirm default parameters or set new ones for count and
-        summary interval times, counting limit, and log file option.
-        """
-        # Toplevel window basics
-        # Need self. b/c window parent is used for a messagebox in check_and_set().
-        self.settings_win.title('Set run parameters')
-        self.settings_win.attributes('-topmost', True)
-        self.settings_win.resizable(False, False)
-
-        # Colors should match those of master/parent window.
-        settings_fg = 'LightCyan2'
-        settings_bg = 'SkyBlue4'
-        self.settings_win.configure(bg=settings_bg)
-        style = ttk.Style()
-        style.configure('TLabel', background=settings_bg, foreground=settings_fg)
-
-        intvl_choice = ttk.Combobox(self.settings_win)
-        log_choice = tk.Checkbutton(self.settings_win)
-
-        # Need to disable default window Exit; only allow exit from active Confirm button.
-        # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
-        #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
-        def no_exit_on_x():
-            msg = ('Please exit window with "Return" button.\n'
-                   '"Return" is allowed once "Confirm" is clicked.')
-            messagebox.showinfo(title='Confirm before closing', detail=msg,
-                                parent=self.settings_win)
-
-        self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
-
-        # Functions for Combobox selections.
-        def set_intvl_selection(*args):
-            self.share.setting['interval_t'].set(intvl_choice.get())
-
-        def set_sumry_unit(*args):
-            self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
-
-        # Need to restrict entries to only digits,
-        #   MUST use action type parameter to allow user to delete first number
-        #   entered when wants to re-enter following backspace deletion.
-        def test_dig_entry(entry_string, action_type):
-            """
-            Only digits are accepted and displayed in Entry field.
-            Used with .register() to configure Entry kw validatecommand.
-            """
-            # source: https://stackoverflow.com/questions/4140437/
-            if action_type == '1':  # action type 1 is "insert"
-                if not entry_string.isdigit():
-                    return False
-            return True
-
-        def explain_zero_max():
-            max_label = ttk.Label(self.settings_win, foreground='orange',
-                                  text='Enter 0 for a 1-off count.')
-            max_label.grid(column=0, columnspan=3, row=4,
-                           padx=10, pady=(0, 5), sticky=tk.E)
-
-        def check_show_close():
-            """
-            Calls check_and_set(), activates or disables interval cycles,
-            closes settings window, and calls display_data().
-            Called from showdata_button.
-            """
-            # Need a final check in case something changes since initial
-            #   check_and_set().
-            self.check_and_set()
-
-            if self.share.setting['cycles_max'].get() == 0:
-                self.share.data['cycles_remain'].set(0)
-                self.share.setting['interval_t'].set('DISABLED')
-                self.share.setting['summary_t'].set('DISABLED')
-                self.share.notice_txt.set(
-                    'STATUS REPORT ONLY. (Ctrl_Shift-C clears notice.)')
-                # compliment_txt grids in same position; initial grid implementation
-                self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                         pady=5, sticky=tk.W)
-                self.display_data()
-                self.settings_win.destroy()
-            else:
-                self.display_data()
-                self.settings_win.destroy()
-
-        # Have user select interval times for counting and summary cycles.
-        intvl_choice.configure(state='readonly', width=4, height=12,
-                               textvariable=self.share.setting['interval_t'])
-
-        intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
-                                  '30m', '25m', '20m', '15m', '10m', '5m')
-        intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
-
-        intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
-        intvl_label2 = ttk.Label(self.settings_win, text='minutes')
-
-        self.sumry_t_value.configure(
-            validate='key', width=4,
-            textvariable=self.share.setting['sumry_t_value'],
-            validatecommand=(
-                self.sumry_t_value.register(test_dig_entry), '%P', '%d'))
-
-        self.sumry_t_unit.configure(state='readonly',
-                                    textvariable=self.share.setting['sumry_t_unit'],
-                                    values=('day', 'hr', 'min'), width=4)
-        self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
-
-        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
-        sumry_label2 = ttk.Label(self.settings_win, text='time unit')
-
-        # Specify number limit of counting cycles to run before program exits.
-        self.cycles_max_entry.configure(
-            validate='key', width=4,
-            textvariable=self.share.setting['cycles_max'],
-            validatecommand=(
-                self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
-
-        cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
-        # cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
-
-        cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
-                                         command=explain_zero_max)
-
-        # Need a user option to log results to file.
-        # 'do_log' value is BooleanVar() & kw "variable" automatically sets it.
-        log_choice.configure(variable=self.share.setting['do_log'],
-                             bg=settings_bg, borderwidth=0)
-        log_label = ttk.Label(self.settings_win, text='Log results to file')
-
-        confirm_button = ttk.Button(self.settings_win, text='Confirm',
-                                    command=self.check_and_set)
-
-        # Default button should display all default values in real time.
-        default_button = ttk.Button(self.settings_win, text='Use defaults',
-                                    command=self.share.defaultsettings)
-
-        self.showdata_button.configure(text='Count now',
-                                       command=check_show_close)
-        # Need to disable button to force user to first "Confirm" settings,
-        #    even when using default settings: it is a 2-click closing.
-        #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
-        self.showdata_button.config(state=tk.DISABLED)
-
-        # Grid all window widgets; sorted by row.
-        intvl_choice.grid(column=1, row=0)
-        intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
-        intvl_label2.grid(column=2, row=0, padx=5, pady=10, sticky=tk.W)
-        sumry_label1.grid(column=0, row=1, padx=(10, 5), pady=10, sticky=tk.E)
-        self.sumry_t_value.grid(column=1, row=1)
-        sumry_label2.grid(column=2, row=1, padx=5, pady=10, sticky=tk.E)
-        self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
-        if MY_OS == 'lin':
-            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
-        if MY_OS == 'win':
-            cycles_query_button.grid(column=0, row=2, padx=(60, 0), sticky=tk.W)
-        cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
-        self.cycles_max_entry.grid(column=1, row=2)
-        # cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
-        log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
-        log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
-        confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
-        default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
-        self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
-
-    def check_and_set(self):
-        """
-        Confirm that summary time > interval time, set all settings
-        from settings() to their textvariable dict values, and log to
-        file if optioned. Called from settings.close_and_show() via
-        Confirm button.
-        """
-        self.showdata_button.config(state=tk.DISABLED)
-
-        # Note: self.share.setting['interval_t'] is set in settings().
-        interval_m = int(self.share.setting['interval_t'].get()[:-1])
-        self.share.setting['interval_m'].set(interval_m)
-        # interval_m = self.share.setting['interval_m'].get()
-
-        sumry_value = self.sumry_t_value.get()
-        self.share.setting['sumry_t_value'].set(sumry_value)
-        # if sumry_value == 0 then it is caught by interval_m comparison.
-        if not sumry_value:
-            self.share.setting['sumry_t_value'].set(1)
-        elif sumry_value != '0':
-            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
-
-        # Need to set summary_t here as concat of two sumry_t_ element strings,
-        #   then convert to minutes to use in comparisons.
-        summary_t = f"{self.share.setting['sumry_t_value'].get()}{self.sumry_t_unit.get()[:1]}"
-        self.share.setting['summary_t'].set(summary_t)
-        summary_m = int(self.share.getminutes(summary_t))
-        if interval_m >= summary_m:
-            self.showdata_button.config(state=tk.DISABLED)
-            info = "Summary time must be greater than interval time"
-            messagebox.showerror(title='Invalid entry', detail=info,
-                                 parent=self.settings_win)
-        elif interval_m < summary_m:
-            self.showdata_button.config(state=tk.NORMAL)
-
-        # Need to remove leading zeros, but allow a zero entry.
-        #   Replace empty Entry with default values.
-        cycles_max = self.cycles_max_entry.get()
-        if cycles_max == '':
-            self.share.setting['cycles_max'].set(1008)
-        elif cycles_max != '0':
-            self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
-        # Allow zero entry for 1-off status report of task data.
-        elif cycles_max == '0':
-            self.share.setting['cycles_max'].set(0)
-        # Need to set initial cycles_remain to cycles_max b/c
-        #   is decremented in notify_and_log() to track cycle number.
-        self.share.data['cycles_remain'].set(
-            self.share.setting['cycles_max'].get())
-
-    def display_data(self) -> None:
-        """
-        Config and grid data labels in master window; display start data.
-        Log data to file if optioned. Show default settings and task
-        metrics for the most recent BOINC report.
-        Called from settings.check_close_show() with 'Show data' button.
-        """
-        time_start = datetime.now().strftime(TIME_FORMAT)
-        self.share.setstartdata()
-
-        # Thread is started here b/c this method is called only once.
-        # There are no thread.join(), so use daemon.
-        if self.share.setting['cycles_max'].get() > 0:
-            self.share.intvl_thread = threading.Thread(
-                target=self.share.setintervaldata, daemon=True)
-            self.share.intvl_thread.start()
-
-        # Need to keep sumry_b button disabled until after 1st summary interval.
-        self.share.sumry_b.config(state=tk.DISABLED)
-
-        # Need self.share... whenever var is used in other MVC classes.
-        self.time_start_l.config(text=time_start)
-        self.share.data['time_prev_cnt'].set(
-            'The most recent BOINC report when program started')
-        self.interval_t_l.config(foreground=self.emphasize)
-        self.summary_t_l.config(foreground=self.deemphasize)
-        self.task_count_l.config(foreground=self.highlight)
-        # count_next Label is config __init__ and set in set_interval_time().
-        # num_tasks_all Label is config __init__ and set in set_start_data().
-        # TODO: ^^ Consider having num_tasks_all update more frequently
-        #  than interval_t; every 5 min? Work into countdown clock?
-
-        # Starting count data and times (from past boinc-client hour).
-        # Textvariables are configured in __init__; their values
-        #   (along with self.share.tt_range) are set in set_start_data()
-        #    and called via Controller setstartdata().
-        self.tt_mean_l.configure(foreground=self.highlight)
-        self.tt_sd_l.configure(foreground=self.emphasize)
-        self.tt_range_l.configure(foreground=self.emphasize)
-        self.tt_total_l.configure(foreground=self.emphasize)
-
-        self.task_count_sumry_l.configure(foreground=self.deemphasize)
-        self.ttmean_sumry_l.configure(foreground=self.deemphasize)
-        self.ttsd_sumry_l.configure(foreground=self.deemphasize)
-        self.ttrange_sumry_l.configure(foreground=self.deemphasize)
-        self.ttsum_sumry_l.configure(foreground=self.deemphasize)
-
-        # TODO: Suss why window height increases a few pixels when these are
-        #  gridded vs. initial (pre-settings()) blank no-data display.
-        #  It causes an obnoxious jump in frame/window size
-        # Initial gridding of data labels, start & intervals; sorted by row.
-        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
-                               columnspan=2)
-        self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
-        self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
-        self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
-        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
-        self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
-        self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
-        self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                                  columnspan=2)
-        self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        # Place cycles_remain value in same cell as its header, but shifted right,
-        #  b/c if instead grid in column=3, then new column added to right of dataframe.
-        self.cycles_remain_l.grid(row=11, column=2, padx=(125, 0), sticky=tk.W)
-        self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
-
-        self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
-        self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
-        self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
-        self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
-        self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
-
-        if self.share.setting['do_log'].get() == 1:
-            interval_t = self.share.setting['interval_t'].get()
-            summary_t = self.share.setting['summary_t'].get()
-            tcount_start = self.share.data['task_count'].get()
-            tt_mean = self.share.data['tt_mean'].get()
-            tt_sd = self.share.data['tt_sd'].get()
-            tt_range = self.share.data['tt_range'].get()
-            tt_total = self.share.data['tt_total'].get()
-            num_tasks_all = self.share.data['num_tasks_all'].get()
-            cycles_max = self.share.setting['cycles_max'].get()
-            if cycles_max > 0:
-                self.report = (
-                    '\n>>> TASK COUNTER START settings <<<\n'
-                    f'{time_start}; Number of tasks in the most recent BOINC report:'
-                    f' {tcount_start}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},'
-                    f' range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
-                    f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
-                    f'{self.indent}Counts every {interval_t},'
-                    f' summaries every {summary_t}\n'
-                    f'Timed intervals beginning now...\n')
-            # Need to provide a truncated report for one-off "status" runs.
-            elif cycles_max == 0:
-                self.report = (
-                    f'\n{time_start}; STATUS REPORT\n'
-                    f'{self.indent}Number of tasks in the most recent BOINC report:'
-                    f' {tcount_start}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},'
-                    f' range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
-        logging.info(self.report)
-
-    # Methods for buttons, menu items, keybinds.
-    def emphasize_intvl_data(self) -> None:
-        """
-        Switches font emphasis from Summary data to Interval data.
-        Called from 'Interval data' button.
-        """
-
-        self.interval_t_l.config(foreground=self.emphasize)
-        self.summary_t_l.config(foreground=self.deemphasize)
-
-        # Interval data, column1
-        self.task_count_l.configure(foreground=self.highlight)
-        self.tt_mean_l.configure(foreground=self.highlight)
-        self.tt_sd_l.configure(foreground=self.emphasize)
-        self.tt_range_l.configure(foreground=self.emphasize)
-        self.tt_total_l.configure(foreground=self.emphasize)
-
-        # Summary data, column2, deemphasize font color
-        self.task_count_sumry_l.configure(foreground=self.deemphasize)
-        self.ttmean_sumry_l.configure(foreground=self.deemphasize)
-        self.ttsd_sumry_l.configure(foreground=self.deemphasize)
-        self.ttrange_sumry_l.configure(foreground=self.deemphasize)
-        self.ttsum_sumry_l.configure(foreground=self.deemphasize)
-
-    def emphasize_sumry_data(self) -> None:
-        """
-        Switches font emphasis from Interval data to Summary data.
-        Called from 'Summary data' button.
-        """
-        self.interval_t_l.config(foreground=self.deemphasize)
-        self.summary_t_l.config(foreground=self.emphasize)
-
-        # Summary data, column2, emphasize font color
-        self.task_count_sumry_l.configure(foreground=self.highlight)
-        self.ttmean_sumry_l.configure(foreground=self.highlight)
-        self.ttsd_sumry_l.configure(foreground=self.emphasize)
-        self.ttrange_sumry_l.configure(text=self.share.data['tt_range'].get(),
-                                       foreground=self.emphasize)
-        self.ttsum_sumry_l.configure(foreground=self.emphasize)
-
-        # Interval data, column1, deemphasize font color
-        self.task_count_l.configure(foreground=self.deemphasize)
-        self.task_count_l.configure(foreground=self.deemphasize)
-        self.tt_mean_l.configure(foreground=self.deemphasize)
-        self.tt_sd_l.configure(foreground=self.deemphasize)
-        self.tt_range_l.configure(foreground=self.deemphasize)
-        self.tt_total_l.configure(foreground=self.deemphasize)
-
-    @staticmethod
-    def show_log() -> None:
-        """
-        Create a separate window to view the log file, read-only,
-        scrolled text. Called from File menu.
-        """
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 79
-        elif MY_OS == 'dar':
-            os_width = 72
-
-        try:
-            with open(LOGFILE, 'r') as file:
-                logwin = tk.Toplevel()
-                logwin.title('count-tasks_log.txt')
-                if MY_OS in 'lin, dar':
-                    logwin.minsize(665, 200)
-                elif MY_OS == 'win':
-                    logwin.minsize(800, 200)
-                logwin.focus_set()
-                logtext = ScrolledText(logwin, width=os_width, height=30,
-                                       font='TkFixedFont',
-                                       bg='grey85', relief='raised', padx=5)
-                logtext.insert(tk.INSERT, file.read())
-                logtext.see('end')
-                logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                def reload():
-                    with open(LOGFILE, 'r') as new_text:
-                        logtext.delete(tk.INSERT, tk.END)
-                        logtext.insert(tk.INSERT, new_text.read())
-                        logtext.see('end')
-                        logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                ttk.Button(logwin, text='Reload', command=reload).pack()
-        except FileNotFoundError:
-            warn_main = f'Log {LOGFILE} cannot be found.'
-            warn_detail = ('Log file should be in folder:\n'
-                           f'{CWD}\n'
-                           'Has it been moved or renamed?')
-            # print('\n', warn_main, warn_detail)
-            messagebox.showwarning(title='FILE NOT FOUND',
-                                   message=warn_main, detail=warn_detail)
-
-    @staticmethod
-    def backup_log() -> None:
-        """
-        Copy the log file to the home folder. Overwrites current file.
-        Called from File menu.
-
-        :return: A new or overwritten backup file.
-        """
-
-        destination = Path.home() / BKUPFILE
-        if Path.is_file(LOGFILE) is True:
-            try:
-                shutil.copyfile(LOGFILE, destination)
-                success_msg = 'Log file has been copied to: '
-                success_detail = str(destination)
-                # print(success_msg)
-                messagebox.showinfo(title='Archive completed',
-                                    message=success_msg, detail=success_detail)
-            except PermissionError:
-                print("Log file backup: Permission denied.")
-            except IsADirectoryError:
-                print("Log file backup: Destination is a directory.")
-            except shutil.SameFileError:
-                print("Log file backup: Source and destination are the same file.")
-        else:
-            warn_main = f'Log {LOGFILE} cannot be archived'
-            warn_detail = ('Log file should be in folder:\n'
-                           f'{CWD}\n'
-                           'Has it been moved or renamed?')
-            messagebox.showwarning(title='FILE NOT FOUND',
-                                   message=warn_main, detail=warn_detail)
-            # print('\n', warn_main, warn_detail)
 
 
 # The engine that gets BOINC data and runs timed data counts.
@@ -1312,6 +550,773 @@ class CountModeler:
         sys.exit(0)
 
 
+# The tkinter GUI engine that runs as main thread.
+class CountViewer(tk.Frame):
+    """
+    The Viewer communicates with Modeler via 'share' objects handled
+    through the Controller class. All GUI widgets go here.
+    """
+    print('gcount-tasks now running...')
+
+    def __init__(self, master, share):
+        super().__init__(master)
+        self.share = share
+        self.dataframe = tk.Frame()
+
+        # Set colors for row labels and data display.
+        # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
+        self.row_fg = 'LightCyan2'  # foreground for row labels
+        self.data_bg = 'grey40'  # background for data labels and frame
+        self.master_bg = 'SkyBlue4'  # also used for row header labels.
+        self.notice_fg = 'khaki'
+        # Label foreground configuration vars.
+        self.emphasize = 'grey90'
+        self.highlight = 'gold'
+        self.deemphasize = 'grey60'
+
+        # Log text formatting vars:
+        self.report = 'none'
+        self.indent = ' ' * 22
+        self.bigindent = ' ' * 33
+
+        # Basic run parameters/settings passed between Viewer and Modeler.
+        # Defaults, from in Modeler.default_settings, can be changed in
+        # settings().
+        self.share.setting = {
+            'interval_t': tk.StringVar(),
+            'interval_m': tk.IntVar(),
+            'sumry_t_value': tk.IntVar(),
+            'sumry_t_unit': tk.StringVar(),
+            'summary_t': tk.StringVar(),
+            'cycles_max': tk.IntVar(),
+            'do_log': tk.IntVar()
+        }
+
+        # Common data var for display; passed between Viewer and Modeler
+        self.share.data = {
+            # Start and Interval data
+            'task_count': tk.IntVar(),
+            'tt_mean': tk.StringVar(),
+            'tt_sd': tk.StringVar(),
+            'tt_range': tk.StringVar(),
+            'tt_total': tk.StringVar(),
+            # General data
+            'time_prev_cnt': tk.StringVar(),
+            'cycles_remain': tk.IntVar(),
+            'time_next_cnt': tk.StringVar(),
+            'num_tasks_all': tk.IntVar(),
+            # Summary data
+            'task_count_sumry': tk.IntVar(),
+            'tt_mean_sumry': tk.StringVar(),
+            'tt_sd_sumry': tk.StringVar(),
+            'tt_range_sumry': tk.StringVar(),
+            'tt_total_sumry': tk.StringVar(),
+        }
+
+        # Used in set_start_data() and set_interval_data()
+        self.share.ttimes_used = ['']
+
+        # Used in notify_and_log()
+        self.share.notice_txt = tk.StringVar()
+
+        # settings() toplevel window widgets:
+        self.settings_win = tk.Toplevel(relief='raised', bd=3)
+        self.sumry_t_value = ttk.Entry(self.settings_win)
+        self.sumry_t_unit = ttk.Combobox(self.settings_win)
+        self.cycles_max_entry = ttk.Entry(self.settings_win)
+        self.showdata_button = ttk.Button(self.settings_win)
+
+        # Master window widgets:
+        # Set interval & summary focus button attributes here b/c need to
+        #   configure them in different modules.
+        # start_b will be replaced with ttk intvl_b after first interval
+        # completes; it is re-grid in set_interval_data().
+        # start_b is tk.B b/c that accepts disabledforeground keyword.
+        # TODO: Check whether MacOS recognizes tk activebackground)
+        # TODO: Work up OS-specific button widths.
+        self.share.start_b = tk.Button(text='Starting data', width=18,
+                                       disabledforeground='grey10',
+                                       state=tk.DISABLED)
+        self.share.intvl_b = ttk.Button(text='Interval data', width=18,
+                                        command=self.emphasize_intvl_data)
+        self.share.sumry_b = ttk.Button(text='Summary data', width=20,
+                                        command=self.emphasize_sumry_data)
+
+        # Labels for settings values in master window; configure in display_data():
+        self.time_start_l = tk.Label(self.dataframe, text='Waiting to start...',
+                                     bg=self.data_bg, fg='grey90')
+        self.interval_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
+                                     textvariable=self.share.setting['interval_t'],
+                                     relief='groove', bg=self.data_bg)
+        self.summary_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
+                                    textvariable=self.share.setting['summary_t'],
+                                    relief='groove', bg=self.data_bg)
+        self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
+                                     bg=self.master_bg, fg=self.row_fg)
+
+        # Labels for BOINC data; gridded in their respective show_methods().
+        self.task_count_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                     textvariable=self.share.data['task_count'])
+        self.tt_mean_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                  textvariable=self.share.data['tt_mean'])
+        self.tt_sd_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                textvariable=self.share.data['tt_sd'])
+        self.tt_range_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                   textvariable=self.share.data['tt_range'])
+        self.tt_total_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                   textvariable=self.share.data['tt_total'])
+        self.task_count_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                           textvariable=self.share.data['task_count_sumry'])
+        self.ttmean_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                       textvariable=self.share.data['tt_mean_sumry'])
+        self.ttsd_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                     textvariable=self.share.data['tt_sd_sumry'])
+        self.ttrange_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                        textvariable=self.share.data['tt_range_sumry'])
+        self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
+                                      textvariable=self.share.data['tt_total_sumry'])
+        self.time_prev_cnt_l = tk.Label(
+            textvariable=self.share.data['time_prev_cnt'],
+            bg=self.master_bg, fg=self.row_fg)
+        self.time_next_cnt_l = tk.Label(
+            textvariable=self.share.data['time_next_cnt'],
+            bg=self.master_bg, fg=self.notice_fg)
+        self.cycles_remain_l = tk.Label(
+            textvariable=self.share.data['cycles_remain'],
+            bg=self.master_bg, fg=self.row_fg)
+        self.num_tasks_all_l = tk.Label(
+            textvariable=self.share.data['num_tasks_all'],
+            bg=self.master_bg, fg=self.row_fg)
+        # Text for compliment_txt is configured in compliment_me()
+        self.share.compliment_txt = tk.Label(
+            fg=self.notice_fg, bg=self.master_bg,
+            relief='flat', border=0)
+        # Notice label will share grid with complement_txt to display notices.
+        self.share.notice_l = tk.Label(
+            textvariable=self.share.notice_txt,
+            fg=self.notice_fg, bg=self.master_bg, relief='flat', border=0)
+
+        self.config_master()
+        self.master_widgets()
+        # Need to set window position here (not in config_master),so it doesn't
+        #    shift when PassModeler.config_results() is called b/c different
+        #    from app position.
+        # self.master.geometry('+96+134')  # or app.geometry('+96+134')
+
+    def config_master(self) -> None:
+        """
+        Master frame configuration, keybindings, frames, and row headers.
+        """
+        # Background color of container Frame is configured in __init__
+        # OS-specific window size ranges set in Controller __init__
+        # self.master.minsize(466, 365)
+        self.master.title(GUI_TITLE)
+        # Need to color in all of master Frame, and use light grey border;
+        #    changes to near white for click-drag.
+        self.master.configure(bg=self.master_bg,
+                              highlightthickness=3,
+                              highlightcolor='grey75',
+                              highlightbackground='grey95')
+
+        # Theme controls entire window theme, but only for ttk.Style objects.
+        # Options: classic, alt, clam, default, aqua(MacOS only)
+        ttk.Style().theme_use('alt')
+
+        # Set up universal and OS-specific keybindings and menus
+        self.master.bind_all('<Escape>', self.share.quitgui)
+        cmdkey = ''
+        if MY_OS in 'lin, win':
+            cmdkey = 'Control'
+        elif MY_OS == 'dar':
+            cmdkey = 'Command'
+        self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
+        self.master.bind('<Shift-Control-C>', self.share.complimentme)
+        self.master.bind("<Control-l>", lambda q: self.show_log())
+
+        # Make data rows and columns stretch with window drag size.
+        # Don't vertically stretch separator rows.
+        rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13)
+        for _r in rows2config:
+            self.master.columnconfigure(1, weight=1)
+        self.master.columnconfigure(2, weight=1)
+
+        # Set up frame to display data. Putting frame here instead of in
+        # master_widgets gives proper alignment of row headers and data.
+        self.dataframe.configure(borderwidth=3, relief='sunken',
+                                 bg=self.data_bg)
+        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
+                            padx=(5, 10), sticky=tk.NSEW)
+        framerows = (2, 3, 4, 5, 6, 7, 8)
+        for row in framerows:
+            self.dataframe.rowconfigure(row, weight=1)
+
+        self.dataframe.columnconfigure(1, weight=1)
+        self.dataframe.columnconfigure(2, weight=1)
+
+        # Fill in headers for data rows.
+        row_header = {'Counting since': 2,
+                      'Count interval': 3,
+                      '# tasks reported': 4,
+                      'Task times:  mean': 5,
+                      'stdev': 6,
+                      'range': 7,
+                      'total': 8,
+                      'Time of last count:': 10,
+                      'Next count in:': 11,
+                      # 'Counts remaining:': 11,
+                      'Tasks in queue:': 12,
+                      'Notices:': 13
+                      }
+        for header, rownum in row_header.items():
+            tk.Label(self.master, text=f'{header}',
+                     bg=self.master_bg, fg=self.row_fg
+                     ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
+        # Need to accommodate two headers in same row.
+        tk.Label(self.master, text='Counts remaining:',
+                 bg=self.master_bg, fg=self.row_fg
+                 ).grid(row=11, column=2, sticky=tk.W)
+
+    def master_widgets(self) -> None:
+        """
+        Master frame menus, buttons, and separators.
+        """
+
+        # creating a menu instance
+        menu = tk.Menu(self.master)
+        self.master.config(menu=menu)
+
+        # Add pull-down menus
+        os_accelerator = ''
+        if MY_OS in 'lin, win':
+            os_accelerator = 'Ctrl'
+        elif MY_OS == 'dar':
+            os_accelerator = 'Command'
+        file = tk.Menu(menu, tearoff=0)
+        menu.add_cascade(label="File", menu=file)
+        file.add_command(label="Backup log file", command=self.backup_log)
+        # Update note: settings() is only run upon startup.
+        # file.add_command(label='Settings...', command=self.settings)
+        file.add_separator()
+        file.add_command(label='Quit', command=self.share.quitgui,
+                         # MacOS doesn't display this accelerator
+                         #   b/c can't override MacOS native Command+Q;
+                         #   and don't want Ctrl+Q displayed or used.
+                         accelerator=f'{os_accelerator}+Q')
+
+        view = tk.Menu(menu, tearoff=0)
+        menu.add_cascade(label="View", menu=view)
+        view.add_command(label="Log file", command=self.show_log,
+                         # MacOS: can't display Cmd+L b/c won't override native cmd.
+                         accelerator="Ctrl+L")
+        help_menu = tk.Menu(menu, tearoff=0)
+        info = tk.Menu(self.master, tearoff=0)
+        menu.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_cascade(label='Info...', menu=info)
+        info.add_command(label='- Interval and Summary data buttons'
+                               ' switch visual emphasis...')
+        info.add_command(label='    ...those buttons activate once their data post.')
+        info.add_command(label='- Number of "Tasks in queue" updates every interval.')
+        info.add_command(label='- Review count and notice history with "View log".')
+        info.add_command(label='- "Backup log file" places a copy in your Home folder.')
+
+        help_menu.add_command(label="Compliment", command=self.share.complimentme,
+                              accelerator="Ctrl+Shift+C")
+        help_menu.add_command(label="About", command=self.share.about)
+
+        # Create or configure button widgets:
+        style_button = ttk.Style(self.master)
+        style_button.configure('TButton', background='grey80', anchor='center')
+        # NOTE: Start, Interval, & Summary button attributes are in __init__.
+        viewlog_b = ttk.Button(text='View log file', command=self.show_log)
+        # quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
+
+        # For colored separators, use ttk.Frame instead of ttk.Separator.
+        # Initialize then configure style for separator color.
+        style_sep = ttk.Style(self.master)
+        style_sep.configure('TFrame', background=self.master_bg)
+        sep1 = ttk.Frame(relief="raised", height=6)
+        sep2 = ttk.Frame(relief="raised", height=6)
+
+        # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
+        # viewlog_b.grid(row=0, column=0, padx=5, pady=5)
+        viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
+        self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
+        self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
+        sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
+        # Intervening rows are gridded in display_data()
+        sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
+        # quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
+        # compliment_txt grids in "Notices": row, same position as notices_txt_l.
+        self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
+                                       padx=5, pady=5, sticky=tk.W)
+
+        # Need if condition so startup sequence isn't recalled when subsequent
+        #  Viewer methods are called; interval_t will be set, so
+        #  starting sequence will be skipped. Starting sequence:
+        #  default_settings(), settings(), check_and_set(),
+        #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
+        #  intvl_thread for M.set_interval_data().
+        # ^^^ There must be a cleaner way to structure start functions?
+        if not self.share.setting['interval_t'].get():
+            self.share.defaultsettings()
+            self.settings()
+
+    def settings(self) -> None:
+        """
+        A Toplevel window called from master_widgets() at startup.
+        Use to confirm default parameters or set new ones for count and
+        summary interval times, counting limit, and log file option.
+        """
+        # Toplevel window basics
+        # Need self. b/c window parent is used for a messagebox in check_and_set().
+        self.settings_win.title('First, set run parameters')
+        if MY_OS in 'lin, win':
+            self.settings_win.attributes('-topmost', True)
+        # In macOS, topmost places Combobox selections BEHIND the window.
+        #    So allow app window to remain topmost and offset settings_win
+        elif MY_OS == 'dar':
+            # self.settings_win.focus()
+            self.settings_win.geometry('+640+134')
+        self.settings_win.resizable(False, False)
+
+        # Colors should match those of master/parent window.
+        settings_fg = 'LightCyan2'
+        settings_bg = 'SkyBlue4'
+        self.settings_win.configure(bg=settings_bg)
+        style = ttk.Style()
+        style.configure('TLabel', background=settings_bg, foreground=settings_fg)
+
+        intvl_choice = ttk.Combobox(self.settings_win)
+        log_choice = tk.Checkbutton(self.settings_win)
+
+        # Need to disable default window Exit; only allow exit from active Confirm button.
+        # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
+        #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
+        def no_exit_on_x():
+            msg = ('Please exit window with "Return" button.\n'
+                   '"Return" is allowed once "Confirm" is clicked.')
+            messagebox.showinfo(title='Confirm before closing', detail=msg,
+                                parent=self.settings_win)
+
+        self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
+
+        # Functions for Combobox selections.
+        def set_intvl_selection(*args):
+            self.share.setting['interval_t'].set(intvl_choice.get())
+
+        def set_sumry_unit(*args):
+            self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
+
+        # Need to restrict entries to only digits,
+        #   MUST use action type parameter to allow user to delete first number
+        #   entered when wants to re-enter following backspace deletion.
+        def test_dig_entry(entry_string, action_type):
+            """
+            Only digits are accepted and displayed in Entry field.
+            Used with .register() to configure Entry kw validatecommand.
+            """
+            # source: https://stackoverflow.com/questions/4140437/
+            if action_type == '1':  # action type 1 is "insert"
+                if not entry_string.isdigit():
+                    return False
+            return True
+
+        def explain_zero_max():
+            max_label = ttk.Label(self.settings_win, foreground='orange',
+                                  text='Enter 0 for a 1-off count.')
+            max_label.grid(column=0, columnspan=3, row=4,
+                           padx=10, pady=(0, 5), sticky=tk.E)
+
+        def check_show_close():
+            """
+            Calls check_and_set(), activates or disables interval cycles,
+            closes settings window, and calls display_data().
+            Called from showdata_button.
+            """
+            # Need a final check in case something changes since initial
+            #   check_and_set().
+            self.check_and_set()
+
+            if self.share.setting['cycles_max'].get() == 0:
+                self.share.data['cycles_remain'].set(0)
+                self.share.setting['interval_t'].set('DISABLED')
+                self.share.setting['summary_t'].set('DISABLED')
+                self.share.notice_txt.set(
+                    'STATUS REPORT ONLY. (Ctrl_Shift-C clears notice.)')
+                # compliment_txt grids in same position; initial grid implementation
+                self.share.notice_l.grid(row=13, column=1, columnspan=2,
+                                         pady=5, sticky=tk.W)
+                self.display_data()
+                self.settings_win.destroy()
+            else:
+                self.display_data()
+                self.settings_win.destroy()
+
+        # Have user select interval times for counting and summary cycles.
+        intvl_choice.configure(state='readonly', width=4, height=12,
+                               textvariable=self.share.setting['interval_t'])
+
+        intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
+                                  '30m', '25m', '20m', '15m', '10m', '5m')
+        intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
+
+        intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
+        intvl_label2 = ttk.Label(self.settings_win, text='minutes')
+
+        self.sumry_t_value.configure(
+            validate='key', width=4,
+            textvariable=self.share.setting['sumry_t_value'],
+            validatecommand=(
+                self.sumry_t_value.register(test_dig_entry), '%P', '%d'))
+
+        self.sumry_t_unit.configure(state='readonly',
+                                    textvariable=self.share.setting['sumry_t_unit'],
+                                    values=('day', 'hr', 'min'), width=4)
+        self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
+
+        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
+        sumry_label2 = ttk.Label(self.settings_win, text='time unit')
+
+        # Specify number limit of counting cycles to run before program exits.
+        self.cycles_max_entry.configure(
+            validate='key', width=4,
+            textvariable=self.share.setting['cycles_max'],
+            validatecommand=(
+                self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
+
+        cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
+        # cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
+
+        cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
+                                         command=explain_zero_max)
+
+        # Need a user option to log results to file.
+        # 'do_log' value is BooleanVar() & kw "variable" automatically sets it.
+        log_choice.configure(variable=self.share.setting['do_log'],
+                             bg=settings_bg, borderwidth=0)
+        log_label = ttk.Label(self.settings_win, text='Log results to file')
+
+        confirm_button = ttk.Button(self.settings_win, text='Confirm',
+                                    command=self.check_and_set)
+
+        # Default button should display all default values in real time.
+        default_button = ttk.Button(self.settings_win, text='Use defaults',
+                                    command=self.share.defaultsettings)
+
+        self.showdata_button.configure(text='Count now',
+                                       command=check_show_close)
+        # Need to disable button to force user to first "Confirm" settings,
+        #    even when using default settings: it is a 2-click closing.
+        #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
+        self.showdata_button.config(state=tk.DISABLED)
+
+        # Grid all window widgets; sorted by row.
+        intvl_choice.grid(column=1, row=0)
+        intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
+        intvl_label2.grid(column=2, row=0, padx=5, pady=10, sticky=tk.W)
+        sumry_label1.grid(column=0, row=1, padx=(10, 5), pady=10, sticky=tk.E)
+        self.sumry_t_value.grid(column=1, row=1)
+        sumry_label2.grid(column=2, row=1, padx=5, pady=10, sticky=tk.E)
+        self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
+        if MY_OS == 'lin':
+            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
+        if MY_OS == 'win':
+            cycles_query_button.grid(column=0, row=2, padx=(60, 0), sticky=tk.W)
+        cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
+        self.cycles_max_entry.grid(column=1, row=2)
+        # cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
+        log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
+        log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
+        confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
+        default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
+        self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
+
+    def check_and_set(self):
+        """
+        Confirm that summary time > interval time, set all settings
+        from settings() to their textvariable dict values, and log to
+        file if optioned. Called from settings.close_and_show() via
+        Confirm button.
+        """
+        self.showdata_button.config(state=tk.DISABLED)
+
+        # Note: self.share.setting['interval_t'] is set in settings().
+        interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        self.share.setting['interval_m'].set(interval_m)
+        # interval_m = self.share.setting['interval_m'].get()
+
+        sumry_value = self.sumry_t_value.get()
+        self.share.setting['sumry_t_value'].set(sumry_value)
+        # if sumry_value == 0 then it is caught by interval_m comparison.
+        if not sumry_value:
+            self.share.setting['sumry_t_value'].set(1)
+        elif sumry_value != '0':
+            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
+
+        # Need to set summary_t here as concat of two sumry_t_ element strings,
+        #   then convert to minutes to use in comparisons.
+        summary_t = f"{self.share.setting['sumry_t_value'].get()}{self.sumry_t_unit.get()[:1]}"
+        self.share.setting['summary_t'].set(summary_t)
+        summary_m = int(self.share.getminutes(summary_t))
+        if interval_m >= summary_m:
+            self.showdata_button.config(state=tk.DISABLED)
+            info = "Summary time must be greater than interval time"
+            messagebox.showerror(title='Invalid entry', detail=info,
+                                 parent=self.settings_win)
+        elif interval_m < summary_m:
+            self.showdata_button.config(state=tk.NORMAL)
+
+        # Need to remove leading zeros, but allow a zero entry.
+        #   Replace empty Entry with default values.
+        cycles_max = self.cycles_max_entry.get()
+        if cycles_max == '':
+            self.share.setting['cycles_max'].set(1008)
+        elif cycles_max != '0':
+            self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
+        # Allow zero entry for 1-off status report of task data.
+        elif cycles_max == '0':
+            self.share.setting['cycles_max'].set(0)
+        # Need to set initial cycles_remain to cycles_max b/c
+        #   is decremented in notify_and_log() to track cycle number.
+        self.share.data['cycles_remain'].set(
+            self.share.setting['cycles_max'].get())
+
+    def display_data(self) -> None:
+        """
+        Config and grid data labels in master window; display start data.
+        Log data to file if optioned. Show default settings and task
+        metrics for the most recent BOINC report.
+        Called from settings.check_close_show() with 'Show data' button.
+        """
+        time_start = datetime.now().strftime(TIME_FORMAT)
+        self.share.setstartdata()
+
+        # Thread is started here b/c this method is called only once.
+        # There are no thread.join(), so use daemon.
+        if self.share.setting['cycles_max'].get() > 0:
+            self.share.intvl_thread = threading.Thread(
+                target=self.share.setintervaldata, daemon=True)
+            self.share.intvl_thread.start()
+
+        # Need to keep sumry_b button disabled until after 1st summary interval.
+        self.share.sumry_b.config(state=tk.DISABLED)
+
+        # Need self.share... whenever var is used in other MVC classes.
+        self.time_start_l.config(text=time_start)
+        self.share.data['time_prev_cnt'].set(
+            'The most recent BOINC report when program started')
+        self.interval_t_l.config(foreground=self.emphasize)
+        self.summary_t_l.config(foreground=self.deemphasize)
+        self.task_count_l.config(foreground=self.highlight)
+        # count_next Label is config __init__ and set in set_interval_time().
+        # num_tasks_all Label is config __init__ and set in set_start_data().
+        # TODO: ^^ Consider having num_tasks_all update more frequently
+        #  than interval_t; every 5 min? Work into countdown clock?
+
+        # Starting count data and times (from past boinc-client hour).
+        # Textvariables are configured in __init__; their values
+        #   (along with self.share.tt_range) are set in set_start_data()
+        #    and called via Controller setstartdata().
+        self.tt_mean_l.configure(foreground=self.highlight)
+        self.tt_sd_l.configure(foreground=self.emphasize)
+        self.tt_range_l.configure(foreground=self.emphasize)
+        self.tt_total_l.configure(foreground=self.emphasize)
+
+        self.task_count_sumry_l.configure(foreground=self.deemphasize)
+        self.ttmean_sumry_l.configure(foreground=self.deemphasize)
+        self.ttsd_sumry_l.configure(foreground=self.deemphasize)
+        self.ttrange_sumry_l.configure(foreground=self.deemphasize)
+        self.ttsum_sumry_l.configure(foreground=self.deemphasize)
+
+        # TODO: Suss why window height increases a few pixels when these are
+        #  gridded vs. initial (pre-settings()) blank no-data display.
+        #  It causes an obnoxious jump in frame/window size
+        # Initial gridding of data labels, start & intervals; sorted by row.
+        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
+                               columnspan=2)
+        self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
+        self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
+        self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
+        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
+        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
+        self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
+        self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
+        self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
+                                  columnspan=2)
+        self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
+        # Place cycles_remain value in same cell as its header, but shifted right,
+        #  b/c if instead grid in column=3, then new column added to right of dataframe.
+        self.cycles_remain_l.grid(row=11, column=2, padx=(125, 0), sticky=tk.W)
+        self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+
+        self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
+        self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
+
+        if self.share.setting['do_log'].get() == 1:
+            interval_t = self.share.setting['interval_t'].get()
+            summary_t = self.share.setting['summary_t'].get()
+            tcount_start = self.share.data['task_count'].get()
+            tt_mean = self.share.data['tt_mean'].get()
+            tt_sd = self.share.data['tt_sd'].get()
+            tt_range = self.share.data['tt_range'].get()
+            tt_total = self.share.data['tt_total'].get()
+            num_tasks_all = self.share.data['num_tasks_all'].get()
+            cycles_max = self.share.setting['cycles_max'].get()
+            if cycles_max > 0:
+                self.report = (
+                    '\n>>> TASK COUNTER START settings <<<\n'
+                    f'{time_start}; Number of tasks in the most recent BOINC report:'
+                    f' {tcount_start}\n'
+                    f'{self.indent}Task Time: mean {tt_mean},'
+                    f' range [{tt_range}],\n'
+                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
+                    f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
+                    f'{self.indent}Counts every {interval_t},'
+                    f' summaries every {summary_t}\n'
+                    f'Timed intervals beginning now...\n')
+            # Need to provide a truncated report for one-off "status" runs.
+            elif cycles_max == 0:
+                self.report = (
+                    f'\n{time_start}; STATUS REPORT\n'
+                    f'{self.indent}Number of tasks in the most recent BOINC report:'
+                    f' {tcount_start}\n'
+                    f'{self.indent}Task Time: mean {tt_mean},'
+                    f' range [{tt_range}],\n'
+                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
+        logging.info(self.report)
+
+    # Methods for buttons, menu items, keybinds.
+    def emphasize_intvl_data(self) -> None:
+        """
+        Switches font emphasis from Summary data to Interval data.
+        Called from 'Interval data' button.
+        """
+
+        self.interval_t_l.config(foreground=self.emphasize)
+        self.summary_t_l.config(foreground=self.deemphasize)
+
+        # Interval data, column1
+        self.task_count_l.configure(foreground=self.highlight)
+        self.tt_mean_l.configure(foreground=self.highlight)
+        self.tt_sd_l.configure(foreground=self.emphasize)
+        self.tt_range_l.configure(foreground=self.emphasize)
+        self.tt_total_l.configure(foreground=self.emphasize)
+
+        # Summary data, column2, deemphasize font color
+        self.task_count_sumry_l.configure(foreground=self.deemphasize)
+        self.ttmean_sumry_l.configure(foreground=self.deemphasize)
+        self.ttsd_sumry_l.configure(foreground=self.deemphasize)
+        self.ttrange_sumry_l.configure(foreground=self.deemphasize)
+        self.ttsum_sumry_l.configure(foreground=self.deemphasize)
+
+    def emphasize_sumry_data(self) -> None:
+        """
+        Switches font emphasis from Interval data to Summary data.
+        Called from 'Summary data' button.
+        """
+        self.interval_t_l.config(foreground=self.deemphasize)
+        self.summary_t_l.config(foreground=self.emphasize)
+
+        # Summary data, column2, emphasize font color
+        self.task_count_sumry_l.configure(foreground=self.highlight)
+        self.ttmean_sumry_l.configure(foreground=self.highlight)
+        self.ttsd_sumry_l.configure(foreground=self.emphasize)
+        self.ttrange_sumry_l.configure(text=self.share.data['tt_range'].get(),
+                                       foreground=self.emphasize)
+        self.ttsum_sumry_l.configure(foreground=self.emphasize)
+
+        # Interval data, column1, deemphasize font color
+        self.task_count_l.configure(foreground=self.deemphasize)
+        self.task_count_l.configure(foreground=self.deemphasize)
+        self.tt_mean_l.configure(foreground=self.deemphasize)
+        self.tt_sd_l.configure(foreground=self.deemphasize)
+        self.tt_range_l.configure(foreground=self.deemphasize)
+        self.tt_total_l.configure(foreground=self.deemphasize)
+
+    @staticmethod
+    def show_log() -> None:
+        """
+        Create a separate window to view the log file, read-only,
+        scrolled text. Called from File menu.
+        """
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 79
+        elif MY_OS == 'dar':
+            os_width = 72
+
+        try:
+            with open(LOGFILE, 'r') as file:
+                logwin = tk.Toplevel()
+                logwin.title('count-tasks_log.txt')
+                if MY_OS in 'lin, dar':
+                    logwin.minsize(665, 200)
+                elif MY_OS == 'win':
+                    logwin.minsize(800, 200)
+                logwin.focus_set()
+                logtext = ScrolledText(logwin, width=os_width, height=30,
+                                       font='TkFixedFont',
+                                       bg='grey85', relief='raised', padx=5)
+                logtext.insert(tk.INSERT, file.read())
+                logtext.see('end')
+                logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+                def reload():
+                    with open(LOGFILE, 'r') as new_text:
+                        logtext.delete(tk.INSERT, tk.END)
+                        logtext.insert(tk.INSERT, new_text.read())
+                        logtext.see('end')
+                        logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+                ttk.Button(logwin, text='Reload', command=reload).pack()
+        except FileNotFoundError:
+            warn_main = f'Log {LOGFILE} cannot be found.'
+            warn_detail = ('Log file should be in folder:\n'
+                           f'{CWD}\n'
+                           'Has it been moved or renamed?')
+            # print('\n', warn_main, warn_detail)
+            messagebox.showwarning(title='FILE NOT FOUND',
+                                   message=warn_main, detail=warn_detail)
+
+    @staticmethod
+    def backup_log() -> None:
+        """
+        Copy the log file to the home folder. Overwrites current file.
+        Called from File menu.
+
+        :return: A new or overwritten backup file.
+        """
+
+        destination = Path.home() / BKUPFILE
+        if Path.is_file(LOGFILE) is True:
+            try:
+                shutil.copyfile(LOGFILE, destination)
+                success_msg = 'Log file has been copied to: '
+                success_detail = str(destination)
+                # print(success_msg)
+                messagebox.showinfo(title='Archive completed',
+                                    message=success_msg, detail=success_detail)
+            except PermissionError:
+                print("Log file backup: Permission denied.")
+            except IsADirectoryError:
+                print("Log file backup: Destination is a directory.")
+            except shutil.SameFileError:
+                print("Log file backup: Source and destination are the same file.")
+        else:
+            warn_main = f'Log {LOGFILE} cannot be archived'
+            warn_detail = ('Log file should be in folder:\n'
+                           f'{CWD}\n'
+                           'Has it been moved or renamed?')
+            messagebox.showwarning(title='FILE NOT FOUND',
+                                   message=warn_main, detail=warn_detail)
+            # print('\n', warn_main, warn_detail)
+
+
 class CountController(tk.Tk):
     """
     The Controller through which other MVC Count Classes can interact.
@@ -1327,7 +1332,7 @@ class CountController(tk.Tk):
             self.minsize(550, 320)
             self.maxsize(780, 400)
             # Need geometry so that master window will be under settings()
-            # Toplevel window at startup.
+            # Toplevel window at startup for Windows and Linux, not MacOS.
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
@@ -1337,7 +1342,7 @@ class CountController(tk.Tk):
         elif MY_OS == 'dar':
             self.minsize(550, 350)
             self.maxsize(745, 400)
-            self.geometry('+96+134')
+            # self.geometry('+96+134')
 
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
