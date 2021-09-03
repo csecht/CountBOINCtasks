@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -531,8 +531,8 @@ class CountModeler:
             'tt_min': 'na',
             'tt_max': 'na'}
 
-    # Not the most logical place for this method, but it works well here if
-    #   need to write to the log file.
+    # Not the most logical place for this method, but it works well here when
+    #   need to write exit message to the log file.
     def quit_gui(self, event=None) -> None:
         """
         Safe and informative exit from the program.
@@ -1253,9 +1253,10 @@ class CountViewer(tk.Frame):
         try:
             with open(LOGFILE, 'r') as file:
                 logwin = tk.Toplevel()
-                logwin.title('count-tasks_log.txt')
+                # logwin.title('count-tasks_log.txt')
+                logwin.title(f'{LOGFILE}')
                 if MY_OS in 'lin, dar':
-                    logwin.minsize(665, 200)
+                    logwin.minsize(725, 200)
                 elif MY_OS == 'win':
                     logwin.minsize(800, 200)
                 logwin.focus_set()
