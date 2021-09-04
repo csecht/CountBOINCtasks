@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -56,7 +56,7 @@ except (ImportError, ModuleNotFoundError) as error:
           'Python 3.7+distributions.\n'
           'Install the most recent version or re-install Python and include Tk/Tcl.\n'
           'Python downloads are available from python.org\n'
-          'On Linux-Ubuntu you may need: sudo apt install python3-tk\n'
+          'On Linux you may just need:$ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 7):
@@ -172,18 +172,20 @@ class CountModeler:
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
 
-            # Need to sleep between counts and also display a countdown timer.
+            # Need to sleep between count cycles and display a countdown timer.
             # interval_sec = 1  # DEBUG/TESTING
-            # Limit total time of interval to actual time (Epoch seconds) b/c
-            # each sleep cycle runs a little longer than target interval.
+            # Need to limit total time of interval to actual time (Epoch seconds)
+            #   b/c each interval sleep cycle runs longer than intended interval.
+            #   Also need to compensate for additional "lag" with a correction
+            #   factor to shorten the set interval to a realized target time.
             interval_sec = interval_m * 60
-            target_sec = interval_m * 60.0
+            target_sec = interval_m * 60 * 0.9995
             clock_begin = time.time()
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
                     break
                 clock_curr = time.time()
-                if clock_curr > (clock_begin + target_sec):
+                if clock_curr >= (clock_begin + target_sec):
                     self.share.data['time_next_cnt'].set('00:00')
                     break
                 interval_sec -= 1
@@ -191,7 +193,7 @@ class CountModeler:
                 _h, _m = divmod(_m, 60)
                 time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
-                time.sleep(1.0)
+                time.sleep(1.00)
 
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
@@ -810,12 +812,12 @@ class CountViewer(tk.Frame):
         info = tk.Menu(self.master, tearoff=0)
         menu.add_cascade(label="Help", menu=help_menu)
         help_menu.add_cascade(label='Info...', menu=info)
-        info.add_command(label='- Interval and Summary data buttons'
-                               ' switch visual emphasis...')
+        info.add_command(label='- Interval and Summary data buttons switch visual emphasis...')
         info.add_command(label='    ...those buttons activate once their data post.')
-        info.add_command(label='- Number of "Tasks in queue" updates every interval.')
-        info.add_command(label='- Review count and notice history with "View log".')
-        info.add_command(label='- "Backup log file" places a copy in your Home folder.')
+        info.add_command(label='- Starting data # tasks is from the hourly BOINC report.')
+        info.add_command(label='- Number of "Tasks in queue" updates every count interval.')
+        info.add_command(label='- You can review count and notice history with "View log".')
+        info.add_command(label="- Menu: File>'Backup log file' places a copy in your Home folder.")
 
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
