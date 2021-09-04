@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -818,7 +818,8 @@ class CountViewer(tk.Frame):
         info.add_command(label='    ...those buttons activate once their data post.')
         info.add_command(label='- Starting data # tasks is from the hourly BOINC report.')
         info.add_command(label='- Number of "Tasks in queue" updates every count interval.')
-        info.add_command(label='- You can review count and notice history with "View log".')
+        info.add_command(label='- Displayed countdown clock time is approximate.')
+        info.add_command(label='- You can review count data and notice history with "View log file".')
         info.add_command(label="- Menu: File>'Backup log file' places a copy in your Home folder.")
 
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
