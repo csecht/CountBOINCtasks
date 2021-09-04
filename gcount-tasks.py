@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -345,24 +345,24 @@ class CountModeler:
             self.share.notice_txt.set(
                 'PROJECT UPDATE REQUESTED; see log file.\n'
                 '(Ctrl_Shift-C clears notice.)')
-            self.share.compliment_txt.grid_remove()  # Necessary?
+            # self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.W)
+                                     pady=(5, 0), sticky=tk.W)
         elif not self.notrunning and self.tic_nnt > 0:
             self.share.notice_txt.set(
                 f'NO TASKS reported in past {self.tic_nnt} count(s).\n'
                 '(Ctrl_Shift-C clears notice.)')
-            self.share.compliment_txt.grid_remove()  # Necessary?
+            # self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.W)
+                                     pady=(5, 0), sticky=tk.W)
         elif self.notrunning:
             self.share.notice_txt.set(
                 'NO TASKS WERE RUNNING; check BOINC Manager\n'
                 '(Ctrl_Shift-C clears notice.)')
             # Notice grids in compliment_me position.
-            self.share.compliment_txt.grid_remove()  # Necessary?
+            # self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.W)
+                                     pady=(5, 0), sticky=tk.W)
         # When things are normal, notice_txt will be removed on next interval.
         else:
             self.share.notice_l.grid_remove()  # Necessary?
@@ -371,9 +371,9 @@ class CountModeler:
             eoc_time = datetime.now().strftime(TIME_FORMAT)
             self.share.notice_txt.set(
                 f'{cycles_max} counts completed {eoc_time}')
-            self.share.compliment_txt.grid_remove()  # Necessary?
+            # self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     padx=5, pady=5, sticky=tk.W)
+                                     pady=(5, 0), sticky=tk.W)
 
         # Need to log regular intervals for the do_log option
         if self.share.setting['do_log'].get() == 1:
@@ -692,7 +692,7 @@ class CountViewer(tk.Frame):
             bg=self.master_bg, fg=self.row_fg)
         # Text for compliment_txt is configured in compliment_me()
         self.share.compliment_txt = tk.Label(
-            fg=self.notice_fg, bg=self.master_bg,
+            text=' ', fg=self.notice_fg, bg=self.master_bg,
             relief='flat', border=0)
         # Notice label will share grid with complement_txt to display notices.
         self.share.notice_l = tk.Label(
@@ -778,6 +778,11 @@ class CountViewer(tk.Frame):
         tk.Label(self.master, text='Counts remaining:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=11, column=2, sticky=tk.W)
+        # Need different padding for Notices row to minimize shifting when
+        #  complement_me() or notice_txt_l are called. Still needs work.
+        tk.Label(self.master, text='Notices:',
+                 bg=self.master_bg, fg=self.row_fg
+                 ).grid(row=13, column=0, padx=(5, 0), pady=(5, 0), sticky=tk.E)
 
     def master_widgets(self) -> None:
         """
@@ -1341,7 +1346,7 @@ class CountController(tk.Tk):
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
-            self.minsize(550, 320)
+            self.minsize(550, 330)
             self.maxsize(780, 400)
             # Need geometry so that master window will be under settings()
             # Toplevel window at startup for Windows and Linux, not MacOS.
@@ -1476,10 +1481,10 @@ class CountFyi:
         # Need to re-grid initial master_widgets gridding b/c its grid may
         #   have been removed by a notice_txt_l call.
         self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
-                                       pady=5, sticky=tk.W)
+                                       pady=(5, 0), sticky=tk.W)
 
         def refresh():
-            self.share.compliment_txt.config(text="")
+            self.share.compliment_txt.grid_remove()
             app.update_idletasks()
 
         self.share.compliment_txt.after(3000, refresh)
