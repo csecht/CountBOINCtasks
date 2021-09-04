@@ -177,7 +177,8 @@ class CountModeler:
             # Need to limit total time of interval to actual time (Epoch seconds)
             #   b/c each interval sleep cycle runs longer than intended interval.
             #   Also need to compensate for additional "lag" with a correction
-            #   factor to shorten the set interval to a realized target time.
+            #   factor to shorten the set interval to a realized target time that
+            #   is just less than maximum 60 minute interval.
             interval_sec = interval_m * 60
             target_sec = interval_m * 60 * 0.9995
             clock_begin = time.time()
@@ -198,7 +199,7 @@ class CountModeler:
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
 
-            # Best to show weekday with time.
+            # Best to show weekday with time for the interval cycle that just ended.
             self.share.data['time_prev_cnt'].set(
                 datetime.now().strftime('%A %H:%M:%S'))
 
@@ -347,7 +348,6 @@ class CountModeler:
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                      padx=5, pady=5, sticky=tk.W)
-            app.update_idletasks()
         elif not self.notrunning and self.tic_nnt > 0:
             self.share.notice_txt.set(
                 f'NO TASKS reported in past {self.tic_nnt} count(s).\n'
@@ -355,16 +355,14 @@ class CountModeler:
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                      padx=5, pady=5, sticky=tk.W)
-            app.update_idletasks()
         elif self.notrunning:
             self.share.notice_txt.set(
                 'NO TASKS WERE RUNNING; check BOINC Manager\n'
                 '(Ctrl_Shift-C clears notice.)')
-            # Notice grids in compliment_me spot; initial grid implementation
+            # Notice grids in compliment_me position.
             self.share.compliment_txt.grid_remove()  # Necessary?
             self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                      padx=5, pady=5, sticky=tk.W)
-            app.update_idletasks()
         # When things are normal, notice_txt will be removed on next interval.
         else:
             self.share.notice_l.grid_remove()  # Necessary?
@@ -379,7 +377,10 @@ class CountModeler:
 
         # Need to log regular intervals for the do_log option
         if self.share.setting['do_log'].get() == 1:
-            time_now = datetime.now().strftime(TIME_FORMAT)
+            # Recorded time of previous count:
+            time_now = self.share.data['time_prev_cnt'].get()
+            # Current time after prev count; TESTING ONLY
+            # time_now = datetime.now().strftime(TIME_FORMAT)
             interval_t = self.share.setting['interval_t'].get()
             task_count_new = self.share.data['task_count'].get()
             tt_mean = self.share.data['tt_mean'].get()
@@ -812,6 +813,7 @@ class CountViewer(tk.Frame):
         info = tk.Menu(self.master, tearoff=0)
         menu.add_cascade(label="Help", menu=help_menu)
         help_menu.add_cascade(label='Info...', menu=info)
+        info.add_command(label='- Counting will not begin until run settings are confirmed at start.')
         info.add_command(label='- Interval and Summary data buttons switch visual emphasis...')
         info.add_command(label='    ...those buttons activate once their data post.')
         info.add_command(label='- Starting data # tasks is from the hourly BOINC report.')
@@ -869,7 +871,7 @@ class CountViewer(tk.Frame):
         """
         # Toplevel window basics
         # Need self. b/c window parent is used for a messagebox in check_and_set().
-        self.settings_win.title('First, set run parameters')
+        self.settings_win.title('Set and confirm run settings')
         if MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
         # In macOS, topmost places Combobox selections BEHIND the window.
@@ -894,7 +896,7 @@ class CountViewer(tk.Frame):
         #   settings_win closes. In Linux and Windows the msg will be covered
         #   by settings_win, but it's there if user drags settings_win away.
         #   In macOS, it will be helpful b/c setting_win cannot (?) set focus.
-        self.time_start_l.configure(text='Waiting for settings...')
+        self.time_start_l.configure(text='Waiting for run settings...')
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
 
