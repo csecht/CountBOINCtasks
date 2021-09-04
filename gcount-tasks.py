@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.9'
+__version__ = '0.1.10'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -163,22 +163,22 @@ class CountModeler:
         interval_m = self.share.setting['interval_m'].get()
         # tstart = time.perf_counter()  # TESTING
         for cycle in range(cycles_max):
-            if cycle == 1:
+            if cycle == 1 or cycles_max == 1:
                 # Need to change button name and function from Start to Interval
                 #   after initial cycle[0] completes and intvl data displays.
                 #  It might be better if statement were in Viewer, but simpler
                 #  to put it here with easy reference to cycle.
-                self.share.start_b.grid_remove()
+                self.share.start_b.grid_forget()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
 
-            # Need to sleep between count cycles and display a countdown timer.
-            # interval_sec = 1  # DEBUG/TESTING
+            # Need to sleep between counts while displaying a countdown timer.
             # Need to limit total time of interval to actual time (Epoch seconds)
             #   b/c each interval sleep cycle runs longer than intended interval.
             #   Also need to compensate for additional "lag" with a correction
             #   factor to shorten the set interval to a realized target time that
             #   is just less than maximum 60 minute interval.
+            # interval_sec = 10  # DEBUG/TESTING
             interval_sec = interval_m * 60
             target_sec = interval_m * 60 * 0.9995
             clock_begin = time.time()
@@ -337,32 +337,28 @@ class CountModeler:
         # reset in set_interval_data(); proj_stalled is True when tasks
         # neither running or "downloaded" and all are "uploaded";
         #   b/c forcing a Project update may prompt the server to action.
-        # The notice_l grid overlays the complement_txt grid.
-
         cycles_max = self.share.setting['cycles_max'].get()
 
+        # The notice_l grid overlays the complement_txt grid. It is
+        #   re-gridded here in case complement_me() did a .grid_remove().
+        #   Original grid coordinates are set in master_widgets().
         if self.notrunning and self.proj_stalled:
             self.share.notice_txt.set(
                 'PROJECT UPDATE REQUESTED; see log file.\n'
-                '(Ctrl_Shift-C clears notice.)')
-            # self.share.compliment_txt.grid_remove()  # Necessary?
-            self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     pady=(5, 0), sticky=tk.W)
+                '(Ctrl-Shift-C clears notice.)')
+            self.share.notice_l.grid()
         elif not self.notrunning and self.tic_nnt > 0:
             self.share.notice_txt.set(
                 f'NO TASKS reported in past {self.tic_nnt} count(s).\n'
-                '(Ctrl_Shift-C clears notice.)')
-            # self.share.compliment_txt.grid_remove()  # Necessary?
-            self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     pady=(5, 0), sticky=tk.W)
+                '(Ctrl-Shift-C clears notice.)')
+            self.share.notice_l.grid()
+
         elif self.notrunning:
             self.share.notice_txt.set(
                 'NO TASKS WERE RUNNING; check BOINC Manager\n'
-                '(Ctrl_Shift-C clears notice.)')
-            # Notice grids in compliment_me position.
-            # self.share.compliment_txt.grid_remove()  # Necessary?
-            self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     pady=(5, 0), sticky=tk.W)
+                '(Ctrl-Shift-C clears notice.)')
+            self.share.notice_l.grid()
+
         # When things are normal, notice_txt will be removed on next interval.
         else:
             self.share.notice_l.grid_remove()  # Necessary?
@@ -371,9 +367,7 @@ class CountModeler:
             eoc_time = datetime.now().strftime(TIME_FORMAT)
             self.share.notice_txt.set(
                 f'{cycles_max} counts completed {eoc_time}')
-            # self.share.compliment_txt.grid_remove()  # Necessary?
-            self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                     pady=(5, 0), sticky=tk.W)
+            self.share.notice_l.grid()
 
         # Need to log regular intervals for the do_log option
         if self.share.setting['do_log'].get() == 1:
@@ -779,7 +773,7 @@ class CountViewer(tk.Frame):
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=11, column=2, sticky=tk.W)
         # Need different padding for Notices row to minimize shifting when
-        #  complement_me() or notice_txt_l are called. Still needs work.
+        #  complement_me() or notice_l are called. Still needs work.
         tk.Label(self.master, text='Notices:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=13, column=0, padx=(5, 0), pady=(5, 0), sticky=tk.E)
@@ -853,10 +847,11 @@ class CountViewer(tk.Frame):
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in display_data()
         sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
-        # quit_b.grid(row=13, column=2, padx=(0, 5), pady=(4, 0), sticky=tk.E)
-        # compliment_txt grids in "Notices": row, same position as notices_txt_l.
+        # compliment_txt grids in "Notices": row, same position as notices_l.
         self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
-                                       padx=5, pady=5, sticky=tk.W)
+                                       padx=5, pady=(5, 0), sticky=tk.W)
+        self.share.notice_l.grid(row=13, column=1, columnspan=2,
+                                 padx=5, pady=(5, 0), sticky=tk.W)
 
         # Need if condition so startup sequence isn't recalled when subsequent
         #  Viewer methods are called; interval_t will be set, so
@@ -959,10 +954,7 @@ class CountViewer(tk.Frame):
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.notice_txt.set(
-                    'STATUS REPORT ONLY. (Ctrl_Shift-C clears notice.)')
-                # compliment_txt grids in same position.
-                self.share.notice_l.grid(row=13, column=1, columnspan=2,
-                                         pady=5, sticky=tk.W)
+                    'STATUS REPORT ONLY.\n(Ctrl-Shift-C clears notice.)')
                 self.display_data()
                 self.settings_win.destroy()
             else:
@@ -1346,14 +1338,14 @@ class CountController(tk.Tk):
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
-            self.minsize(550, 330)
+            self.minsize(550, 340)
             self.maxsize(780, 400)
             # Need geometry so that master window will be under settings()
             # Toplevel window at startup for Windows and Linux, not MacOS.
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
-            self.minsize(500, 350)
+            self.minsize(500, 360)
             self.maxsize(702, 400)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
@@ -1479,15 +1471,17 @@ class CountFyi:
         self.share.compliment_txt.config(text=praise)
         self.share.notice_l.grid_remove()
         # Need to re-grid initial master_widgets gridding b/c its grid may
-        #   have been removed by a notice_txt_l call.
-        self.share.compliment_txt.grid(row=13, column=1, columnspan=2,
-                                       pady=(5, 0), sticky=tk.W)
+        #   have been removed by a notice_l call. Original grid coordinates
+        #   are set in master_widgets().
+        self.share.compliment_txt.grid()
 
         def refresh():
             self.share.compliment_txt.grid_remove()
+            # Re-grid notice to return to current interval notice.
+            # self.share.notice_l.grid()
             app.update_idletasks()
 
-        self.share.compliment_txt.after(3000, refresh)
+        self.share.compliment_txt.after(3333, refresh)
 
     @staticmethod
     def about() -> None:
