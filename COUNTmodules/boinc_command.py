@@ -31,7 +31,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.23'
+__version__ = '0.4.24'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -73,12 +73,14 @@ def set_boincpath() -> str:
             custom_path = input(
                 '\nboinccmd is not in its default path: '
                 f'{default_path[my_os]}\n'
-                'You may set your custom path in countCFG.txt, or you can\n'
-                '   enter your custom path here to execute boinccmd: ')
+                'You may set your custom path in countCFG.txt, enter your\n'
+                '   custom path here, or just hit enter to move on: ')
             if os.path.isfile(custom_path) is False:
-                raise OSError(f'Oops. {custom_path} will not work.\n'
+                raise OSError(f'Oops. "{custom_path}" will not work.\n'
                               'Be sure to include \\boinccmd.exe or '
-                              '/boinccmd, depending on your system.\n'
+                              '/boinccmd in the path, depending on your system.\n'
+                              'If you have not yet installed BOINC, read this:\n'
+                              'https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
                               'Try again. Exiting now...\n')
             cmd_tail = os.path.split(custom_path)[1]
             if cmd_tail not in ('boinccmd.exe', 'boinccmd'):
