@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.1.11'
+__version__ = '0.2.0'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -293,16 +293,20 @@ class CountModeler:
 
             # SUMMARY DATA ####################################################
             # NOTE: Starting data are not included in summary tabulations.
-            # TODO: Display time of last summary
+            summary_time = self.share.data['time_prev_cnt'].get()
             summary_m = self.get_minutes(self.share.setting['summary_t'].get())
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
             summary_factor = summary_m // interval_m
             if (cycle + 1) % summary_factor == 0 and self.notrunning is False:
+    
                 # Flag used in notify_and_log() for logging.
                 self.report_summary = True
                 # Need to activate disabled Summary data button now; only need
                 #  statement for 1st summary, but, oh well, here we go again...
                 self.share.sumry_b.config(state=tk.NORMAL)
+
+                # Display time of summary; gridded in same row as time prev count.
+                self.share.data['time_prev_sumry'].set(summary_time)
 
                 # Need unique tasks for stats and counting.
                 ttimes_uniq = set(self.ttimes_smry)
@@ -601,6 +605,7 @@ class CountViewer(tk.Frame):
             'time_next_cnt': tk.StringVar(),
             'num_tasks_all': tk.IntVar(),
             # Summary data
+            'time_prev_sumry': tk.StringVar(),
             'task_count_sumry': tk.IntVar(),
             'tt_mean_sumry': tk.StringVar(),
             'tt_sd_sumry': tk.StringVar(),
@@ -671,8 +676,12 @@ class CountViewer(tk.Frame):
                                         textvariable=self.share.data['tt_range_sumry'])
         self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                       textvariable=self.share.data['tt_total_sumry'])
+        # Labels in master
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
+            bg=self.master_bg, fg=self.row_fg)
+        self.time_prev_sumry_l = tk.Label(
+            textvariable=self.share.data['time_prev_sumry'],
             bg=self.master_bg, fg=self.row_fg)
         self.time_next_cnt_l = tk.Label(
             textvariable=self.share.data['time_next_cnt'],
@@ -754,20 +763,23 @@ class CountViewer(tk.Frame):
                       'stdev': 6,
                       'range': 7,
                       'total': 8,
-                      'Time of last count:': 10,
+                      'Time, last count:': 10,
                       'Next count in:': 11,
-                      # 'Counts remaining:': 11,
+                      # 'Counts remaining:': 12,
                       'Tasks in queue:': 12,
-                      'Notices:': 13
+                      # 'Notices:': 13
                       }
         for header, rownum in row_header.items():
             tk.Label(self.master, text=f'{header}',
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
-        # Need to accommodate two headers in same row.
+        # Need to accommodate instances of two headers in same rows.
+        tk.Label(self.master, text='last summary:',
+                 bg=self.master_bg, fg=self.row_fg
+                 ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
                  bg=self.master_bg, fg=self.row_fg
-                 ).grid(row=11, column=2, sticky=tk.W)
+                 ).grid(row=12, column=2, sticky=tk.W)
         # Need different padding for Notices row to minimize shifting when
         #  complement_me() or notice_l are called. Needs more work....
         tk.Label(self.master, text='Notices:',
@@ -810,9 +822,10 @@ class CountViewer(tk.Frame):
         help_menu.add_cascade(label='Info...', menu=info)
         info.add_command(label='- Counting will not begin until run settings are confirmed at start.')
         info.add_command(label='- Interval and Summary data buttons switch visual emphasis...')
-        info.add_command(label='    ...those buttons activate once their data post.')
-        info.add_command(label='- Starting "# tasks reported " is from the hourly BOINC report.')
-        info.add_command(label='- Number of "Tasks in queue" updates every count interval.')
+        info.add_command(label='     ...those buttons activate once their data post.')
+        info.add_command(label='- At startup, # tasks reported and time of last count are from the')
+        info.add_command(label='     most recent hourly BOINC report.')
+        info.add_command(label='- Number of tasks in queue updates every count interval.')
         info.add_command(label='- Displayed countdown clock time is approximate.')
         info.add_command(label='- You can review count data and Notices history with "View log file".')
         info.add_command(label="- Menu: File>'Backup log file' copies the file to your Home folder.")
@@ -1108,8 +1121,7 @@ class CountViewer(tk.Frame):
 
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=time_start)
-        self.share.data['time_prev_cnt'].set(
-            'The most recent BOINC report when program started')
+        self.share.data['time_prev_cnt'].set('Most recent BOINC report.')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.highlight)
@@ -1147,10 +1159,10 @@ class CountViewer(tk.Frame):
         self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
         self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                                   columnspan=2)
+        self.time_prev_sumry_l.grid(row=10, column=2, padx=(0, 10), sticky=tk.E)
         self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        # Place cycles_remain value in same cell as its header, but shifted right,
-        #  b/c if instead grid in column=3, then new column added to right of dataframe.
-        self.cycles_remain_l.grid(row=11, column=2, padx=(125, 0), sticky=tk.W)
+        # Place cycles_remain value in same cell as its header, but shifted right.
+        self.cycles_remain_l.grid(row=12, column=2, padx=(125, 0), sticky=tk.W)
         self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
 
         self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
@@ -1341,12 +1353,12 @@ class CountController(tk.Tk):
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
-            self.minsize(500, 360)
-            self.maxsize(702, 400)
+            self.minsize(500, 350)
+            self.maxsize(702, 420)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
-            self.minsize(550, 350)
-            self.maxsize(745, 400)
+            self.minsize(550, 360)
+            self.maxsize(745, 430)
             # self.geometry('+96+134')
 
         # pylint: disable=assignment-from-no-return
