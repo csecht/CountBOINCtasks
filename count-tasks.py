@@ -264,12 +264,10 @@ class DataIntervals:
                         logging.info(report)
 
             elif self.task_count_new > 0 and self.notrunning is False:
-                # self.tic_nnt -= self.tic_nnt
                 self.tic_nnt = 0
                 tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
                     self.task_count_new, self.ttimes_new).values()
                 report = (
-                    # f'\n{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f'{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f' {self.blue}{self.task_count_new}{self.undo_color}\n'
                     f'{self.indent}Task Time: mean {self.blue}{tt_mean}{self.undo_color},'
