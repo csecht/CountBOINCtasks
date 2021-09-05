@@ -2,9 +2,10 @@
 
 """
 CountBOINCtasks provides task counts and time statistics at timed
-intervals for tasks most recently reported to BOINC servers. This is
-a tkinter-based GUI version of count-tasks.py using a MVC architecture;
-inspiration: Brian Oakley; https://stackoverflow.com/questions/32864610/
+intervals for tasks most recently reported to BOINC servers. It can be
+run on Windows, Linux, and MocOS. It is a tkinter-based GUI version of
+count-tasks.py that uses a MVC architecture inspired by Brian Oakley at
+https://stackoverflow.com/questions/32864610/
 
     Copyright (C) 2021 C. Echt
 
@@ -764,6 +765,7 @@ class CountViewer(tk.Frame):
                       'range': 7,
                       'total': 8,
                       'Time, last count:': 10,
+                      # 'last summary:': 10,
                       'Next count in:': 11,
                       # 'Counts remaining:': 12,
                       'Tasks in queue:': 12,
@@ -862,9 +864,9 @@ class CountViewer(tk.Frame):
         self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                  padx=5, pady=(5, 0), sticky=tk.W)
 
-        # Need if condition so startup sequence isn't recalled when subsequent
-        #  Viewer methods are called; interval_t will be set, so
-        #  starting sequence will be skipped. Starting sequence:
+        # Need 'if' condition so startup sequence isn't recalled when
+        #  Viewer methods are called; when interval_t is set at startup,
+        #  subsequent starting functions will be skipped. Starting functions:
         #  default_settings(), settings(), check_and_set(),
         #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
         #  intvl_thread for M.set_interval_data().
@@ -1061,7 +1063,6 @@ class CountViewer(tk.Frame):
         # Note: self.share.setting['interval_t'] is set in settings().
         interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.setting['interval_m'].set(interval_m)
-        # interval_m = self.share.setting['interval_m'].get()
 
         sumry_value = self.sumry_t_value.get()
         self.share.setting['sumry_t_value'].set(sumry_value)
@@ -1127,13 +1128,10 @@ class CountViewer(tk.Frame):
         self.task_count_l.config(foreground=self.highlight)
         # count_next Label is config __init__ and set in set_interval_time().
         # num_tasks_all Label is config __init__ and set in set_start_data().
-        # TODO: ^^ Consider having num_tasks_all update more frequently
-        #  than interval_t; every 5 min? Work into countdown clock?
 
         # Starting count data and times (from past boinc-client hour).
         # Textvariables are configured in __init__; their values
-        #   (along with self.share.tt_range) are set in set_start_data()
-        #    and called via Controller setstartdata().
+        #   are set in set_start_data(), called via Controller setstartdata().
         self.tt_mean_l.configure(foreground=self.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
@@ -1337,6 +1335,7 @@ class CountViewer(tk.Frame):
 class CountController(tk.Tk):
     """
     The Controller through which other MVC Count Classes can interact.
+    Instantiates CountViewer() with master tk.Frame inheritance.
     """
 
     def __init__(self):
