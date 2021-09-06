@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -88,7 +88,7 @@ class CountModeler:
     def __init__(self, share):
         self.share = share
 
-        self.th_lock = threading.Lock()
+        # self.th_lock = threading.Lock()
 
         self.ttimes_smry = []
         self.count_new = None
@@ -177,8 +177,8 @@ class CountModeler:
             #   drift by more than 1 second during count_max cycles.
             # Without this time limit, each 60m interval would run ~4s longer.
             # Note: interval_sec value needs to reset each cycle.
-            # interval_sec = 10  # DEBUG/TESTING
-            interval_sec = interval_m * 60
+            interval_sec = 10  # DEBUG/TESTING
+            # interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
@@ -242,11 +242,10 @@ class CountModeler:
                         self.share.first_project = list(BC.project_url.keys())[
                             list(BC.project_url.values()).index(first_local_url)]
                         BC.project_action(self.share.first_project, 'update')
-                        # Need to provide time for BOINC Project server to respond?
-                        # The long sleep needs to suspend set_interval_data() thread;
-                        #  use threading.Lock() to suspend timer for sleep duration.(?)
-                        with self.th_lock:
-                            time.sleep(70)
+                        # Need to provide time for BOINC Project server to respond.
+                        self.share.data['time_next_cnt'].set(
+                            'BOINC Project auto-update in progress...')
+                        time.sleep(70)
 
             # NOTE: Starting tasks are not included in interval and summary
             #   counts, but starting task times are used here to evaluate
@@ -351,7 +350,7 @@ class CountModeler:
         if self.notrunning and self.proj_stalled:
             self.share.notice_txt.set(
                 'PROJECT UPDATE REQUESTED; see log file.\n'
-                '(Ctrl-Shift-C clears notice.)')
+                'Check BOINC Manager.')
             self.share.notice_l.grid()
         elif not self.notrunning and self.tic_nnt > 0:
             self.share.notice_txt.set(
@@ -402,10 +401,10 @@ class CountModeler:
                 if self.proj_stalled:
                     report = (
                         f'\n{self.interval_end_time};'
-                        f' *** PROJECT UPDATE REQUESTED for {self.share.first_project}. ***\n'
+                        f' *** PROJECT AUTO-UPDATE REQUESTED for {self.share.first_project}. ***\n'
                         'All tasks were "Ready to report" and waiting to upload.\n'
-                        'If Project auto-update is allowed, they should now be uploaded.\n'
-                        'Check BOINC Manager.')
+                        'If Project auto-update is allowed, tasks should now be uploaded.\n'
+                        'Check BOINC Manager to verify.')
                     logging.info(report)
 
             if self.tic_nnt > 0:
@@ -767,7 +766,7 @@ class CountViewer(tk.Frame):
                       'range': 7,
                       'total': 8,
                       'Time, last count:': 10,
-                      # 'last summary:': 10,
+                      # '..summary:': 10,
                       'Next count in:': 11,
                       # 'Counts remaining:': 12,
                       'Tasks in queue:': 12,
