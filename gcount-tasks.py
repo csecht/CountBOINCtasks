@@ -1060,8 +1060,8 @@ class CountViewer(tk.Frame):
             cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
         if MY_OS == 'win':
-            cycles_query_button.grid(column=0, row=2, padx=(60, 0), sticky=tk.W)
-            update_query_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
+            cycles_query_button.grid(column=0, row=2, padx=(70, 0), sticky=tk.W)
+            update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
 
     def check_and_set(self):
         """
