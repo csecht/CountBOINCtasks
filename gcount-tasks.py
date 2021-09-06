@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -626,6 +626,9 @@ class CountViewer(tk.Frame):
         self.sumry_t_unit = ttk.Combobox(self.settings_win)
         self.cycles_max_entry = ttk.Entry(self.settings_win)
         self.countnow_button = ttk.Button(self.settings_win)
+        self.intvl_choice = ttk.Combobox(self.settings_win)
+        self.log_choice = tk.Checkbutton(self.settings_win)
+        self.update_choice = tk.Checkbutton(self.settings_win)
 
         # Master window widgets:
         # Set interval & summary focus button attributes here b/c need to
@@ -917,12 +920,11 @@ class CountViewer(tk.Frame):
                    '"Count now" is allowed once "Confirm" checks settings.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
-
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
         # Functions for Combobox selections.
         def set_intvl_selection(*args):
-            self.share.setting['interval_t'].set(intvl_choice.get())
+            self.share.setting['interval_t'].set(self.intvl_choice.get())
 
         def set_sumry_unit(*args):
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
@@ -973,17 +975,15 @@ class CountViewer(tk.Frame):
                 self.display_data()
                 self.settings_win.destroy()
 
-        intvl_choice = ttk.Combobox(self.settings_win)
-        log_choice = tk.Checkbutton(self.settings_win)
-        update_choice = tk.Checkbutton(self.settings_win)
-
         # Have user select interval times for counting and summary cycles.
-        intvl_choice.configure(state='readonly', width=4, height=12,
-                               textvariable=self.share.setting['interval_t'])
+        # All interactive settings widgets are instantiated in Viewer __init__
+        #   and configured and gridded here.
+        self.intvl_choice.configure(state='readonly', width=4, height=12,
+                                    textvariable=self.share.setting['interval_t'])
 
-        intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
-                                  '30m', '25m', '20m', '15m', '10m', '5m')
-        intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
+        self.intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
+                                       '30m', '25m', '20m', '15m', '10m', '5m')
+        self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
 
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
         intvl_label2 = ttk.Label(self.settings_win, text='minutes')
@@ -1014,12 +1014,12 @@ class CountViewer(tk.Frame):
 
         # Need a user options to log results to file and use auto-updates.
         # Checkbutton() kw "variable" automatically sets values.
-        log_choice.configure(variable=self.share.setting['do_log'],
-                             bg=settings_bg, borderwidth=0)
+        self.log_choice.configure(variable=self.share.setting['do_log'],
+                                  bg=settings_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
 
-        update_choice.configure(variable=self.share.setting['do_update'],
-                                bg=settings_bg, borderwidth=0)
+        self.update_choice.configure(variable=self.share.setting['do_update'],
+                                     bg=settings_bg, borderwidth=0)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
@@ -1036,7 +1036,7 @@ class CountViewer(tk.Frame):
         self.countnow_button.config(state=tk.DISABLED)
 
         # Grid all window widgets; generally sorted by row.
-        intvl_choice.grid(column=1, row=0)
+        self.intvl_choice.grid(column=1, row=0)
         intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
         intvl_label2.grid(column=2, row=0, padx=5, pady=10, sticky=tk.W)
         sumry_label1.grid(column=0, row=1, padx=(10, 5), pady=10, sticky=tk.E)
@@ -1046,17 +1046,14 @@ class CountViewer(tk.Frame):
         cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
         self.cycles_max_entry.grid(column=1, row=2)
         log_label.grid(column=0, row=3, padx=5, pady=5, sticky=tk.E)
-        log_choice.grid(column=1, row=3, padx=0, pady=5, sticky=tk.W)
+        self.log_choice.grid(column=1, row=3, padx=0, pady=5, sticky=tk.W)
         update_label.grid(column=0, row=4, padx=5, pady=0, sticky=tk.E)
-        update_choice.grid(column=1, row=4, padx=0, pady=0, sticky=tk.W)
+        self.update_choice.grid(column=1, row=4, padx=0, pady=0, sticky=tk.W)
         confirm_button.grid(column=3, row=4, padx=10, pady=(0, 10), sticky=tk.E)
         default_button.grid(column=0, row=5, padx=10, pady=(0, 10), sticky=tk.W)
         self.countnow_button.grid(column=3, row=5, padx=10, pady=(0, 10), sticky=tk.E)
         # Need OS-specific gridding:
-        if MY_OS == 'lin':
-            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
-            update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
-        if MY_OS == 'dar':
+        if MY_OS in 'lin, dar':
             cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
         if MY_OS == 'win':
