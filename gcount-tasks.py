@@ -113,7 +113,7 @@ class CountModeler:
         self.share.setting['cycles_max'].set(1008)
         # self.share.setting['do_log'].set(1)
         self.share.setting['do_log'].set(True)
-
+        self.share.setting['do_update'].set(False)
 
     def set_start_data(self):
         """
@@ -404,8 +404,8 @@ class CountModeler:
                     report = (
                         f'\n{self.interval_end_time};'
                         f' *** PROJECT UPDATE REQUESTED for {self.share.first_project}. ***\n'
-                        'All tasks were in uploaded status and waiting to upload.\n'
-                        'Following a forced Project update they should now be uploaded f.\n'
+                        'All tasks were "Ready to report" and waiting to upload.\n'
+                        'If Project auto-update is allowed, they should now be uploaded.\n'
                         'Check BOINC Manager.')
                     logging.info(report)
 
@@ -900,10 +900,6 @@ class CountViewer(tk.Frame):
         style = ttk.Style()
         style.configure('TLabel', background=settings_bg, foreground=settings_fg)
 
-        intvl_choice = ttk.Combobox(self.settings_win)
-        log_choice = tk.Checkbutton(self.settings_win)
-        update_choice = tk.Checkbutton(self.settings_win)
-
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
         #   settings_win closes. In Linux and Windows the msg will be covered
@@ -977,6 +973,10 @@ class CountViewer(tk.Frame):
                 self.display_data()
                 self.settings_win.destroy()
 
+        intvl_choice = ttk.Combobox(self.settings_win)
+        log_choice = tk.Checkbutton(self.settings_win)
+        update_choice = tk.Checkbutton(self.settings_win)
+
         # Have user select interval times for counting and summary cycles.
         intvl_choice.configure(state='readonly', width=4, height=12,
                                textvariable=self.share.setting['interval_t'])
@@ -1012,13 +1012,12 @@ class CountViewer(tk.Frame):
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
 
-        # Need a user option to log results to file.
-        # 'do_log' value is boolean & kw "variable" automatically sets it when
-        #  it's a Checkbutton widget.
+        # Need a user options to log results to file and use auto-updates.
+        # Checkbutton() kw "variable" automatically sets values.
         log_choice.configure(variable=self.share.setting['do_log'],
                              bg=settings_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
-        
+
         update_choice.configure(variable=self.share.setting['do_update'],
                                 bg=settings_bg, borderwidth=0)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
@@ -1027,11 +1026,8 @@ class CountViewer(tk.Frame):
 
         confirm_button = ttk.Button(self.settings_win, text='Confirm',
                                     command=self.check_and_set)
-
-        # Default button should display all default values in real time.
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
-
         self.countnow_button.configure(text='Count now',
                                        command=check_show_close)
         # Need to disable button to force user to first "Confirm" settings,
@@ -1049,7 +1045,6 @@ class CountViewer(tk.Frame):
         self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
         cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
         self.cycles_max_entry.grid(column=1, row=2)
-        # cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
         log_label.grid(column=0, row=3, padx=5, pady=5, sticky=tk.E)
         log_choice.grid(column=1, row=3, padx=0, pady=5, sticky=tk.W)
         update_label.grid(column=0, row=4, padx=5, pady=0, sticky=tk.E)
