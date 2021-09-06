@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 """
-CountBOINCtasks provides task counts and time statistics at timed
-intervals for tasks most recently reported to BOINC servers. It can be
-run on Windows, Linux, and MocOS. It is a tkinter-based GUI version of
+gcount-tasks.py provides task counts and time statistics at timed
+intervals for tasks recently reported to BOINC servers. It can be run
+on Windows, Linux, and MocOS. It is a tkinter-based GUI version of
 count-tasks.py that uses a MVC architecture inspired by Brian Oakley at
 https://stackoverflow.com/questions/32864610/
+Requires Python3.6 or later with tkinter (tk/tcl) installed.
 
     Copyright (C) 2021 C. Echt
 
@@ -25,15 +26,16 @@ https://stackoverflow.com/questions/32864610/
 # ^^ Info for --about invocation argument or __doc__>>
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
-__credits__ = ['Inspired by rickslab-gpu-utils']
+__credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 2 - Beta'
 
+import argparse
 import logging
 import random
 import shutil
@@ -60,8 +62,8 @@ except (ImportError, ModuleNotFoundError) as error:
           'On Linux you may just need:$ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
-if sys.version_info < (3, 7):
-    print('Program requires Python 3.7 or later.')
+if sys.version_info < (3, 6):
+    print('Program requires Python 3.6 or later.')
     sys.exit(1)
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
@@ -177,8 +179,8 @@ class CountModeler:
             #   drift by more than 1 second during count_max cycles.
             # Without this time limit, each 60m interval would run ~4s longer.
             # Note: interval_sec value needs to reset each cycle.
-            interval_sec = 10  # DEBUG/TESTING
-            # interval_sec = interval_m * 60
+            # interval_sec = 10  # DEBUG/TESTING
+            interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
@@ -1541,14 +1543,32 @@ class CountFyi:
 
 
 if __name__ == "__main__":
-    try:
-        app = CountController()
-        app.title("Count BOINC tasks")
-        app.mainloop()
-    except KeyboardInterrupt:
-        exit_msg = (f'\n\n  *** Interrupted by user ***\n'
-                    f'  Quitting now...{datetime.now()}\n\n')
-        # sys.stdout.write(exit_msg)
-        print(exit_msg)
-        logging.info(msg=exit_msg)
-        # TODO: exception does not print on macOS. WHY?
+    # os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--about',
+                        help='Provides description, version, GNU license',
+                        action='store_true',
+                        default=False)
+    args = parser.parse_args()
+    if args.about:
+        print(__doc__)
+        print('Author:    ', __author__)
+        print('Credits:   ', __credits__)
+        print('License:   ', __license__)
+        print('URL:       ', __project_url__)
+        print('Version:   ', __version__)
+        print('Status:    ', __status__)
+        print()
+        sys.exit(0)
+    else:
+        try:
+            app = CountController()
+            app.title("Count BOINC tasks")
+            app.mainloop()
+        except KeyboardInterrupt:
+            exit_msg = (f'\n\n  *** Interrupted by user ***\n'
+                        f'  Quitting now...{datetime.now()}\n\n')
+            # sys.stdout.write(exit_msg)
+            print(exit_msg)
+            logging.info(msg=exit_msg)
+            # TODO: exception does not print on macOS. WHY?
