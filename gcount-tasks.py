@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -948,7 +948,7 @@ class CountViewer(tk.Frame):
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
         def explain_update():
-            explain = ('Allows a Project update to re-establish communication '
+            explain = ('Allows automatic Project update to re-establish communication '
                        ' with the BOINC server when no tasks are running and '
                        ' all tasks are "Ready to report" in the BOINC Manager.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
@@ -1553,3 +1553,4 @@ if __name__ == "__main__":
         # sys.stdout.write(exit_msg)
         print(exit_msg)
         logging.info(msg=exit_msg)
+        # TODO: exception does not print on macOS. WHY?
