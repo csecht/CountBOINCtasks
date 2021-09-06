@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -111,7 +111,9 @@ class CountModeler:
         self.share.setting['sumry_t_value'].set(1)
         self.share.setting['sumry_t_unit'].set('day')
         self.share.setting['cycles_max'].set(1008)
-        self.share.setting['do_log'].set(1)
+        # self.share.setting['do_log'].set(1)
+        self.share.setting['do_log'].set(True)
+
 
     def set_start_data(self):
         """
@@ -229,22 +231,23 @@ class CountModeler:
                                if tags[2] in elem]
                 if 'uploaded' in task_states and 'downloaded' not in task_states:
                     self.proj_stalled = True
-                    local_boinc_urls = BC.get_project_url()
-                    # I'm not sure how to handle multiple concurrent Projects.
-                    # If they are all stalled, then updating the first works?
-                    # B/c of how BC.project_action is structured, here I use the
-                    #  url to get the Project name ID which is used to get the
-                    #  url needed for the project cmd.  Silly, but uses
-                    #  generalized methods. Is there a better way?
-                    first_local_url = local_boinc_urls[0]
-                    self.share.first_project = list(BC.project_url.keys())[
-                        list(BC.project_url.values()).index(first_local_url)]
-                    BC.project_action(self.share.first_project, 'update')
-                    # Need to provide time for BOINC Project server to respond?
-                    # The long sleep needs to suspend set_interval_data() thread;
-                    #  use threading.Lock() to suspend timer for sleep duration.(?)
-                    with self.th_lock:
-                        time.sleep(70)
+                    if self.share.setting['do_update'].get():
+                        local_boinc_urls = BC.get_project_url()
+                        # I'm not sure how to handle multiple concurrent Projects.
+                        # If they are all stalled, then updating the first works?
+                        # B/c of how BC.project_action is structured, here I use the
+                        #  url to get the Project name ID which is used to get the
+                        #  url needed for the project cmd.  Silly, but uses
+                        #  generalized methods. Is there a better way?
+                        first_local_url = local_boinc_urls[0]
+                        self.share.first_project = list(BC.project_url.keys())[
+                            list(BC.project_url.values()).index(first_local_url)]
+                        BC.project_action(self.share.first_project, 'update')
+                        # Need to provide time for BOINC Project server to respond?
+                        # The long sleep needs to suspend set_interval_data() thread;
+                        #  use threading.Lock() to suspend timer for sleep duration.(?)
+                        with self.th_lock:
+                            time.sleep(70)
 
             # NOTE: Starting tasks are not included in interval and summary
             #   counts, but starting task times are used here to evaluate
@@ -373,7 +376,7 @@ class CountModeler:
             self.share.notice_l.grid()
 
         # Need to log regular intervals for the do_log option
-        if self.share.setting['do_log'].get() == 1:
+        if self.share.setting['do_log'].get():
             interval_t = self.share.setting['interval_t'].get()
             task_count_new = self.share.data['task_count'].get()
             tt_mean = self.share.data['tt_mean'].get()
@@ -540,7 +543,7 @@ class CountModeler:
         time_now = datetime.now().strftime(TIME_FORMAT)
         quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
         print(quit_msg)
-        if self.share.setting['do_log'].get() == 1:
+        if self.share.setting['do_log'].get():
             logging.info(quit_msg)
         app.destroy()
         sys.exit(0)
@@ -585,7 +588,8 @@ class CountViewer(tk.Frame):
             'sumry_t_unit': tk.StringVar(),
             'summary_t': tk.StringVar(),
             'cycles_max': tk.IntVar(),
-            'do_log': tk.IntVar()
+            'do_log': tk.BooleanVar(),
+            'do_update': tk.BooleanVar()
         }
 
         # Common data var for display; passed between Viewer and Modeler
@@ -621,7 +625,7 @@ class CountViewer(tk.Frame):
         self.sumry_t_value = ttk.Entry(self.settings_win)
         self.sumry_t_unit = ttk.Combobox(self.settings_win)
         self.cycles_max_entry = ttk.Entry(self.settings_win)
-        self.showdata_button = ttk.Button(self.settings_win)
+        self.countnow_button = ttk.Button(self.settings_win)
 
         # Master window widgets:
         # Set interval & summary focus button attributes here b/c need to
@@ -898,7 +902,7 @@ class CountViewer(tk.Frame):
 
         intvl_choice = ttk.Combobox(self.settings_win)
         log_choice = tk.Checkbutton(self.settings_win)
-        susp_choice = tk.Checkbutton(self.settings_win)
+        update_choice = tk.Checkbutton(self.settings_win)
 
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
@@ -942,16 +946,20 @@ class CountViewer(tk.Frame):
             return True
 
         def explain_zero_max():
-            max_label = ttk.Label(self.settings_win, foreground='orange',
-                                  text='Enter 0 for a 1-off count.')
-            max_label.grid(column=0, columnspan=3, row=4,
-                           padx=10, pady=(0, 5), sticky=tk.E)
+            explain = 'Enter 0 (zero) for a status report.'
+            messagebox.showinfo(parent=self.settings_win, detail=explain)
+
+        def explain_update():
+            explain = ('Allows a Project update to re-establish communication '
+                       ' with the BOINC server when no tasks are running and '
+                       ' all tasks are "Ready to report" in the BOINC Manager.')
+            messagebox.showinfo(parent=self.settings_win, detail=explain)
 
         def check_show_close():
             """
             Calls check_and_set(), activates or disables interval cycles,
             closes settings window, and calls display_data().
-            Called from showdata_button.
+            Called from countnow_button.
             """
             # Need a final check in case something changes since initial
             #   check_and_set().
@@ -1000,18 +1008,22 @@ class CountViewer(tk.Frame):
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
                 self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
-
         cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
-        # cycles_label2 = ttk.Label(self.settings_win, text='default 1008')
-
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
 
         # Need a user option to log results to file.
-        # 'do_log' value is 0 or 1 & kw "variable" automatically sets it.
+        # 'do_log' value is boolean & kw "variable" automatically sets it when
+        #  it's a Checkbutton widget.
         log_choice.configure(variable=self.share.setting['do_log'],
                              bg=settings_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
+        
+        update_choice.configure(variable=self.share.setting['do_update'],
+                                bg=settings_bg, borderwidth=0)
+        update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
+        update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
+                                      command=explain_update)
 
         confirm_button = ttk.Button(self.settings_win, text='Confirm',
                                     command=self.check_and_set)
@@ -1020,14 +1032,14 @@ class CountViewer(tk.Frame):
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
 
-        self.showdata_button.configure(text='Count now',
+        self.countnow_button.configure(text='Count now',
                                        command=check_show_close)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
         #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
-        self.showdata_button.config(state=tk.DISABLED)
+        self.countnow_button.config(state=tk.DISABLED)
 
-        # Grid all window widgets; sorted by row.
+        # Grid all window widgets; generally sorted by row.
         intvl_choice.grid(column=1, row=0)
         intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
         intvl_label2.grid(column=2, row=0, padx=5, pady=10, sticky=tk.W)
@@ -1035,18 +1047,26 @@ class CountViewer(tk.Frame):
         self.sumry_t_value.grid(column=1, row=1)
         sumry_label2.grid(column=2, row=1, padx=5, pady=10, sticky=tk.E)
         self.sumry_t_unit.grid(column=3, row=1, padx=5, pady=10, sticky=tk.W)
-        if MY_OS == 'lin':
-            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
-        if MY_OS == 'win':
-            cycles_query_button.grid(column=0, row=2, padx=(60, 0), sticky=tk.W)
         cycles_label1.grid(column=0, row=2, padx=5, pady=10, sticky=tk.E)
         self.cycles_max_entry.grid(column=1, row=2)
         # cycles_label2.grid(column=2, row=2, padx=5, pady=10, sticky=tk.W)
-        log_label.grid(column=0, row=3, padx=5, pady=10, sticky=tk.E)
-        log_choice.grid(column=1, row=3, padx=0, sticky=tk.W)
-        confirm_button.grid(column=3, row=3, padx=10, pady=10, sticky=tk.E)
-        default_button.grid(column=0, row=4, padx=10, pady=(0, 5), sticky=tk.W)
-        self.showdata_button.grid(column=3, row=4, padx=10, pady=(0, 5), sticky=tk.E)
+        log_label.grid(column=0, row=3, padx=5, pady=5, sticky=tk.E)
+        log_choice.grid(column=1, row=3, padx=0, pady=5, sticky=tk.W)
+        update_label.grid(column=0, row=4, padx=5, pady=0, sticky=tk.E)
+        update_choice.grid(column=1, row=4, padx=0, pady=0, sticky=tk.W)
+        confirm_button.grid(column=3, row=4, padx=10, pady=(0, 10), sticky=tk.E)
+        default_button.grid(column=0, row=5, padx=10, pady=(0, 10), sticky=tk.W)
+        self.countnow_button.grid(column=3, row=5, padx=10, pady=(0, 10), sticky=tk.E)
+        # Need OS-specific gridding:
+        if MY_OS == 'lin':
+            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
+            update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+        if MY_OS == 'dar':
+            cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
+            update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+        if MY_OS == 'win':
+            cycles_query_button.grid(column=0, row=2, padx=(60, 0), sticky=tk.W)
+            update_query_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
 
     def check_and_set(self):
         """
@@ -1055,7 +1075,7 @@ class CountViewer(tk.Frame):
         file if optioned. Called from settings.close_and_show() via
         Confirm button.
         """
-        self.showdata_button.config(state=tk.DISABLED)
+        self.countnow_button.config(state=tk.DISABLED)
 
         # Note: self.share.setting['interval_t'] is set in settings().
         interval_m = int(self.share.setting['interval_t'].get()[:-1])
@@ -1075,12 +1095,12 @@ class CountViewer(tk.Frame):
         self.share.setting['summary_t'].set(summary_t)
         summary_m = int(self.share.getminutes(summary_t))
         if interval_m >= summary_m:
-            self.showdata_button.config(state=tk.DISABLED)
+            self.countnow_button.config(state=tk.DISABLED)
             info = "Summary time must be greater than interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
         elif interval_m < summary_m:
-            self.showdata_button.config(state=tk.NORMAL)
+            self.countnow_button.config(state=tk.NORMAL)
 
         # Need to remove leading zeros, but allow a zero entry.
         #   Replace empty Entry with default values.
@@ -1100,7 +1120,7 @@ class CountViewer(tk.Frame):
 
         # Here logging is lazily employed to manage the file of report data.
         # A log file will be created only if so optioned.
-        if self.share.setting['do_log'].get() == 1:
+        if self.share.setting['do_log'].get():
             logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                                 format='%(message)s')
 
@@ -1173,7 +1193,7 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
 
-        if self.share.setting['do_log'].get() == 1:
+        if self.share.setting['do_log'].get():
             interval_t = self.share.setting['interval_t'].get()
             summary_t = self.share.setting['summary_t'].get()
             tcount_start = self.share.data['task_count'].get()
@@ -1183,6 +1203,7 @@ class CountViewer(tk.Frame):
             tt_total = self.share.data['tt_total'].get()
             num_tasks_all = self.share.data['num_tasks_all'].get()
             cycles_max = self.share.setting['cycles_max'].get()
+            auto_update = self.share.setting['do_update'].get()
             if cycles_max > 0:
                 self.report = (
                     '\n>>> GUI TASK COUNTER START: settings... <<<\n'
@@ -1195,6 +1216,7 @@ class CountViewer(tk.Frame):
                     f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
                     f'{self.indent}Counts every {interval_t},'
                     f' summaries every {summary_t}\n'
+                    f'{self.indent}Project auto-update is set: {auto_update}\n'
                     f'Timed intervals beginning now...\n')
             # Need to provide a truncated report for one-off "status" runs.
             elif cycles_max == 0:
@@ -1357,7 +1379,7 @@ class CountController(tk.Tk):
             self.geometry('+96+134')
         elif MY_OS == 'win':
             self.minsize(500, 350)
-            self.maxsize(702, 420)
+            self.maxsize(720, 420)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
             self.minsize(550, 360)
