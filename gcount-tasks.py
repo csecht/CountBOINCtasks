@@ -70,10 +70,9 @@ MY_OS = sys.platform[:3]
 TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
 BC = boinc_command.BoincCommand()
 # Log file should be in the CountBOINCtasks-master folder.
-# LOGFILE = Path('../count-tasks_log.txt')
 LOGFILE = Path('count-tasks_log.txt')
+BKUPFILE = Path('count-tasks_log(copy).txt')
 CWD = Path.cwd()
-BKUPFILE = 'count-tasks_log(copy).txt'
 # GUI_TITLE = __file__  # <- for development
 GUI_TITLE = 'BOINC task counter'
 
@@ -198,7 +197,7 @@ class CountModeler:
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
 
-            # Display weekday with ending time of interval sleep cycle.
+            # Display short weekday with time of previous summary interval.
             self.share.data['time_prev_cnt'].set(
                 datetime.now().strftime('%a %H:%M:%S'))
             # Define full ending time here, instead of in notify_and_log(),
@@ -779,7 +778,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same rows.
-        tk.Label(self.master, text='last Summary:',
+        tk.Label(self.master, text='last summary:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
