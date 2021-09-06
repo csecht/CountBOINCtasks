@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils']
 __license__ = 'GNU General Public License'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -74,10 +74,6 @@ CWD = Path.cwd()
 BKUPFILE = 'count-tasks_log(copy).txt'
 # GUI_TITLE = __file__  # <- for development
 GUI_TITLE = 'BOINC task counter'
-
-# Here logging is lazily employed to manage the file of report data.
-logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
-                    format='%(message)s')
 
 # Use this for a clean exit from Terminal; bypasses __name__ KeyInterrupt msg.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -575,7 +571,7 @@ class CountViewer(tk.Frame):
         self.deemphasize = 'grey60'
 
         # Log text formatting vars:
-        self.report = 'none'
+        self.report = ''
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
 
@@ -902,6 +898,7 @@ class CountViewer(tk.Frame):
 
         intvl_choice = ttk.Combobox(self.settings_win)
         log_choice = tk.Checkbutton(self.settings_win)
+        susp_choice = tk.Checkbutton(self.settings_win)
 
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
@@ -1011,7 +1008,7 @@ class CountViewer(tk.Frame):
                                          command=explain_zero_max)
 
         # Need a user option to log results to file.
-        # 'do_log' value is BooleanVar() & kw "variable" automatically sets it.
+        # 'do_log' value is 0 or 1 & kw "variable" automatically sets it.
         log_choice.configure(variable=self.share.setting['do_log'],
                              bg=settings_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
@@ -1095,10 +1092,17 @@ class CountViewer(tk.Frame):
         # Allow zero entry for 1-off status report of task data.
         elif cycles_max == '0':
             self.share.setting['cycles_max'].set(0)
+
         # Need to set initial cycles_remain to cycles_max b/c
         #   is decremented in notify_and_log() to track cycle number.
         self.share.data['cycles_remain'].set(
             self.share.setting['cycles_max'].get())
+
+        # Here logging is lazily employed to manage the file of report data.
+        # A log file will be created only if so optioned.
+        if self.share.setting['do_log'].get() == 1:
+            logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
+                                format='%(message)s')
 
     def display_data(self) -> None:
         """
