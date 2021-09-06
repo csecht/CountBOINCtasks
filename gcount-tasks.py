@@ -200,7 +200,7 @@ class CountModeler:
 
             # Display weekday with ending time of interval sleep cycle.
             self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%A %H:%M:%S'))
+                datetime.now().strftime('%a %H:%M:%S'))
             # Define full ending time here, instead of in notify_and_log(),
             #   so that the logged time matches displayed time.
             self.interval_end_time = datetime.now().strftime(TIME_FORMAT)
@@ -779,7 +779,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same rows.
-        tk.Label(self.master, text='..summary:',
+        tk.Label(self.master, text='last Summary:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',

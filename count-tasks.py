@@ -516,10 +516,6 @@ if __name__ == '__main__':
                              ' (default: %(default)s)',
                         default='yes',
                         choices=['yes', 'no'])
-    # parser.add_argument('--gui',
-    #                     help='Show data in interactive graphics window.',
-    #                     action='store_true',
-    #                     default=True)
     parser.add_argument('--interval',
                         help='Specify minutes between task counts'
                              ' (default: %(default)d)',
