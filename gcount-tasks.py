@@ -111,7 +111,6 @@ class CountModeler:
         self.share.setting['sumry_t_value'].set(1)
         self.share.setting['sumry_t_unit'].set('day')
         self.share.setting['cycles_max'].set(1008)
-        # self.share.setting['do_log'].set(1)
         self.share.setting['do_log'].set(True)
         self.share.setting['do_update'].set(False)
 
@@ -779,7 +778,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same rows.
-        tk.Label(self.master, text='last summary:',
+        tk.Label(self.master, text='..summary:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
