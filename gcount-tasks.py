@@ -1138,7 +1138,7 @@ class CountViewer(tk.Frame):
 
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=time_start)
-        self.share.data['time_prev_cnt'].set('The most recent BOINC report.')
+        self.share.data['time_prev_cnt'].set('The recent BOINC report.')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.highlight)
