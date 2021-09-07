@@ -51,7 +51,6 @@ from COUNTmodules import boinc_command
 
 try:
     import tkinter as tk
-    import tkinter.font
     from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
@@ -169,7 +168,7 @@ class CountModeler:
                 self.share.start_b.grid_forget()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
-    
+
             # Need to sleep between counts while displaying a countdown timer.
             # Need to limit total time of interval to target_elapsed_time,
             #   in Epoch seconds, b/c each interval sleep cycle will run longer
@@ -298,7 +297,7 @@ class CountModeler:
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
             summary_factor = summary_m // interval_m
             if (cycle + 1) % summary_factor == 0 and self.notrunning is False:
-    
+
                 # Flag used in notify_and_log() for logging.
                 self.report_summary = True
                 # Need to activate disabled Summary data button now; only need
@@ -895,12 +894,10 @@ class CountViewer(tk.Frame):
             self.settings_win.geometry('+640+134')
         self.settings_win.resizable(False, False)
 
-        # Colors should match those of master/parent window.
-        settings_fg = 'LightCyan2'
-        settings_bg = 'SkyBlue4'
-        self.settings_win.configure(bg=settings_bg)
+        # Colors match those of master/parent window.
+        self.settings_win.configure(bg=self.master_bg)
         style = ttk.Style()
-        style.configure('TLabel', background=settings_bg, foreground=settings_fg)
+        style.configure('TLabel', background=self.master_bg, foreground=self.row_fg)
 
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
@@ -1014,11 +1011,11 @@ class CountViewer(tk.Frame):
         # Need a user options to log results to file and use auto-updates.
         # Checkbutton() kw "variable" automatically sets values.
         self.log_choice.configure(variable=self.share.setting['do_log'],
-                                  bg=settings_bg, borderwidth=0)
+                                  bg=self.master_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
 
         self.update_choice.configure(variable=self.share.setting['do_update'],
-                                     bg=settings_bg, borderwidth=0)
+                                     bg=self.master_bg, borderwidth=0)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
@@ -1315,9 +1312,9 @@ class CountViewer(tk.Frame):
                     # source: https://stackoverflow.com/questions/2769061/
                     # how-to-erase-the-file-contents-of-text-file-in-python
                     if okay:
-                        logfile = open(LOGFILE, 'r+')
-                        logfile.truncate(0)
-                        logfile.seek(0)
+                        with open(LOGFILE, 'r+') as logfile:
+                            logfile.truncate(0)
+                            logfile.seek(0)
                         # Need to clear the screen text as well.
                         logtext.delete('1.0', tk.END)
 
