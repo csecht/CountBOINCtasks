@@ -1313,7 +1313,7 @@ class CountViewer(tk.Frame):
                         parent=logwin,
                         title='Confirmation needed',
                         message='Delete log history?',
-                        detail="'Enter' or spacebar will delete.")
+                        detail="'Enter' or spacebar will also delete log file content.")
                     # source: https://stackoverflow.com/questions/2769061/
                     # how-to-erase-the-file-contents-of-text-file-in-python
                     if answer:
