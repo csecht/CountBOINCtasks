@@ -84,13 +84,11 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 # The engine that gets BOINC data and runs timed data counts.
 class CountModeler:
     """
-    Counting, stat analysis, and formatting of BOINC task data.
+    Counting, statistical analysis, and formatting of BOINC task data.
     """
 
     def __init__(self, share):
         self.share = share
-
-        # self.th_lock = threading.Lock()
 
         self.ttimes_smry = []
         self.count_new = None
@@ -1309,18 +1307,19 @@ class CountViewer(tk.Frame):
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
                 def erase():
-                    answer = messagebox.askokcancel(
+                    okay = messagebox.askokcancel(
                         parent=logwin,
                         title='Confirmation needed',
-                        message='Delete log history?',
+                        message='Delete log file content?',
                         detail="'Enter' or spacebar will also delete log file content.")
                     # source: https://stackoverflow.com/questions/2769061/
                     # how-to-erase-the-file-contents-of-text-file-in-python
-                    if answer:
+                    if okay:
                         logfile = open(LOGFILE, 'r+')
                         logfile.truncate(0)
                         logfile.seek(0)
-                        logtext.delete('1.0', tk.END)  # clear the screen text.
+                        # Need to clear the screen text as well.
+                        logtext.delete('1.0', tk.END)
 
                 ttk.Button(logwin, text='Reload', command=reload).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
