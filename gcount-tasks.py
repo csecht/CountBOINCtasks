@@ -67,7 +67,7 @@ if sys.version_info < (3, 6):
     sys.exit(1)
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
-TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
+TIME_FORMAT = '%Y-%b-%d %H:%M'
 BC = boinc_command.BoincCommand()
 # Log file should be in the CountBOINCtasks-master folder.
 LOGFILE = Path('count-tasks_log.txt')
