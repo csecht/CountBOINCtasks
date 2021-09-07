@@ -767,7 +767,7 @@ class CountViewer(tk.Frame):
                       'stdev': 6,
                       'range': 7,
                       'total': 8,
-                      'Time, last count:': 10,
+                      'Time, prior count:': 10,
                       # '..summary:': 10,
                       'Next count in:': 11,
                       # 'Counts remaining:': 12,
@@ -779,7 +779,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same rows.
-        tk.Label(self.master, text='last summary:',
+        tk.Label(self.master, text='prior summary:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
