@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.2.6'
+__version__ = '0.2.8'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -67,7 +67,8 @@ if sys.version_info < (3, 6):
     sys.exit(1)
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
-TIME_FORMAT = '%Y-%b-%d %H:%M'
+SHORT_TIME_FORMAT = '%Y-%b-%d %H:%M'
+LONG_TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
 BC = boinc_command.BoincCommand()
 # Log file should be in the CountBOINCtasks-master folder.
 LOGFILE = Path('count-tasks_log.txt')
@@ -197,13 +198,14 @@ class CountModeler:
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
 
-            # Display weekday with time of previous interval.
+            # Display weekday with short time of previous interval to remove
+            #   ambiguity for user.
             self.share.data['time_prev_cnt'].set(
                 datetime.now().strftime('%A %H:%M'))
 
             # Define full ending time here, instead of in notify_and_log(),
             #   so that the logged time matches displayed time.
-            self.interval_end_time = datetime.now().strftime(TIME_FORMAT)
+            self.interval_end_time = datetime.now().strftime(LONG_TIME_FORMAT)
 
             # Do one boinccmd call then parse tagged data from all
             # task data, instead of multiple BC.get_tasks() calls.
@@ -412,7 +414,7 @@ class CountModeler:
             if self.tic_nnt > 0:
                 report = (f'{self.interval_end_time}: NO TASKS reported in the past'
                           f' {self.tic_nnt} count(s).\n'
-                          f'{cycles_remain} counts remaining until exit.')
+                          f'{self.indent}{cycles_remain} counts remain until exit.')
                 logging.info(report)
 
             # This tic condition the same as: task_count_new > 0 and
@@ -540,7 +542,7 @@ class CountModeler:
         :param event: Needed for keybindings.
         :type event: Direct call from keybindings.
         """
-        time_now = datetime.now().strftime(TIME_FORMAT)
+        time_now = datetime.now().strftime(LONG_TIME_FORMAT)
         quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
         print(quit_msg)
         if self.share.setting['do_log'].get():
@@ -732,7 +734,7 @@ class CountViewer(tk.Frame):
             cmdkey = 'Command'
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", lambda q: self.show_log())
+        self.master.bind("<Control-l>", lambda q: self.view_log())
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -817,7 +819,7 @@ class CountViewer(tk.Frame):
 
         view = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="View", menu=view)
-        view.add_command(label="Log file", command=self.show_log,
+        view.add_command(label="Log file", command=self.view_log,
                          # MacOS: can't display Cmd+L b/c won't override native cmd.
                          accelerator="Ctrl+L")
         help_menu = tk.Menu(menu, tearoff=0)
@@ -842,7 +844,7 @@ class CountViewer(tk.Frame):
         style_button = ttk.Style(self.master)
         style_button.configure('TButton', background='grey80', anchor='center')
         # NOTE: Start, Interval, & Summary button attributes are in __init__.
-        viewlog_b = ttk.Button(text='View log file', command=self.show_log)
+        viewlog_b = ttk.Button(text='View log file', command=self.view_log)
         # quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
@@ -1122,7 +1124,8 @@ class CountViewer(tk.Frame):
         metrics for the most recent BOINC report.
         Called from settings.check_close_show() with 'Show data' button.
         """
-        time_start = datetime.now().strftime(TIME_FORMAT)
+        time_start = datetime.now().strftime(SHORT_TIME_FORMAT)
+        long_time_start = datetime.now().strftime(LONG_TIME_FORMAT)
         self.share.setstartdata()
 
         # Thread is started here b/c this method is called only once.
@@ -1198,7 +1201,7 @@ class CountViewer(tk.Frame):
             if cycles_max > 0:
                 self.report = (
                     '\n>>> GUI TASK COUNTER START: settings... <<<\n'
-                    f'{time_start}; Number of tasks in the most recent BOINC report:'
+                    f'{long_time_start}; Number of tasks in the most recent BOINC report:'
                     f' {tcount_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
                     f' range [{tt_range}],\n'
@@ -1212,7 +1215,7 @@ class CountViewer(tk.Frame):
             # Need to provide a truncated report for one-off "status" runs.
             elif cycles_max == 0:
                 self.report = (
-                    f'\n{time_start}; STATUS REPORT\n'
+                    f'\n{long_time_start}; STATUS REPORT\n'
                     f'{self.indent}Number of tasks in the most recent BOINC report:'
                     f' {tcount_start}\n'
                     f'{self.indent}Task Time: mean {tt_mean},'
@@ -1270,7 +1273,7 @@ class CountViewer(tk.Frame):
         self.tt_total_l.configure(foreground=self.deemphasize)
 
     @staticmethod
-    def show_log() -> None:
+    def view_log() -> None:
         """
         Create a separate window to view the log file, read-only,
         scrolled text. Called from File menu.
@@ -1299,13 +1302,29 @@ class CountViewer(tk.Frame):
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
                 def reload():
-                    with open(LOGFILE, 'r') as new_text:
-                        logtext.delete(tk.INSERT, tk.END)
-                        logtext.insert(tk.INSERT, new_text.read())
-                        logtext.see('end')
+                    with open(LOGFILE) as new_text:
+                        logtext.delete('1.0', tk.END)
+                        logtext.insert('1.0', new_text.read())
+                        logtext.see(tk.END)
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
+                def erase():
+                    answer = messagebox.askokcancel(
+                        parent=logwin,
+                        title='Confirmation needed',
+                        message='Delete log history?',
+                        detail="'Enter' or spacebar will delete.")
+                    # source: https://stackoverflow.com/questions/2769061/
+                    # how-to-erase-the-file-contents-of-text-file-in-python
+                    if answer:
+                        logfile = open(LOGFILE, 'r+')
+                        logfile.truncate(0)
+                        logfile.seek(0)
+                        logtext.delete('1.0', tk.END)  # clear the screen text.
+
                 ttk.Button(logwin, text='Reload', command=reload).pack()
+                ttk.Button(logwin, text='Erase', command=erase).pack()
+
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} cannot be found.'
             warn_detail = ('Log file should be in folder:\n'
