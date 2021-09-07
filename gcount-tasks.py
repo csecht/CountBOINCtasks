@@ -555,7 +555,6 @@ class CountViewer(tk.Frame):
     The Viewer communicates with Modeler via 'share' objects handled
     through the Controller class. All GUI widgets go here.
     """
-    print('gcount-tasks now running...')
 
     def __init__(self, master, share):
         super().__init__(master)
@@ -650,10 +649,10 @@ class CountViewer(tk.Frame):
         #   gridded in settings() to show a startup message, then reconfigured
         #   in display_data() for the time_start.
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg, fg='grey90')
-        self.interval_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
+        self.interval_t_l = tk.Label(self.dataframe, width=21, borderwidth=2,
                                      textvariable=self.share.setting['interval_t'],
                                      relief='groove', bg=self.data_bg)
-        self.summary_t_l = tk.Label(self.dataframe, width=20, borderwidth=2,
+        self.summary_t_l = tk.Label(self.dataframe, width=21, borderwidth=2,
                                     textvariable=self.share.setting['summary_t'],
                                     relief='groove', bg=self.data_bg)
         self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
@@ -1363,20 +1362,19 @@ class CountController(tk.Tk):
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
-            self.minsize(550, 340)
-            self.maxsize(780, 400)
+            self.minsize(550, 360)
+            self.maxsize(780, 380)
             # Need geometry so that master window will be under settings()
-            # Toplevel window at startup for Windows and Linux, not MacOS.
+            #   Toplevel window at startup for Windows and Linux, but not MacOS.
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
             self.minsize(500, 350)
-            self.maxsize(720, 420)
+            self.maxsize(700, 420)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
             self.minsize(550, 360)
-            self.maxsize(745, 430)
-            # self.geometry('+96+134')
+            self.maxsize(745, 400)
 
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
@@ -1564,6 +1562,7 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title("Count BOINC tasks")
+            print('gcount-tasks now running...')
             app.mainloop()
         except KeyboardInterrupt:
             exit_msg = (f'\n\n  *** Interrupted by user ***\n'
