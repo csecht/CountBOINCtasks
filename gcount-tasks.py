@@ -197,9 +197,10 @@ class CountModeler:
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
 
-            # Display short weekday with time of previous summary interval.
+            # Display weekday with time of previous interval.
             self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%a %H:%M:%S'))
+                datetime.now().strftime('%A %H:%M'))
+
             # Define full ending time here, instead of in notify_and_log(),
             #   so that the logged time matches displayed time.
             self.interval_end_time = datetime.now().strftime(TIME_FORMAT)
@@ -1137,7 +1138,7 @@ class CountViewer(tk.Frame):
 
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=time_start)
-        self.share.data['time_prev_cnt'].set('Most recent BOINC report.')
+        self.share.data['time_prev_cnt'].set('The most recent BOINC report.')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.highlight)
