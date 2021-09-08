@@ -99,10 +99,11 @@ TIP: To get only the most recent task count and time metrics without
 Download and run as described under Usage, but launch the program with these Terminal 
 commands:
 <ul>
-<li>for Linux or Mac OS: ./count-tasks.py</li>
+<li>for Linux or Mac OS: ./count-tasks.py </li>
 <li>for Windows: python count-tasks.py</li>
 </ul>
-The graphical version does not yet accept command line options.
+
+For a brief description and version number, use the `--about` command line option.
 
 ![gcount-tasks](gcount-tasks_scrnshot.png)
 
@@ -128,6 +129,5 @@ The process of opening apps from unrecognized Apple developers can be somewhat s
   figure out the new path. (Any help would be appreciated.) As a work-around, 
   if you archived a prior BOINC package, you can copy the boinccmd 
   executable file into the default location: 
-  Users/<you>/Application Support/BOINC/ , or follow the 
-  prompts to enter a custom path to boinccmd (assuming you have figured 
-  that out!)
+  Users/<you>/Application Support/BOINC/ , or follow the prompts from the 
+  count-tasks.py Terminal command to enter a custom path to the boinccmd program.
