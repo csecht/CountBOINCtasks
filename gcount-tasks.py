@@ -1285,7 +1285,7 @@ class CountViewer(tk.Frame):
             os_width = 72
 
         try:
-            with open(LOGFILE, 'r') as file:
+            with open(LOGFILE, 'r') as logfile:
                 logwin = tk.Toplevel()
                 # logwin.title('count-tasks_log.txt')
                 logwin.title(f'{LOGFILE}')
@@ -1297,7 +1297,7 @@ class CountViewer(tk.Frame):
                 logtext = ScrolledText(logwin, width=os_width, height=30,
                                        font='TkFixedFont',
                                        bg='grey85', relief='raised', padx=5)
-                logtext.insert(tk.INSERT, file.read())
+                logtext.insert(tk.INSERT, logfile.read())
                 logtext.see('end')
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
@@ -1309,18 +1309,19 @@ class CountViewer(tk.Frame):
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
                 def erase():
-                    answer = messagebox.askokcancel(
+                    okay = messagebox.askokcancel(
                         parent=logwin,
                         title='Confirmation needed',
-                        message='Delete log history?',
+                        message='Delete log file content?',
                         detail="'Enter' or spacebar will also delete log file content.")
                     # source: https://stackoverflow.com/questions/2769061/
                     # how-to-erase-the-file-contents-of-text-file-in-python
-                    if answer:
-                        logfile = open(LOGFILE, 'r+')
-                        logfile.truncate(0)
-                        logfile.seek(0)
-                        logtext.delete('1.0', tk.END)  # clear the screen text.
+                    if okay:
+                        with open(LOGFILE, 'r+') as logfile:
+                            logfile.truncate(0)
+                            logfile.seek(0)
+                        # Need to also clear the screen text.
+                        logtext.delete('1.0', tk.END)
 
                 ttk.Button(logwin, text='Reload', command=reload).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
