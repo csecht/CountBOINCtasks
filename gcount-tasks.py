@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.2.8'
+__version__ = '0.2.9'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -120,7 +120,7 @@ class CountModeler:
         """
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
-        #     task_names = BC.get_reported('tasks').
+        #     tnames = BC.get_reported('tasks').
         ttimes_start = BC.get_reported('elapsed time')
         # Begin list used/old tasks to exclude from new tasks; list is used
         #   in set_interval_data() to track tasks across intervals.
@@ -1172,9 +1172,12 @@ class CountViewer(tk.Frame):
                                   columnspan=2)
         self.time_prev_sumry_l.grid(row=10, column=2, padx=(0, 10), sticky=tk.E)
         self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        # Place cycles_remain value in same cell as its header, but shifted right.
-        self.cycles_remain_l.grid(row=12, column=2, padx=(125, 0), sticky=tk.W)
         self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+        # Place cycles_remain value in same cell as its header, but shifted right.
+        if MY_OS in 'lin, dar':
+            self.cycles_remain_l.grid(row=12, column=2, padx=(125, 0), sticky=tk.W)
+        elif MY_OS == 'win':
+            self.cycles_remain_l.grid(row=12, column=2, padx=(110, 0), sticky=tk.W)
 
         self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
@@ -1377,19 +1380,19 @@ class CountController(tk.Tk):
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
-            self.minsize(550, 360)
+            self.minsize(582, 360)
             self.maxsize(780, 380)
             # Need geometry so that master window will be under settings()
             #   Toplevel window at startup for Windows and Linux, but not MacOS.
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
-            self.minsize(500, 350)
-            self.maxsize(700, 420)
+            self.minsize(532, 360)
+            self.maxsize(700, 380)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
-            self.minsize(550, 360)
-            self.maxsize(745, 400)
+            self.minsize(600, 370)
+            self.maxsize(780, 400)
 
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
