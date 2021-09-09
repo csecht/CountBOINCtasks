@@ -245,7 +245,7 @@ class CountModeler:
                         BC.project_action(self.share.first_project, 'update')
                         # Need to provide time for BOINC Project server to respond.
                         self.share.data['time_next_cnt'].set(
-                            'BOINC Project auto-update in progress...')
+                            'Project auto-update in progress...')
                         time.sleep(70)
 
             # NOTE: Starting tasks are not included in interval and summary
@@ -842,7 +842,6 @@ class CountViewer(tk.Frame):
         style_button.configure('TButton', background='grey80', anchor='center')
         # NOTE: Start, Interval, & Summary button attributes are in __init__.
         viewlog_b = ttk.Button(text='View log file', command=self.view_log)
-        # quit_b = ttk.Button(text='Quit', command=self.share.quitgui)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -852,7 +851,6 @@ class CountViewer(tk.Frame):
         sep2 = ttk.Frame(relief="raised", height=6)
 
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
-        # viewlog_b.grid(row=0, column=0, padx=5, pady=5)
         viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
         self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
         self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
