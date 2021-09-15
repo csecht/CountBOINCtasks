@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -91,7 +91,7 @@ class CountModeler:
         self.share = share
         self.thread_lock = threading.Lock()
         
-        self.ttimes_smry = []
+        self.ttimes_smry = set()
         self.report_summary = False
         self.proj_stalled = False
         self.task_states = ['none']
@@ -105,7 +105,6 @@ class CountModeler:
     def default_settings(self) -> None:
         """Set or reset default run parameters in the setting dictionary.
         """
-        
         self.share.setting['interval_t'].set('60m')
         self.share.setting['interval_m'].set(60)
         self.share.setting['summary_t'].set('1d')
@@ -124,11 +123,11 @@ class CountModeler:
         #   In future, may want to inspect task names with
         #     tnames = BC.get_reported('tasks').
         ttimes_start = BC.get_reported('elapsed time')
-        # Begin list used/old tasks to exclude from new tasks; list is used
-        #   in set_interval_data() to track tasks across intervals.
-        self.share.ttimes_used.extend(ttimes_start)
         self.share.data['task_count'].set(len(ttimes_start))
         
+        # Begin set of used/old tasks to exclude from new tasks;
+        #   used in set_interval_data() to track tasks across intervals.
+        self.share.ttimes_used.update(ttimes_start)
         # num_tasks_all Label config and grid are defined in Viewer __init__:
         #  set value here for use in display_data()
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
@@ -192,7 +191,7 @@ class CountModeler:
         Is called as Thread from V.display_data().
         Calls to: get_ttime_stats(), get_minutes() log_it().
         """
-        ttimes_new = []
+        ttimes_new = set()
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
         reference_time = time.time()
@@ -228,30 +227,25 @@ class CountModeler:
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1.0)
             
-            # TODO: CONSIDER, here and for summary, manipulate sets instead of,
-            #  lists by using set methods of union, intersection, difference.
-            
             # NOTE: Starting tasks are not included in interval and summary
             #   counts, but starting task times are used here to evaluate
             #   "new" tasks.
-            # Need to add all prior tasks to the "used" list.
-            #  "new" task times are carried over from the prior interval;
-            #  For cycle[0], ttimes_used was set in set_start_data().
-            self.share.ttimes_used.extend(ttimes_new)
-            ttimes_reported = (BC.get_reported('elapsed time'))
+            # Need to add all prior tasks to the "used" set.
+            #  "new" task times are carried over from the prior interval cycle.
+            #  For cycle[0], ttimes_used is starting tasks from set_start_data()
+            #    and ttimes_new is empty.
+            self.share.ttimes_used.update(ttimes_new)
+            ttimes_reported = set(BC.get_reported('elapsed time'))
             
-            # Need to re-set prior ttimes_new, then repopulate it with newly
+            # Need to reset prior ttimes_new, then repopulate it with only newly
             #   reported tasks.
             ttimes_new.clear()
-            ttimes_new = [task for task in ttimes_reported if task
-                          not in self.share.ttimes_used]
+            ttimes_new = ttimes_reported - self.share.ttimes_used
             
-            # Counting a set() may not be necessary if new list works as
-            #   intended, but better to err toward thoroughness and clarity.
-            task_count_new = len(set(ttimes_new))
+            task_count_new = len(ttimes_new)
             self.share.data['task_count'].set(task_count_new)
-            # Add new tasks to summary list for later analysis.
-            self.ttimes_smry.extend(ttimes_new)
+            # Add new tasks to summary set for later analysis.
+            self.ttimes_smry.update(ttimes_new)
             
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
@@ -288,9 +282,6 @@ class CountModeler:
                 self.share.data['tt_range'].set(tt_range)
                 self.share.data['tt_total'].set(tt_total)
                 
-                # Need to update all tk control variables; necessary?
-                # app.update_idletasks()
-                
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
                 summary_time = self.share.data['time_prev_cnt'].get()
@@ -307,12 +298,11 @@ class CountModeler:
                     # Display time of summary; gridded in same row as time prev count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     
-                    # Need unique tasks for stats and counting.
-                    ttimes_uniq = set(self.ttimes_smry)
-                    task_count_sumry = len(ttimes_uniq)
+                    task_count_sumry = len(self.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
                     
-                    summarydict = self.get_ttime_stats(task_count_sumry, ttimes_uniq)
+                    summarydict = self.get_ttime_stats(
+                        task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
                     tt_max = summarydict['tt_max']
                     tt_min = summarydict['tt_min']
@@ -325,7 +315,7 @@ class CountModeler:
                     self.share.data['tt_range_sumry'].set(tt_range)
                     self.share.data['tt_total_sumry'].set(tt_total)
                     
-                    # Need to reset data list for the next summary interval.
+                    # Need to reset data set for the next summary interval.
                     self.ttimes_smry.clear()
             
             # Call to log_it() needs to be out of thread lock.
@@ -370,7 +360,7 @@ class CountModeler:
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {lapsed_time}.')
-
+                    
                     else:  # Everything is fine, remove any prior notice.
                         self.share.note['notice_txt'].set('')
                 
@@ -419,7 +409,6 @@ class CountModeler:
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
                     if prior_note:
-                        # TODO: Be sure OS maxsizes can fit 4 lines of Notices.
                         self.share.note['notice_txt'].set(
                             f'{prior_note}\n'
                             f'*** {cycles_max} count intervals have been run. ***\n')
@@ -516,29 +505,29 @@ class CountModeler:
             logging.info(report)
             if proj_stalled:
                 report = (
-                    f'\n{self.share.task_state_time};'
+                    f'{self.share.task_state_time};'
                     f' *** PROJECT AUTO-UPDATE REQUESTED for {self.share.first_project}. ***\n'
                     'All tasks were "Ready to report" and waiting to upload.\n'
                     'If Project auto-update is allowed, tasks should now be uploaded.\n'
                     'Check BOINC Manager to verify.')
                 logging.info(report)
             if num_tasks_all == 0:
-                report = f'\n{self.share.task_state_time}; ' \
+                report = f'{self.share.task_state_time}; ' \
                          f'BOINC client has no tasks!\n'
                 logging.info(report)
             if num_suspended_by_boinc > 0:
-                report = (f'\n{self.share.task_state_time}; '
+                report = (f'{self.share.task_state_time}; '
                           f'BOINC Manager has suspended tasks;\n'
                           f'{self.indent}A "When to suspend" condition was met'
                           ' in BOINC Manager Computing preferences.\n')
                 logging.info(report)
             if num_suspended_by_user > 0:
-                report = (f'\n{self.share.task_state_time}; {num_suspended_by_user}'
+                report = (f'{self.share.task_state_time}; {num_suspended_by_user}'
                           f' tasks suspended by user.\n')
                 logging.info(report)
         
         if called_from == 'interval' and tic_nnt > 0:
-            report = (f'\n{self.share.intvl_cycle_time}; NO TASKS reported in the past'
+            report = (f'{self.share.intvl_cycle_time}; NO TASKS reported in the past'
                       f' {tic_nnt} count(s).\n'
                       f'{self.indent}{cycles_remain} counts remain.')
             logging.info(report)
@@ -741,9 +730,6 @@ class CountViewer(tk.Frame):
             'tt_total_sumry': tk.StringVar(),
         }
         
-        # Used in set_start_data() and set_interval_data()
-        self.share.ttimes_used = ['']
-        
         # Data for notices and logging passed between Modeler threads.
         self.share.note = {
             'notice_txt': tk.StringVar(),
@@ -753,6 +739,10 @@ class CountViewer(tk.Frame):
             'num_suspended_by_user': tk.IntVar(),
             'num_suspended_by_boinc': tk.IntVar(),
         }
+        
+        # Used in CM.set_start_data() and CM.set_interval_data();
+        # cannot be in CountModeler __init__ b/c it will be reset there
+        self.share.ttimes_used = set()
         
         # settings() window widgets:
         self.settings_win = tk.Toplevel(relief='raised', bd=3)
@@ -1025,9 +1015,10 @@ class CountViewer(tk.Frame):
         # In macOS, topmost places Combobox selections BEHIND the window.
         #    So allow app window to remain topmost and offset settings_win.
         elif MY_OS == 'dar':
+            # TODO: FIX that settings_win cannot get focus.
             # self.settings_win.lift()
             # self.master.lower()
-            # self.settings_win.focus()  # TODO: <<^^Doesn't work. FIX.
+            # self.settings_win.focus()
             self.settings_win.geometry('+640+134')
         self.settings_win.resizable(False, False)
         
