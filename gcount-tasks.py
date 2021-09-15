@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1023,10 +1023,10 @@ class CountViewer(tk.Frame):
         # In macOS, topmost places Combobox selections BEHIND the window.
         #    So allow app window to remain topmost and offset settings_win.
         elif MY_OS == 'dar':
-            self.settings_win.lift()
-            self.master.lower()
-            self.settings_win.focus()  # TODO: Doesn't work. FIX.
-            # self.settings_win.geometry('+640+134')
+            # self.settings_win.lift()
+            # self.master.lower()
+            # self.settings_win.focus()  # TODO: <<^^Doesn't work. FIX.
+            self.settings_win.geometry('+640+134')
         self.settings_win.resizable(False, False)
         
         # Colors match those of master/parent window.
