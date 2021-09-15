@@ -3,7 +3,7 @@
 """
 gcount-tasks.py provides task counts and time statistics at timed
 intervals for tasks recently reported to BOINC servers. It can be run
-on Windows, Linux, and MocOS. It is a tkinter-based GUI version of
+on Windows, Linux, and MacOS. It is a tkinter-based GUI version of
 count-tasks.py that uses a MVC architecture inspired by Brian Oakley at
 https://stackoverflow.com/questions/32864610/
 Requires Python3.6 or later with tkinter (tk/tcl) installed.
@@ -23,12 +23,12 @@ Requires Python3.6 or later with tkinter (tk/tcl) installed.
     You should have received a copy of the GNU General Public License
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
-# ^^ Info for --about invocation argument or __doc__>>
+# ^^ Text for --about invocation argument and __doc__>>
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.2.9'
+__version__ = '0.3.0'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -54,11 +54,11 @@ try:
     from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
-    print('gcount_tasks.py requires tkinter, which is included with some\n'
+    print('gcount_tasks.py requires tkinter, which is included with \n'
           'Python 3.7+distributions.\n'
           'Install the most recent version or re-install Python and include Tk/Tcl.\n'
           'Python downloads are available from python.org\n'
-          'On Linux you may just need:$ sudo apt-get install python3-tk\n'
+          'On Linux you may also need:$ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 6):
@@ -85,25 +85,29 @@ class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
     """
-
+    # Set time, in seconds, for query, display, and logging of BOINC
+    # task states; used in task_state_notices().
+    BOINC_STATUS_INTERVAL = 60
+    
     def __init__(self, share):
         self.share = share
-
+        self.thread_lock = threading.Lock()
+        
         self.ttimes_smry = []
-        self.count_new = None
-        self.tic_nnt = 0
-        self.notrunning = False
-        self.proj_stalled = False
         self.report_summary = False
-
+        self.proj_stalled = False
+        self.task_states = ['none']
+        self.task_count_start = 0
+        self.task_count_new = 0
+        
         # Log file print formatting:
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
-
+    
     def default_settings(self) -> None:
         """Set or reset default run parameters in the setting dictionary.
         """
-
+        
         self.share.setting['interval_t'].set('60m')
         self.share.setting['interval_m'].set(60)
         self.share.setting['summary_t'].set('1d')
@@ -112,7 +116,7 @@ class CountModeler:
         self.share.setting['cycles_max'].set(1008)
         self.share.setting['do_log'].set(True)
         self.share.setting['do_update'].set(False)
-
+    
     def set_start_data(self):
         """
         Gather initial data of tasks and their times; set data dict
@@ -126,11 +130,11 @@ class CountModeler:
         #   in set_interval_data() to track tasks across intervals.
         self.share.ttimes_used.extend(ttimes_start)
         self.share.data['task_count'].set(len(ttimes_start))
-
+        
         # num_tasks_all Label config and grid are defined in Viewer __init__:
         #  set value here for use in display_data()
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
-
+        
         # Need to parse data returned from get_ttime_stats().
         startdict = self.get_ttime_stats(
             self.share.data['task_count'].get(), ttimes_start)
@@ -140,25 +144,61 @@ class CountModeler:
         tt_sd = startdict['tt_sd']
         tt_total = startdict['tt_total']
         tt_range = f'{tt_min} -- {tt_max}'
-
+        
         self.share.data['tt_mean'].set(tt_mean)
         self.share.data['tt_sd'].set(tt_sd)
         self.share.data['tt_range'].set(tt_range)
         self.share.data['tt_total'].set(tt_total)
-
+    
+    def set_task_states(self) -> None:
+        """
+        Query boinc-client for tasks queued, running, and suspended;
+        set corresponding dictionary tk control variables.
+        Called from task_state_notices().
+        """
+        
+        self.share.task_state_time = datetime.now().strftime(LONG_TIME_FORMAT)
+        tasks_all = BC.get_tasks('all')
+        # Need the literal task data tags as found in boinccmd stdout;
+        #   the format is same as tag_str in BC.get_tasks().
+        #   Use tuple index to populate variables.
+        tags = ('   name: ',
+                '   active_task_state: ',
+                '   state: ')
+        num_tasks_all = len([elem for elem in tasks_all if tags[0] in elem])
+        tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
+                        if tags[1] in elem]
+        self.task_states = [elem.replace(tags[2], '') for elem in tasks_all
+                            if tags[2] in elem]
+        if 'uploaded' in self.task_states and 'downloaded' not in self.task_states:
+            self.share.note['proj_stalled'].set(True)
+        num_running = len(
+            [task for task in tasks_active if 'EXECUTING' in task])
+        num_suspended_by_boinc = len(
+            [task for task in tasks_active if 'SUSPENDED' in task])
+        num_suspended_by_user = len(
+            [task for task in tasks_all if 'suspended via GUI: yes' in task])
+        
+        self.share.data['num_tasks_all'].set(num_tasks_all)
+        self.share.note['num_running'].set(num_running)
+        self.share.note['num_suspended_by_boinc'].set(num_suspended_by_boinc)
+        self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
+        
+        # app.update_idletasks()  # Necessary?
+    
     def set_interval_data(self) -> None:
         """
         Run timer and countdown clock to update and analyze regular and
-        summary data for task status and times. Set stringvars for data
-        dict and notices.
-        Is called as Thread from V.display_data() so that other tkinter
-        widgets can be used during interval sleep times.
-        Calls to: get_ttime_stats(), get_minutes(), notify_and_log().
+        summary data for task status and times. Set control variables
+        for data and note dictionaries.
+        Is called as Thread from V.display_data().
+        Calls to: get_ttime_stats(), get_minutes() log_it().
         """
         ttimes_new = []
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
         reference_time = time.time()
+        tic_nnt = 0
         for cycle in range(cycles_max):
             if cycle == 1 or cycles_max == 1:
                 # Need to change button name and function from Start to Interval
@@ -168,15 +208,13 @@ class CountModeler:
                 self.share.start_b.grid_forget()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
-
+            
             # Need to sleep between counts while displaying a countdown timer.
             # Need to limit total time of interval to target_elapsed_time,
             #   in Epoch seconds, b/c each interval sleep cycle will run longer
             #   than the intended interval. Realized interval time should not
             #   drift by more than 1 second during count_max cycles.
-            # Without this time limit, each 60m interval would run ~4s longer.
-            # Note: interval_sec value needs to reset each cycle.
-            # interval_sec = 10  # DEBUG/TESTING
+            # Without this time limit, each 60m interval would gain ~4s.
             interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
@@ -191,63 +229,10 @@ class CountModeler:
                 time_remain = f'{_m:02d}:{_s:02d}'
                 self.share.data['time_next_cnt'].set(time_remain)
                 time.sleep(1.0)
-
-            cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
-            self.share.data['cycles_remain'].set(cycles_remain)
-
-            # Display weekday with short time of previous interval to remove
-            #   ambiguity for user.
-            self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%A %H:%M'))
-
-            # Define full ending time here, instead of in notify_and_log(),
-            #   so that the logged time matches displayed time.
-            self.interval_end_time = datetime.now().strftime(LONG_TIME_FORMAT)
-
-            # Do one boinccmd call then parse tagged data from all
-            # task data, instead of multiple BC.get_tasks() calls.
-            tasks_all = BC.get_tasks('all')
-            # Need the literal task data tags as found in boinccmd stdout;
-            #   the format is same as tag_str in BC.get_tasks().
-            #   Use tuple index to populate variables.
-            tags = ('   name: ',
-                    '   active_task_state: ',
-                    '   state: ')
-            num_tasks_all = len([elem for elem in tasks_all if tags[0] in elem])
-            self.share.data['num_tasks_all'].set(num_tasks_all)
-            tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
-                            if tags[1] in elem]
-
-            # Need to reset flags for when tasks have run out and
-            #   project has stalled.
-            # When communication to server is stalled, all tasks will be
-            #  "Ready to report" with a state of 'uploaded', so a forced
-            #   Project update may prompt finalizing the task upload process.
-            self.notrunning = False
-            self.proj_stalled = False
-            if 'EXECUTING' not in tasks_active:
-                self.notrunning = True
-                task_states = [elem.replace(tags[2], '') for elem in tasks_all
-                               if tags[2] in elem]
-                if 'uploaded' in task_states and 'downloaded' not in task_states:
-                    self.proj_stalled = True
-                    if self.share.setting['do_update'].get():
-                        local_boinc_urls = BC.get_project_url()
-                        # I'm not sure how to handle multiple concurrent Projects.
-                        # If they are all stalled, then updating the first works?
-                        # B/c of how BC.project_action is structured, here I use the
-                        #  url to get the Project name ID which is used to get the
-                        #  url needed for the project cmd.  Silly, but uses
-                        #  generalized methods. Is there a better way?
-                        first_local_url = local_boinc_urls[0]
-                        self.share.first_project = list(BC.project_url.keys())[
-                            list(BC.project_url.values()).index(first_local_url)]
-                        BC.project_action(self.share.first_project, 'update')
-                        # Need to provide time for BOINC Project server to respond.
-                        self.share.data['time_next_cnt'].set(
-                            'Project auto-update in progress...')
-                        time.sleep(70)
-
+            
+            # TODO: CONSIDER, here and for summary, manipulate sets instead of,
+            #  lists by using set methods of union, intersection, difference.
+            
             # NOTE: Starting tasks are not included in interval and summary
             #   counts, but starting task times are used here to evaluate
             #   "new" tasks.
@@ -255,193 +240,335 @@ class CountModeler:
             #  "new" task times are carried over from the prior interval;
             #  For cycle[0], ttimes_used was set in set_start_data().
             self.share.ttimes_used.extend(ttimes_new)
-            ttimes_reported = BC.get_reported('elapsed time')
-
+            ttimes_reported = (BC.get_reported('elapsed time'))
+            
             # Need to re-set prior ttimes_new, then repopulate it with newly
             #   reported tasks.
             ttimes_new.clear()
             ttimes_new = [task for task in ttimes_reported if task
                           not in self.share.ttimes_used]
-
+            
             # Counting a set() may not be necessary if new list works as
             #   intended, but better to err toward thoroughness and clarity.
             task_count_new = len(set(ttimes_new))
             self.share.data['task_count'].set(task_count_new)
             # Add new tasks to summary list for later analysis.
             self.ttimes_smry.extend(ttimes_new)
-
-            # Record when no new tasks were reported in past interval;
-            #   Needed in notify_and_log().
-            if task_count_new == 0:
-                self.tic_nnt += 1
-            elif task_count_new > 0 and not self.notrunning:
-                self.tic_nnt = 0
-            # Need to robustly parse data returned from get_ttime_stats().
-            intervaldict = self.get_ttime_stats(task_count_new, ttimes_new)
-            tt_mean = intervaldict['tt_mean']
-            tt_max = intervaldict['tt_max']
-            tt_min = intervaldict['tt_min']
-            tt_sd = intervaldict['tt_sd']
-            tt_range = f'{tt_min} -- {tt_max}'
-            tt_total = intervaldict['tt_total']
-
-            self.share.data['tt_mean'].set(tt_mean)
-            self.share.data['tt_sd'].set(tt_sd)
-            self.share.data['tt_range'].set(tt_range)
-            self.share.data['tt_total'].set(tt_total)
-
-            # SUMMARY DATA ####################################################
-            # NOTE: Starting data are not included in summary tabulations.
-            summary_time = self.share.data['time_prev_cnt'].get()
-            summary_m = self.get_minutes(self.share.setting['summary_t'].get())
-            interval_m = int(self.share.setting['interval_t'].get()[:-1])
-            summary_factor = summary_m // interval_m
-            if (cycle + 1) % summary_factor == 0 and self.notrunning is False:
-
-                # Flag used in notify_and_log() for logging.
-                self.report_summary = True
-                # Need to activate disabled Summary data button now; only need
-                #  statement for 1st summary, but, oh well, here we go again...
-                self.share.sumry_b.config(state=tk.NORMAL)
-
-                # Display time of summary; gridded in same row as time prev count.
-                self.share.data['time_prev_sumry'].set(summary_time)
-
-                # Need unique tasks for stats and counting.
-                ttimes_uniq = set(self.ttimes_smry)
-                task_count_sumry = len(ttimes_uniq)
-                self.share.data['task_count_sumry'].set(task_count_sumry)
-
-                summarydict = self.get_ttime_stats(task_count_sumry, ttimes_uniq)
-                tt_mean = summarydict['tt_mean']
-                tt_max = summarydict['tt_max']
-                tt_min = summarydict['tt_min']
-                tt_sd = summarydict['tt_sd']
+            
+            cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
+            self.share.data['cycles_remain'].set(cycles_remain)
+            # Display weekday with time of previous interval to aid the user.
+            self.share.data['time_prev_cnt'].set(
+                datetime.now().strftime('%A %H:%M'))
+            # Capture full ending time here, instead of in log_it(),
+            #   so that the logged time matches displayed time.
+            self.share.intvl_cycle_time = datetime.now().strftime(LONG_TIME_FORMAT)
+            
+            with self.thread_lock:
+                # Track when no new tasks were reported in past interval;
+                #   tic_nnt used in log_it().
+                # Call is needed here to get current num_running value for eval.
+                self.set_task_states()
+                num_running = self.share.note['num_running'].get()
+                if task_count_new == 0:
+                    tic_nnt += 1
+                elif task_count_new > 0 and num_running > 0:
+                    tic_nnt = 0
+                self.share.note['tic_nnt'].set(tic_nnt)
+                
+                # Need to robustly parse data returned from get_ttime_stats().
+                intervaldict = self.get_ttime_stats(task_count_new, ttimes_new)
+                tt_mean = intervaldict['tt_mean']
+                tt_max = intervaldict['tt_max']
+                tt_min = intervaldict['tt_min']
+                tt_sd = intervaldict['tt_sd']
                 tt_range = f'{tt_min} -- {tt_max}'
-                tt_total = summarydict['tt_total']
-
-                self.share.data['tt_mean_sumry'].set(tt_mean)
-                self.share.data['tt_sd_sumry'].set(tt_sd)
-                self.share.data['tt_range_sumry'].set(tt_range)
-                self.share.data['tt_total_sumry'].set(tt_total)
-
-                # Need to reset data list for the next summary interval.
-                self.ttimes_smry.clear()
-
-            self.notify_and_log()
-
-    def notify_and_log(self) -> None:
+                tt_total = intervaldict['tt_total']
+                
+                self.share.data['tt_mean'].set(tt_mean)
+                self.share.data['tt_sd'].set(tt_sd)
+                self.share.data['tt_range'].set(tt_range)
+                self.share.data['tt_total'].set(tt_total)
+                
+                # Need to update all tk control variables; necessary?
+                # app.update_idletasks()
+                
+                # SUMMARY DATA ####################################################
+                # NOTE: Starting data are not included in summary tabulations.
+                summary_time = self.share.data['time_prev_cnt'].get()
+                summary_m = self.get_minutes(self.share.setting['summary_t'].get())
+                interval_m = int(self.share.setting['interval_t'].get()[:-1])
+                summary_factor = summary_m // interval_m
+                if (cycle + 1) % summary_factor == 0 and num_running > 0:
+                    # Flag used in log_it() for logging.
+                    self.report_summary = True
+                    # Need to activate disabled Summary data button now; only need
+                    #  statement for 1st summary, but, oh well, here we go again...
+                    self.share.sumry_b.config(state=tk.NORMAL)
+                    
+                    # Display time of summary; gridded in same row as time prev count.
+                    self.share.data['time_prev_sumry'].set(summary_time)
+                    
+                    # Need unique tasks for stats and counting.
+                    ttimes_uniq = set(self.ttimes_smry)
+                    task_count_sumry = len(ttimes_uniq)
+                    self.share.data['task_count_sumry'].set(task_count_sumry)
+                    
+                    summarydict = self.get_ttime_stats(task_count_sumry, ttimes_uniq)
+                    tt_mean = summarydict['tt_mean']
+                    tt_max = summarydict['tt_max']
+                    tt_min = summarydict['tt_min']
+                    tt_sd = summarydict['tt_sd']
+                    tt_range = f'{tt_min} -- {tt_max}'
+                    tt_total = summarydict['tt_total']
+                    
+                    self.share.data['tt_mean_sumry'].set(tt_mean)
+                    self.share.data['tt_sd_sumry'].set(tt_sd)
+                    self.share.data['tt_range_sumry'].set(tt_range)
+                    self.share.data['tt_total_sumry'].set(tt_total)
+                    
+                    # Need to reset data list for the next summary interval.
+                    self.ttimes_smry.clear()
+            
+            # Call to log_it() needs to be out of thread lock.
+            app.update_idletasks()
+            if self.share.setting['do_log'].get():
+                self.log_it('interval')
+    
+    def task_state_notices(self) -> None:
         """
-        Display interval and summary metrics for recently reported BOINC
-        task data.
-        Provide notices for aberrant task status. Optional log to file.
-        Called from set_interval_data().
+        Notices for BOINC task state information run short time interval.
+        Is started as Thread from V.display_data().
+        Threaded intervals are independent from those in
+        set_interval_data(). Calls to: set_task_states() and log_it().
         """
-
-        # Post notices for task or BOINC status that might need user attention.
-        # NOTE: Values for notrunning, proj_stalled and tic_nnt are set and
-        # reset in set_interval_data(); proj_stalled is True when tasks
-        # neither running or "downloaded" and all are "uploaded";
-        #   b/c forcing a Project update may prompt the server to action.
+        while self.share.data['cycles_remain'].get() > 0:
+            time.sleep(CountModeler.BOINC_STATUS_INTERVAL)
+            with self.thread_lock:
+                self.set_task_states()
+                num_running = self.share.note['num_running'].get()
+                num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
+                num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
+                num_tasks_all = self.share.data['num_tasks_all'].get()
+                tic_nnt = self.share.note['tic_nnt'].get()
+                proj_stalled = self.share.note['proj_stalled'].get()
+                cycles_max = self.share.setting['cycles_max'].get()
+                cycles_remain = self.share.data['cycles_remain'].get()
+                
+                # Need notices for task status that might need user attention,
+                #   conditioned in descending priority.
+                if num_running > 0:
+                    if num_suspended_by_user > 0:
+                        self.share.note['notice_txt'].set(
+                            f'{num_suspended_by_user} tasks are suspended by user.\n'
+                            'BOINC will not upload while tasks are suspended.')
+                    elif num_running == num_tasks_all:
+                        self.share.note['notice_txt'].set(
+                            'BOINC client is about to run out of tasks.\n'
+                            'Check BOINC Manager.')
+                    elif tic_nnt > 0:
+                        self.share.note['notice_txt'].set(
+                            f'NO TASKS reported in past {tic_nnt} count(s).\n')
+                    else:  # Everything is fine.
+                        self.share.note['notice_txt'].set('')
+                
+                if num_running == 0:
+                    # When communication to server is stalled, all tasks will be
+                    #  "Ready to report" with a state of 'uploaded', so a forced
+                    #   Project update may prompt finalizing the task upload process.
+                    if proj_stalled:
+                        if self.share.setting['do_update'].get():
+                            local_boinc_urls = BC.get_project_url()
+                            # I'm not sure how to handle multiple concurrent Projects.
+                            # If they are all stalled, then updating the first works?
+                            # B/c of how BC.project_action is structured, here I use the
+                            #  url to get the Project name ID which is used to get the
+                            #  url needed for the project cmd.  Silly, but uses
+                            #  generalized methods. Is there a better way?
+                            first_local_url = local_boinc_urls[0]
+                            self.share.first_project = list(BC.project_url.keys())[
+                                list(BC.project_url.values()).index(first_local_url)]
+                            BC.project_action(self.share.first_project, 'update')
+                            # Need to provide time for BOINC Project server to respond.
+                            self.share.data['time_next_cnt'].set(
+                                'Project auto-update in progress...')
+                            time.sleep(70)
+                        
+                        self.share.note['notice_txt'].set(
+                            'PROJECT UPDATE REQUESTED; details in log file.\n'
+                            'Check BOINC Manager.')
+                    elif num_tasks_all == 0:
+                        self.share.note['notice_txt'].set(
+                            'BOINC client has no tasks to run!\n'
+                            'Check BOINC Manager.')
+                    elif num_suspended_by_user > 0:
+                        self.share.note['notice_txt'].set(
+                            f'NO TASKS running; {num_suspended_by_user} tasks suspended by user.\n'
+                            'You may want to resume them.')
+                    elif num_suspended_by_boinc > 0:
+                        self.share.note['notice_txt'].set(
+                            'NO TASKS running.\n'
+                            'A BOINC Manager "When to suspend" condition was met.\n'
+                            'Change BOINC Manager Computing preferences if this becomes a problem.')
+                    else:
+                        self.share.note['notice_txt'].set(
+                            'NO TASKS running, reason unknown. Check BOINC Manager\n')
+                
+                if cycles_remain == 0:
+                    prior_note = self.share.note['notice_txt'].get()
+                    if prior_note:
+                        # TODO: Be sure OS maxsizes can fit 4 lines of Notices.
+                        self.share.note['notice_txt'].set(
+                            f'{prior_note}\n'
+                            f'*** {cycles_max} count intervals have been run. ***\n')
+                    else:
+                        self.share.note['notice_txt'].set(
+                            f'*** All {cycles_max} count intervals have been run. ***\n')
+                    print(f'\n*** {cycles_max} counting cycles have ended. ***\n')
+            
+            # Call to log_it() needs to be out of thread lock.
+            app.update_idletasks()
+            if self.share.setting['do_log'].get():
+                self.log_it('notice')
+    
+    def log_it(self, called_from) -> None:
+        """
+        Write to file interval and summary metrics for recently reported
+        BOINC task data. Provide notices for aberrant task status.
+        Called from set_interval_data() and task_state_notices().
+        """
+        # print(time.time(), 'Now in log_it')
+        
         cycles_max = self.share.setting['cycles_max'].get()
-
-        # The notice_l grid overlays the complement_txt grid. It is
-        #   re-gridded here in case complement_me() did a .grid_remove().
-        #   Original grid coordinates are set in master_widgets().
-        if self.notrunning and self.proj_stalled:
-            self.share.notice_txt.set(
-                'PROJECT UPDATE REQUESTED; see log file.\n'
-                'Check BOINC Manager.')
-            self.share.notice_l.grid()
-        elif not self.notrunning and self.tic_nnt > 0:
-            self.share.notice_txt.set(
-                f'NO TASKS reported in past {self.tic_nnt} count(s).\n'
-                '(Ctrl-Shift-C clears notice.)')
-            self.share.notice_l.grid()
-
-        elif self.notrunning:
-            self.share.notice_txt.set(
-                'NO TASKS WERE RUNNING; check BOINC Manager\n'
-                '(Ctrl-Shift-C clears notice.)')
-            self.share.notice_l.grid()
-
-        # When things are normal, notice_txt will be removed on next interval.
-        else:
-            self.share.notice_l.grid_remove()  # Necessary?
-
-        if self.share.data['cycles_remain'].get() == 0:
-            self.share.notice_txt.set(
-                f'{cycles_max} counts completed; {self.interval_end_time}')
-            self.share.notice_l.grid()
-
-        # Need to log regular intervals for the do_log option
-        if self.share.setting['do_log'].get():
-            interval_t = self.share.setting['interval_t'].get()
-            task_count_new = self.share.data['task_count'].get()
-            tt_mean = self.share.data['tt_mean'].get()
-            tt_sd = self.share.data['tt_sd'].get()
-            tt_range = self.share.data['tt_range'].get()
-            tt_total = self.share.data['tt_total'].get()
-            num_tasks_all = self.share.data['num_tasks_all'].get()
-            cycles_remain = self.share.data['cycles_remain'].get()
-
-            summary_t = self.share.setting['summary_t'].get()
-            tcount_sum = self.share.data['task_count_sumry'].get()
-            ttmean_sum = self.share.data['tt_mean_sumry'].get()
-            ttsd_sum = self.share.data['tt_sd_sumry'].get()
-            ttrange_sum = self.share.data['tt_range_sumry'].get()
-            tttotal_sum = self.share.data['tt_total_sumry'].get()
-
-            # Note: self.interval_end_time is defined in set_interval_data()
-            #   at end of current interval cycle sleep period.
-            if self.notrunning:
-                report = (f'\n{self.interval_end_time};'
-                          ' *** NO TASKS RUNNING. Check BOINC Manager.***\n')
+        interval_t = self.share.setting['interval_t'].get()
+        summary_t = self.share.setting['summary_t'].get()
+        if called_from == 'start':
+            self.task_count_start = self.share.data['task_count'].get()
+        elif called_from == 'interval':
+            self.task_count_new = self.share.data['task_count'].get()
+        auto_update = self.share.setting['do_update'].get()
+        tt_mean = self.share.data['tt_mean'].get()
+        tt_sd = self.share.data['tt_sd'].get()
+        tt_range = self.share.data['tt_range'].get()
+        tt_total = self.share.data['tt_total'].get()
+        num_tasks_all = self.share.data['num_tasks_all'].get()
+        cycles_remain = self.share.data['cycles_remain'].get()
+        
+        num_running = self.share.note['num_running'].get()
+        num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
+        num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
+        tic_nnt = self.share.note['tic_nnt'].get()
+        proj_stalled = self.share.note['proj_stalled'].get()
+        
+        tcount_sum = self.share.data['task_count_sumry'].get()
+        ttmean_sum = self.share.data['tt_mean_sumry'].get()
+        ttsd_sum = self.share.data['tt_sd_sumry'].get()
+        ttrange_sum = self.share.data['tt_range_sumry'].get()
+        tttotal_sum = self.share.data['tt_total_sumry'].get()
+        
+        if called_from == 'start' and cycles_max > 0:
+            report = (
+                '\n>>> GUI TASK COUNTER START: settings... <<<\n'
+                f'{self.share.long_time_start};'
+                f' Number of tasks in the most recent BOINC report:'
+                f' {self.task_count_start}\n'
+                f'{self.indent}Task Time: mean {tt_mean}, range [{tt_range}],\n'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
+                f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
+                f'{self.indent}Counts every {interval_t}, summaries every {summary_t}.\n'
+                f'{self.indent}BOINC status evaluations every'
+                f' {round((CountModeler.BOINC_STATUS_INTERVAL / 60), 2)} minutes.\n'
+                f'{self.indent}Project auto-update is set: {auto_update}\n'
+                f'Timed intervals beginning now...\n')
+            logging.info(report)
+        # Need to provide a truncated report for one-off "status" runs.
+        elif called_from == 'start' and cycles_max == 0:
+            report = (
+                f'\n{self.share.long_time_start}; STATUS REPORT\n'
+                f'{self.indent}Number of tasks in the most recent BOINC report:'
+                f' {self.task_count_start}\n'
+                f'{self.indent}Task Time: mean {tt_mean},'
+                f' range [{tt_range}],\n'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
+            logging.info(report)
+        
+        # Note: Two timestamps are used: self.share.share.intvl_cycle_time is defined
+        # in set_interval_data() at end of each count cycle.,
+        # self.share.task_state_time is defined in set_task_states().
+        if called_from == 'notice' and num_running > 0:
+            # A Notice for no new tasks reported, tic_nnt, is issued in
+            #   set_interval_data() instead of here.
+            if num_running == num_tasks_all:
+                report = (f'\n{self.share.task_state_time};'
+                          'BOINC client is about to run out of tasks.')
                 logging.info(report)
-
-                if self.proj_stalled:
-                    report = (
-                        f'\n{self.interval_end_time};'
-                        f' *** PROJECT AUTO-UPDATE REQUESTED for {self.share.first_project}. ***\n'
-                        'All tasks were "Ready to report" and waiting to upload.\n'
-                        'If Project auto-update is allowed, tasks should now be uploaded.\n'
-                        'Check BOINC Manager to verify.')
-                    logging.info(report)
-
-            if self.tic_nnt > 0:
-                report = (f'{self.interval_end_time}: NO TASKS reported in the past'
-                          f' {self.tic_nnt} count(s).\n'
-                          f'{self.indent}{cycles_remain} counts remain until exit.')
+            if num_suspended_by_user > 0:
+                report = (f'\n{self.share.task_state_time}; '
+                          f'{num_suspended_by_user} tasks are suspended by user.')
                 logging.info(report)
-
-            # This tic condition the same as: task_count_new > 0 and
-            #   self.share.notrunning is False; that is, everything normal.
-            elif self.tic_nnt == 0:
+        elif called_from == 'notice' and num_running == 0:
+            report = (f'\n{self.share.task_state_time};'
+                      ' *** NO TASKS RUNNING. Check BOINC Manager.***\n')
+            logging.info(report)
+            if proj_stalled:
                 report = (
-                    f'\n{self.interval_end_time}; Tasks reported in the past {interval_t}:'
-                    f' {task_count_new}\n'
-                    f'{self.indent}Task Time: mean {tt_mean}, range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
-                    f'{self.indent}{cycles_remain} counts remaining until exit.'
-                )
+                    f'\n{self.share.task_state_time};'
+                    f' *** PROJECT AUTO-UPDATE REQUESTED for {self.share.first_project}. ***\n'
+                    'All tasks were "Ready to report" and waiting to upload.\n'
+                    'If Project auto-update is allowed, tasks should now be uploaded.\n'
+                    'Check BOINC Manager to verify.')
                 logging.info(report)
-
-            if self.report_summary:
-                report = (
-                    f'\n{self.interval_end_time}; >>> SUMMARY: Count for the past'
-                    f' {summary_t}: {tcount_sum}\n'
-                    f'{self.indent}Task Time: mean {ttmean_sum}, range [{ttrange_sum}],\n'
-                    f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
-                )
+            if num_tasks_all == 0:
+                report = f'\n{self.share.task_state_time}; ' \
+                         f'BOINC client has no tasks!\n'
                 logging.info(report)
-                # Need to reset flag to toggle summary logging.
-                self.report_summary = False
-
-            if self.share.data['cycles_remain'].get() == 0:
-                report = f'\n### {cycles_max} counting cycles have ended. ###\n'
+            if num_suspended_by_boinc > 0:
+                report = (f'\n{self.share.task_state_time}; '
+                          f'BOINC Manager has suspended tasks;\n'
+                          f'{self.indent}A "When to suspend" condition was met'
+                          ' in BOINC Manager Computing preferences.\n')
                 logging.info(report)
-
+            if num_suspended_by_user > 0:
+                report = (f'\n{self.share.task_state_time}; {num_suspended_by_user}'
+                          f' tasks suspended by user.\n')
+                logging.info(report)
+        
+        if called_from == 'interval' and tic_nnt > 0:
+            report = (f'\n{self.share.intvl_cycle_time}; NO TASKS reported in the past'
+                      f' {tic_nnt} count(s).\n'
+                      f'{self.indent}{cycles_remain} counts remain.')
+            logging.info(report)
+        
+        # This tic condition the same as: task_count_new > 0 and
+        #   num_running > 0; that is, everything normal.
+        elif called_from == 'interval' and tic_nnt == 0:
+            report = (
+                f'\n{self.share.intvl_cycle_time}; Tasks reported in the past {interval_t}:'
+                f' {self.task_count_new}\n'
+                f'{self.indent}Task Time: mean {tt_mean}, range [{tt_range}],\n'
+                f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
+                f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
+                f'{self.indent}{cycles_remain} counts remain.'
+            )
+            logging.info(report)
+        
+        if called_from == 'interval' and self.report_summary:
+            report = (
+                f'\n{self.share.intvl_cycle_time}; >>> SUMMARY: Count for the past'
+                f' {summary_t}: {tcount_sum}\n'
+                f'{self.indent}Task Time: mean {ttmean_sum}, range [{ttrange_sum}],\n'
+                f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
+            )
+            logging.info(report)
+            # Need to reset flag to toggle summary logging.
+            self.report_summary = False
+        
+        if called_from == 'interval' and cycles_remain == 0:
+            report = f'\n### {cycles_max} counting cycles have ended. ###\n'
+            logging.info(report)
+    
     @staticmethod
     def get_minutes(time_string: str) -> int:
         """Convert time string to minutes.
@@ -462,7 +589,7 @@ class CountModeler:
         except ValueError as verr:
             err_msg = f'Invalid value unit: {val} '
             raise ValueError(err_msg) from verr
-
+    
     @staticmethod
     def format_sec(secs: int, time_format: str) -> str:
         """Convert seconds to the specified time format for display.
@@ -492,7 +619,7 @@ class CountModeler:
         return ('\nEnter secs as integer, time_format as either'
                 f" 'std' or 'short'.\nArguments as entered: secs={secs}, "
                 f"time_format={time_format}.\n")
-
+    
     def get_ttime_stats(self, numtasks: int, tasktimes: iter) -> dict:
         """
         Sum and run statistics from times, as sec (integers or floats).
@@ -528,7 +655,7 @@ class CountModeler:
             'tt_sd': 'na',
             'tt_min': 'na',
             'tt_max': 'na'}
-
+    
     # Not the most logical place for this method, but it works well here when
     #   need to write exit message to the log file.
     def quit_gui(self, event=None) -> None:
@@ -554,12 +681,12 @@ class CountViewer(tk.Frame):
     The Viewer communicates with Modeler via 'share' objects handled
     through the Controller class. All GUI widgets go here.
     """
-
+    
     def __init__(self, master, share):
         super().__init__(master)
         self.share = share
         self.dataframe = tk.Frame()
-
+        
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
@@ -570,15 +697,15 @@ class CountViewer(tk.Frame):
         self.emphasize = 'grey90'
         self.highlight = 'gold'
         self.deemphasize = 'grey60'
-
+        
         # Log text formatting vars:
-        self.report = ''
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
-
+        
         # Basic run parameters/settings passed between Viewer and Modeler.
         # Defaults, from in Modeler.default_settings, can be changed in
         # settings().
+        self.good_settings = False
         self.share.setting = {
             'interval_t': tk.StringVar(),
             'interval_m': tk.IntVar(),
@@ -589,7 +716,7 @@ class CountViewer(tk.Frame):
             'do_log': tk.BooleanVar(),
             'do_update': tk.BooleanVar()
         }
-
+        
         # Common data var for display; passed between Viewer and Modeler
         self.share.data = {
             # Start and Interval data
@@ -611,13 +738,20 @@ class CountViewer(tk.Frame):
             'tt_range_sumry': tk.StringVar(),
             'tt_total_sumry': tk.StringVar(),
         }
-
+        
         # Used in set_start_data() and set_interval_data()
         self.share.ttimes_used = ['']
-
-        # Used in notify_and_log()
-        self.share.notice_txt = tk.StringVar()
-
+        
+        # Data for notices and logging passed between Modeler threads.
+        self.share.note = {
+            'notice_txt': tk.StringVar(),
+            'num_running': tk.IntVar(),
+            'tic_nnt': tk.IntVar(),
+            'proj_stalled': tk.BooleanVar(),
+            'num_suspended_by_user': tk.IntVar(),
+            'num_suspended_by_boinc': tk.IntVar(),
+        }
+        
         # settings() window widgets:
         self.settings_win = tk.Toplevel(relief='raised', bd=3)
         self.sumry_t_value = ttk.Entry(self.settings_win)
@@ -627,7 +761,7 @@ class CountViewer(tk.Frame):
         self.intvl_choice = ttk.Combobox(self.settings_win)
         self.log_choice = tk.Checkbutton(self.settings_win)
         self.update_choice = tk.Checkbutton(self.settings_win)
-
+        
         # Master window widgets:
         # Set interval & summary focus button attributes here b/c need to
         #   configure them in different modules.
@@ -641,7 +775,7 @@ class CountViewer(tk.Frame):
                                         command=self.emphasize_intvl_data)
         self.share.sumry_b = ttk.Button(text='Summary data', width=20,
                                         command=self.emphasize_sumry_data)
-
+        
         # Labels for settings values; configured and gridded in display_data().
         #  Data in these labels are invariant for duration of run.
         # NOTE: self.time_start_l label is initially configured for text and
@@ -656,7 +790,7 @@ class CountViewer(tk.Frame):
                                     relief='groove', bg=self.data_bg)
         self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
                                      bg=self.master_bg, fg=self.row_fg)
-
+        
         # Labels for BOINC data; configured and gridded in display_data().
         self.task_count_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                      textvariable=self.share.data['task_count'])
@@ -700,12 +834,12 @@ class CountViewer(tk.Frame):
             relief='flat', border=0)
         # Notice label will share grid with complement_txt.
         self.share.notice_l = tk.Label(
-            textvariable=self.share.notice_txt,
+            textvariable=self.share.note['notice_txt'],
             fg=self.notice_fg, bg=self.master_bg, relief='flat', border=0)
-
+        
         self.config_master()
         self.master_widgets()
-
+    
     def config_master(self) -> None:
         """
         Master frame configuration, keybindings, frames, and row headers.
@@ -718,9 +852,9 @@ class CountViewer(tk.Frame):
         #    changes to near white for click-drag.
         self.master.configure(bg=self.master_bg,
                               highlightthickness=3,
-                              highlightcolor='grey75',
-                              highlightbackground='grey95')
-
+                              highlightcolor='grey95',
+                              highlightbackground='grey75')
+        
         # Set up universal and OS-specific keybindings and menus
         self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
         self.master.bind_all('<Escape>', self.share.quitgui)
@@ -732,18 +866,18 @@ class CountViewer(tk.Frame):
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
         self.master.bind("<Control-l>", lambda q: self.view_log())
-
+        
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
         ttk.Style().theme_use('alt')
-
+        
         # Make data rows and columns stretch with window drag size.
         # Don't vertically stretch separator rows.
         rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13)
         for _r in rows2config:
             self.master.columnconfigure(1, weight=1)
         self.master.columnconfigure(2, weight=1)
-
+        
         # Set up frame to display data. Putting frame here instead of in
         # master_widgets gives proper alignment of row headers and data.
         self.dataframe.configure(borderwidth=3, relief='sunken',
@@ -753,10 +887,10 @@ class CountViewer(tk.Frame):
         framerows = (2, 3, 4, 5, 6, 7, 8)
         for row in framerows:
             self.dataframe.rowconfigure(row, weight=1)
-
+        
         self.dataframe.columnconfigure(1, weight=1)
         self.dataframe.columnconfigure(2, weight=1)
-
+        
         # Fill in headers for data rows.
         row_header = {'Counting since': 2,
                       'Count interval': 3,
@@ -765,8 +899,8 @@ class CountViewer(tk.Frame):
                       'stdev': 6,
                       'range': 7,
                       'total': 8,
-                      'Time, prior count:': 10,
-                      # '..summary:': 10,
+                      'Interval from:': 10,
+                      # 'Summary from:': 10,
                       'Next count in:': 11,
                       # 'Counts remaining:': 12,
                       'Tasks in queue:': 12,
@@ -777,7 +911,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same rows.
-        tk.Label(self.master, text='prior summary:',
+        tk.Label(self.master, text='Summary from:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
@@ -788,16 +922,16 @@ class CountViewer(tk.Frame):
         tk.Label(self.master, text='Notices:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=13, column=0, padx=(5, 0), pady=(5, 0), sticky=tk.E)
-
+    
     def master_widgets(self) -> None:
         """
         Master frame menus, buttons, and separators.
         """
-
+        
         # creating a menu instance
         menu = tk.Menu(self.master)
         self.master.config(menu=menu)
-
+        
         # Add pull-down menus
         os_accelerator = ''
         if MY_OS in 'lin, win':
@@ -813,7 +947,7 @@ class CountViewer(tk.Frame):
                          #   b/c can't override MacOS native Command+Q;
                          #   and don't want Ctrl+Q displayed or used.
                          accelerator=f'{os_accelerator}+Q')
-
+        
         view = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.view_log,
@@ -828,28 +962,29 @@ class CountViewer(tk.Frame):
         info.add_command(label='     ...those buttons activate once their data post.')
         info.add_command(label='- At startup, # tasks reported and time of last count are from the')
         info.add_command(label='     most recent hourly BOINC report.')
-        info.add_command(label='- Number of tasks in queue updates every count interval.')
+        info.add_command(label='- Number of tasks in queue and Notices update every '
+                               f'{CountModeler.BOINC_STATUS_INTERVAL / 60} minutes.')
         info.add_command(label='- Displayed countdown clock time is approximate.')
         info.add_command(label='- You can review count data and Notices history with "View log file".')
         info.add_command(label="- Menu: File>'Backup log file' copies the file to your Home folder.")
-
+        
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
-
+        
         # Create or configure button widgets:
         style_button = ttk.Style(self.master)
         style_button.configure('TButton', background='grey80', anchor='center')
         # NOTE: Start, Interval, & Summary button attributes are in __init__.
         viewlog_b = ttk.Button(text='View log file', command=self.view_log)
-
+        
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
         style_sep = ttk.Style(self.master)
         style_sep.configure('TFrame', background=self.master_bg)
         sep1 = ttk.Frame(relief="raised", height=6)
         sep2 = ttk.Frame(relief="raised", height=6)
-
+        
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
         viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
         self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
@@ -862,18 +997,18 @@ class CountViewer(tk.Frame):
                                        padx=5, pady=(5, 0), sticky=tk.W)
         self.share.notice_l.grid(row=13, column=1, columnspan=2,
                                  padx=5, pady=(5, 0), sticky=tk.W)
-
+        
         # Need 'if' condition so startup sequence isn't recalled when
         #  Viewer methods are called; when interval_t is set at startup,
         #  subsequent starting functions will be skipped. Starting functions:
         #  default_settings(), settings(), check_and_set(),
-        #  settings.check_show_close(), V.display_data() -> M.set_start_data() &
+        #  settings.check_and_close(), V.display_data() -> M.set_start_data() &
         #  intvl_thread for M.set_interval_data().
         # ^^^ There must be a cleaner way to structure start functions?
         if not self.share.setting['interval_t'].get():
             self.share.defaultsettings()
             self.settings()
-
+    
     def settings(self) -> None:
         """
         A Toplevel window called from master_widgets() at startup.
@@ -886,17 +1021,19 @@ class CountViewer(tk.Frame):
         if MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
         # In macOS, topmost places Combobox selections BEHIND the window.
-        #    So allow app window to remain topmost and offset settings_win
+        #    So allow app window to remain topmost and offset settings_win.
         elif MY_OS == 'dar':
+            self.settings_win.lift()
+            self.master.lower()
             self.settings_win.focus()  # TODO: Doesn't work. FIX.
-            self.settings_win.geometry('+640+134')
+            # self.settings_win.geometry('+640+134')
         self.settings_win.resizable(False, False)
-
+        
         # Colors match those of master/parent window.
         self.settings_win.configure(bg=self.master_bg)
         style = ttk.Style()
         style.configure('TLabel', background=self.master_bg, foreground=self.row_fg)
-
+        
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
         #   settings_win closes. In Linux and Windows the msg will be covered
@@ -905,7 +1042,7 @@ class CountViewer(tk.Frame):
         self.time_start_l.configure(text='Waiting for run settings...')
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
-
+        
         # Need to disable default window Exit; only allow exit from active Confirm button.
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
         #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
@@ -914,19 +1051,20 @@ class CountViewer(tk.Frame):
                    '"Count now" is allowed once "Confirm" checks settings.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
+        
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
-
+        
         # Functions for Combobox selections.
         def set_intvl_selection(*args):
             self.share.setting['interval_t'].set(self.intvl_choice.get())
-
+        
         def set_sumry_unit(*args):
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
-
+        
         # Need to restrict entries to only digits,
         #   MUST use action type parameter to allow user to delete first number
         #   entered when wants to re-enter following backspace deletion.
-        def test_dig_entry(entry_string, action_type):
+        def eval_dig_entry(entry_string, action_type):
             """
             Only digits are accepted and displayed in Entry field.
             Used with .register() to configure Entry kw validatecommand.
@@ -936,99 +1074,99 @@ class CountViewer(tk.Frame):
                 if not entry_string.isdigit():
                     return False
             return True
-
+        
         def explain_zero_max():
             explain = 'Enter 0 (zero) for a status report.'
             messagebox.showinfo(parent=self.settings_win, detail=explain)
-
+        
         def explain_update():
             explain = ('Allows automatic Project update to re-establish communication '
                        ' with the BOINC server when no tasks are running and '
                        ' all tasks are "Ready to report" in the BOINC Manager.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
-
-        def check_show_close():
+        
+        def check_and_close():
             """
-            Calls check_and_set(), activates or disables interval cycles,
-            closes settings window, and calls display_data().
+            Calls check_and_set(); if all is good then closes settings()
+            window and calls display_data(), which is the end of the
+            startup sequence.
             Called from countnow_button.
             """
-            # Need a final check in case something changes since initial
-            #   check_and_set().
             self.check_and_set()
-
-            if self.share.setting['cycles_max'].get() == 0:
-                self.share.data['cycles_remain'].set(0)
-                self.share.setting['interval_t'].set('DISABLED')
-                self.share.setting['summary_t'].set('DISABLED')
-                self.share.notice_txt.set(
-                    'STATUS REPORT ONLY.\n(Ctrl-Shift-C clears notice.)')
-                self.display_data()
-                self.settings_win.destroy()
-            else:
-                self.display_data()
-                self.settings_win.destroy()
-
+            # app.update_idletasks() # Necessary?
+            if self.good_settings:
+                if self.share.setting['cycles_max'].get() == 0:
+                    self.share.data['cycles_remain'].set(0)
+                    self.share.setting['interval_t'].set('DISABLED')
+                    self.share.setting['summary_t'].set('DISABLED')
+                    self.share.note['notice_txt'].set(
+                        'STATUS REPORT ONLY.\n(Ctrl-Q exits program.)')
+                    self.display_data()
+                    self.settings_win.destroy()
+                else:
+                    self.display_data()
+                    self.settings_win.destroy()
+        
         # Have user select interval times for counting and summary cycles.
         # All interactive settings widgets are instantiated in Viewer __init__
         #   and configured and gridded here.
         self.intvl_choice.configure(state='readonly', width=4, height=12,
                                     textvariable=self.share.setting['interval_t'])
-
-        self.intvl_choice['values'] = ('60m', '55m', '50m', '45m', '40m', '35m',
-                                       '30m', '25m', '20m', '15m', '10m', '5m')
+        
+        self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
+        # self.intvl_choice['values'] = ('1m',)  # TESTING
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
-
+        
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
         intvl_label2 = ttk.Label(self.settings_win, text='minutes')
-
+        
         self.sumry_t_value.configure(
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_t_value.register(test_dig_entry), '%P', '%d'))
-
+                self.sumry_t_value.register(eval_dig_entry), '%P', '%d'))
+        
         self.sumry_t_unit.configure(state='readonly',
                                     textvariable=self.share.setting['sumry_t_unit'],
                                     values=('day', 'hr', 'min'), width=4)
         self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
-
+        
         sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
         sumry_label2 = ttk.Label(self.settings_win, text='time unit')
-
+        
         # Specify number limit of counting cycles to run before program exits.
         self.cycles_max_entry.configure(
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
-                self.cycles_max_entry.register(test_dig_entry), '%P', '%d'))
+                self.cycles_max_entry.register(eval_dig_entry), '%P', '%d'))
         cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
-
+        
         # Need a user options to log results to file and use auto-updates.
         # Checkbutton() kw "variable" automatically sets values.
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
-
+        
         self.update_choice.configure(variable=self.share.setting['do_update'],
                                      bg=self.master_bg, borderwidth=0)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
-
+        
         confirm_button = ttk.Button(self.settings_win, text='Confirm',
                                     command=self.check_and_set)
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
-                                       command=check_show_close)
+                                       command=check_and_close)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
-        #    'Show data' button is enabled (tk.NORMAL) in check_and_set().
+        #    'Count now' button is enabled (tk.NORMAL) in check_and_set().
         self.countnow_button.config(state=tk.DISABLED)
-
+        
         # Grid all window widgets; generally sorted by row.
         self.intvl_choice.grid(column=1, row=0)
         intvl_label1.grid(column=0, row=0, padx=5, pady=10, sticky=tk.E)
@@ -1053,20 +1191,20 @@ class CountViewer(tk.Frame):
         if MY_OS == 'win':
             cycles_query_button.grid(column=0, row=2, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
-
+    
     def check_and_set(self):
         """
-        Confirm that summary time > interval time, set all settings
-        from settings() to their textvariable dict values, and log to
-        file if optioned. Called from settings.close_and_show() via
-        Confirm button.
+        Confirm that summary time is valid for interval time,
+        set all settings to valid control variable dict values,
+        and set up logging data if optioned.
+        Called from confirm_button in settings().
         """
         self.countnow_button.config(state=tk.DISABLED)
-
+        
         # Note: self.share.setting['interval_t'] is set in settings().
         interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.setting['interval_m'].set(interval_m)
-
+        
         sumry_value = self.sumry_t_value.get()
         self.share.setting['sumry_t_value'].set(sumry_value)
         # if sumry_value == 0 then it is caught by interval_m comparison.
@@ -1074,20 +1212,22 @@ class CountViewer(tk.Frame):
             self.share.setting['sumry_t_value'].set(1)
         elif sumry_value != '0':
             self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
-
+        
         # Need to set summary_t here as concat of two sumry_t_ element strings,
         #   then convert to minutes to use in comparisons.
         summary_t = f"{self.share.setting['sumry_t_value'].get()}{self.sumry_t_unit.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
         summary_m = int(self.share.getminutes(summary_t))
-        if interval_m >= summary_m:
+        if interval_m >= summary_m or summary_m % interval_m != 0:
             self.countnow_button.config(state=tk.DISABLED)
-            info = "Summary time must be greater than interval time"
+            self.good_settings = False
+            info = "Summary time must be greater than, and a multiple of, interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
-        elif interval_m < summary_m:
+        elif interval_m < summary_m and summary_m % interval_m == 0:
+            self.good_settings = True
             self.countnow_button.config(state=tk.NORMAL)
-
+        
         # Need to remove leading zeros, but allow a zero entry.
         #   Replace empty Entry with default values.
         cycles_max = self.cycles_max_entry.get()
@@ -1098,18 +1238,16 @@ class CountViewer(tk.Frame):
         # Allow zero entry for 1-off status report of task data.
         elif cycles_max == '0':
             self.share.setting['cycles_max'].set(0)
-
-        # Need to set initial cycles_remain to cycles_max b/c
-        #   is decremented in notify_and_log() to track cycle number.
-        self.share.data['cycles_remain'].set(
-            self.share.setting['cycles_max'].get())
-
+        
+        # Need to set initial cycles_remain to cycles_max.
+        self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
+        
         # Here logging is lazily employed to manage the file of report data.
         # A log file will be created only if so optioned.
         if self.share.setting['do_log'].get():
             logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                                 format='%(message)s')
-
+    
     def display_data(self) -> None:
         """
         Config and grid data labels in master window; display start data.
@@ -1118,19 +1256,23 @@ class CountViewer(tk.Frame):
         Called from settings.check_close_show() with 'Show data' button.
         """
         time_start = datetime.now().strftime(SHORT_TIME_FORMAT)
-        long_time_start = datetime.now().strftime(LONG_TIME_FORMAT)
+        self.share.long_time_start = datetime.now().strftime(LONG_TIME_FORMAT)
         self.share.setstartdata()
-
-        # Thread is started here b/c this method is called only once.
+        
+        # Threads are started here b/c this method is called only once and is
+        #   the last method in the Viewer (the main thread) startup sequence.
         # There are no thread.join(), so use daemon.
         if self.share.setting['cycles_max'].get() > 0:
             self.share.intvl_thread = threading.Thread(
                 target=self.share.setintervaldata, daemon=True)
             self.share.intvl_thread.start()
-
+            self.share.notice_thread = threading.Thread(
+                target=self.share.taskstatenotices, daemon=True)
+            self.share.notice_thread.start()
+        
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
-
+        
         # Need self.share... whenever var is used in other MVC classes.
         self.time_start_l.config(text=time_start)
         self.share.data['time_prev_cnt'].set('The recent BOINC report.')
@@ -1139,24 +1281,24 @@ class CountViewer(tk.Frame):
         self.task_count_l.config(foreground=self.highlight)
         # count_next Label is config __init__ and set in set_interval_time().
         # num_tasks_all Label is config __init__ and set in set_start_data().
-
+        
         # Starting count data and times (from past boinc-client hour).
-        # Textvariables are configured in __init__; their values
-        #   are set in set_start_data(), called via Controller setstartdata().
+        # Tk control variables are configured in __init__; their values
+        #   are set in set_start_data().
         self.tt_mean_l.configure(foreground=self.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
-
+        
         self.task_count_sumry_l.configure(foreground=self.deemphasize)
         self.ttmean_sumry_l.configure(foreground=self.deemphasize)
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
-
-        # TODO: Suss why window height increases a few pixels when these are
-        #  gridded vs. initial (pre-settings()) blank no-data display.
-        #  It causes an obnoxious jump in frame/window size
+        
+        # TODO: FIX, window height increases a few pixels when these are
+        #  gridded vs. initial (pre-settings()) blank no-data display,
+        #  causing an obnoxious jump in frame/window size.
         # Initial gridding of data labels, start & intervals; sorted by row.
         # NOTE: time_start_label is gridded in settings(): row=2, column=1 ...
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
@@ -1168,82 +1310,48 @@ class CountViewer(tk.Frame):
         self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
         self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                                   columnspan=2)
-        self.time_prev_sumry_l.grid(row=10, column=2, padx=(0, 10), sticky=tk.E)
+        self.time_prev_sumry_l.grid(row=10, column=2, padx=(108, 0), sticky=tk.W)
         self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
         self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
         # Place cycles_remain value in same cell as its header, but shifted right.
         if MY_OS in 'lin, dar':
-            self.cycles_remain_l.grid(row=12, column=2, padx=(125, 0), sticky=tk.W)
+            self.cycles_remain_l.grid(row=12, column=2, padx=(123, 0), sticky=tk.W)
         elif MY_OS == 'win':
             self.cycles_remain_l.grid(row=12, column=2, padx=(110, 0), sticky=tk.W)
-
+        
         self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
         self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
-
+        
         if self.share.setting['do_log'].get():
-            interval_t = self.share.setting['interval_t'].get()
-            summary_t = self.share.setting['summary_t'].get()
-            tcount_start = self.share.data['task_count'].get()
-            tt_mean = self.share.data['tt_mean'].get()
-            tt_sd = self.share.data['tt_sd'].get()
-            tt_range = self.share.data['tt_range'].get()
-            tt_total = self.share.data['tt_total'].get()
-            num_tasks_all = self.share.data['num_tasks_all'].get()
-            cycles_max = self.share.setting['cycles_max'].get()
-            auto_update = self.share.setting['do_update'].get()
-            if cycles_max > 0:
-                self.report = (
-                    '\n>>> GUI TASK COUNTER START: settings... <<<\n'
-                    f'{long_time_start}; Number of tasks in the most recent BOINC report:'
-                    f' {tcount_start}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},'
-                    f' range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
-                    f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
-                    f'{self.indent}Counts every {interval_t},'
-                    f' summaries every {summary_t}\n'
-                    f'{self.indent}Project auto-update is set: {auto_update}\n'
-                    f'Timed intervals beginning now...\n')
-            # Need to provide a truncated report for one-off "status" runs.
-            elif cycles_max == 0:
-                self.report = (
-                    f'\n{long_time_start}; STATUS REPORT\n'
-                    f'{self.indent}Number of tasks in the most recent BOINC report:'
-                    f' {tcount_start}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},'
-                    f' range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
-        logging.info(self.report)
-
+            self.share.logit('start')
+    
     # Methods for buttons, menu items, keybinds.
     def emphasize_intvl_data(self) -> None:
         """
         Switches font emphasis from Summary data to Interval data.
         Called from 'Interval data' button.
         """
-
+        
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
-
+        
         # Interval data, column1
         self.task_count_l.configure(foreground=self.highlight)
         self.tt_mean_l.configure(foreground=self.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
-
+        
         # Summary data, column2, deemphasize font color
         self.task_count_sumry_l.configure(foreground=self.deemphasize)
         self.ttmean_sumry_l.configure(foreground=self.deemphasize)
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
-
+    
     def emphasize_sumry_data(self) -> None:
         """
         Switches font emphasis from Interval data to Summary data.
@@ -1251,7 +1359,7 @@ class CountViewer(tk.Frame):
         """
         self.interval_t_l.config(foreground=self.deemphasize)
         self.summary_t_l.config(foreground=self.emphasize)
-
+        
         # Summary data, column2, emphasize font color
         self.task_count_sumry_l.configure(foreground=self.highlight)
         self.ttmean_sumry_l.configure(foreground=self.highlight)
@@ -1259,7 +1367,7 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.configure(text=self.share.data['tt_range'].get(),
                                        foreground=self.emphasize)
         self.ttsum_sumry_l.configure(foreground=self.emphasize)
-
+        
         # Interval data, column1, deemphasize font color
         self.task_count_l.configure(foreground=self.deemphasize)
         self.task_count_l.configure(foreground=self.deemphasize)
@@ -1267,7 +1375,7 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
-
+    
     @staticmethod
     def view_log() -> None:
         """
@@ -1279,11 +1387,10 @@ class CountViewer(tk.Frame):
             os_width = 79
         elif MY_OS == 'dar':
             os_width = 72
-
+        
         try:
             with open(LOGFILE, 'r') as file:
                 logwin = tk.Toplevel()
-                # logwin.title('count-tasks_log.txt')
                 logwin.title(f'{LOGFILE}')
                 if MY_OS in 'lin, dar':
                     logwin.minsize(725, 200)
@@ -1296,14 +1403,14 @@ class CountViewer(tk.Frame):
                 logtext.insert(tk.INSERT, file.read())
                 logtext.see('end')
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                def reload():
+                
+                def update():
                     with open(LOGFILE) as new_text:
                         logtext.delete('1.0', tk.END)
                         logtext.insert('1.0', new_text.read())
                         logtext.see(tk.END)
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
+                
                 def erase():
                     okay = messagebox.askokcancel(
                         parent=logwin,
@@ -1318,19 +1425,18 @@ class CountViewer(tk.Frame):
                             logfile.seek(0)
                         # Need to clear the screen text as well.
                         logtext.delete('1.0', tk.END)
-
-                ttk.Button(logwin, text='Reload', command=reload).pack()
+                
+                ttk.Button(logwin, text='Update', command=update).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
-
+        
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} cannot be found.'
             warn_detail = ('Log file should be in folder:\n'
                            f'{CWD}\n'
                            'Has it been moved or renamed?')
-            # print('\n', warn_main, warn_detail)
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
-
+    
     @staticmethod
     def backup_log() -> None:
         """
@@ -1339,14 +1445,13 @@ class CountViewer(tk.Frame):
 
         :return: A new or overwritten backup file.
         """
-
+        
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGFILE) is True:
             try:
                 shutil.copyfile(LOGFILE, destination)
                 success_msg = 'Log file has been copied to: '
                 success_detail = str(destination)
-                # print(success_msg)
                 messagebox.showinfo(title='Archive completed',
                                     message=success_msg, detail=success_detail)
             except PermissionError:
@@ -1362,7 +1467,6 @@ class CountViewer(tk.Frame):
                            'Has it been moved or renamed?')
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
-            # print('\n', warn_main, warn_detail)
 
 
 class CountController(tk.Tk):
@@ -1370,39 +1474,39 @@ class CountController(tk.Tk):
     The Controller through which other MVC Count Classes can interact.
     Instantiates CountViewer() with master tk.Frame inheritance.
     """
-
+    
     def __init__(self):
         super().__init__()
-
+        
         # Need window sizes to make room for multi-line notices,
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
-            self.minsize(582, 360)
-            self.maxsize(780, 380)
+            self.minsize(580, 360)
+            self.maxsize(780, 390)
             # Need geometry so that master window will be under settings()
             #   Toplevel window at startup for Windows and Linux, but not MacOS.
             # These x, y coordinates match default system placement on Ubuntu desktop.
             self.geometry('+96+134')
         elif MY_OS == 'win':
             self.minsize(532, 360)
-            self.maxsize(700, 380)
+            self.maxsize(720, 390)
             self.geometry('+96+134')
         elif MY_OS == 'dar':
             self.minsize(600, 370)
-            self.maxsize(780, 400)
-
+            self.maxsize(780, 410)
+        
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
         CountViewer(master=container, share=self)
-
+    
     def defaultsettings(self) -> None:
         """
         Starting settings of: report interval, summary interval,
         counting limit, and log file option.
         """
         CountModeler(share=self).default_settings()
-
+    
     def getminutes(self, timestring: str) -> int:
         """
         Converts a time string into minutes.
@@ -1411,13 +1515,13 @@ class CountController(tk.Tk):
         :return: converted minutes as integer
         """
         return CountModeler(share=self).get_minutes(timestring)
-
+    
     def setstartdata(self, *args) -> None:
         """
         Is called from Viewer.startup().
         """
         CountModeler(share=self).set_start_data()
-
+    
     def formatsec(self, seconds: int, time_format: str) -> None:
         """
         Coverts seconds to formatted time string.
@@ -1428,21 +1532,31 @@ class CountController(tk.Tk):
         :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
         """
         CountModeler(share=self).format_sec(seconds, time_format)
-
+    
     # pylint: disable=unused-argument
     def setintervaldata(self, *args) -> None:
         """
-        Is called from Viewer.display_data(),
-        in which get_ttime_stats() returns dictionary of time statistics.
+        Is called from Viewer.display_data(), which starts the Modeler
+        interval thread.
         """
         CountModeler(share=self).set_interval_data()
-
+    
+    def taskstatenotices(self, *args) -> None:
+        """
+        Is called from Viewer.display_data(), which starts a the Modeler
+        task state notification thread.
+        """
+        CountModeler(share=self).task_state_notices()
+    
+    def logit(self, called_from) -> None:
+        CountModeler(share=self).log_it(called_from)
+    
     # pylint: disable=unused-argument
     def quitgui(self, *args) -> None:
         """Close down program. Called from button, menu, and keybinding.
         """
         CountModeler(share=self).quit_gui()
-
+    
     # pylint: disable=unused-argument
     def complimentme(self, *args) -> None:
         """Is called from Help menu. A silly diversion.
@@ -1450,7 +1564,7 @@ class CountController(tk.Tk):
         :param args: Needed for keybinding
         """
         CountFyi(share=self).compliment_me()
-
+    
     def about(self):
         """Is called from Viewer Help menu.
         """
@@ -1461,10 +1575,10 @@ class CountFyi:
     """
     Modules to provide user information and help.
     """
-
+    
     def __init__(self, share):
         self.share = share
-
+    
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu and keybinding.
 
@@ -1513,15 +1627,15 @@ class CountFyi:
         #   have been removed by a notice_l call. Original grid coordinates
         #   are set in master_widgets().
         self.share.compliment_txt.grid()
-
+        
         def refresh():
             self.share.compliment_txt.grid_remove()
-            # Re-grid notice to return to current interval notice.
-            # self.share.notice_l.grid()
+            # Re-grid notice to return to current Notice.
+            self.share.notice_l.grid()
             app.update_idletasks()
-
+        
         self.share.compliment_txt.after(3333, refresh)
-
+    
     @staticmethod
     def about() -> None:
         """
