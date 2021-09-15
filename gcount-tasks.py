@@ -66,6 +66,8 @@ if sys.version_info < (3, 6):
     sys.exit(1)
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
+# GUI_TITLE = __file__  # <- for development
+GUI_TITLE = 'BOINC task counter'
 SHORT_TIME_FORMAT = '%Y-%b-%d %H:%M'
 LONG_TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
 BC = boinc_command.BoincCommand()
@@ -73,8 +75,7 @@ BC = boinc_command.BoincCommand()
 LOGFILE = Path('count-tasks_log.txt')
 BKUPFILE = Path('count-tasks_log(copy).txt')
 CWD = Path.cwd()
-# GUI_TITLE = __file__  # <- for development
-GUI_TITLE = 'BOINC task counter'
+BOINC_STATUS_INTERVAL = 60  # <- time.sleep() seconds
 
 # Use this for a clean exit from Terminal; bypasses __name__ KeyInterrupt msg.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -85,9 +86,6 @@ class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
     """
-    # Set time, in seconds, for query, display, and logging of BOINC
-    # task states; used in task_state_notices().
-    BOINC_STATUS_INTERVAL = 60
     
     def __init__(self, share):
         self.share = share
@@ -343,7 +341,7 @@ class CountModeler:
         set_interval_data(). Calls to: set_task_states() and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
-            time.sleep(CountModeler.BOINC_STATUS_INTERVAL)
+            time.sleep(BOINC_STATUS_INTERVAL)
             with self.thread_lock:
                 self.set_task_states()
                 num_running = self.share.note['num_running'].get()
@@ -354,6 +352,7 @@ class CountModeler:
                 proj_stalled = self.share.note['proj_stalled'].get()
                 cycles_max = self.share.setting['cycles_max'].get()
                 cycles_remain = self.share.data['cycles_remain'].get()
+                interval_m = self.share.setting['interval_m'].get()
                 
                 # Need notices for task status that might need user attention,
                 #   conditioned in descending priority.
@@ -367,9 +366,12 @@ class CountModeler:
                             'BOINC client is about to run out of tasks.\n'
                             'Check BOINC Manager.')
                     elif tic_nnt > 0:
+                        lapsed_time = self.format_sec(
+                            (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
-                            f'NO TASKS reported in past {tic_nnt} count(s).\n')
-                    else:  # Everything is fine.
+                            f'NO TASKS reported in past {lapsed_time}.')
+
+                    else:  # Everything is fine, remove any prior notice.
                         self.share.note['notice_txt'].set('')
                 
                 if num_running == 0:
@@ -478,7 +480,7 @@ class CountModeler:
                 f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
                 f'{self.indent}Counts every {interval_t}, summaries every {summary_t}.\n'
                 f'{self.indent}BOINC status evaluations every'
-                f' {round((CountModeler.BOINC_STATUS_INTERVAL / 60), 2)} minutes.\n'
+                f' {round((BOINC_STATUS_INTERVAL / 60), 2)} minutes.\n'
                 f'{self.indent}Project auto-update is set: {auto_update}\n'
                 f'Timed intervals beginning now...\n')
             logging.info(report)
@@ -963,7 +965,7 @@ class CountViewer(tk.Frame):
         info.add_command(label='- At startup, # tasks reported and time of last count are from the')
         info.add_command(label='     most recent hourly BOINC report.')
         info.add_command(label='- Number of tasks in queue and Notices update every '
-                               f'{CountModeler.BOINC_STATUS_INTERVAL / 60} minutes.')
+                               f'{BOINC_STATUS_INTERVAL / 60} minutes.')
         info.add_command(label='- Displayed countdown clock time is approximate.')
         info.add_command(label='- You can review count data and Notices history with "View log file".')
         info.add_command(label="- Menu: File>'Backup log file' copies the file to your Home folder.")
@@ -1114,7 +1116,7 @@ class CountViewer(tk.Frame):
                                     textvariable=self.share.setting['interval_t'])
         
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
-        # self.intvl_choice['values'] = ('1m',)  # TESTING
+        # self.intvl_choice['values'] = ('1m',)  # TESTING (make shorter than BOINC_STATUS_INTERVAL)
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
         
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
