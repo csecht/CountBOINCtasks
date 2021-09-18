@@ -523,7 +523,7 @@ class CountModeler:
                 report = (f'{self.share.task_state_time}; '
                           f'BOINC Manager has suspended tasks;\n'
                           f'{self.indent}A "When to suspend" condition was met'
-                          ' in BOINC Manager Computing preferences.\n')
+                          ' in BOINC Manager Computing preferences.')
                 logging.info(report)
             if num_suspended_by_user > 0:
                 report = (f'{self.share.task_state_time}; {num_suspended_by_user}'
