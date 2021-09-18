@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -46,6 +46,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from platform import node
 
 from COUNTmodules import boinc_command
 
@@ -1491,7 +1492,7 @@ class CountController(tk.Tk):
         elif MY_OS == 'dar':
             self.minsize(600, 370)
             self.maxsize(780, 410)
-        
+
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
         CountViewer(master=container, share=self)
@@ -1687,7 +1688,7 @@ if __name__ == "__main__":
     else:
         try:
             app = CountController()
-            app.title("Count BOINC tasks")
+            app.title(f"Count BOINC tasks on {node()}")
             print('gcount-tasks now running...')
             app.mainloop()
         except KeyboardInterrupt:
