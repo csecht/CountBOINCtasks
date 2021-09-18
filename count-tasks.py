@@ -27,7 +27,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.26'
+__version__ =   '0.4.27'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -49,9 +49,16 @@ BC = boinc_command.BoincCommand()
 # Assume log file is in the CountBOINCtasks-master folder.
 LOGPATH = str(Path('count-tasks_log.txt'))
 # LOGFILE = str(Path('../count-tasks_log.txt'))
-# Here logging is lazily employed to manage the user file of report data.
+# Here logging is lazily employed to manage the user's data log file.
 logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')
+
+if sys.version_info < (3, 6):
+    print('Sorry, but running count-tasks.py requires Python 3.6 or later.\n'
+          'Current Python version: '
+          f'{sys.version_info.major}.{sys.version_info.minor}\n'
+          'Python downloads are available from https://docs.python.org/')
+    sys.exit(1)
 
 
 class DataIntervals:

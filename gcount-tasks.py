@@ -57,13 +57,17 @@ except (ImportError, ModuleNotFoundError) as error:
     print('gcount_tasks.py requires tkinter, which is included with \n'
           'Python 3.7+distributions.\n'
           'Install the most recent version or re-install Python and include Tk/Tcl.\n'
-          'Python downloads are available from python.org\n'
+          '\n'
           'On Linux you may also need:$ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 6):
-    print('Program requires Python 3.6 or later.')
+    print('Sorry, but running gcount-tasks.py requires Python 3.6 or later.\n'
+          'Current Python version: '
+          f'{sys.version_info.major}.{sys.version_info.minor}\n'
+          'Python downloads are available from https://docs.python.org/')
     sys.exit(1)
+
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
 # GUI_TITLE = __file__  # <- for development
@@ -768,7 +772,6 @@ class CountViewer(tk.Frame):
                                         command=self.emphasize_sumry_data)
         
         # Labels for settings values; configured and gridded in display_data().
-        #  Data in these labels are invariant for duration of run.
         # NOTE: self.time_start_l label is initially configured for text and
         #   gridded in settings() to show a startup message, then reconfigured
         #   in display_data() for the time_start.
