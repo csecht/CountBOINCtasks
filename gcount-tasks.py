@@ -75,7 +75,7 @@ BC = boinc_command.BoincCommand()
 LOGFILE = Path('count-tasks_log.txt')
 BKUPFILE = Path('count-tasks_log(copy).txt')
 CWD = Path.cwd()
-BOINC_STATUS_INTERVAL = 60  # <- time.sleep() seconds
+TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
 # Use this for a clean exit from Terminal; bypasses __name__ KeyInterrupt msg.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -112,7 +112,7 @@ class CountModeler:
         self.share.setting['sumry_t_unit'].set('day')
         self.share.setting['cycles_max'].set(1008)
         self.share.setting['do_log'].set(True)
-        self.share.setting['do_update'].set(False)
+        self.share.setting['proj_update'].set(False)
     
     def set_start_data(self):
         """
@@ -158,7 +158,7 @@ class CountModeler:
         tasks_all = BC.get_tasks('all')
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
-        #   Use tuple index to populate variables.
+        #   Use tuple index to populate the list expressions.
         tags = ('   name: ',
                 '   active_task_state: ',
                 '   state: ')
@@ -167,6 +167,10 @@ class CountModeler:
                         if tags[1] in elem]
         self.task_states = [elem.replace(tags[2], '') for elem in tasks_all
                             if tags[2] in elem]
+        # When communication to server is stalled, all tasks will be
+        #  "Ready to report" with a state of 'uploaded', so a forced
+        #   Project update in task_state_notices() may prompt finalizing
+        #   the task upload.
         if 'uploaded' in self.task_states and 'downloaded' not in self.task_states:
             self.share.note['proj_stalled'].set(True)
         num_running = len(
@@ -180,8 +184,6 @@ class CountModeler:
         self.share.note['num_running'].set(num_running)
         self.share.note['num_suspended_by_boinc'].set(num_suspended_by_boinc)
         self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
-        
-        # app.update_idletasks()  # Necessary?
     
     def set_interval_data(self) -> None:
         """
@@ -205,7 +207,7 @@ class CountModeler:
                 self.share.start_b.grid_forget()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
-            
+
             # Need to sleep between counts while displaying a countdown timer.
             # Need to limit total time of interval to target_elapsed_time,
             #   in Epoch seconds, b/c each interval sleep cycle will run longer
@@ -331,7 +333,7 @@ class CountModeler:
         set_interval_data(). Calls to: set_task_states() and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
-            time.sleep(BOINC_STATUS_INTERVAL)
+            time.sleep(TASK_STATE_INTERVAL)
             with self.thread_lock:
                 self.set_task_states()
                 num_running = self.share.note['num_running'].get()
@@ -356,20 +358,17 @@ class CountModeler:
                             'BOINC client is about to run out of tasks.\n'
                             'Check BOINC Manager.')
                     elif tic_nnt > 0:
-                        lapsed_time = self.format_sec(
+                        nnt_time = self.format_sec(
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
-                            f'NO TASKS reported in past {lapsed_time}.')
+                            f'NO TASKS reported in past {nnt_time}.')
                     
                     else:  # Everything is fine, remove any prior notice.
                         self.share.note['notice_txt'].set('')
                 
                 if num_running == 0:
-                    # When communication to server is stalled, all tasks will be
-                    #  "Ready to report" with a state of 'uploaded', so a forced
-                    #   Project update may prompt finalizing the task upload process.
                     if proj_stalled:
-                        if self.share.setting['do_update'].get():
+                        if self.share.setting['proj_update'].get():
                             local_boinc_urls = BC.get_project_url()
                             # I'm not sure how to handle multiple concurrent Projects.
                             # If they are all stalled, then updating the first works?
@@ -437,7 +436,7 @@ class CountModeler:
             self.task_count_start = self.share.data['task_count'].get()
         elif called_from == 'interval':
             self.task_count_new = self.share.data['task_count'].get()
-        auto_update = self.share.setting['do_update'].get()
+        proj_update = self.share.setting['proj_update'].get()
         tt_mean = self.share.data['tt_mean'].get()
         tt_sd = self.share.data['tt_sd'].get()
         tt_range = self.share.data['tt_range'].get()
@@ -469,8 +468,8 @@ class CountModeler:
                 f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
                 f'{self.indent}Counts every {interval_t}, summaries every {summary_t}.\n'
                 f'{self.indent}BOINC status evaluations every'
-                f' {round((BOINC_STATUS_INTERVAL / 60), 2)} minutes.\n'
-                f'{self.indent}Project auto-update is set: {auto_update}\n'
+                f' {round((TASK_STATE_INTERVAL / 60), 2)} minutes.\n'
+                f'{self.indent}Project auto-update is set: {proj_update}\n'
                 f'Timed intervals beginning now...\n')
             logging.info(report)
         # Need to provide a truncated report for one-off "status" runs.
@@ -705,7 +704,7 @@ class CountViewer(tk.Frame):
             'summary_t': tk.StringVar(),
             'cycles_max': tk.IntVar(),
             'do_log': tk.BooleanVar(),
-            'do_update': tk.BooleanVar()
+            'proj_update': tk.BooleanVar()
         }
         
         # Common data var for display; passed between Viewer and Modeler
@@ -955,7 +954,7 @@ class CountViewer(tk.Frame):
         info.add_command(label='- At startup, # tasks reported and time of last count are from the')
         info.add_command(label='     most recent hourly BOINC report.')
         info.add_command(label='- Number of tasks in queue and Notices update every '
-                               f'{BOINC_STATUS_INTERVAL / 60} minutes.')
+                               f'{round((TASK_STATE_INTERVAL / 60), 2)} minutes.')
         info.add_command(label='- Displayed countdown clock time is approximate.')
         info.add_command(label='- You can review count data and Notices history with "View log file".')
         info.add_command(label="- Menu: File>'Backup log file' copies the file to your Home folder.")
@@ -1107,7 +1106,7 @@ class CountViewer(tk.Frame):
                                     textvariable=self.share.setting['interval_t'])
         
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
-        # self.intvl_choice['values'] = ('1m',)  # TESTING (make shorter than BOINC_STATUS_INTERVAL)
+        # self.intvl_choice['values'] = ('1m',)  # TESTING (shorter than TASK_STATE_INTERVAL)
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
         
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
@@ -1137,15 +1136,16 @@ class CountViewer(tk.Frame):
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
         
-        # Need a user options to log results to file and use auto-updates.
+        # Need user options to log results to file and to use auto-updates.
         # Checkbutton() kw "variable" automatically sets values.
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file')
         
-        self.update_choice.configure(variable=self.share.setting['do_update'],
+        self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
+
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
         
