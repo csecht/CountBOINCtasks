@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1395,7 +1395,7 @@ class CountViewer(tk.Frame):
         try:
             with open(LOGFILE, 'r') as file:
                 logwin = tk.Toplevel()
-                logwin.title(f'{LOGFILE}')
+                logwin.title(f'{LOGFILE}, {node()}')
                 if MY_OS in 'lin, dar':
                     logwin.minsize(725, 200)
                 elif MY_OS == 'win':
@@ -1421,14 +1421,16 @@ class CountViewer(tk.Frame):
                         title='Confirmation needed',
                         message='Delete log file content?',
                         detail="'Enter' or spacebar will also delete log file content.")
+                    if okay:
+                        open(LOGFILE, 'w').close()
+                        logtext.delete('1.0', tk.END)
                     # source: https://stackoverflow.com/questions/2769061/
                     # how-to-erase-the-file-contents-of-text-file-in-python
-                    if okay:
-                        with open(LOGFILE, 'r+') as logfile:
-                            logfile.truncate(0)
-                            logfile.seek(0)
-                        # Need to clear the screen text as well.
-                        logtext.delete('1.0', tk.END)
+                    # Use this for a file that is already open. Unnecessary here.
+                    # if okay:
+                    #     with open(LOGFILE, 'r+') as logfile:
+                    #         logfile.truncate(0)
+                    #         logfile.seek(0)
                 
                 ttk.Button(logwin, text='Update', command=update).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
