@@ -1463,21 +1463,20 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).default_settings()
 
-    def setstartdata(self, *arg) -> None:
+    def setstartdata(self) -> None:
         """
         Is called from Viewer.startup().
         """
         CountModeler(share=self).set_start_data()
     
-    # pylint: disable=unused-argument
-    def setintervaldata(self, *arg) -> None:
+    def setintervaldata(self) -> None:
         """
         Is called from Viewer.display_data(), which starts the Modeler
         interval thread.
         """
         CountModeler(share=self).set_interval_data()
-    
-    def taskstatenotices(self, *arg) -> None:
+
+    def taskstatenotices(self) -> None:
         """
         Is called from Viewer.display_data(), which starts a the Modeler
         task state notification thread.
@@ -1491,7 +1490,7 @@ class CountController(tk.Tk):
     def quitgui(self, *arg) -> None:
         """Close down program. Called from button, menu, and keybinding.
 
-        :param args: Needed for keybinding
+        :param arg: Needed for keybinding
         """
         CountModeler(share=self).quit_gui()
     
@@ -1499,7 +1498,7 @@ class CountController(tk.Tk):
     def complimentme(self, *arg) -> None:
         """Is called from Help menu. A silly diversion.
 
-        :param args: Needed for keybinding
+        :param arg: Needed for keybinding
         """
         CountFyi(share=self).compliment_me()
     
@@ -1511,7 +1510,7 @@ class CountController(tk.Tk):
 
 class CountFyi:
     """
-    Modules to provide user information and help.
+    Methods to provide user information and help.
     """
     
     def __init__(self, share):
@@ -1520,7 +1519,7 @@ class CountFyi:
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu and keybinding.
 
-        :return: Transient label to make one smile.
+        :return: Transient text to make one smile.
         """
         compliments = [
             "Hey there good lookin'!", 'I wish we had met sooner.',
