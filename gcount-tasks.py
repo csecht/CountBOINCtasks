@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -82,8 +82,8 @@ BKUPFILE = Path('count-tasks_log(copy).txt')
 CWD = Path.cwd()
 TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
-# Use this for a clean exit from Terminal; bypasses __name__ KeyInterrupt msg.
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+# Use this for a immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
+# signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
 # The engine that gets BOINC data and runs timed data counts.
@@ -745,7 +745,7 @@ class CountViewer(tk.Frame):
         }
         
         # Used in CM.set_start_data() and CM.set_interval_data();
-        # cannot be in CountModeler __init__ b/c it will be reset there
+        # cannot be in CountModeler __init__ b/c there it will reset each call.
         self.share.ttimes_used = set()
         
         # settings() window widgets:
@@ -850,9 +850,11 @@ class CountViewer(tk.Frame):
                               highlightcolor='grey95',
                               highlightbackground='grey75')
         
-        # Set up universal and OS-specific keybindings and menus
+        # Provide Terminal exit info.
         self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
         self.master.bind_all('<Escape>', self.share.quitgui)
+
+        # Set up universal and OS-specific keybindings and menus
         cmdkey = ''
         if MY_OS in 'lin, win':
             cmdkey = 'Control'
@@ -938,9 +940,9 @@ class CountViewer(tk.Frame):
         file.add_command(label="Backup log file", command=self.backup_log)
         file.add_separator()
         file.add_command(label='Quit', command=self.share.quitgui,
-                         # MacOS doesn't display this accelerator
-                         #   b/c can't override MacOS native Command+Q;
-                         #   and don't want Ctrl+Q displayed or used.
+                         # Note: macOS won't display this accelerator text
+                         #   b/c can't override macOS native Command+Q;
+                         #   and don't want Ctrl+Q displayed or used on macOS.
                          accelerator=f'{os_accelerator}+Q')
         
         view = tk.Menu(menu, tearoff=0)
@@ -952,16 +954,25 @@ class CountViewer(tk.Frame):
         info = tk.Menu(self.master, tearoff=0)
         menu.add_cascade(label="Help", menu=help_menu)
         help_menu.add_cascade(label='Info...', menu=info)
-        info.add_command(label='- Counting will not begin until run settings are confirmed at start.')
-        info.add_command(label='- Interval and Summary data buttons switch visual emphasis...')
-        info.add_command(label='     ...those buttons activate once their data post.')
-        info.add_command(label='- At startup, # tasks reported and time of last count are from the')
-        info.add_command(label='     most recent hourly BOINC report.')
-        info.add_command(label='- Number of tasks in queue and Notices update every '
-                               f'{round((TASK_STATE_INTERVAL / 60), 2)} minutes.')
-        info.add_command(label='- Displayed countdown clock time is approximate.')
-        info.add_command(label='- You can review count data and Notices history with "View log file".')
-        info.add_command(label="- Menu: File>'Backup log file' copies the file to your Home folder.")
+        info.add_command(
+            label='- Counting will not begin until run settings are confirmed at start.')
+        info.add_command(
+            label='- Interval and Summary data buttons switch visual emphasis...')
+        info.add_command(
+            label='     ...those buttons activate once their data post.')
+        info.add_command(
+            label='- At startup, # tasks reported and time of last count are from the')
+        info.add_command(
+            label='     most recent hourly BOINC report.')
+        info.add_command(
+            label='- Number of tasks in queue and Notices update every '
+            f'{round((TASK_STATE_INTERVAL / 60), 2)} minutes.')
+        info.add_command(
+            label='- Displayed countdown clock time is approximate.')
+        info.add_command(
+            label='- Review count data and Notices history with "View log file".')
+        info.add_command(
+            label="- Menu: File>'Backup log file' copies the file to your Home folder.")
         
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
@@ -1015,14 +1026,10 @@ class CountViewer(tk.Frame):
         self.settings_win.title('Set and confirm run settings')
         if MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
-        # In macOS, topmost places Combobox selections BEHIND the window.
-        #    So allow app window to remain topmost and offset settings_win.
+        # In macOS, topmost places Combobox selections BEHIND the window,
+        #    but focus_focus() does not.
         elif MY_OS == 'dar':
-            # TODO: FIX that settings_win cannot get focus.
-            # self.settings_win.lift()
-            # self.master.lower()
-            # self.settings_win.focus()
-            self.settings_win.geometry('+640+134')
+            self.settings_win.focus_force()
         self.settings_win.resizable(False, False)
         
         # Colors match those of master/parent window.
@@ -1043,7 +1050,7 @@ class CountViewer(tk.Frame):
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
         #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
         def no_exit_on_x():
-            msg = ('Please exit window with "Count now" button.\n'
+            msg = ('Please close window with "Count now" button.\n'
                    '"Count now" is allowed once "Confirm" checks settings.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
@@ -1668,7 +1675,6 @@ class CountFyi:
 
 
 if __name__ == "__main__":
-    # os.chdir(os.path.dirname(os.path.realpath(__file__)))
     parser = argparse.ArgumentParser()
     parser.add_argument('--about',
                         help='Provides description, version, GNU license',
@@ -1691,10 +1697,12 @@ if __name__ == "__main__":
             app.title(f"Count BOINC tasks on {node()}")
             print('gcount-tasks now running...')
             app.mainloop()
+        # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
+        #  like moving cursor over window, or a timer action.
+        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL), but that
+        #  will bypass this exit message.
         except KeyboardInterrupt:
             exit_msg = (f'\n\n  *** Interrupted by user ***\n'
                         f'  Quitting now...{datetime.now()}\n\n')
-            # sys.stdout.write(exit_msg)
             print(exit_msg)
             logging.info(msg=exit_msg)
-            # TODO: exception does not print on macOS. WHY?
