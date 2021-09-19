@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.3.5'
+__version__ = '0.4.0'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -39,7 +39,6 @@ import argparse
 import logging
 import random
 import shutil
-import signal
 import statistics as stats
 import sys
 import threading
@@ -48,7 +47,8 @@ from datetime import datetime
 from pathlib import Path
 from platform import node
 
-from COUNTmodules import boinc_command
+from COUNTmodules import boinc_command, time_convert
+
 
 try:
     import tkinter as tk
@@ -69,13 +69,14 @@ if sys.version_info < (3, 6):
           'Python downloads are available from https://docs.python.org/')
     sys.exit(1)
 
+BC = boinc_command.BoincCommand()
+TC = time_convert
 MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
 # GUI_TITLE = __file__  # <- for development
 GUI_TITLE = 'BOINC task counter'
 SHORT_TIME_FORMAT = '%Y-%b-%d %H:%M'
 LONG_TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
-BC = boinc_command.BoincCommand()
 # Log file should be in the CountBOINCtasks-master folder.
 LOGFILE = Path('count-tasks_log.txt')
 BKUPFILE = Path('count-tasks_log(copy).txt')
@@ -97,7 +98,7 @@ class CountModeler:
         self.thread_lock = threading.Lock()
         
         self.ttimes_smry = set()
-        self.report_summary = False
+        self.summary_ready = False
         self.proj_stalled = False
         self.task_states = ['none']
         self.task_count_start = 0
@@ -154,12 +155,12 @@ class CountModeler:
     
     def set_task_states(self) -> None:
         """
-        Query boinc-client for tasks queued, running, and suspended;
-        set corresponding dictionary tk control variables.
+        Query boinc-client for status of tasks queued, running, and
+        suspended; set corresponding dictionary tk control variables.
         Called from task_state_notices().
         """
         
-        self.share.task_state_time = datetime.now().strftime(LONG_TIME_FORMAT)
+        self.share.status_time = datetime.now().strftime(LONG_TIME_FORMAT)
         tasks_all = BC.get_tasks('all')
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
@@ -292,12 +293,12 @@ class CountModeler:
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
                 summary_time = self.share.data['time_prev_cnt'].get()
-                summary_m = self.get_minutes(self.share.setting['summary_t'].get())
+                summary_m = TC.string_to_m(self.share.setting['summary_t'].get())
                 interval_m = int(self.share.setting['interval_t'].get()[:-1])
                 summary_factor = summary_m // interval_m
                 if (cycle + 1) % summary_factor == 0 and num_running > 0:
                     # Flag used in log_it() for logging.
-                    self.report_summary = True
+                    self.summary_ready = True
                     # Need to activate disabled Summary data button now; only need
                     #  statement for 1st summary, but, oh well, here we go again...
                     self.share.sumry_b.config(state=tk.NORMAL)
@@ -363,7 +364,7 @@ class CountModeler:
                             'BOINC client is about to run out of tasks.\n'
                             'Check BOINC Manager.')
                     elif tic_nnt > 0:
-                        nnt_time = self.format_sec(
+                        nnt_time = TC.sec_to_format(
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}.')
@@ -432,7 +433,6 @@ class CountModeler:
         BOINC task data. Provide notices for aberrant task status.
         Called from set_interval_data() and task_state_notices().
         """
-        # print(time.time(), 'Now in log_it')
         
         cycles_max = self.share.setting['cycles_max'].get()
         interval_t = self.share.setting['interval_t'].get()
@@ -460,7 +460,8 @@ class CountModeler:
         ttsd_sum = self.share.data['tt_sd_sumry'].get()
         ttrange_sum = self.share.data['tt_range_sumry'].get()
         tttotal_sum = self.share.data['tt_total_sumry'].get()
-        
+        status_intvl = TC.string_to_m(f'{TASK_STATE_INTERVAL}s')
+
         if called_from == 'start' and cycles_max > 0:
             report = (
                 '\n>>> GUI TASK COUNTER START: settings... <<<\n'
@@ -473,7 +474,7 @@ class CountModeler:
                 f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
                 f'{self.indent}Counts every {interval_t}, summaries every {summary_t}.\n'
                 f'{self.indent}BOINC status evaluations every'
-                f' {round((TASK_STATE_INTERVAL / 60), 2)} minutes.\n'
+                f' {status_intvl} minutes.\n'
                 f'{self.indent}Project auto-update is set: {proj_update}\n'
                 f'Timed intervals beginning now...\n')
             logging.info(report)
@@ -491,42 +492,42 @@ class CountModeler:
         
         # Note: Two timestamps are used: self.share.share.intvl_cycle_time is defined
         # in set_interval_data() at end of each count cycle.,
-        # self.share.task_state_time is defined in set_task_states().
+        # self.share.status_time is defined in set_task_states().
         if called_from == 'notice' and num_running > 0:
             # A Notice for no new tasks reported, tic_nnt, is issued in
             #   set_interval_data() instead of here.
             if num_running == num_tasks_all:
-                report = (f'\n{self.share.task_state_time};'
+                report = (f'\n{self.share.status_time};'
                           'BOINC client is about to run out of tasks.')
                 logging.info(report)
             if num_suspended_by_user > 0:
-                report = (f'\n{self.share.task_state_time}; '
+                report = (f'\n{self.share.status_time}; '
                           f'{num_suspended_by_user} tasks are suspended by user.')
                 logging.info(report)
         elif called_from == 'notice' and num_running == 0:
-            report = (f'\n{self.share.task_state_time};'
+            report = (f'\n{self.share.status_time};'
                       ' *** NO TASKS RUNNING. Check BOINC Manager.***\n')
             logging.info(report)
             if proj_stalled:
                 report = (
-                    f'{self.share.task_state_time};'
+                    f'{self.share.status_time};'
                     f' *** PROJECT AUTO-UPDATE REQUESTED for {self.share.first_project}. ***\n'
                     'All tasks were "Ready to report" and waiting to upload.\n'
                     'If Project auto-update is allowed, tasks should now be uploaded.\n'
                     'Check BOINC Manager to verify.')
                 logging.info(report)
             if num_tasks_all == 0:
-                report = f'{self.share.task_state_time}; ' \
+                report = f'{self.share.status_time}; ' \
                          f'BOINC client has no tasks!\n'
                 logging.info(report)
             if num_suspended_by_boinc > 0:
-                report = (f'{self.share.task_state_time}; '
+                report = (f'{self.share.status_time}; '
                           f'BOINC Manager has suspended tasks;\n'
                           f'{self.indent}A "When to suspend" condition was met'
                           ' in BOINC Manager Computing preferences.')
                 logging.info(report)
             if num_suspended_by_user > 0:
-                report = (f'{self.share.task_state_time}; {num_suspended_by_user}'
+                report = (f'{self.share.status_time}; {num_suspended_by_user}'
                           f' tasks suspended by user.\n')
                 logging.info(report)
         
@@ -549,7 +550,7 @@ class CountModeler:
             )
             logging.info(report)
         
-        if called_from == 'interval' and self.report_summary:
+        if called_from == 'interval' and self.summary_ready:
             report = (
                 f'\n{self.share.intvl_cycle_time}; >>> SUMMARY: Count for the past'
                 f' {summary_t}: {tcount_sum}\n'
@@ -558,64 +559,14 @@ class CountModeler:
             )
             logging.info(report)
             # Need to reset flag to toggle summary logging.
-            self.report_summary = False
+            self.summary_ready = False
         
         if called_from == 'interval' and cycles_remain == 0:
             report = f'\n### {cycles_max} counting cycles have ended. ###\n'
             logging.info(report)
     
     @staticmethod
-    def get_minutes(time_string: str) -> int:
-        """Convert time string to minutes.
-
-        :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d;
-                            Valid units are m, h, or d.
-        :return: Time as integer minutes.
-        """
-        t_min = {'m': 1, 'h': 60, 'd': 1440}
-        val = int(time_string[:-1])
-        unit = time_string[-1]
-        try:
-            return t_min[unit] * val
-        # Error msgs to developer
-        except KeyError as kerr:
-            err_msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
-            raise KeyError(err_msg) from kerr
-        except ValueError as verr:
-            err_msg = f'Invalid value unit: {val} '
-            raise ValueError(err_msg) from verr
-    
-    @staticmethod
-    def format_sec(secs: int, time_format: str) -> str:
-        """Convert seconds to the specified time format for display.
-
-        :param secs: Time in seconds, any integer except 0.
-        :param time_format: Either 'std' or 'short'
-        :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
-        """
-        # Time conversion concept from Niko
-        # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
-        _m, _s = divmod(secs, 60)
-        _h, _m = divmod(_m, 60)
-        day, _h = divmod(_h, 24)
-        if time_format == 'short':
-            if secs >= 86400:
-                return f'{day:1d}d'  # option, add {h:01d}h'
-            if 86400 > secs >= 3600:
-                return f'{_h:01d}h'  # option, add :{m:01d}m
-            if 3600 > secs >= 60:
-                return f'{_m:01d}m'  # option, add :{s:01d}s
-            return f'{_s:01d}s'
-        if time_format == 'std':
-            if secs >= 86400:
-                return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
-            return f'{_h:02d}:{_m:02d}:{_s:02d}'
-        # Error msg to developer
-        return ('\nEnter secs as integer, time_format as either'
-                f" 'std' or 'short'.\nArguments as entered: secs={secs}, "
-                f"time_format={time_format}.\n")
-    
-    def get_ttime_stats(self, numtasks: int, tasktimes: iter) -> dict:
+    def get_ttime_stats(numtasks: int, tasktimes: iter) -> dict:
         """
         Sum and run statistics from times, as sec (integers or floats).
 
@@ -624,12 +575,12 @@ class CountModeler:
         :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
                  Dict values as: 00:00:00.
         """
-        total = self.format_sec(int(sum(set(tasktimes))), 'std')
+        total = TC.sec_to_format(int(sum(tasktimes)), 'std')
         if numtasks > 1:
-            mean = self.format_sec(int(stats.mean(set(tasktimes))), 'std')
-            stdev = self.format_sec(int(stats.stdev(set(tasktimes))), 'std')
-            low = self.format_sec(int(min(tasktimes)), 'std')
-            high = self.format_sec(int(max(tasktimes)), 'std')
+            mean = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
+            stdev = TC.sec_to_format(int(stats.stdev(tasktimes)), 'std')
+            low = TC.sec_to_format(int(min(tasktimes)), 'std')
+            high = TC.sec_to_format(int(max(tasktimes)), 'std')
             return {
                 'tt_total': total,
                 'tt_mean': mean,
@@ -966,7 +917,7 @@ class CountViewer(tk.Frame):
             label='     most recent hourly BOINC report.')
         info.add_command(
             label='- Number of tasks in queue and Notices update every '
-            f'{round((TASK_STATE_INTERVAL / 60), 2)} minutes.')
+            f'{TC.string_to_m(f"{TASK_STATE_INTERVAL}s")} minutes')
         info.add_command(
             label='- Displayed countdown clock time is approximate.')
         info.add_command(
@@ -1058,10 +1009,10 @@ class CountViewer(tk.Frame):
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
         
         # Functions for Combobox selections.
-        def set_intvl_selection(*args):
+        def set_intvl_selection(*arg):
             self.share.setting['interval_t'].set(self.intvl_choice.get())
         
-        def set_sumry_unit(*args):
+        def set_sumry_unit(*arg):
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
         
         # Need to restrict entries to only digits,
@@ -1117,7 +1068,6 @@ class CountViewer(tk.Frame):
                                     textvariable=self.share.setting['interval_t'])
         
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
-        # self.intvl_choice['values'] = ('1m',)  # TESTING (shorter than TASK_STATE_INTERVAL)
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
         
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
@@ -1221,7 +1171,7 @@ class CountViewer(tk.Frame):
         #   then convert to minutes to use in comparisons.
         summary_t = f"{self.share.setting['sumry_t_value'].get()}{self.sumry_t_unit.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
-        summary_m = int(self.share.getminutes(summary_t))
+        summary_m = TC.string_to_m(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
             self.countnow_button.config(state=tk.DISABLED)
             self.good_settings = False
@@ -1436,7 +1386,7 @@ class CountViewer(tk.Frame):
                 ttk.Button(logwin, text='Erase', command=erase).pack()
         
         except FileNotFoundError:
-            warn_main = f'Log {LOGFILE} cannot be found.'
+            warn_main = f'Log {LOGFILE} cannot be found on {node()}.'
             warn_detail = ('Log file should be in folder:\n'
                            f'{CWD}\n'
                            'Has it been moved or renamed?')
@@ -1512,42 +1462,22 @@ class CountController(tk.Tk):
         counting limit, and log file option.
         """
         CountModeler(share=self).default_settings()
-    
-    def getminutes(self, timestring: str) -> int:
-        """
-        Converts a time string into minutes.
 
-        :param timestring: value+unit, e.g. 60m, 12h, or 2d.
-        :return: converted minutes as integer
-        """
-        return CountModeler(share=self).get_minutes(timestring)
-    
-    def setstartdata(self, *args) -> None:
+    def setstartdata(self, *arg) -> None:
         """
         Is called from Viewer.startup().
         """
         CountModeler(share=self).set_start_data()
     
-    def formatsec(self, seconds: int, time_format: str) -> None:
-        """
-        Coverts seconds to formatted time string.
-
-        :param seconds: Time in seconds, any integer except 0.
-        :param time_format: Either 'std' or 'short'
-
-        :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
-        """
-        CountModeler(share=self).format_sec(seconds, time_format)
-    
     # pylint: disable=unused-argument
-    def setintervaldata(self, *args) -> None:
+    def setintervaldata(self, *arg) -> None:
         """
         Is called from Viewer.display_data(), which starts the Modeler
         interval thread.
         """
         CountModeler(share=self).set_interval_data()
     
-    def taskstatenotices(self, *args) -> None:
+    def taskstatenotices(self, *arg) -> None:
         """
         Is called from Viewer.display_data(), which starts a the Modeler
         task state notification thread.
@@ -1558,13 +1488,15 @@ class CountController(tk.Tk):
         CountModeler(share=self).log_it(called_from)
     
     # pylint: disable=unused-argument
-    def quitgui(self, *args) -> None:
+    def quitgui(self, *arg) -> None:
         """Close down program. Called from button, menu, and keybinding.
+
+        :param args: Needed for keybinding
         """
         CountModeler(share=self).quit_gui()
     
     # pylint: disable=unused-argument
-    def complimentme(self, *args) -> None:
+    def complimentme(self, *arg) -> None:
         """Is called from Help menu. A silly diversion.
 
         :param args: Needed for keybinding
