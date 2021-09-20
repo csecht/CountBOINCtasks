@@ -786,11 +786,10 @@ class CountViewer(tk.Frame):
     
     def config_master(self) -> None:
         """
-        Master frame configuration, keybindings, frames, and row headers.
+        Master frame configuration, keybindings, and row headers.
         """
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
-        # self.master.minsize(466, 365)
         self.master.title(GUI_TITLE)
         # Need to color in all of master Frame, and use light grey border;
         #    changes to near white for click-drag.
@@ -816,27 +815,10 @@ class CountViewer(tk.Frame):
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
         ttk.Style().theme_use('alt')
-        
-        # Make data rows and columns stretch with window drag size.
-        # Don't vertically stretch separator rows.
-        rows2config = (2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13)
-        for _r in rows2config:
-            self.master.columnconfigure(1, weight=1)
+
+        self.master.columnconfigure(1, weight=1)
         self.master.columnconfigure(2, weight=1)
-        
-        # Set up frame to display data. Putting frame here instead of in
-        # master_widgets gives proper alignment of row headers and data.
-        self.dataframe.configure(borderwidth=3, relief='sunken',
-                                 bg=self.data_bg)
-        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
-                            padx=(5, 10), sticky=tk.NSEW)
-        framerows = (2, 3, 4, 5, 6, 7, 8)
-        for row in framerows:
-            self.dataframe.rowconfigure(row, weight=1)
-        
-        self.dataframe.columnconfigure(1, weight=1)
-        self.dataframe.columnconfigure(2, weight=1)
-        
+
         # Fill in headers for data rows.
         row_header = {'Counting since': 2,
                       'Count interval': 3,
@@ -871,13 +853,18 @@ class CountViewer(tk.Frame):
     
     def master_widgets(self) -> None:
         """
-        Master frame menus, buttons, and separators.
+        Master frame menus, buttons, separators, and data frame.
         """
-        
-        # creating a menu instance
+        self.dataframe.configure(borderwidth=3, relief='sunken',
+                                 bg=self.data_bg)
+        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
+                            padx=(5, 10), sticky=tk.NSEW)
+        self.dataframe.columnconfigure(1, weight=1)
+        self.dataframe.columnconfigure(2, weight=1)
+
         menu = tk.Menu(self.master)
         self.master.config(menu=menu)
-        
+
         # Add pull-down menus
         os_accelerator = ''
         if MY_OS in 'lin, win':
@@ -988,9 +975,8 @@ class CountViewer(tk.Frame):
         
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
-        #   settings_win closes. In Linux and Windows the msg will be covered
-        #   by settings_win, but it's there if user drags settings_win away.
-        #   In macOS, it will be helpful b/c setting_win cannot (?) set focus.
+        #   settings_win closes. The message text is covered by
+        #   settings_win, but is there if user drags settings_win away.
         self.time_start_l.configure(text='Waiting for run settings...')
         self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
                                columnspan=2)
@@ -1091,7 +1077,7 @@ class CountViewer(tk.Frame):
         sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
         sumry_label2 = ttk.Label(self.settings_win, text='time unit')
         
-        # Specify number limit of counting cycles to run before program exits.
+        # Specify number limit of counting cycles to run.
         self.cycles_max_entry.configure(
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
@@ -1110,7 +1096,6 @@ class CountViewer(tk.Frame):
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
-
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
         
