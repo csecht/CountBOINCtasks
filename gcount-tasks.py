@@ -157,8 +157,9 @@ class CountModeler:
     
     def set_start_data(self):
         """
-        Gather initial data of tasks and their times; set data dict
-        stringvars.
+        Gather initial task data and times; set data dictionary
+        control variables.
+        Called once from display_data().
         """
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
@@ -1333,7 +1334,7 @@ class CountViewer(tk.Frame):
         Create a separate window to view the log file, read-only,
         scrolled text. Called from File menu.
         
-        :param arg: Needed for keybinding implicit event
+        :param arg: Needed for keybinding implicit event.
         """
         os_width = 0
         if MY_OS in 'lin, win':
@@ -1358,7 +1359,7 @@ class CountViewer(tk.Frame):
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
                 
                 def update():
-                    """Update open log window text with log file content.
+                    """Replace log window text with log file content.
                     """
                     with open(LOGFILE) as new_text:
                         logtext.delete('1.0', tk.END)
@@ -1367,7 +1368,7 @@ class CountViewer(tk.Frame):
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
                 
                 def erase():
-                    """Delete log file content and text of log window.
+                    """Delete log file content and log window text.
                     """
                     okay = messagebox.askokcancel(
                         parent=logwin,
@@ -1380,7 +1381,6 @@ class CountViewer(tk.Frame):
                 
                 ttk.Button(logwin, text='Update', command=update).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
-        
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} cannot be found on {node()}.'
             warn_detail = ('Log file should be in folder:\n'
