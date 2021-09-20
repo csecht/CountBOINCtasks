@@ -811,7 +811,7 @@ class CountViewer(tk.Frame):
             cmdkey = 'Command'
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", lambda q: self.view_log())
+        self.master.bind("<Control-l>", self.view_log)
         
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -1287,7 +1287,7 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             self.share.logit('start')
     
-    # Methods for buttons, menu items, keybinds.
+    # Methods for buttons, menu items, keybindings.
     def emphasize_intvl_data(self) -> None:
         """
         Switches font emphasis from Summary data to Interval data.
@@ -1334,12 +1334,13 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
-    
-    @staticmethod
-    def view_log() -> None:
+
+    def view_log(*arg) -> None:
         """
         Create a separate window to view the log file, read-only,
         scrolled text. Called from File menu.
+        
+        :param arg: Needed for keybinding implicit event
         """
         os_width = 0
         if MY_OS in 'lin, win':
@@ -1405,7 +1406,9 @@ class CountViewer(tk.Frame):
         back-up.
         Called from File menu.
         """
-        
+        # Could make this an outside function with backupfile and logfile as
+        #  arguments, but that would require import of partial from functools
+        #  to call it as a command from its menu object, its only call.
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGFILE) is True:
             try:
@@ -1501,7 +1504,7 @@ class CountController(tk.Tk):
     def quitgui(self, *arg) -> None:
         """Close down program. Called from button, menu, and keybinding.
 
-        :param arg: Needed for keybinding
+        :param arg: Needed for keybinding implicit event
         """
         CountModeler(share=self).quit_gui()
     
@@ -1509,7 +1512,7 @@ class CountController(tk.Tk):
     def complimentme(self, *arg) -> None:
         """Is called from Help menu. A silly diversion.
 
-        :param arg: Needed for keybinding
+        :param arg: Needed for keybinding implicit event
         """
         CountFyi(share=self).compliment_me()
     
