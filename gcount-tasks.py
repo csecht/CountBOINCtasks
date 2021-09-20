@@ -1003,22 +1003,21 @@ class CountViewer(tk.Frame):
                    '"Count now" is allowed once "Confirm" checks settings.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
-        
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
-        
+
         # Functions for Combobox selections.
         def set_intvl_selection(event):
-            """A Combobox selection.
+            """Interval time Combobox selection.
             :param event: Implicit event for <<ComboboxSelected>>
             """
             self.share.setting['interval_t'].set(self.intvl_choice.get())
-        
+
         def set_sumry_unit(event):
-            """A Combobox selection.
+            """Summary interval time unit Combobox selection.
             :param event: Implicit event for <<ComboboxSelected>>
             """
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
-        
+
         # Need to restrict entries to only digits,
         #   MUST use action type parameter to allow user to delete first number
         #   entered when wants to re-enter following backspace deletion.
