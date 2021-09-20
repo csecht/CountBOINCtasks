@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -72,8 +72,6 @@ if sys.version_info < (3, 6):
 BC = boinc_command.BoincCommand()
 TC = time_convert
 MY_OS = sys.platform[:3]
-# MY_OS = 'win'  # TESTING
-# GUI_TITLE = __file__  # <- for development
 GUI_TITLE = 'BOINC task counter'
 SHORT_STRFTIME = '%Y-%b-%d %H:%M'
 LONG_SRTFTIME = '%Y-%b-%d %H:%M:%S'
@@ -82,17 +80,17 @@ LOGFILE = Path('count-tasks_log.txt')
 BKUPFILE = Path('count-tasks_log(copy).txt')
 TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
-# Use this for a immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
+# Use this for an immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
 def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
     """
-    Sum and run statistics from BOINC task times provided as
-    as integer or float seconds.
+    Sum and run statistics of BOINC task times. Called from Modeler.
 
     :param numtasks: The number of elements in tasktimes.
-    :param tasktimes: A list, tuple, or set of times, in seconds.
+    :param tasktimes: A list, tuple, or set of times, in seconds as
+                      integers or floats.
     :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
              Dict values as: 00:00:00.
     """
@@ -505,7 +503,8 @@ class CountModeler:
                 f'{self.share.long_time_start};'
                 f' Number of tasks in the most recent BOINC report:'
                 f' {self.task_count_start}\n'
-                f'{self.indent}Task Time: mean {tt_mean}, range [{tt_range}],\n'
+                f'{self.indent}Task Time: mean {tt_mean},\n'
+                f'{self.bigindent}range [{tt_range}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                 f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
                 f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
@@ -521,8 +520,8 @@ class CountModeler:
                 f'\n{self.share.long_time_start}; STATUS REPORT\n'
                 f'{self.indent}Number of tasks in the most recent BOINC report:'
                 f' {self.task_count_start}\n'
-                f'{self.indent}Task Time: mean {tt_mean},'
-                f' range [{tt_range}],\n'
+                f'{self.indent}Task Time: mean {tt_mean},\n'
+                f'{self.bigindent}range [{tt_range}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                 f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
             logging.info(report)
@@ -580,7 +579,8 @@ class CountModeler:
             report = (
                 f'\n{self.share.intvl_cycle_time}; Tasks reported in the past {interval_t}:'
                 f' {self.task_count_new}\n'
-                f'{self.indent}Task Time: mean {tt_mean}, range [{tt_range}],\n'
+                f'{self.indent}Task Time: mean {tt_mean},\n'
+                f'{self.bigindent}range [{tt_range}],\n'
                 f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
                 f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
                 f'{self.indent}{cycles_remain} counts remain.'
@@ -591,7 +591,8 @@ class CountModeler:
             report = (
                 f'\n{self.share.intvl_cycle_time}; >>> SUMMARY: Count for the past'
                 f' {summary_t}: {tcount_sum}\n'
-                f'{self.indent}Task Time: mean {ttmean_sum}, range [{ttrange_sum}],\n'
+                f'{self.indent}Task Time: mean {ttmean_sum},\n'
+                f'{self.bigindent}range [{ttrange_sum}],\n'
                 f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
             )
             logging.info(report)
@@ -850,6 +851,22 @@ class CountViewer(tk.Frame):
         tk.Label(self.master, text='Notices:',
                  bg=self.master_bg, fg=self.row_fg
                  ).grid(row=13, column=0, padx=(5, 0), pady=(5, 0), sticky=tk.E)
+
+        # NOTE: These grids and configurations are here ONLY because it is only
+        #  way(?) to prevent jump in height of initial blank dataframe when
+        #  data are subsequently displayed in display_data().
+        self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
+        self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
+        self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
+        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
+        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
+        self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
+        self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
+        # These control variables have default data, so make invisible in
+        #   in pre-settings dataframe by matching background color.
+        self.interval_t_l.config(foreground=self.data_bg)
+        self.summary_t_l.config(foreground=self.data_bg)
+        self.task_count_l.config(foreground=self.data_bg)
     
     def master_widgets(self) -> None:
         """
@@ -1239,18 +1256,10 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
         
-        # TODO: FIX, window height increases a few pixels when these are
-        #  gridded vs. initial (pre-settings()) blank no-data display,
-        #  causing an obnoxious jump in frame/window size.
-        # Initial gridding of data labels, start & intervals; sorted by row.
         # NOTE: time_start_label is gridded in settings(): row=2, column=1 ...
-        self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
-        self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
-        self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
-        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
-        self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
-        self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
+        #   dataframe rows 3-8 are gridded in config_master() to prevent a jump
+        #   of frame height when data are displayed in the rows.
+        # Initial grid of remaining data labels; sorted by row.
         self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                                   columnspan=2)
         self.time_prev_sumry_l.grid(row=10, column=2, padx=(108, 0), sticky=tk.W)
@@ -1349,6 +1358,8 @@ class CountViewer(tk.Frame):
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
                 
                 def update():
+                    """Update open log window text with log file content.
+                    """
                     with open(LOGFILE) as new_text:
                         logtext.delete('1.0', tk.END)
                         logtext.insert('1.0', new_text.read())
@@ -1356,6 +1367,8 @@ class CountViewer(tk.Frame):
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
                 
                 def erase():
+                    """Delete log file content and text of log window.
+                    """
                     okay = messagebox.askokcancel(
                         parent=logwin,
                         title='Confirmation needed',
@@ -1364,13 +1377,6 @@ class CountViewer(tk.Frame):
                     if okay:
                         open(LOGFILE, 'w').close()
                         logtext.delete('1.0', tk.END)
-                    # source: https://stackoverflow.com/questions/2769061/
-                    # how-to-erase-the-file-contents-of-text-file-in-python
-                    # Use this for a file that is already open. Unnecessary here.
-                    # if okay:
-                    #     with open(LOGFILE, 'r+') as logfile:
-                    #         logfile.truncate(0)
-                    #         logfile.seek(0)
                 
                 ttk.Button(logwin, text='Update', command=update).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
@@ -1386,8 +1392,8 @@ class CountViewer(tk.Frame):
     @staticmethod
     def backup_log() -> None:
         """
-        Copy the log file to the home folder. Overwrites previously file
-        back-up.
+        Copy the log file to the home folder. Overwrites previous
+        back-up file.
         Called from File menu.
         """
         # Could make this an outside function with backupfile and logfile as
