@@ -80,7 +80,6 @@ LONG_SRTFTIME = '%Y-%b-%d %H:%M:%S'
 # Log file should be in the CountBOINCtasks-master folder.
 LOGFILE = Path('count-tasks_log.txt')
 BKUPFILE = Path('count-tasks_log(copy).txt')
-CWD = Path.cwd()
 TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
 # Use this for a immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
@@ -1009,16 +1008,22 @@ class CountViewer(tk.Frame):
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
         
         # Functions for Combobox selections.
-        def set_intvl_selection(*arg):
+        def set_intvl_selection(event):
+            """A Combobox selection.
+            :param event: Implicit event for <<ComboboxSelected>>
+            """
             self.share.setting['interval_t'].set(self.intvl_choice.get())
         
-        def set_sumry_unit(*arg):
+        def set_sumry_unit(event):
+            """A Combobox selection.
+            :param event: Implicit event for <<ComboboxSelected>>
+            """
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
         
         # Need to restrict entries to only digits,
         #   MUST use action type parameter to allow user to delete first number
         #   entered when wants to re-enter following backspace deletion.
-        def eval_digit_entry(entry_string, action_type):
+        def eval_digit_entry(entry_string, action_type) -> bool:
             """
             Only digits are accepted and displayed in Entry field.
             Used with .register() to configure Entry kw validatecommand.
@@ -1170,7 +1175,7 @@ class CountViewer(tk.Frame):
         
         # Need to set summary_t here as concat of two sumry_t_ element strings,
         #   then convert to minutes to use in comparisons.
-        summary_t = f"{self.share.setting['sumry_t_value'].get()}{self.sumry_t_unit.get()[:1]}"
+        summary_t = f"{sumry_value}{self.sumry_t_unit.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
         summary_m = TC.string_to_m(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
@@ -1389,7 +1394,7 @@ class CountViewer(tk.Frame):
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} cannot be found on {node()}.'
             warn_detail = ('Log file should be in folder:\n'
-                           f'{CWD}\n'
+                           f'{Path.cwd()}\n'
                            'Has it been moved or renamed?')
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
@@ -1425,7 +1430,7 @@ class CountViewer(tk.Frame):
         else:
             warn_main = f'Log {LOGFILE} cannot be archived'
             warn_detail = ('Log file should be in folder:\n'
-                           f'{CWD}\n'
+                           f'{Path.cwd()}\n'
                            'Has it been moved or renamed?')
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
