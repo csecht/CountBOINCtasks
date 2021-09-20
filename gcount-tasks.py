@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -75,8 +75,8 @@ MY_OS = sys.platform[:3]
 # MY_OS = 'win'  # TESTING
 # GUI_TITLE = __file__  # <- for development
 GUI_TITLE = 'BOINC task counter'
-SHORT_TIME_FORMAT = '%Y-%b-%d %H:%M'
-LONG_TIME_FORMAT = '%Y-%b-%d %H:%M:%S'
+SHORT_STRFTIME = '%Y-%b-%d %H:%M'
+LONG_SRTFTIME = '%Y-%b-%d %H:%M:%S'
 # Log file should be in the CountBOINCtasks-master folder.
 LOGFILE = Path('count-tasks_log.txt')
 BKUPFILE = Path('count-tasks_log(copy).txt')
@@ -138,8 +138,8 @@ class CountModeler:
         #  set value here for use in display_data()
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
         
-        # Need to parse data returned from get_ttime_stats().
-        startdict = self.get_ttime_stats(
+        # Need to parse data returned from ttime_stats().
+        startdict = self.ttime_stats(
             self.share.data['task_count'].get(), ttimes_start)
         tt_mean = startdict['tt_mean']
         tt_max = startdict['tt_max']
@@ -160,7 +160,7 @@ class CountModeler:
         Called from task_state_notices().
         """
         
-        self.share.status_time = datetime.now().strftime(LONG_TIME_FORMAT)
+        self.share.status_time = datetime.now().strftime(LONG_SRTFTIME)
         tasks_all = BC.get_tasks('all')
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
@@ -197,7 +197,7 @@ class CountModeler:
         summary data for task status and times. Set control variables
         for data and note dictionaries.
         Is called as Thread from V.display_data().
-        Calls to: get_ttime_stats(), get_minutes() log_it().
+        Calls to: ttime_stats(), get_minutes() log_it().
         """
         ttimes_new = set()
         cycles_max = self.share.setting['cycles_max'].get()
@@ -262,7 +262,7 @@ class CountModeler:
                 datetime.now().strftime('%A %H:%M'))
             # Capture full ending time here, instead of in log_it(),
             #   so that the logged time matches displayed time.
-            self.share.intvl_cycle_time = datetime.now().strftime(LONG_TIME_FORMAT)
+            self.share.intvl_cycle_time = datetime.now().strftime(LONG_SRTFTIME)
             
             with self.thread_lock:
                 # Track when no new tasks were reported in past interval;
@@ -276,8 +276,8 @@ class CountModeler:
                     tic_nnt = 0
                 self.share.note['tic_nnt'].set(tic_nnt)
                 
-                # Need to robustly parse data returned from get_ttime_stats().
-                intervaldict = self.get_ttime_stats(task_count_new, ttimes_new)
+                # Need to robustly parse data returned from ttime_stats().
+                intervaldict = self.ttime_stats(task_count_new, ttimes_new)
                 tt_mean = intervaldict['tt_mean']
                 tt_max = intervaldict['tt_max']
                 tt_min = intervaldict['tt_min']
@@ -309,7 +309,7 @@ class CountModeler:
                     task_count_sumry = len(self.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
                     
-                    summarydict = self.get_ttime_stats(
+                    summarydict = self.ttime_stats(
                         task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
                     tt_max = summarydict['tt_max']
@@ -566,7 +566,7 @@ class CountModeler:
             logging.info(report)
     
     @staticmethod
-    def get_ttime_stats(numtasks: int, tasktimes: iter) -> dict:
+    def ttime_stats(numtasks: int, tasktimes: iter) -> dict:
         """
         Sum and run statistics from times, as sec (integers or floats).
 
@@ -603,7 +603,7 @@ class CountModeler:
             'tt_max': 'na'}
     
     # Not the most logical place for this method, but it works well here when
-    #   need to write exit message to the log file.
+    #   also need to write exit message to the log file.
     def quit_gui(self, event=None) -> None:
         """
         Safe and informative exit from the program.
@@ -612,7 +612,7 @@ class CountModeler:
         :param event: Needed for keybindings.
         :type event: Direct call from keybindings.
         """
-        time_now = datetime.now().strftime(LONG_TIME_FORMAT)
+        time_now = datetime.now().strftime(LONG_SRTFTIME)
         quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
         print(quit_msg)
         if self.share.setting['do_log'].get():
@@ -1018,7 +1018,7 @@ class CountViewer(tk.Frame):
         # Need to restrict entries to only digits,
         #   MUST use action type parameter to allow user to delete first number
         #   entered when wants to re-enter following backspace deletion.
-        def eval_dig_entry(entry_string, action_type):
+        def eval_digit_entry(entry_string, action_type):
             """
             Only digits are accepted and displayed in Entry field.
             Used with .register() to configure Entry kw validatecommand.
@@ -1030,7 +1030,8 @@ class CountViewer(tk.Frame):
             return True
         
         def explain_zero_max():
-            explain = 'Enter 0 (zero) for a status report.'
+            explain = ('Interval counting stops after entered number of '
+                       'cycles. Enter 0 (zero) for a status report.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
         
         def explain_update():
@@ -1077,7 +1078,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_t_value.register(eval_dig_entry), '%P', '%d'))
+                self.sumry_t_value.register(eval_digit_entry), '%P', '%d'))
         
         self.sumry_t_unit.configure(state='readonly',
                                     textvariable=self.share.setting['sumry_t_unit'],
@@ -1092,7 +1093,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
-                self.cycles_max_entry.register(eval_dig_entry), '%P', '%d'))
+                self.cycles_max_entry.register(eval_digit_entry), '%P', '%d'))
         cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
@@ -1209,8 +1210,8 @@ class CountViewer(tk.Frame):
         metrics for the most recent BOINC report.
         Called from settings.check_close_show() with 'Show data' button.
         """
-        time_start = datetime.now().strftime(SHORT_TIME_FORMAT)
-        self.share.long_time_start = datetime.now().strftime(LONG_TIME_FORMAT)
+        time_start = datetime.now().strftime(SHORT_STRFTIME)
+        self.share.long_time_start = datetime.now().strftime(LONG_SRTFTIME)
         self.share.setstartdata()
         
         # Threads are started here b/c this method is called only once and is
@@ -1396,10 +1397,9 @@ class CountViewer(tk.Frame):
     @staticmethod
     def backup_log() -> None:
         """
-        Copy the log file to the home folder. Overwrites current file.
+        Copy the log file to the home folder. Overwrites previously file
+        back-up.
         Called from File menu.
-
-        :return: A new or overwritten backup file.
         """
         
         destination = Path.home() / BKUPFILE
@@ -1411,10 +1411,16 @@ class CountViewer(tk.Frame):
                 messagebox.showinfo(title='Archive completed',
                                     message=success_msg, detail=success_detail)
             except PermissionError:
+                messagebox.showinfo(title='Log copy error',
+                                    message="Permission denied")
                 print("Log file backup: Permission denied.")
             except IsADirectoryError:
+                messagebox.showinfo(title='Log copy error',
+                                    message="Backup file name is a directory")
                 print("Log file backup: Destination is a directory.")
             except shutil.SameFileError:
+                messagebox.showinfo(title='Log copy error',
+                    message="Source and destination are the same file")
                 print("Log file backup: Source and destination are the same file.")
         else:
             warn_main = f'Log {LOGFILE} cannot be archived'
@@ -1433,21 +1439,20 @@ class CountController(tk.Tk):
     
     def __init__(self):
         super().__init__()
-        
+
+        # Need geometry so that master window will be under settings()
+        #   Toplevel window at startup.
+        # These x, y coordinates match default window placement on Ubuntu desktop.
+        self.geometry('+96+134')
         # Need window sizes to make room for multi-line notices,
         # but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
             self.minsize(580, 360)
             self.maxsize(780, 390)
-            # Need geometry so that master window will be under settings()
-            #   Toplevel window at startup for Windows and Linux, but not MacOS.
-            # These x, y coordinates match default system placement on Ubuntu desktop.
-            self.geometry('+96+134')
         elif MY_OS == 'win':
             self.minsize(532, 360)
             self.maxsize(720, 390)
-            self.geometry('+96+134')
         elif MY_OS == 'dar':
             self.minsize(600, 370)
             self.maxsize(780, 410)
