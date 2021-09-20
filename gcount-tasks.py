@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -86,6 +86,44 @@ TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
+def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
+    """
+    Sum and run statistics from BOINC task times provided as
+    as integer or float seconds.
+
+    :param numtasks: The number of elements in tasktimes.
+    :param tasktimes: A list, tuple, or set of times, in seconds.
+    :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
+             Dict values as: 00:00:00.
+    """
+    total = TC.sec_to_format(int(sum(tasktimes)), 'std')
+    if numtasks > 1:
+        mean = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
+        stdev = TC.sec_to_format(int(stats.stdev(tasktimes)), 'std')
+        low = TC.sec_to_format(int(min(tasktimes)), 'std')
+        high = TC.sec_to_format(int(max(tasktimes)), 'std')
+        return {
+            'tt_total': total,
+            'tt_mean': mean,
+            'tt_sd': stdev,
+            'tt_min': low,
+            'tt_max': high}
+    if numtasks == 1:
+        return {
+            'tt_total': total,
+            'tt_mean': total,
+            'tt_sd': 'na',
+            'tt_min': 'na',
+            'tt_max': 'na'}
+    # numtasks are 0...
+    return {
+        'tt_total': '00:00:00',
+        'tt_mean': '00:00:00',
+        'tt_sd': 'na',
+        'tt_min': 'na',
+        'tt_max': 'na'}
+
+
 # The engine that gets BOINC data and runs timed data counts.
 class CountModeler:
     """
@@ -137,8 +175,8 @@ class CountModeler:
         #  set value here for use in display_data()
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
         
-        # Need to parse data returned from ttime_stats().
-        startdict = self.ttime_stats(
+        # Need to parse data returned from ttimes_stats().
+        startdict = ttimes_stats(
             self.share.data['task_count'].get(), ttimes_start)
         tt_mean = startdict['tt_mean']
         tt_max = startdict['tt_max']
@@ -196,7 +234,7 @@ class CountModeler:
         summary data for task status and times. Set control variables
         for data and note dictionaries.
         Is called as Thread from V.display_data().
-        Calls to: ttime_stats(), get_minutes() log_it().
+        Calls to: ttimes_stats(), get_minutes() log_it().
         """
         ttimes_new = set()
         cycles_max = self.share.setting['cycles_max'].get()
@@ -275,8 +313,8 @@ class CountModeler:
                     tic_nnt = 0
                 self.share.note['tic_nnt'].set(tic_nnt)
                 
-                # Need to robustly parse data returned from ttime_stats().
-                intervaldict = self.ttime_stats(task_count_new, ttimes_new)
+                # Need to robustly parse data returned from ttimes_stats().
+                intervaldict = ttimes_stats(task_count_new, ttimes_new)
                 tt_mean = intervaldict['tt_mean']
                 tt_max = intervaldict['tt_max']
                 tt_min = intervaldict['tt_min']
@@ -308,7 +346,7 @@ class CountModeler:
                     task_count_sumry = len(self.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
                     
-                    summarydict = self.ttime_stats(
+                    summarydict = ttimes_stats(
                         task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
                     tt_max = summarydict['tt_max']
@@ -563,46 +601,7 @@ class CountModeler:
         if called_from == 'interval' and cycles_remain == 0:
             report = f'\n### {cycles_max} counting cycles have ended. ###\n'
             logging.info(report)
-    
-    @staticmethod
-    def ttime_stats(numtasks: int, tasktimes: iter) -> dict:
-        """
-        Sum and run statistics from times, as sec (integers or floats).
 
-        :param numtasks: The number of elements in tasktimes.
-        :param tasktimes: A list, tuple, or set of times, in seconds.
-        :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
-                 Dict values as: 00:00:00.
-        """
-        total = TC.sec_to_format(int(sum(tasktimes)), 'std')
-        if numtasks > 1:
-            mean = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
-            stdev = TC.sec_to_format(int(stats.stdev(tasktimes)), 'std')
-            low = TC.sec_to_format(int(min(tasktimes)), 'std')
-            high = TC.sec_to_format(int(max(tasktimes)), 'std')
-            return {
-                'tt_total': total,
-                'tt_mean': mean,
-                'tt_sd': stdev,
-                'tt_min': low,
-                'tt_max': high}
-        if numtasks == 1:
-            return {
-                'tt_total': total,
-                'tt_mean': total,
-                'tt_sd': 'na',
-                'tt_min': 'na',
-                'tt_max': 'na'}
-        # numtasks are 0...
-        return {
-            'tt_total': '00:00:00',
-            'tt_mean': '00:00:00',
-            'tt_sd': 'na',
-            'tt_min': 'na',
-            'tt_max': 'na'}
-    
-    # Not the most logical place for this method, but it works well here when
-    #   also need to write exit message to the log file.
     def quit_gui(self, event=None) -> None:
         """
         Safe and informative exit from the program.
@@ -1438,8 +1437,10 @@ class CountViewer(tk.Frame):
 
 class CountController(tk.Tk):
     """
-    The Controller through which other MVC Count Classes can interact.
+    The Controller through which other MVC Count Classes can interact
+    through the 'share' parameter.
     Instantiates CountViewer() with master tk.Frame inheritance.
+    Concept from https://stackoverflow.com/questions/32864610/
     """
     
     def __init__(self):
