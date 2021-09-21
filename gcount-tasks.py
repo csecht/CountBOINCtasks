@@ -466,11 +466,14 @@ class CountModeler:
             if self.share.setting['do_log'].get():
                 self.log_it('notice')
     
-    def log_it(self, called_from) -> None:
+    def log_it(self, called_from: str) -> None:
         """
         Write to file interval and summary metrics for recently reported
-        BOINC task data. Provide notices for aberrant task status.
+        BOINC tasks. Provide notices for aberrant task status.
         Called from set_interval_data() and task_state_notices().
+
+        :param called_from: Either 'start', 'interval' or 'notice',
+                            depending on type of information to be logged.
         """
         
         cycles_max = self.share.setting['cycles_max'].get()
@@ -530,9 +533,9 @@ class CountModeler:
                 f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
             logging.info(report)
         
-        # Note: Two timestamps are used: self.share.share.intvl_cycle_time is defined
-        # in set_interval_data() at end of each count cycle.,
-        # self.share.status_time is defined in set_task_states().
+        # Note: Two timestamps are used: self.share.share.intvl_cycle_time
+        #   is defined in set_interval_data() at end of each count cycle.,
+        #   self.share.status_time is defined in set_task_states().
         if called_from == 'notice' and num_running > 0:
             # A Notice for no new tasks reported, tic_nnt, is issued in
             #   set_interval_data() instead of here.
@@ -612,8 +615,7 @@ class CountModeler:
         Safe and informative exit from the program.
         Called from multiple widgets via Controller.quitgui().
 
-        :param event: Needed for keybindings.
-        :type event: Direct call from keybindings.
+        :param event: Needed for call from keybindings.
         """
         time_now = datetime.now().strftime(LONG_SRTFTIME)
         quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
@@ -1327,12 +1329,12 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def view_log(*arg) -> None:
+    def view_log(*event) -> None:
         """
         Create a separate window to view the log file, read-only,
         scrolled text. Called from File menu.
         
-        :param arg: Needed for keybinding implicit event.
+        :param event: Needed for keybinding implicit event.
         """
         os_width = 0
         if MY_OS in 'lin, win':
@@ -1403,7 +1405,7 @@ class CountViewer(tk.Frame):
                 shutil.copyfile(LOGFILE, destination)
                 success_msg = 'Log file has been copied to: '
                 success_detail = str(destination)
-                messagebox.showinfo(title='Archive completed',
+                messagebox.showinfo(title='Backup completed',
                                     message=success_msg, detail=success_detail)
             except PermissionError:
                 messagebox.showinfo(title='Log copy error',
@@ -1597,7 +1599,7 @@ class CountFyi:
         elif MY_OS == 'dar':
             os_width = '54'
         abouttxt = tk.Text(aboutwin, font='TkTextFont',
-                           width=os_width, height=num_doc_lines + 7,
+                           width=os_width, height=num_doc_lines + 6,
                            bg=bkg, fg='grey98', relief='groove',
                            borderwidth=5, padx=25)
         abouttxt.insert(1.0, f'{__doc__}\n'
