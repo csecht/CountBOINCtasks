@@ -512,7 +512,7 @@ class CountModeler:
                 f'{self.indent}Counts every {interval_t}, summaries every {summary_t}.\n'
                 f'{self.indent}BOINC status evaluations every'
                 f' {status_intvl} minutes.\n'
-                f'{self.indent}Project auto-update is set: {proj_update}\n'
+                f'{self.indent}Project auto-update: {proj_update}\n'
                 f'Timed intervals beginning now...\n')
             logging.info(report)
         # Need to provide a truncated report for one-off "status" runs.
@@ -1061,8 +1061,7 @@ class CountViewer(tk.Frame):
                     self.share.data['cycles_remain'].set(0)
                     self.share.setting['interval_t'].set('DISABLED')
                     self.share.setting['summary_t'].set('DISABLED')
-                    self.share.note['notice_txt'].set(
-                        'STATUS REPORT ONLY.\n(Ctrl-Q exits program.)')
+                    self.share.note['notice_txt'].set('STATUS REPORT ONLY')
                     self.display_data()
                     self.settings_win.destroy()
                 else:
@@ -1211,25 +1210,25 @@ class CountViewer(tk.Frame):
     
     def display_data(self) -> None:
         """
-        Config and grid data labels in master window; display start data.
-        Log data to file if optioned. Show default settings and task
-        metrics for the most recent BOINC report.
-        Called from settings.check_close_show() with 'Show data' button.
+        Config and grid data labels in master window; display settings
+        and start data as task metrics for the most recent BOINC report.
+        Log data to file if optioned.
+        Called from settings.check_close_show() with 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
         self.share.long_time_start = datetime.now().strftime(LONG_SRTFTIME)
         self.share.setstartdata()
         
         # Threads are started here b/c this method is called only once and is
-        #   the last method in the Viewer (the main thread) startup sequence.
+        #   the last method in the Viewer (main thread) startup sequence.
         # There are no thread.join(), so use daemon.
         if self.share.setting['cycles_max'].get() > 0:
-            self.share.intvl_thread = threading.Thread(
+            intvl_thread = threading.Thread(
                 target=self.share.setintervaldata, daemon=True)
-            self.share.intvl_thread.start()
-            self.share.notice_thread = threading.Thread(
+            intvl_thread.start()
+            notice_thread = threading.Thread(
                 target=self.share.taskstatenotices, daemon=True)
-            self.share.notice_thread.start()
+            notice_thread.start()
         
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
@@ -1343,7 +1342,7 @@ class CountViewer(tk.Frame):
             os_width = 72
         
         try:
-            with open(LOGFILE, 'r') as file:
+            with open(LOGFILE) as file:
                 logwin = tk.Toplevel()
                 logwin.title(f'{LOGFILE}, {node()}')
                 if MY_OS in 'lin, dar':
@@ -1400,7 +1399,7 @@ class CountViewer(tk.Frame):
         #  arguments, but that would require import of partial from functools
         #  to call it as a command from its menu object, its only call.
         destination = Path.home() / BKUPFILE
-        if Path.is_file(LOGFILE) is True:
+        if Path.is_file(LOGFILE):
             try:
                 shutil.copyfile(LOGFILE, destination)
                 success_msg = 'Log file has been copied to: '
@@ -1639,7 +1638,7 @@ if __name__ == "__main__":
         #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL), but that
         #  will bypass this exit message.
         except KeyboardInterrupt:
-            exit_msg = (f'\n\n  *** Interrupted by user ***\n'
+            exit_msg = ('\n\n  *** Interrupted by user ***\n'
                         f'  Quitting now...{datetime.now()}\n\n')
             print(exit_msg)
             logging.info(msg=exit_msg)
