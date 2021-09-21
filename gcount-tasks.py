@@ -370,7 +370,7 @@ class CountModeler:
     def task_state_notices(self) -> None:
         """
         Notices for BOINC task state information run short time interval.
-        Is started as Thread from V.display_data().
+        Is started as Thread from Viewer.display_data().
         Threaded intervals are independent from those in
         set_interval_data(). Calls to: set_task_states() and log_it().
         """
@@ -649,7 +649,7 @@ class CountViewer(tk.Frame):
         self.bigindent = ' ' * 33
         
         # Basic run parameters/settings passed between Viewer and Modeler.
-        # Defaults, from in Modeler.default_settings, can be changed in
+        # Defaults, from in Modeler.default_settings(), can be changed in
         # settings().
         self.good_settings = False
         self.share.setting = {
@@ -685,7 +685,8 @@ class CountViewer(tk.Frame):
             'tt_total_sumry': tk.StringVar(),
         }
         
-        # Data for notices and logging passed between Modeler threads.
+        # Data for notices and logging passed between Viewer and Modeler
+        # and between Modeler threads.
         self.share.note = {
             'notice_txt': tk.StringVar(),
             'num_running': tk.IntVar(),
@@ -695,8 +696,11 @@ class CountViewer(tk.Frame):
             'num_suspended_by_boinc': tk.IntVar(),
         }
         
-        # Used in CM.set_start_data() and CM.set_interval_data();
-        # cannot be in CountModeler __init__ b/c there it will reset each call.
+        # Used in Modeler.set_start_data() and M.set_interval_data();
+        #   Is not 'shared' outside of Modeler, but cannot be in
+        #   CountModeler __init__ b/c there it would reset start data
+        #   when set_interval_data() is called.
+        # TODO: Find a better way to handle this instance attribute.
         self.share.ttimes_used = set()
         
         # settings() window widgets:
@@ -776,8 +780,7 @@ class CountViewer(tk.Frame):
             bg=self.master_bg, fg=self.row_fg)
         # Text for compliment_txt is configured in compliment_me()
         self.share.compliment_txt = tk.Label(
-            text=' ', fg=self.notice_fg, bg=self.master_bg,
-            relief='flat', border=0)
+            text=' ', bg=self.master_bg, fg=self.notice_fg)
         # Notice label will share grid with complement_txt.
         self.share.notice_l = tk.Label(
             textvariable=self.share.note['notice_txt'],
@@ -1221,13 +1224,13 @@ class CountViewer(tk.Frame):
         
         # Threads are started here b/c this method is called only once and is
         #   the last method in the Viewer (main thread) startup sequence.
-        # There are no thread.join(), so use daemon.
+        # There are no thread.join(), so use daemon for clean exits.
         if self.share.setting['cycles_max'].get() > 0:
             intvl_thread = threading.Thread(
                 target=self.share.setintervaldata, daemon=True)
-            intvl_thread.start()
             notice_thread = threading.Thread(
                 target=self.share.taskstatenotices, daemon=True)
+            intvl_thread.start()
             notice_thread.start()
         
         # Need to keep sumry_b button disabled until after 1st summary interval.
@@ -1258,8 +1261,8 @@ class CountViewer(tk.Frame):
         
         # NOTE: time_start_label is gridded in settings(): row=2, column=1 ...
         #   dataframe rows 3-8 are gridded in config_master() to prevent a jump
-        #   of frame height when data are displayed in the rows.
-        # Initial grid of remaining data labels; sorted by row.
+        #   of frame height when data labels are displayed in the rows.
+        # This is initial grid of remaining data labels; sorted by row.
         self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
                                   columnspan=2)
         self.time_prev_sumry_l.grid(row=10, column=2, padx=(108, 0), sticky=tk.W)
@@ -1381,7 +1384,7 @@ class CountViewer(tk.Frame):
                 ttk.Button(logwin, text='Update', command=update).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
         except FileNotFoundError:
-            warn_main = f'Log {LOGFILE} cannot be found on {node()}.'
+            warn_main = f'Log {LOGFILE} missing on {node()}.'
             warn_detail = ('Log file should be in folder:\n'
                            f'{Path.cwd()}\n'
                            'Has it been moved or renamed?')
@@ -1415,7 +1418,8 @@ class CountViewer(tk.Frame):
                                     message="Backup file name is a directory")
                 print("Log file backup: Destination is a directory.")
             except shutil.SameFileError:
-                messagebox.showinfo(title='Log copy error',
+                messagebox.showinfo(
+                    title='Log copy error',
                     message="Source and destination are the same file")
                 print("Log file backup: Source and destination are the same file.")
         else:
@@ -1490,18 +1494,18 @@ class CountController(tk.Tk):
         CountModeler(share=self).log_it(called_from)
     
     # pylint: disable=unused-argument
-    def quitgui(self, *arg) -> None:
+    def quitgui(self, *event) -> None:
         """Close down program. Called from button, menu, and keybinding.
 
-        :param arg: Needed for keybinding implicit event
+        :param event: Needed for implicit keybinding event
         """
         CountModeler(share=self).quit_gui()
     
     # pylint: disable=unused-argument
-    def complimentme(self, *arg) -> None:
+    def complimentme(self, *event) -> None:
         """Is called from Help menu. A silly diversion.
 
-        :param arg: Needed for keybinding implicit event
+        :param event: Needed for implicit keybinding event
         """
         CountFyi(share=self).compliment_me()
     
