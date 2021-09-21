@@ -31,7 +31,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.24'
+__version__ = '0.4.25'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -69,13 +69,13 @@ def set_boincpath() -> str:
     }
 
     if my_os in default_path:
-        if Path.is_file(default_path[my_os]) is False:
+        if not Path.is_file(default_path[my_os]):
             custom_path = input(
                 '\nboinccmd is not in its default path: '
                 f'{default_path[my_os]}\n'
                 'You may set your custom path in countCFG.txt, enter your\n'
                 '   custom path here, or just hit enter to move on: ')
-            if os.path.isfile(custom_path) is False:
+            if not os.path.isfile(custom_path):
                 raise OSError(f'Oops. "{custom_path}" will not work.\n'
                               'Be sure to include \\boinccmd.exe or '
                               '/boinccmd in the path, depending on your system.\n'
@@ -102,7 +102,6 @@ class BoincCommand:
     Execute boinc-client commands and parse data.
     """
 
-    # TODO: CHECK that urls are the BOINC task servers
     project_url = {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
@@ -279,7 +278,6 @@ class BoincCommand:
                 data.append(task_name)
                 task_name = None
         return data
-        # TODO: in taskXDF main script, need to add task data names to a newline-delimited file.
 
     def get_project_url(self, tag='master URL', cmd=' --get_project_status') -> list:
         """
