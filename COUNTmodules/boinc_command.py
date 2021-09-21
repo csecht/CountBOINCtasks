@@ -19,7 +19,6 @@ Executes BOINC commands and parsing task data through boinccmd.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 
-import os
 import shlex
 import sys
 from pathlib import Path
@@ -31,10 +30,12 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.25'
+__version__ = '0.4.26'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
+
+CFGFILE = Path('countCFG.txt')
 
 
 def set_boincpath() -> str:
@@ -45,8 +46,8 @@ def set_boincpath() -> str:
     """
     # Need to first check for custom path in the configuration file.
     # .split to remove the tag, .join to re-form the path with any spaces.
-    if os.path.isfile('countCFG.txt'):
-        with open('countCFG.txt', 'r') as cfg:
+    if Path.is_file(CFGFILE):
+        with open('countCFG.txt') as cfg:
             for line in cfg:
                 if '#' not in line and 'custom_path' in line:
                     parts = line.split()
@@ -60,13 +61,14 @@ def set_boincpath() -> str:
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
     lin_path = Path('/usr/bin/boinccmd')
-    # On a Mac Terminal, the command line would be /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
     dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
     default_path = {
                     'win': win_path,
                     'lin': lin_path,
                     'dar': dar_path
     }
+    # Note: On MacOS, the Terminal command line would be entered as:
+    # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
     if my_os in default_path:
         if not Path.is_file(default_path[my_os]):
@@ -75,15 +77,16 @@ def set_boincpath() -> str:
                 f'{default_path[my_os]}\n'
                 'You may set your custom path in countCFG.txt, enter your\n'
                 '   custom path here, or just hit enter to move on: ')
-            if not os.path.isfile(custom_path):
+            if not Path.is_file(Path(custom_path)):
                 raise OSError(f'Oops. "{custom_path}" will not work.\n'
                               'Be sure to include \\boinccmd.exe or '
                               '/boinccmd in the path, depending on your system.\n'
                               'If you have not yet installed BOINC, read this:\n'
                               'https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
                               'Try again. Exiting now...\n')
-            cmd_tail = os.path.split(custom_path)[1]
-            if cmd_tail not in ('boinccmd.exe', 'boinccmd'):
+            cmd_name = Path(custom_path).name
+            print('The boinc command file is:', cmd_name)
+            if cmd_name not in ('boinccmd.exe', 'boinccmd'):
                 raise OSError(f'The entered action path, {custom_path},'
                               ' must end with \\boinccmd.exe or '
                               '/boinccmd, depending on your system.\n'
