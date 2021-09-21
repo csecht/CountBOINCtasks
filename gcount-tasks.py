@@ -129,7 +129,7 @@ class CountModeler:
     """
     # Need to have ttimes_used not in __init__ where it will be reset when
     #   set_interval_data is called. ttimes_smry is OK in __init__, but is here
-    #   for clarity. Is there a better way?
+    #   as a Class attribute for clarity. Is there a better way?
     ttimes_used = set()
     ttimes_smry = set()
 
@@ -172,7 +172,7 @@ class CountModeler:
         
         # Begin set of used/old tasks to exclude from new tasks;
         #   used in set_interval_data() to track tasks across intervals.
-        CountModeler.ttimes_used.update(ttimes_start)
+        self.ttimes_used.update(ttimes_start)
         # num_tasks_all Label config and grid are defined in Viewer __init__:
         #  set value here for use in display_data()
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
@@ -281,18 +281,18 @@ class CountModeler:
             #  "new" task times are carried over from the prior interval cycle.
             #  For cycle[0], ttimes_used is starting tasks from set_start_data()
             #    and ttimes_new is empty.
-            CountModeler.ttimes_used.update(ttimes_new)
+            self.ttimes_used.update(ttimes_new)
             ttimes_reported = set(BC.get_reported('elapsed time'))
             
             # Need to reset prior ttimes_new, then repopulate it with only newly
             #   reported tasks.
             ttimes_new.clear()
-            ttimes_new = ttimes_reported - CountModeler.ttimes_used
+            ttimes_new = ttimes_reported - self.ttimes_used
             
             task_count_new = len(ttimes_new)
             self.share.data['task_count'].set(task_count_new)
             # Add new tasks to summary set for later analysis.
-            CountModeler.ttimes_smry.update(ttimes_new)
+            self.ttimes_smry.update(ttimes_new)
             
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
@@ -345,11 +345,11 @@ class CountModeler:
                     # Display time of summary; gridded in same row as time prev count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     
-                    task_count_sumry = len(CountModeler.ttimes_smry)
+                    task_count_sumry = len(self.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
                     
                     summarydict = ttimes_stats(
-                        task_count_sumry, CountModeler.ttimes_smry)
+                        task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
                     tt_max = summarydict['tt_max']
                     tt_min = summarydict['tt_min']
@@ -363,7 +363,7 @@ class CountModeler:
                     self.share.data['tt_total_sumry'].set(tt_total)
                     
                     # Need to reset data set for the next summary interval.
-                    CountModeler.ttimes_smry.clear()
+                    self.ttimes_smry.clear()
             
             # Call to log_it() needs to be out of thread lock.
             app.update_idletasks()
