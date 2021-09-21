@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.3'
+__version__ = '0.4.4'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -127,12 +127,15 @@ class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
     """
-    
+    # Need to have ttimes_used not in __init__ where it will be reset when
+    #   set_interval_data is called. ttimes_smry is OK in __init__, but is here
+    #   for clarity. Is there a better way?
+    ttimes_used = set()
+    ttimes_smry = set()
+
     def __init__(self, share):
         self.share = share
         self.thread_lock = threading.Lock()
-        
-        self.ttimes_smry = set()
         self.summary_ready = False
         self.proj_stalled = False
         self.task_states = ['none']
@@ -169,7 +172,7 @@ class CountModeler:
         
         # Begin set of used/old tasks to exclude from new tasks;
         #   used in set_interval_data() to track tasks across intervals.
-        self.share.ttimes_used.update(ttimes_start)
+        CountModeler.ttimes_used.update(ttimes_start)
         # num_tasks_all Label config and grid are defined in Viewer __init__:
         #  set value here for use in display_data()
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
@@ -278,18 +281,18 @@ class CountModeler:
             #  "new" task times are carried over from the prior interval cycle.
             #  For cycle[0], ttimes_used is starting tasks from set_start_data()
             #    and ttimes_new is empty.
-            self.share.ttimes_used.update(ttimes_new)
+            CountModeler.ttimes_used.update(ttimes_new)
             ttimes_reported = set(BC.get_reported('elapsed time'))
             
             # Need to reset prior ttimes_new, then repopulate it with only newly
             #   reported tasks.
             ttimes_new.clear()
-            ttimes_new = ttimes_reported - self.share.ttimes_used
+            ttimes_new = ttimes_reported - CountModeler.ttimes_used
             
             task_count_new = len(ttimes_new)
             self.share.data['task_count'].set(task_count_new)
             # Add new tasks to summary set for later analysis.
-            self.ttimes_smry.update(ttimes_new)
+            CountModeler.ttimes_smry.update(ttimes_new)
             
             cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
             self.share.data['cycles_remain'].set(cycles_remain)
@@ -342,11 +345,11 @@ class CountModeler:
                     # Display time of summary; gridded in same row as time prev count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     
-                    task_count_sumry = len(self.ttimes_smry)
+                    task_count_sumry = len(CountModeler.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
                     
                     summarydict = ttimes_stats(
-                        task_count_sumry, self.ttimes_smry)
+                        task_count_sumry, CountModeler.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
                     tt_max = summarydict['tt_max']
                     tt_min = summarydict['tt_min']
@@ -360,7 +363,7 @@ class CountModeler:
                     self.share.data['tt_total_sumry'].set(tt_total)
                     
                     # Need to reset data set for the next summary interval.
-                    self.ttimes_smry.clear()
+                    CountModeler.ttimes_smry.clear()
             
             # Call to log_it() needs to be out of thread lock.
             app.update_idletasks()
@@ -695,13 +698,6 @@ class CountViewer(tk.Frame):
             'num_suspended_by_user': tk.IntVar(),
             'num_suspended_by_boinc': tk.IntVar(),
         }
-        
-        # Used in Modeler.set_start_data() and M.set_interval_data();
-        #   Is not 'shared' outside of Modeler, but cannot be in
-        #   CountModeler __init__ b/c there it would reset start data
-        #   when set_interval_data() is called.
-        # TODO: Find a better way to handle this instance attribute.
-        self.share.ttimes_used = set()
         
         # settings() window widgets:
         self.settings_win = tk.Toplevel(relief='raised', bd=3)
@@ -1635,7 +1631,7 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title(f"Count BOINC tasks on {node()}")
-            print('gcount-tasks now running...')
+            print(f'{Path(__file__).stem} now running...')
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
