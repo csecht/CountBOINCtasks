@@ -1548,8 +1548,6 @@ class CountFyi:
     
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menubar and keybinding.
-
-        :return: Transient text to make one smile.
         """
         compliments = [
             "Hey there good lookin'!", 'I wish we had met sooner.',
@@ -1597,7 +1595,7 @@ class CountFyi:
         
         def refresh():
             self.share.compliment_txt.grid_remove()
-            # Re-grid notice to return to current Notice.
+            # Re-grid notice to return to current Notice text.
             self.share.notice_l.grid()
             app.update_idletasks()
         
@@ -1658,7 +1656,9 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title(f"Count BOINC tasks on {node()}")
-            print(f'{Path(__file__).stem} now running...')
+            # Note: cannot use Path(__file__).stem for basename b/c __file__
+            #   does not work in Windows, tho it does in Win PyCharm.
+            print('gcount-tasks now running...')
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
