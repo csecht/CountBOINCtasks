@@ -637,7 +637,7 @@ class CountViewer(tk.Frame):
         super().__init__(master)
         self.share = share
         self.dataframe = tk.Frame()
-        self.menu = tk.Menu(self.master)
+        self.menubar = tk.Menu()
 
         # Set colors for row labels and data display.
         self.row_fg = 'LightCyan2'  # foreground for row labels
@@ -653,11 +653,12 @@ class CountViewer(tk.Frame):
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
 
-        # Need to grey-out menu headings when another application has focus.
-        # source: https://stackoverflow.com/questions/18089068/
+        # Need to grey-out menubar headings and View log button when
+        #   another application has focus.
+        #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
-        self.master.bind("<FocusIn>", self.app_got_focus)
-        self.master.bind("<FocusOut>", self.app_lost_focus)
+        self.bind_all("<FocusIn>", self.app_got_focus)
+        self.bind_all("<FocusOut>", self.app_lost_focus)
 
         # Basic run parameters/settings passed between Viewer and Modeler.
         # Defaults, from in Modeler.default_settings(), can be changed in
@@ -891,7 +892,7 @@ class CountViewer(tk.Frame):
         self.dataframe.columnconfigure(1, weight=1)
         self.dataframe.columnconfigure(2, weight=1)
 
-        self.master.config(menu=self.menu)
+        self.master.config(menu=self.menubar)
 
         # Add pull-down menus
         os_accelerator = ''
@@ -899,8 +900,8 @@ class CountViewer(tk.Frame):
             os_accelerator = 'Ctrl'
         elif MY_OS == 'dar':
             os_accelerator = 'Command'
-        file = tk.Menu(self.menu, tearoff=0)
-        self.menu.add_cascade(label="File", menu=file)
+        file = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
         file.add_separator()
         file.add_command(label='Quit', command=self.share.quitgui,
@@ -908,14 +909,14 @@ class CountViewer(tk.Frame):
                          #   b/c can't override macOS native Command+Q;
                          #   and don't want Ctrl+Q displayed or used on macOS.
                          accelerator=f'{os_accelerator}+Q')
-        view = tk.Menu(self.menu, tearoff=0)
-        self.menu.add_cascade(label="View", menu=view)
+        view = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.view_log,
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
-        help_menu = tk.Menu(self.menu, tearoff=0)
+        help_menu = tk.Menu(self.menubar, tearoff=0)
         info = tk.Menu(self.master, tearoff=0)
-        self.menu.add_cascade(label="Help", menu=help_menu)
+        self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_cascade(label='Info...', menu=info)
         info.add_command(
             label='- Counting will not begin until run settings are confirmed at start.')
@@ -940,12 +941,6 @@ class CountViewer(tk.Frame):
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
-        
-        # Create or configure button widgets:
-        # style_button = ttk.Style(self.master)
-        # style_button.configure('TButton', background='grey80', anchor='center')
-        # NOTE: Start, Interval, & Summary button attributes are in __init__.
-        # self.viewlog_b = ttk.Button(text='View log file', command=self.view_log)
         
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -1289,7 +1284,7 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             self.share.logit('start')
     
-    # Methods for buttons, menu items, keybindings.
+    # Methods for buttons, menubar items, keybindings.
     def emphasize_intvl_data(self) -> None:
         """
         Switches font emphasis from Summary data to Interval data.
@@ -1338,32 +1333,32 @@ class CountViewer(tk.Frame):
         self.tt_total_l.configure(foreground=self.deemphasize)
 
     def app_got_focus(self, event) -> None:
-        """Give menu headings normal color when app has focus.
+        """Give menubar headings normal color when app has focus.
 
         :param event: <FocusIn> or <FocusOut> mouse click.
         """
-        self.menu.entryconfig("File", foreground='black')
-        self.menu.entryconfig("View", foreground='black')
-        self.menu.entryconfig("Help", foreground='black')
+        self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
+        self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
+        self.menubar.entryconfig("Help", foreground='black', state=tk.NORMAL)
         self.style.configure('View.TButton', background='grey75',
                              foreground='black')
-        self.viewlog_b.configure(style='View.TButton')
+        self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
     def app_lost_focus(self, event) -> None:
-        """Give menu headings grey-out color when app looses focus.
+        """Give menubar headings grey-out color when app looses focus.
 
         :param event: <FocusIn> or <FocusOut> mouse click.
         """
-        self.menu.entryconfig("File", foreground='grey')
-        self.menu.entryconfig("View", foreground='grey')
-        self.menu.entryconfig("Help", foreground='grey')
+        self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
+        self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
+        self.menubar.entryconfig("Help", foreground='grey', state=tk.DISABLED)
         self.style.configure('View.TButton', foreground='grey')
-        self.viewlog_b.configure(style='View.TButton')
+        self.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
 
     def view_log(*event) -> None:
         """
         Create a separate window to view the log file, read-only,
-        scrolled text. Called from File menu.
+        scrolled text. Called from File menubar.
         
         :param event: Needed for keybinding implicit event.
         """
@@ -1425,11 +1420,11 @@ class CountViewer(tk.Frame):
         """
         Copy the log file to the home folder. Overwrites previous
         back-up file.
-        Called from File menu.
+        Called from File menubar.
         """
         # Could make this an outside function with backupfile and logfile as
         #  arguments, but that would require import of partial from functools
-        #  to call it as a command from its menu object, its only call.
+        #  to call it as a command from its menubar object, its only call.
         destination = Path.home() / BKUPFILE
         if Path.is_file(LOGFILE):
             try:
@@ -1491,7 +1486,7 @@ class CountController(tk.Tk):
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
         CountViewer(master=container, share=self)
-    
+
     def defaultsettings(self) -> None:
         """
         Starting settings of: report interval, summary interval,
@@ -1524,7 +1519,7 @@ class CountController(tk.Tk):
     
     # pylint: disable=unused-argument
     def quitgui(self, *event) -> None:
-        """Close down program. Called from button, menu, and keybinding.
+        """Close down program. Called from button, menubar, and keybinding.
 
         :param event: Needed for implicit keybinding event
         """
@@ -1532,14 +1527,14 @@ class CountController(tk.Tk):
     
     # pylint: disable=unused-argument
     def complimentme(self, *event) -> None:
-        """Is called from Help menu. A silly diversion.
+        """Is called from Help menubar. A silly diversion.
 
         :param event: Needed for implicit keybinding event
         """
         CountFyi(share=self).compliment_me()
     
     def about(self):
-        """Is called from Viewer Help menu.
+        """Is called from Viewer Help menubar.
         """
         CountFyi(share=self).about()
 
@@ -1553,7 +1548,7 @@ class CountFyi:
         self.share = share
     
     def compliment_me(self) -> None:
-        """A silly diversion; called from Help menu and keybinding.
+        """A silly diversion; called from Help menubar and keybinding.
 
         :return: Transient text to make one smile.
         """
@@ -1613,7 +1608,7 @@ class CountFyi:
     def about() -> None:
         """
         Basic information for gcount-tasks;
-        Toplevel window called from Help menu.
+        Toplevel window called from Help menubar.
         """
         aboutwin = tk.Toplevel()
         aboutwin.resizable(False, False)
