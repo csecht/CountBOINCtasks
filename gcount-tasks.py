@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.4'
+__version__ = '0.4.5'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -632,12 +632,13 @@ class CountViewer(tk.Frame):
     The Viewer communicates with Modeler via 'share' objects handled
     through the Controller class. All GUI widgets go here.
     """
-    
+
     def __init__(self, master, share):
         super().__init__(master)
         self.share = share
         self.dataframe = tk.Frame()
-        
+        self.menu = tk.Menu(self.master)
+
         # Set colors for row labels and data display.
         # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
@@ -652,7 +653,13 @@ class CountViewer(tk.Frame):
         # Log text formatting vars:
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
-        
+
+        # Need to grey-out menu headings when another application has focus.
+        # source: https://stackoverflow.com/questions/18089068/
+        #   tk-tkinter-detect-application-lost-focus
+        self.master.bind("<FocusIn>", self.app_got_focus)
+        self.master.bind("<FocusOut>", self.app_lost_focus)
+
         # Basic run parameters/settings passed between Viewer and Modeler.
         # Defaults, from in Modeler.default_settings(), can be changed in
         # settings().
@@ -881,8 +888,7 @@ class CountViewer(tk.Frame):
         self.dataframe.columnconfigure(1, weight=1)
         self.dataframe.columnconfigure(2, weight=1)
 
-        menu = tk.Menu(self.master)
-        self.master.config(menu=menu)
+        self.master.config(menu=self.menu)
 
         # Add pull-down menus
         os_accelerator = ''
@@ -890,8 +896,8 @@ class CountViewer(tk.Frame):
             os_accelerator = 'Ctrl'
         elif MY_OS == 'dar':
             os_accelerator = 'Command'
-        file = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="File", menu=file)
+        file = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="File", menu=file)
         file.add_command(label="Backup log file", command=self.backup_log)
         file.add_separator()
         file.add_command(label='Quit', command=self.share.quitgui,
@@ -899,15 +905,14 @@ class CountViewer(tk.Frame):
                          #   b/c can't override macOS native Command+Q;
                          #   and don't want Ctrl+Q displayed or used on macOS.
                          accelerator=f'{os_accelerator}+Q')
-        
-        view = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="View", menu=view)
+        view = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.view_log,
                          # MacOS: can't display Cmd+L b/c won't override native cmd.
                          accelerator="Ctrl+L")
-        help_menu = tk.Menu(menu, tearoff=0)
+        help_menu = tk.Menu(self.menu, tearoff=0)
         info = tk.Menu(self.master, tearoff=0)
-        menu.add_cascade(label="Help", menu=help_menu)
+        self.menu.add_cascade(label="Help", menu=help_menu)
         help_menu.add_cascade(label='Info...', menu=info)
         info.add_command(
             label='- Counting will not begin until run settings are confirmed at start.')
@@ -969,7 +974,7 @@ class CountViewer(tk.Frame):
         if not self.share.setting['interval_t'].get():
             self.share.defaultsettings()
             self.settings()
-    
+
     def settings(self) -> None:
         """
         A Toplevel window called from master_widgets() at startup.
@@ -1328,6 +1333,24 @@ class CountViewer(tk.Frame):
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
+
+    def app_got_focus(self, event) -> None:
+        """Give menu headings normal color when app has focus.
+
+        :param event: <FocusIn> or <FocusOut> mouse click.
+        """
+        self.menu.entryconfig("File", foreground='black')
+        self.menu.entryconfig("View", foreground='black')
+        self.menu.entryconfig("Help", foreground='black')
+
+    def app_lost_focus(self, event) -> None:
+        """Give menu headings grey-out color when app looses focus.
+
+        :param event: <FocusIn> or <FocusOut> mouse click.
+        """
+        self.menu.entryconfig("File", foreground='grey')
+        self.menu.entryconfig("View", foreground='grey')
+        self.menu.entryconfig("Help", foreground='grey')
 
     def view_log(*event) -> None:
         """
