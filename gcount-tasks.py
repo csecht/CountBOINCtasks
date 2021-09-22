@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.5'
+__version__ = '0.4.6'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -249,7 +249,7 @@ class CountModeler:
                 #   after initial cycle[0] completes and intvl data displays.
                 #  It might be better if statement were in Viewer, but simpler
                 #  to put it here with easy reference to cycle.
-                self.share.start_b.grid_forget()
+                self.share.starting_b.grid_forget()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
 
@@ -640,7 +640,6 @@ class CountViewer(tk.Frame):
         self.menu = tk.Menu(self.master)
 
         # Set colors for row labels and data display.
-        # http://www.science.smith.edu/dftwiki/index.php/Color_Charts_for_TKinter
         self.row_fg = 'LightCyan2'  # foreground for row labels
         self.data_bg = 'grey40'  # background for data labels and frame
         self.master_bg = 'SkyBlue4'  # also used for row header labels.
@@ -719,14 +718,18 @@ class CountViewer(tk.Frame):
         self.update_choice = tk.Checkbutton(self.settings_win)
         
         # Master window widgets:
-        # Set interval & summary focus button attributes here b/c need to
-        #   configure them in different modules.
-        # start_b will be replaced with ttk intvl_b after first interval
-        # completes; it is re-grid in set_interval_data().
-        # start_b is tk.B b/c that accepts disabledforeground keyword.
-        self.share.start_b = tk.Button(text='Starting data', width=18,
-                                       disabledforeground='grey10',
-                                       state=tk.DISABLED)
+        # Set interval & summary focus button attributes with .share. b/c need
+        #   to reconfigure them in Modeler.
+        # starting_b will be replaced with ttk intvl_b after first interval
+        #   completes; it is re-grid in set_interval_data().
+        # starting_b is tk.B b/c that accepts disabledforeground keyword.
+        # This style is used only to configure viewlog_b color in
+        #   app_got_focus() and app_lost_focus(). There must be a better way...
+        self.style = ttk.Style(self.master)
+        self.viewlog_b = ttk.Button(text='View log file', command=self.view_log)
+        self.share.starting_b = tk.Button(text='Starting data', width=18,
+                                          disabledforeground='grey10',
+                                          state=tk.DISABLED)
         self.share.intvl_b = ttk.Button(text='Interval data', width=18,
                                         command=self.emphasize_intvl_data)
         self.share.sumry_b = ttk.Button(text='Summary data', width=20,
@@ -908,7 +911,7 @@ class CountViewer(tk.Frame):
         view = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.view_log,
-                         # MacOS: can't display Cmd+L b/c won't override native cmd.
+                         # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
         help_menu = tk.Menu(self.menu, tearoff=0)
         info = tk.Menu(self.master, tearoff=0)
@@ -939,10 +942,10 @@ class CountViewer(tk.Frame):
         help_menu.add_command(label="About", command=self.share.about)
         
         # Create or configure button widgets:
-        style_button = ttk.Style(self.master)
-        style_button.configure('TButton', background='grey80', anchor='center')
+        # style_button = ttk.Style(self.master)
+        # style_button.configure('TButton', background='grey80', anchor='center')
         # NOTE: Start, Interval, & Summary button attributes are in __init__.
-        viewlog_b = ttk.Button(text='View log file', command=self.view_log)
+        # self.viewlog_b = ttk.Button(text='View log file', command=self.view_log)
         
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
@@ -952,8 +955,8 @@ class CountViewer(tk.Frame):
         sep2 = ttk.Frame(relief="raised", height=6)
         
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
-        viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
-        self.share.start_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
+        self.viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
+        self.share.starting_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
         self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
         # Intervening rows are gridded in display_data()
@@ -1342,6 +1345,9 @@ class CountViewer(tk.Frame):
         self.menu.entryconfig("File", foreground='black')
         self.menu.entryconfig("View", foreground='black')
         self.menu.entryconfig("Help", foreground='black')
+        self.style.configure('View.TButton', background='grey75',
+                             foreground='black')
+        self.viewlog_b.configure(style='View.TButton')
 
     def app_lost_focus(self, event) -> None:
         """Give menu headings grey-out color when app looses focus.
@@ -1351,6 +1357,8 @@ class CountViewer(tk.Frame):
         self.menu.entryconfig("File", foreground='grey')
         self.menu.entryconfig("View", foreground='grey')
         self.menu.entryconfig("Help", foreground='grey')
+        self.style.configure('View.TButton', foreground='grey')
+        self.viewlog_b.configure(style='View.TButton')
 
     def view_log(*event) -> None:
         """
