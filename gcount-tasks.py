@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.6'
+__version__ = '0.4.7'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -899,15 +899,15 @@ class CountViewer(tk.Frame):
             os_accelerator = 'Ctrl'
         elif MY_OS == 'dar':
             os_accelerator = 'Command'
-        file = tk.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="File", menu=file)
-        file.add_command(label="Backup log file", command=self.backup_log)
-        file.add_separator()
-        file.add_command(label='Quit', command=self.share.quitgui,
-                         # Note: macOS won't display this accelerator text
-                         #   b/c can't override macOS native Command+Q;
-                         #   and don't want Ctrl+Q displayed or used on macOS.
-                         accelerator=f'{os_accelerator}+Q')
+        self.file = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=self.file)
+        self.file.add_command(label="Backup log file", command=self.backup_log)
+        self.file.add_separator()
+        self.file.add_command(label='Quit', command=self.share.quitgui,
+                              # Note: macOS won't display this accelerator text
+                              #   b/c can't override macOS native Command+Q;
+                              #   and don't want Ctrl+Q displayed or used on macOS.
+                              accelerator=f'{os_accelerator}+Q')
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.view_log,
@@ -1206,11 +1206,15 @@ class CountViewer(tk.Frame):
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
         
         # Here logging is lazily employed to manage the file of report data.
-        # A log file will be created only if so optioned.
+        # A log file will be created only if so optioned (default).
         if self.share.setting['do_log'].get():
             logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
                                 format='%(message)s')
-    
+        else:
+            self.viewlog_b.config(state=tk.DISABLED)
+            self.file.entryconfig("Backup log file", state=tk.DISABLED)
+            self.master.unbind("<Control-l>")
+
     def display_data(self) -> None:
         """
         Config and grid data labels in master window; display settings
@@ -1341,7 +1345,8 @@ class CountViewer(tk.Frame):
         self.menubar.entryconfig("Help", foreground='black', state=tk.NORMAL)
         self.style.configure('View.TButton', foreground='black',
                              background='grey75')
-        self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
+        if self.share.setting['do_log'].get():
+            self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
     def app_lost_focus(self, event) -> None:
         """Give menubar headings grey-out color when app looses focus.
@@ -1352,7 +1357,8 @@ class CountViewer(tk.Frame):
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("Help", foreground='grey', state=tk.DISABLED)
         self.style.configure('View.TButton', foreground='grey')
-        self.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
+        if self.share.setting['do_log'].get():
+            self.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
 
     def view_log(*event) -> None:
         """
