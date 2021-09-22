@@ -580,7 +580,7 @@ class CountModeler:
                       f'{self.indent}{cycles_remain} counts remain.')
             logging.info(report)
         
-        # This tic condition the same as: task_count_new > 0 and
+        # This tic condition is equivalent to: task_count_new > 0 and
         #   num_running > 0; that is, everything normal.
         elif called_from == 'interval' and tic_nnt == 0:
             report = (
@@ -668,7 +668,7 @@ class CountViewer(tk.Frame):
             'proj_update': tk.BooleanVar()
         }
         
-        # Common data var for display; passed between Viewer and Modeler
+        # Control variables for display; passed between Viewer and Modeler
         self.share.data = {
             # Start and Interval data
             'task_count': tk.IntVar(),
@@ -764,7 +764,7 @@ class CountViewer(tk.Frame):
                                         textvariable=self.share.data['tt_range_sumry'])
         self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                       textvariable=self.share.data['tt_total_sumry'])
-        # Labels in master
+        # Data labels in master
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
             bg=self.master_bg, fg=self.row_fg)
