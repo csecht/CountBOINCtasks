@@ -653,13 +653,6 @@ class CountViewer(tk.Frame):
         self.indent = ' ' * 22
         self.bigindent = ' ' * 33
 
-        # Need to grey-out menubar headings and View log button when
-        #   another application has focus.
-        #   source: https://stackoverflow.com/questions/18089068/
-        #   tk-tkinter-detect-application-lost-focus
-        self.bind_all("<FocusIn>", self.app_got_focus)
-        self.bind_all("<FocusOut>", self.app_lost_focus)
-
         # Basic run parameters/settings passed between Viewer and Modeler.
         # Defaults, from in Modeler.default_settings(), can be changed in
         # settings().
@@ -812,9 +805,15 @@ class CountViewer(tk.Frame):
                               highlightcolor='grey95',
                               highlightbackground='grey75')
         
-        # Provide Terminal exit info.
+        # From close window,provide exit info to Terminal and log.
         self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
-        self.master.bind_all('<Escape>', self.share.quitgui)
+        self.bind_all('<Escape>', self.share.quitgui)
+        # Need to grey-out menubar headings and View log button when
+        #   another application has focus.
+        #   source: https://stackoverflow.com/questions/18089068/
+        #   tk-tkinter-detect-application-lost-focus
+        self.bind_all("<FocusIn>", self.app_got_focus)
+        self.bind_all("<FocusOut>", self.app_lost_focus)
 
         # Set up universal and OS-specific keybindings and menus
         cmdkey = ''
@@ -1340,8 +1339,8 @@ class CountViewer(tk.Frame):
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("Help", foreground='black', state=tk.NORMAL)
-        self.style.configure('View.TButton', background='grey75',
-                             foreground='black')
+        self.style.configure('View.TButton', foreground='black',
+                             background='grey75')
         self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
     def app_lost_focus(self, event) -> None:
