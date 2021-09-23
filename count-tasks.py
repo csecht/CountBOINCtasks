@@ -27,7 +27,7 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.27'
+__version__ =   '0.4.28'
 __program_name__ = 'count-tasks.py'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -411,9 +411,12 @@ class DataIntervals:
         remain_s = total_s
 
         # \x1b[53m is DeepPink4; works on white and dark terminal backgrounds.
-        # 'xx' here means blinking text.
-        whitexx_on_red = '\x1b[48;5;53;38;5;231;5m'
-        whitexx_on_grn = '\x1b[48;5;28;38;5;231;5m'
+        if args.blink == 'no':
+            white_on_red = '\x1b[48;5;53;38;5;231;1m'
+            white_on_grn = '\x1b[48;5;28;38;5;231;1m'
+        else:
+            white_on_red = '\x1b[48;5;53;38;5;231;5m'
+            white_on_grn = '\x1b[48;5;28;38;5;231;5m'
         # reset = '\x1b[0m'  # No color, reset to system default.
         # del_line = '\x1b[2K'  # Clear entire line.
 
@@ -423,11 +426,11 @@ class DataIntervals:
         for i in range(bar_len):
             remain_bar = prettybar[i:]
             num_segments = len(remain_bar)
-            print(f"\r{self.del_line}{whitexx_on_red}"
+            print(f"\r{self.del_line}{white_on_red}"
                   f"{self.frmat_sec(remain_s, 'short')}{remain_bar}"
                   f"{self.undo_color}|< ~time to next count", end='')
             if num_segments == 1:
-                print(f"\r{self.del_line}{whitexx_on_grn}"
+                print(f"\r{self.del_line}{white_on_grn}"
                       f"{self.frmat_sec(remain_s, 'short')}{remain_bar}"
                       f"{self.undo_color}|< ~time to next count", end='')
             remain_s = (remain_s - barseg_s)
@@ -544,6 +547,11 @@ if __name__ == '__main__':
                         default=1008,
                         type=int,
                         metavar="N")
+    parser.add_argument('--blink',
+                        help='Allow time remaining to blink'
+                             ' (default: %(default)s)',
+                        default='no',
+                        choices=['yes', 'no'])
     args = parser.parse_args()
 
     # Variables to manage parser arguments.
@@ -552,9 +560,6 @@ if __name__ == '__main__':
     SUMMARY_T = str(args.summary)
     summary_m = DataIntervals.get_min(SUMMARY_T)
     SUMRY_FACTOR = summary_m // INTERVAL_M
-    # Variables used for CountGui() data display.
-    # intvl_str = f'{args.interval}m'
-    # sumry_intvl = args.summary  # in CountGUI(), refactor to sumry_t
 
     if INTERVAL_M >= summary_m:
         info = ("Invalid parameters: --summary time must be greater than",
@@ -576,7 +581,7 @@ if __name__ == '__main__':
         DataIntervals()
     except KeyboardInterrupt:
         # For aesthetics, move cursor to beginning of timer line and erase line.
-        exit_msg = (f'\r\x1b[K\n\n  *** Interrupted by user ***\n'
+        exit_msg = (f'\r\x1b[K\n  *** Interrupted by user ***\n'
                     f'  Quitting now...{datetime.now()}\n\n')
         sys.stdout.write(exit_msg)
         # Need to remove formatting from log text.
