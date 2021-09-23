@@ -76,8 +76,8 @@ GUI_TITLE = 'BOINC task counter'
 SHORT_STRFTIME = '%Y-%b-%d %H:%M'
 LONG_SRTFTIME = '%Y-%b-%d %H:%M:%S'
 # Log file should be in the CountBOINCtasks-master folder.
-LOGFILE = Path('count-tasks_log.txt')
-BKUPFILE = Path('count-tasks_log(copy).txt')
+LOGFILE = Path('count-tasks_log.txt').resolve()
+BKUPFILE = Path('count-tasks_log(copy).txt').resolve()
 TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
 # Use this for an immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
@@ -1372,9 +1372,9 @@ class CountViewer(tk.Frame):
             os_width = 79
         elif MY_OS == 'dar':
             os_width = 72
-        
+
         try:
-            with open(LOGFILE.resolve()) as file:
+            with open(LOGFILE) as file:
                 logwin = tk.Toplevel()
                 logwin.title(f'{LOGFILE}, {node()}')
                 if MY_OS in 'lin, dar':
