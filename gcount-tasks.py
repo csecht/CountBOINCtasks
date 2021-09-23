@@ -318,9 +318,9 @@ class CountModeler:
                 # Need to robustly parse data returned from ttimes_stats().
                 intervaldict = ttimes_stats(task_count_new, ttimes_new)
                 tt_mean = intervaldict['tt_mean']
+                tt_sd = intervaldict['tt_sd']
                 tt_max = intervaldict['tt_max']
                 tt_min = intervaldict['tt_min']
-                tt_sd = intervaldict['tt_sd']
                 tt_range = f'{tt_min} -- {tt_max}'
                 tt_total = intervaldict['tt_total']
                 
@@ -351,9 +351,9 @@ class CountModeler:
                     summarydict = ttimes_stats(
                         task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
+                    tt_sd = summarydict['tt_sd']
                     tt_max = summarydict['tt_max']
                     tt_min = summarydict['tt_min']
-                    tt_sd = summarydict['tt_sd']
                     tt_range = f'{tt_min} -- {tt_max}'
                     tt_total = summarydict['tt_total']
                     
@@ -1208,8 +1208,8 @@ class CountViewer(tk.Frame):
         # Here logging is lazily employed to manage the file of report data.
         # A log file will be created only if so optioned (default).
         if self.share.setting['do_log'].get():
-            logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
-                                format='%(message)s')
+            logging.basicConfig(filename=str(LOGFILE), level=logging.INFO,
+                                filemode="a", format='%(message)s')
         else:
             self.viewlog_b.config(state=tk.DISABLED)
             self.file.entryconfig("Backup log file", state=tk.DISABLED)
@@ -1338,7 +1338,7 @@ class CountViewer(tk.Frame):
     def app_got_focus(self, event) -> None:
         """Give menubar headings normal color when app has focus.
 
-        :param event: <FocusIn> or <FocusOut> mouse click.
+        :param event: <FocusIn> mouse click.
         """
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
@@ -1351,7 +1351,7 @@ class CountViewer(tk.Frame):
     def app_lost_focus(self, event) -> None:
         """Give menubar headings grey-out color when app looses focus.
 
-        :param event: <FocusIn> or <FocusOut> mouse click.
+        :param event: <FocusOut> mouse click.
         """
         self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
