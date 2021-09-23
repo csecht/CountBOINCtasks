@@ -1662,9 +1662,9 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title(f"Count BOINC tasks on {node()}")
-            # Note: cannot use Path(__file__).stem for basename b/c __file__
-            #   does not work in Windows, tho it does in Win PyCharm.
-            print('gcount-tasks now running...')
+            # Note: cannot use Path(__file__).name with py2exe, so change
+            #  to literal file name for Windows standalone compilation.
+            print(f'{Path(__file__).name} now running...')
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
