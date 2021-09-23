@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.7'
+__version__ = '0.4.8'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1362,8 +1362,8 @@ class CountViewer(tk.Frame):
 
     def view_log(*event) -> None:
         """
-        Create a separate window to view the log file, read-only,
-        scrolled text. Called from File menubar.
+        Create a separate window to view the log file as scrolled text.
+        Called from File menubar.
         
         :param event: Needed for keybinding implicit event.
         """
@@ -1374,7 +1374,7 @@ class CountViewer(tk.Frame):
             os_width = 72
         
         try:
-            with open(LOGFILE) as file:
+            with open(LOGFILE.resolve()) as file:
                 logwin = tk.Toplevel()
                 logwin.title(f'{LOGFILE}, {node()}')
                 if MY_OS in 'lin, dar':
@@ -1414,12 +1414,13 @@ class CountViewer(tk.Frame):
                 ttk.Button(logwin, text='Erase', command=erase).pack()
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} missing on {node()}.'
-            warn_detail = ('Log file should be in folder:\n'
+            warn_detail = ('That file or a link(alias) with its name'
+                           ' should be in:\n'
                            f'{Path.cwd()}\n'
-                           'Has it been moved or renamed?')
+                           'Has it been deleted, moved or renamed?')
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
-    
+
     @staticmethod
     def backup_log() -> None:
         """
