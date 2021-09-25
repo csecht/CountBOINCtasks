@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.8'
+__version__ = '0.4.9'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -73,8 +73,10 @@ BC = boinc_command.BoincCommand()
 TC = time_convert
 MY_OS = sys.platform[:3]
 GUI_TITLE = 'BOINC task counter'
-SHORT_STRFTIME = '%Y-%b-%d %H:%M'
-LONG_SRTFTIME = '%Y-%b-%d %H:%M:%S'
+SHORT_STRFTIME = '%Y %b %d %H:%M'
+LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
+DAY_STRFTIME = '%A %H:%M'
+LONGSMRY_STRF = '%b %d %H:%M'
 # Log file should be in the CountBOINCtasks-master folder.
 LOGFILE = Path('count-tasks_log.txt').resolve()
 BKUPFILE = Path('count-tasks_log(copy).txt').resolve()
@@ -199,7 +201,7 @@ class CountModeler:
         Called from task_state_notices().
         """
         
-        self.share.status_time = datetime.now().strftime(LONG_SRTFTIME)
+        self.share.status_time = datetime.now().strftime(LONG_STRFTIME)
         tasks_all = BC.get_tasks('all')
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
@@ -298,10 +300,10 @@ class CountModeler:
             self.share.data['cycles_remain'].set(cycles_remain)
             # Display weekday with time of previous interval to aid the user.
             self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%A %H:%M'))
+                datetime.now().strftime(DAY_STRFTIME))
             # Capture full ending time here, instead of in log_it(),
             #   so that the logged time matches displayed time.
-            self.share.intvl_cycle_time = datetime.now().strftime(LONG_SRTFTIME)
+            self.share.intvl_cycle_time = datetime.now().strftime(LONG_STRFTIME)
             
             with self.thread_lock:
                 # Track when no new tasks were reported in past interval;
@@ -323,16 +325,21 @@ class CountModeler:
                 tt_min = intervaldict['tt_min']
                 tt_range = f'{tt_min} -- {tt_max}'
                 tt_total = intervaldict['tt_total']
-                
+
                 self.share.data['tt_mean'].set(tt_mean)
                 self.share.data['tt_sd'].set(tt_sd)
                 self.share.data['tt_range'].set(tt_range)
                 self.share.data['tt_total'].set(tt_total)
-                
+
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
-                summary_time = self.share.data['time_prev_cnt'].get()
                 summary_m = TC.string_to_m(self.share.setting['summary_t'].get())
+                # When summary interval is >= 1 week, need to provide date of
+                #   prior summary rather than weekday, as above (%A %H:%M).
+                if summary_m >= 10080:
+                    self.share.data['time_prev_cnt'].set(
+                        datetime.now().strftime(LONGSMRY_STRF))
+                summary_time = self.share.data['time_prev_cnt'].get()
                 interval_m = int(self.share.setting['interval_t'].get()[:-1])
                 summary_factor = summary_m // interval_m
                 if (cycle + 1) % summary_factor == 0 and num_running > 0:
@@ -341,13 +348,13 @@ class CountModeler:
                     # Need to activate disabled Summary data button now; only need
                     #  statement for 1st summary, but, oh well, here we go again...
                     self.share.sumry_b.config(state=tk.NORMAL)
-                    
+
                     # Display time of summary; gridded in same row as time prev count.
                     self.share.data['time_prev_sumry'].set(summary_time)
-                    
+
                     task_count_sumry = len(self.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
-                    
+
                     summarydict = ttimes_stats(
                         task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
@@ -356,7 +363,7 @@ class CountModeler:
                     tt_min = summarydict['tt_min']
                     tt_range = f'{tt_min} -- {tt_max}'
                     tt_total = summarydict['tt_total']
-                    
+
                     self.share.data['tt_mean_sumry'].set(tt_mean)
                     self.share.data['tt_sd_sumry'].set(tt_sd)
                     self.share.data['tt_range_sumry'].set(tt_range)
@@ -617,7 +624,7 @@ class CountModeler:
 
         :param event: Needed for call from keybindings.
         """
-        time_now = datetime.now().strftime(LONG_SRTFTIME)
+        time_now = datetime.now().strftime(LONG_STRFTIME)
         quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
         print(quit_msg)
         if self.share.setting['do_log'].get():
@@ -1223,7 +1230,7 @@ class CountViewer(tk.Frame):
         Called from settings.check_close_show() with 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
-        self.share.long_time_start = datetime.now().strftime(LONG_SRTFTIME)
+        self.share.long_time_start = datetime.now().strftime(LONG_STRFTIME)
         self.share.setstartdata()
         
         # Threads are started here b/c this method is called only once and is
