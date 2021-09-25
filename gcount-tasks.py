@@ -86,16 +86,16 @@ TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
-def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
+def ttimes_stats(tasktimes: iter) -> dict:
     """
     Sum and run statistics of BOINC task times. Called from Modeler.
 
-    :param numtasks: The number of elements in tasktimes.
     :param tasktimes: A list, tuple, or set of times, in seconds as
                       integers or floats.
     :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
              Dict values as: 00:00:00.
     """
+    numtasks = len(tasktimes)
     total = TC.sec_to_format(int(sum(tasktimes)), 'std')
     if numtasks > 1:
         mean = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
@@ -180,8 +180,7 @@ class CountModeler:
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
         
         # Need to parse data returned from ttimes_stats().
-        startdict = ttimes_stats(
-            self.share.data['task_count'].get(), ttimes_start)
+        startdict = ttimes_stats(ttimes_start)
         tt_mean = startdict['tt_mean']
         tt_max = startdict['tt_max']
         tt_min = startdict['tt_min']
@@ -318,7 +317,7 @@ class CountModeler:
                 self.share.note['tic_nnt'].set(tic_nnt)
                 
                 # Need to robustly parse data returned from ttimes_stats().
-                intervaldict = ttimes_stats(task_count_new, ttimes_new)
+                intervaldict = ttimes_stats(ttimes_new)
                 tt_mean = intervaldict['tt_mean']
                 tt_sd = intervaldict['tt_sd']
                 tt_max = intervaldict['tt_max']
@@ -355,8 +354,7 @@ class CountModeler:
                     task_count_sumry = len(self.ttimes_smry)
                     self.share.data['task_count_sumry'].set(task_count_sumry)
 
-                    summarydict = ttimes_stats(
-                        task_count_sumry, self.ttimes_smry)
+                    summarydict = ttimes_stats(self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
                     tt_sd = summarydict['tt_sd']
                     tt_max = summarydict['tt_max']
