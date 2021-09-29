@@ -23,12 +23,12 @@ Requires Python3.6 or later with tkinter (tk/tcl) installed.
     You should have received a copy of the GNU General Public License
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
-# ^^ Text for --about invocation argument and __doc__>>
+# ^^ Text for --about invocation argument and use as __doc__>>
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.9'
+__version__ = '0.4.10'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -77,8 +77,8 @@ SHORT_STRFTIME = '%Y %b %d %H:%M'
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 DAY_STRFTIME = '%A %H:%M'
 LONGSMRY_STRF = '%b %d %H:%M'
-# Log file should be in the CountBOINCtasks-master folder.
-LOGFILE = Path('count-tasks_log.txt').resolve()
+# Log file or its link should be in the CountBOINCtasks-master folder.
+LOGFILE = Path('count-tasks_log.txt').resolve()  # Use in case of symlinks.
 BKUPFILE = Path('count-tasks_log(copy).txt').resolve()
 TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
@@ -411,8 +411,8 @@ class CountModeler:
                         nnt_time = TC.sec_to_format(
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
-                            f'NO TASKS reported in past {nnt_time}.')
-                    
+                            'NO TASKS reported in the last count '
+                            f'for the past {tic_nnt} interval(s), {nnt_time}.')
                     else:  # Everything is fine, remove any prior notice.
                         self.share.note['notice_txt'].set('')
                 
@@ -803,8 +803,8 @@ class CountViewer(tk.Frame):
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
         self.master.title(GUI_TITLE)
-        # Need to color in all of master Frame, and use light grey border;
-        #    changes to near white for click-drag.
+        # Need to color in all of master Frame, and use near-shite border;
+        #    changes to grey for click-drag.
         self.master.configure(bg=self.master_bg,
                               highlightthickness=3,
                               highlightcolor='grey95',
@@ -1552,7 +1552,7 @@ class CountController(tk.Tk):
 
 class CountFyi:
     """
-    Methods to provide user information and help.
+    Methods to provide user with information and help.
     """
     
     def __init__(self, share):
@@ -1674,8 +1674,8 @@ if __name__ == "__main__":
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
-        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL), but that
-        #  will bypass this exit message.
+        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL) for immediate
+        #    exit, but that will bypass this exit message.
         except KeyboardInterrupt:
             exit_msg = ('\n\n  *** Interrupted by user ***\n'
                         f'  Quitting now...{datetime.now()}\n\n')
