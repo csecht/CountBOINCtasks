@@ -25,7 +25,7 @@ Requires Python3.6 or later with tkinter (tk/tcl) installed.
 """
 # ^^ Text for --about invocation argument and use as __doc__>>
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C. Echt'
+__copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __version__ = '0.4.10'
