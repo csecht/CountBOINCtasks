@@ -96,6 +96,7 @@ TIP: To get only the most recent task count and time metrics without
  running count intervals, run:  `count-tasks.py --c 0`
 
 ### The GUI version: gcount-tasks.py
+# NOTICE: Version 0.4.10 is prone to freezes. Current version has been rolled back to v.0.4.6 until the issue is resolved. 
 Download and run as described under Usage, but launch the program with these Terminal 
 commands:
 <ul>

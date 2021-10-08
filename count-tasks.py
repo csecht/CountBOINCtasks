@@ -23,7 +23,7 @@ https://github.com/csecht/CountBOINCtasks
 """
 
 __author__ =    'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C. Echt'
+__copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
