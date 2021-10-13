@@ -23,12 +23,12 @@ Requires Python3.6 or later with tkinter (tk/tcl) installed.
     You should have received a copy of the GNU General Public License
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
-# ^^ Text for --about invocation argument and __doc__>>
+# ^^ Text for --about invocation argument and use as __doc__>>
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C. Echt'
+__copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.6'
+__version__ = '0.4.11'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -72,11 +72,14 @@ BC = boinc_command.BoincCommand()
 TC = time_convert
 MY_OS = sys.platform[:3]
 GUI_TITLE = 'BOINC task counter'
-SHORT_STRFTIME = '%Y-%b-%d %H:%M'
-LONG_SRTFTIME = '%Y-%b-%d %H:%M:%S'
-# Log file should be in the CountBOINCtasks-master folder.
-LOGFILE = Path('count-tasks_log.txt')
-BKUPFILE = Path('count-tasks_log(copy).txt')
+SHORT_STRFTIME = '%Y %b %d %H:%M'
+LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
+DAY_STRFTIME = '%A %H:%M'
+LONGSMRY_STRF = '%b %d %H:%M'
+# Log file or its link should be in the CountBOINCtasks-master folder.
+#  But use .resolve() to handle symlinks.
+LOGFILE = Path('count-tasks_log.txt').resolve()
+BKUPFILE = Path('count-tasks_log(copy).txt').resolve()
 TASK_STATE_INTERVAL = 60  # <- time.sleep() seconds
 
 
@@ -199,7 +202,7 @@ class CountModeler:
         Called from task_state_notices().
         """
 
-        self.share.status_time = datetime.now().strftime(LONG_SRTFTIME)
+        self.share.status_time = datetime.now().strftime(LONG_STRFTIME)
         tasks_all = BC.get_tasks('all')
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
@@ -298,10 +301,10 @@ class CountModeler:
             self.share.data['cycles_remain'].set(cycles_remain)
             # Display weekday with time of previous interval to aid the user.
             self.share.data['time_prev_cnt'].set(
-                datetime.now().strftime('%A %H:%M'))
+                datetime.now().strftime(DAY_STRFTIME))
             # Capture full ending time here, instead of in log_it(),
             #   so that the logged time matches displayed time.
-            self.share.intvl_cycle_time = datetime.now().strftime(LONG_SRTFTIME)
+            self.share.intvl_cycle_time = datetime.now().strftime(LONG_STRFTIME)
 
             with self.thread_lock:
                 # Track when no new tasks were reported in past interval;
@@ -318,9 +321,9 @@ class CountModeler:
                 # Need to robustly parse data returned from ttimes_stats().
                 intervaldict = ttimes_stats(task_count_new, ttimes_new)
                 tt_mean = intervaldict['tt_mean']
+                tt_sd = intervaldict['tt_sd']
                 tt_max = intervaldict['tt_max']
                 tt_min = intervaldict['tt_min']
-                tt_sd = intervaldict['tt_sd']
                 tt_range = f'{tt_min} -- {tt_max}'
                 tt_total = intervaldict['tt_total']
 
@@ -331,8 +334,13 @@ class CountModeler:
 
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
-                summary_time = self.share.data['time_prev_cnt'].get()
                 summary_m = TC.string_to_m(self.share.setting['summary_t'].get())
+                # When summary interval is >= 1 week, need to provide date of
+                #   prior summary rather than weekday, as above (%A %H:%M).
+                if summary_m >= 10080:
+                    self.share.data['time_prev_cnt'].set(
+                        datetime.now().strftime(LONGSMRY_STRF))
+                summary_time = self.share.data['time_prev_cnt'].get()
                 interval_m = int(self.share.setting['interval_t'].get()[:-1])
                 summary_factor = summary_m // interval_m
                 if (cycle + 1) % summary_factor == 0 and num_running > 0:
@@ -351,9 +359,9 @@ class CountModeler:
                     summarydict = ttimes_stats(
                         task_count_sumry, self.ttimes_smry)
                     tt_mean = summarydict['tt_mean']
+                    tt_sd = summarydict['tt_sd']
                     tt_max = summarydict['tt_max']
                     tt_min = summarydict['tt_min']
-                    tt_sd = summarydict['tt_sd']
                     tt_range = f'{tt_min} -- {tt_max}'
                     tt_total = summarydict['tt_total']
 
@@ -406,8 +414,8 @@ class CountModeler:
                         nnt_time = TC.sec_to_format(
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
-                            f'NO TASKS reported in past {nnt_time}.')
-
+                            'NO TASKS reported in the last count '
+                            f'for the past {tic_nnt} interval(s), {nnt_time}.')
                     else:  # Everything is fine, remove any prior notice.
                         self.share.note['notice_txt'].set('')
 
@@ -473,7 +481,7 @@ class CountModeler:
         Called from set_interval_data() and task_state_notices().
 
         :param called_from: Either 'start', 'interval' or 'notice',
-                            depending on type of information to be logged.
+                            depending on type of data to be logged.
         """
 
         cycles_max = self.share.setting['cycles_max'].get()
@@ -506,7 +514,7 @@ class CountModeler:
 
         if called_from == 'start' and cycles_max > 0:
             report = (
-                '\n>>> GUI TASK COUNTER START: settings... <<<\n'
+                f'\n>>> START SETTINGS, GUI TASK COUNTER v.{__version__} <<<\n'
                 f'{self.share.long_time_start};'
                 f' Number of tasks in the most recent BOINC report:'
                 f' {self.task_count_start}\n'
@@ -580,7 +588,7 @@ class CountModeler:
                       f'{self.indent}{cycles_remain} counts remain.')
             logging.info(report)
 
-        # This tic condition the same as: task_count_new > 0 and
+        # This tic condition is equivalent to: task_count_new > 0 and
         #   num_running > 0; that is, everything normal.
         elif called_from == 'interval' and tic_nnt == 0:
             report = (
@@ -617,7 +625,7 @@ class CountModeler:
 
         :param event: Needed for call from keybindings.
         """
-        time_now = datetime.now().strftime(LONG_SRTFTIME)
+        time_now = datetime.now().strftime(LONG_STRFTIME)
         quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
         print(quit_msg)
         if self.share.setting['do_log'].get():
@@ -675,7 +683,7 @@ class CountViewer(tk.Frame):
             'proj_update': tk.BooleanVar()
         }
 
-        # Common data var for display; passed between Viewer and Modeler
+        # Control variables for display; passed between Viewer and Modeler
         self.share.data = {
             # Start and Interval data
             'task_count': tk.IntVar(),
@@ -771,7 +779,7 @@ class CountViewer(tk.Frame):
                                         textvariable=self.share.data['tt_range_sumry'])
         self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                       textvariable=self.share.data['tt_total_sumry'])
-        # Labels in master
+        # Data labels in master
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
             bg=self.master_bg, fg=self.row_fg)
@@ -805,14 +813,14 @@ class CountViewer(tk.Frame):
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
         self.master.title(GUI_TITLE)
-        # Need to color in all of master Frame, and use light grey border;
-        #    changes to near white for click-drag.
+        # Need to color in all of master Frame, and use near-white border;
+        #    changes to grey for click-drag.
         self.master.configure(bg=self.master_bg,
                               highlightthickness=3,
                               highlightcolor='grey95',
                               highlightbackground='grey75')
 
-        # Provide Terminal exit info.
+        # From close window,provide exit info to Terminal and log.
         self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
         self.master.bind_all('<Escape>', self.share.quitgui)
 
@@ -900,15 +908,15 @@ class CountViewer(tk.Frame):
             os_accelerator = 'Ctrl'
         elif MY_OS == 'dar':
             os_accelerator = 'Command'
-        file = tk.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="File", menu=file)
-        file.add_command(label="Backup log file", command=self.backup_log)
-        file.add_separator()
-        file.add_command(label='Quit', command=self.share.quitgui,
-                         # Note: macOS won't display this accelerator text
-                         #   b/c can't override macOS native Command+Q;
-                         #   and don't want Ctrl+Q displayed or used on macOS.
-                         accelerator=f'{os_accelerator}+Q')
+        self.file = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=self.file)
+        self.file.add_command(label="Backup log file", command=self.backup_log)
+        self.file.add_separator()
+        self.file.add_command(label='Quit', command=self.share.quitgui,
+                              # Note: macOS won't display this accelerator text
+                              #   b/c can't override macOS native Command+Q;
+                              #   and don't want Ctrl+Q displayed or used on macOS.
+                              accelerator=f'{os_accelerator}+Q')
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=self.view_log,
@@ -1208,10 +1216,14 @@ class CountViewer(tk.Frame):
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
         # Here logging is lazily employed to manage the file of report data.
-        # A log file will be created only if so optioned.
+        # A log file will be created only if so optioned (default).
         if self.share.setting['do_log'].get():
-            logging.basicConfig(filename=str(LOGFILE), level=logging.INFO, filemode="a",
-                                format='%(message)s')
+            logging.basicConfig(filename=str(LOGFILE), level=logging.INFO,
+                                filemode="a", format='%(message)s')
+        else:
+            self.viewlog_b.config(state=tk.DISABLED)
+            self.file.entryconfig("Backup log file", state=tk.DISABLED)
+            self.master.unbind("<Control-l>")
 
     def display_data(self) -> None:
         """
@@ -1221,7 +1233,7 @@ class CountViewer(tk.Frame):
         Called from settings.check_close_show() with 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
-        self.share.long_time_start = datetime.now().strftime(LONG_SRTFTIME)
+        self.share.long_time_start = datetime.now().strftime(LONG_STRFTIME)
         self.share.setstartdata()
 
         # Threads are started here b/c this method is called only once and is
@@ -1336,30 +1348,32 @@ class CountViewer(tk.Frame):
     def app_got_focus(self, event) -> None:
         """Give menubar headings normal color when app has focus.
 
-        :param event: <FocusIn> or <FocusOut> mouse click.
+        :param event: <FocusIn> mouse click.
         """
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("Help", foreground='black', state=tk.NORMAL)
         self.style.configure('View.TButton', foreground='black',
                              background='grey75')
-        self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
+        if self.share.setting['do_log'].get():
+            self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
     def app_lost_focus(self, event) -> None:
         """Give menubar headings grey-out color when app looses focus.
 
-        :param event: <FocusIn> or <FocusOut> mouse click.
+        :param event: <FocusOut> mouse click.
         """
         self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("Help", foreground='grey', state=tk.DISABLED)
         self.style.configure('View.TButton', foreground='grey')
-        self.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
+        if self.share.setting['do_log'].get():
+            self.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
 
     def view_log(*event) -> None:
         """
-        Create a separate window to view the log file, read-only,
-        scrolled text. Called from File menubar.
+        Create a separate window to view the log file as scrolled text.
+        Called from File menubar.
 
         :param event: Needed for keybinding implicit event.
         """
@@ -1410,9 +1424,10 @@ class CountViewer(tk.Frame):
                 ttk.Button(logwin, text='Erase', command=erase).pack()
         except FileNotFoundError:
             warn_main = f'Log {LOGFILE} missing on {node()}.'
-            warn_detail = ('Log file should be in folder:\n'
+            warn_detail = ('That file or a link(alias) with its name'
+                           ' should be in:\n'
                            f'{Path.cwd()}\n'
-                           'Has it been moved or renamed?')
+                           'Has it been deleted, moved or renamed?')
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
 
@@ -1516,6 +1531,11 @@ class CountController(tk.Tk):
         CountModeler(share=self).task_state_notices()
 
     def logit(self, called_from) -> None:
+        """Send data to log file.
+
+        :param called_from: Either 'start', 'interval' or 'notice',
+                            depending on type of data to be logged.
+        """
         CountModeler(share=self).log_it(called_from)
 
     # pylint: disable=unused-argument
@@ -1542,7 +1562,7 @@ class CountController(tk.Tk):
 
 class CountFyi:
     """
-    Methods to provide user information and help.
+    Methods to provide user with information and help.
     """
 
     def __init__(self, share):
@@ -1550,8 +1570,6 @@ class CountFyi:
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menubar and keybinding.
-
-        :return: Transient text to make one smile.
         """
         compliments = [
             "Hey there good lookin'!", 'I wish we had met sooner.',
@@ -1599,7 +1617,7 @@ class CountFyi:
 
         def refresh():
             self.share.compliment_txt.grid_remove()
-            # Re-grid notice to return to current Notice.
+            # Re-grid notice to return to current Notice text.
             self.share.notice_l.grid()
             app.update_idletasks()
 
@@ -1660,12 +1678,14 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title(f"Count BOINC tasks on {node()}")
-            print(f'{Path(__file__).stem} now running...')
+            # Note: cannot use Path(__file__).name with py2exe, so change
+            #  to literal file name for Windows standalone compilation.
+            print(f'{Path(__file__).name} now running...')
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
-        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL), but that
-        #  will bypass this exit message.
+        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL) for immediate
+        #    exit, but that will bypass this exit message.
         except KeyboardInterrupt:
             exit_msg = ('\n\n  *** Interrupted by user ***\n'
                         f'  Quitting now...{datetime.now()}\n\n')
