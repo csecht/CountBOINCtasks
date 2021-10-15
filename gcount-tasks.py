@@ -1681,6 +1681,8 @@ if __name__ == "__main__":
             # Note: cannot use Path(__file__).name with py2exe, so change
             #  to literal file name for Windows standalone compilation.
             print(f'{Path(__file__).name} now running...')
+            # print('gcount-tasks.py now running...')  # Window py2exe compile only
+
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
