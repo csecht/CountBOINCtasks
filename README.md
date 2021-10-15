@@ -96,7 +96,6 @@ TIP: To get only the most recent task count and time metrics without
  running count intervals, run:  `count-tasks.py --c 0`
 
 ### The GUI version: gcount-tasks.py
-# NOTICE: Version 0.4.10 is prone to freezes. Current version has been rolled back to v.0.4.6 until the issue is resolved. 
 Download and run as described under Usage, but launch the program with these Terminal 
 commands:
 <ul>
@@ -125,6 +124,8 @@ The process of opening apps from unrecognized Apple developers can be somewhat s
 * Wait for user feedback...
 
 ### Known Issues
+* Version 0.4.10 was prone to freezes. That issue was resolved as of ver. 0.4.11
+
 * BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different 
   boinccmd path from the default path used by count-tasks.py. I've yet to 
   figure out the new path. (Any help would be appreciated.) As a work-around, 
