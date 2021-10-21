@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.4.11'
+__version__ = '0.4.12'
 __program_name__ = 'gcount-tasks.py'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -648,13 +648,19 @@ class CountViewer(tk.Frame):
         self.menubar = tk.Menu()
 
         # Set colors for row labels and data display.
-        self.row_fg = 'LightCyan2'  # foreground for row labels
+        # self.row_fg = 'LightCyan2'  # foreground for row labels
+        # self.master_bg = 'SkyBlue4'  # also used for row header labels.
+        # self.notice_fg = 'khaki'
+        # self.highlight = 'gold'
+        # These colors are more interesting for red-green color-blindness.
+        self.row_fg = 'LightYellow' # foreground for row labels
+        self.master_bg = 'SteelBlue4'  # also used for row header labels
+        self.notice_fg = 'gold1'  # also used for compliments
         self.data_bg = 'grey40'  # background for data labels and frame
-        self.master_bg = 'SkyBlue4'  # also used for row header labels.
-        self.notice_fg = 'khaki'
+
         # Label foreground configuration vars.
         self.emphasize = 'grey90'
-        self.highlight = 'gold'
+        self.highlight = 'gold1'
         self.deemphasize = 'grey60'
 
         # Log text formatting vars:
