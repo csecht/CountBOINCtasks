@@ -28,7 +28,7 @@ __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
 __version__ =   '0.4.28'
-__program_name__ = 'count-tasks.py'
+__program_name__ = 'count-tasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ =    'Development Status :: 4 - BETA'
@@ -54,7 +54,7 @@ logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')
 
 if sys.version_info < (3, 6):
-    print('Sorry, but running count-tasks.py requires Python 3.6 or later.\n'
+    print('Sorry, but running count-tasks requires Python 3.6 or later.\n'
           'Current Python version: '
           f'{sys.version_info.major}.{sys.version_info.minor}\n'
           'Python downloads are available from https://docs.python.org/')

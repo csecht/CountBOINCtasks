@@ -9,7 +9,7 @@ MacOS command:
 Windows command:
     python setup.py py2exe
 
-For all systems, the COUNTmodules folder and the gcount-tasks.py file from the
+For all systems, the COUNTmodules folder and the gcount-tasks file from the
 CountBOINCtasks repository must be in the parent folder where this is executed.
 
 You will also need to install one of these programs:
@@ -40,8 +40,8 @@ for files in os.listdir('/Users/Craig/Applications/counttasks_dev_py2app/'):
         DATA_FILES.append(f2)
 
 setup(
-    app=['gcount-tasks.py'],  # comment for Windows
-    # windows=['gcount-tasks.py',],    # uncomment for Windows
+    app=['gcount-tasks'],  # comment for Windows
+    # windows=['gcount-tasks',],    # uncomment for Windows
     data_files=DATA_FILES,
     name='GcountTasks',
     author='C.S. Echt',

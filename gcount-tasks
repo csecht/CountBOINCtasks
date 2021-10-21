@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-gcount-tasks.py provides task counts and time statistics at timed
+gcount-tasks provides task counts and time statistics at timed
 intervals for tasks recently reported to BOINC servers. It can be run
 on Windows, Linux, and MacOS. It is a tkinter-based GUI version of
-count-tasks.py that uses a MVC architecture inspired by Brian Oakley at
+count-tasks that uses a MVC architecture inspired by Brian Oakley at
 https://stackoverflow.com/questions/32864610/
 Requires Python3.6 or later with tkinter (tk/tcl) installed.
 
@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __version__ = '0.4.12'
-__program_name__ = 'gcount-tasks.py'
+__program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -54,7 +54,7 @@ try:
     from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
-    print('gcount_tasks.py requires tkinter, which is included with \n'
+    print('gcount-tasks requires tkinter, which is included with \n'
           'Python 3.7+distributions.\n'
           'Install the most recent version or re-install Python and include Tk/Tcl.\n'
           '\n'
@@ -62,7 +62,7 @@ except (ImportError, ModuleNotFoundError) as error:
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 6):
-    print('Sorry, but running gcount-tasks.py requires Python 3.6 or later.\n'
+    print('Sorry, but running gcount-tasks requires Python 3.6 or later.\n'
           'Current Python version: '
           f'{sys.version_info.major}.{sys.version_info.minor}\n'
           'Python downloads are available from https://docs.python.org/')
@@ -1687,7 +1687,7 @@ if __name__ == "__main__":
             # Note: cannot use Path(__file__).name with py2exe, so change
             #  to literal file name for Windows standalone compilation.
             print(f'{Path(__file__).name} now running...')
-            # print('gcount-tasks.py now running...')  # Window py2exe compile only
+            # print('gcount-tasks now running...')  # Window py2exe compile only
 
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
