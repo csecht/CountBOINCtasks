@@ -1500,8 +1500,8 @@ class CountController(tk.Tk):
             self.minsize(580, 360)
             self.maxsize(780, 390)
         elif MY_OS == 'win':
-            self.minsize(532, 360)
-            self.maxsize(720, 390)
+            self.minsize(532, 380)
+            self.maxsize(720, 400)
         elif MY_OS == 'dar':
             self.minsize(600, 370)
             self.maxsize(780, 410)
