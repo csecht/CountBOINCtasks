@@ -1402,8 +1402,8 @@ class CountViewer(tk.Frame):
                 logwin.focus_set()
                 # Use a "dark" background/foreground theme for log text.
                 logtext = ScrolledText(logwin, width=os_width, height=30,
-                                       font='TkFixedFont', fg='grey80',
-                                       bg='grey25', relief='raised', padx=5)
+                                       font='TkFixedFont', fg='grey85',
+                                       bg='grey20', relief='raised', padx=5)
                 logtext.insert(tk.INSERT, file.read())
                 logtext.see('end')
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
