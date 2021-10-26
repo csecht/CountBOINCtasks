@@ -1503,8 +1503,8 @@ class CountController(tk.Tk):
             self.minsize(532, 380)
             self.maxsize(720, 400)
         elif MY_OS == 'dar':
-            self.minsize(600, 370)
-            self.maxsize(780, 410)
+            self.minsize(600, 390)
+            self.maxsize(780, 425)
 
         # pylint: disable=assignment-from-no-return
         container = tk.Frame(self).grid()
