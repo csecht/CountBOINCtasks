@@ -16,7 +16,8 @@ It may be useful for comparing task productivity between different computers or 
 <h3 id="usage-">Usage:</h3>
 <p>Download the .zip package from the Code download button and extract to your
  favorite folder. From within the resulting countBOINCtasks-master folder
- , open a Terminal or Command Prompt window and call up the utility&#39;s help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.</p>
+ , open a Terminal or Command Prompt window and call up the utility&#39;s help menu.
+    The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.</p>
 <ul>
 <li>Linux or Mac OS: <code>./count-tasks --help</code>  or <code>python3 count-tasks</code></li>
 <li>Windows: <code>python count-tasks</code> --help</li>
@@ -25,13 +26,13 @@ Depending on your Python path settings in Windows, double-clicking on
 the count-tasks file icon may automatically launch the program, with its
 default settings, in a Terminal window.
 
-Default settings assume a default location of the BOINC folder from the
+<p>Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
   then there will be a command line option to enter that custom path to run
    boinc-client&#39;s boinccmd (or boinccmd.exe) executable. A custom command
     path can also be added to the countCFG.txt configuration file to avoid
-     entering the path on the command line.
-<code>~/countBOINCtasks-master$ ./count-tasks --help
+    entering the path on the command line.</p>
+<p><code>~/countBOINCtasks-master$ ./count-tasks --help
 usage: count-tasks [-h] [--about] [--log {yes,no}] [--interval M] [--summary TIMEunit] [--count_lim N]
 
 optional arguments:
@@ -40,20 +41,20 @@ optional arguments:
   --log {yes,no}      Create log file of results or append to existing log (default: yes)
   --interval M        Specify minutes between task counts (default: 60)
   --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
-  --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data</code>
+  --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data</code></p>
 Options can be abbreviated, e.g., <code>./count-tasks --l --i 15 --s 1h --c 12</code>
 
-Running the default settings (no optional arguments), will count the
+<p>Running the default settings (no optional arguments), will count the
  number of tasks reported to the BOINC Project server on a repeating
   interval of 1 hour, with summaries provided every 24 hr. Basic statistics
    for task times are also provided for each count interval. The initial
     data report provided immediately upon program launch is for the most recent
      tasks reported by boinc-client during the past hour. Repeating
-      counts intervals begin after the initial report (see TIP, below).
+    counts intervals begin after the initial report (see TIP, below).</p>
 
 Example report results, using default settings:
 
-<code>:~/CountBOINCtasks-master$ ./count-tasks
+<p><code>:~/CountBOINCtasks-master$ ./count-tasks
 2021-Jul-21 06:14:14; Number of tasks in the most recent BOINC report: 11
                       Task Time: mean 00:19:25, range [00:13:14 - 00:21:05],
                                  stdev 00:02:11, total 03:33:43
@@ -68,31 +69,31 @@ Timed intervals beginning now...
                       Total tasks in queue: 30
 
 1007 counts remaining until exit.
-13m ||||||||||&lt; ~time to next count</code>
+13m ||||||||||&lt; ~time to next count</code></p>
 
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
 
-Running with the <code>--log</code> option will save the reports to a log file in the
+<p>Running with the <code>--log</code> option will save the reports to a log file in the
  working folder. This file is appended to or created when the program is
-  launched.
+    launched.</p>
 
-You can let <code>count-tasks</code> run in an open terminal window with negligible
+<p>You can let <code>count-tasks</code> run in an open terminal window with negligible
  impact on system resources. Stop it with <em>Ctrl-C</em> or let it stop
   automatically.  With default settings, it will stop after 6 weeks (1008
    1hr count cycles). A different count cycle limit can be set with the
-    <code>--count_lim</code> option.
+    <code>--count_lim</code> option.</p>
 
-NOTE: Summary counts may be less than the sum of individual counts because
+<p>NOTE: Summary counts may be less than the sum of individual counts because
  of persistence of reported tasks between count intervals. This can be
   expected when the <code>--interval</code>option is set to less than the default 60
    (minutes). The boinc-client command that provides reported task data
    , <code>boinccmd  --get_old_tasks</code>, retrieves tasks reported for the past hour
    , independent of the utility&#39;s count interval. To avoid missing any
     reported tasks, the <code>--interval</code> option has a 60 minutes maximum count
-     interval.
+    interval.</p>
 
-TIP: To get only the most recent task count and time metrics without
- running count intervals, run:  <code>count-tasks --c 0</code>
+<p>TIP: To get only the most recent task count and time metrics without
+    running count intervals, run:  <code>count-tasks --c 0</code></p>
 
 ### The GUI version: gcount-tasks
 Download and run as described under Usage, but launch the program with these Terminal
@@ -103,7 +104,6 @@ commands from within the parent folder:
 </ul>
 
 <p>For a brief description and version number, use the <code>--about</code> command line option.</p>
-<h3 id="note-the-prior-version-4-12-is-prone-to-freezing-when-tasks-are-suspended-by-user-it-has-been-rolled-back-to-version-4-6-until-a-fix-is-found-">NOTE: The prior version 4.12 is prone to freezing when tasks are suspended by user; It has been rolled back to version 4.6 until a fix is found.</h3>
 <p><img src="gcount-tasks_scrnshot.png" alt="gcount-tasks"></p>
 <h3 id="stand-alone-versions-no-python-installation-needed-">Stand-alone versions (no Python installation needed!)</h3>
 <h4 id="gcount_tasks-exe-windows">gcount_tasks.exe - Windows</h4>
@@ -126,7 +126,7 @@ boinccmd path from the default path used by count-tasks. I&#39;ve yet to
 figure out the new path. (Any help would be appreciated.) As a work-around,
 if you archived a prior BOINC package, you can copy the boinccmd
 executable file into the default location:
-Users/<you>/Application Support/BOINC/ , or follow the prompts from the
+Users/you-the-user/Application Support/BOINC/ , or follow the prompts from the
 count-tasks Terminal command to enter a custom path to the boinccmd program.</p>
 </li>
 </ul>
