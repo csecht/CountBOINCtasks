@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -52,8 +52,8 @@ from COUNTmodules import boinc_command, time_convert
 
 try:
     import tkinter as tk
-    import tkinter.ttk as ttk
-    from tkinter import messagebox
+    # import tkinter.ttk as ttk
+    from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
     print('gcount-tasks requires tkinter, which is included with \n'
@@ -145,10 +145,6 @@ class CountModeler:
         self.task_states = ['none']
         self.task_count_start = 0
         self.task_count_new = 0
-
-        # Log file print formatting:
-        self.indent = ' ' * 22
-        self.bigindent = ' ' * 33
 
     def default_settings(self) -> None:
         """Set or reset default run parameters in the setting dictionary.
@@ -494,6 +490,10 @@ class CountModeler:
                             depending on type of data to be logged.
         """
 
+        # Log text file formatting:
+        indent = ' ' * 22
+        bigindent = ' ' * 33
+        
         cycles_max = self.share.setting['cycles_max'].get()
         interval_t = self.share.setting['interval_t'].get()
         summary_t = self.share.setting['summary_t'].get()
@@ -530,26 +530,26 @@ class CountModeler:
                     f'{self.share.long_time_start};'
                     ' Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},\n'
-                    f'{self.bigindent}range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
-                    f'{self.indent}Number of scheduled count intervals: {cycles_max}\n'
-                    f'{self.indent}Counts every {interval_t}, summaries every {summary_t}.\n'
-                    f'{self.indent}BOINC status evaluation every {status_intvl} minutes.\n'
-                    f'{self.indent}Project auto-update: {proj_update}\n'
+                    f'{indent}Task Time: mean {tt_mean},\n'
+                    f'{bigindent}range [{tt_range}],\n'
+                    f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{indent}Total tasks in queue: {num_tasks_all}\n'
+                    f'{indent}Number of scheduled count intervals: {cycles_max}\n'
+                    f'{indent}Counts every {interval_t}, summaries every {summary_t}.\n'
+                    f'{indent}BOINC status evaluation every {status_intvl} minutes.\n'
+                    f'{indent}Project auto-update: {proj_update}\n'
                     'Timed intervals beginning now...\n')
                 logging.info(report)
             # Need to provide a truncated report for one-off "status" runs.
             elif called_from == 'start' and cycles_max == 0:
                 report = (
                     f'\n{self.share.long_time_start}; STATUS REPORT\n'
-                    f'{self.indent}Number of tasks in the most recent BOINC report:'
+                    f'{indent}Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},\n'
-                    f'{self.bigindent}range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n')
+                    f'{indent}Task Time: mean {tt_mean},\n'
+                    f'{bigindent}range [{tt_range}],\n'
+                    f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{indent}Total tasks in queue: {num_tasks_all}\n')
                 logging.info(report)
 
             # Note: Two timestamps are used: self.share.data['intvl_count_t']
@@ -578,22 +578,22 @@ class CountModeler:
                         '  Verify in BOINC Manager.')
                     logging.info(report)
                 if num_tasks_all == 0:
-                    report = f'{self.indent}BOINC client has no tasks!\n'
+                    report = f'{indent}BOINC client has no tasks!\n'
                     logging.info(report)
                 if num_suspended_by_boinc > 0:
-                    report = (f'{self.indent}BOINC Manager has suspended tasks;\n'
-                              f'{self.indent}A "When to suspend" condition was met\n'
-                              f'{self.indent}in BOINC Manager Computing preferences.')
+                    report = (f'{indent}BOINC Manager has suspended tasks;\n'
+                              f'{indent}A "When to suspend" condition was met\n'
+                              f'{indent}in BOINC Manager Computing preferences.')
                     logging.info(report)
                 if num_suspended_by_user > 0:
-                    report = (f'{self.indent}'
+                    report = (f'{indent}'
                               f'{num_suspended_by_user} tasks suspended by user.')
                     logging.info(report)
 
             if called_from == 'interval' and tic_nnt > 0:
                 report = (f'\n{intvl_count_t}; NO TASKS reported in the past'
                           f' {tic_nnt} counting intervals.\n'
-                          f'{self.indent}{cycles_remain} counts remain.')
+                          f'{indent}{cycles_remain} counts remain.')
                 logging.info(report)
 
             # This tic condition is equivalent to: task_count_new > 0 and
@@ -602,11 +602,11 @@ class CountModeler:
                 report = (
                     f'\n{intvl_count_t}; Tasks reported in the past {interval_t}:'
                     f' {self.task_count_new}\n'
-                    f'{self.indent}Task Time: mean {tt_mean},\n'
-                    f'{self.bigindent}range [{tt_range}],\n'
-                    f'{self.bigindent}stdev {tt_sd}, total {tt_total}\n'
-                    f'{self.indent}Total tasks in queue: {num_tasks_all}\n'
-                    f'{self.indent}{cycles_remain} counts remain.'
+                    f'{indent}Task Time: mean {tt_mean},\n'
+                    f'{bigindent}range [{tt_range}],\n'
+                    f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{indent}Total tasks in queue: {num_tasks_all}\n'
+                    f'{indent}{cycles_remain} counts remain.'
                 )
                 logging.info(report)
 
@@ -614,9 +614,9 @@ class CountModeler:
                 report = (
                     f'\n{intvl_count_t}; >>> SUMMARY: Count for the past'
                     f' {summary_t}: {tcount_sum}\n'
-                    f'{self.indent}Task Time: mean {ttmean_sum},\n'
-                    f'{self.bigindent}range [{ttrange_sum}],\n'
-                    f'{self.bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
+                    f'{indent}Task Time: mean {ttmean_sum},\n'
+                    f'{bigindent}range [{ttrange_sum}],\n'
+                    f'{bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
                 )
                 logging.info(report)
                 # Need to reset flag to toggle summary logging.
@@ -663,10 +663,6 @@ class CountViewer(tk.Frame):
         self.share.highlight = 'gold1' # fg for notices, compliments, et al.
         self.emphasize = 'grey90'
         self.deemphasize = 'grey60'
-
-        # Log text formatting vars:
-        self.indent = ' ' * 22
-        self.bigindent = ' ' * 33
 
         # Need to grey-out menubar headings and View log button when
         #   another application has focus.
@@ -1020,9 +1016,9 @@ class CountViewer(tk.Frame):
 
         # Colors match those of master/parent window.
         self.settings_win.configure(bg=self.master_bg)
-        style = ttk.Style()
-        style.configure('TLabel', background=self.master_bg,
-                        foreground=self.share.row_fg)
+        settings_style = ttk.Style()
+        settings_style.configure('Set.TLabel', background=self.master_bg,
+                                 foreground=self.share.row_fg)
 
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
@@ -1114,8 +1110,10 @@ class CountViewer(tk.Frame):
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
 
-        intvl_label1 = ttk.Label(self.settings_win, text='Count interval')
-        intvl_label2 = ttk.Label(self.settings_win, text='minutes')
+        intvl_label1 = ttk.Label(self.settings_win, text='Count interval',
+                                 style='Set.TLabel')
+        intvl_label2 = ttk.Label(self.settings_win, text='minutes',
+                                 style='Set.TLabel')
 
         self.sumry_t_value.configure(
             validate='key', width=4,
@@ -1128,8 +1126,10 @@ class CountViewer(tk.Frame):
                                     values=('day', 'hr', 'min'), width=4)
         self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
 
-        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value')
-        sumry_label2 = ttk.Label(self.settings_win, text='time unit')
+        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value',
+                                 style='Set.TLabel')
+        sumry_label2 = ttk.Label(self.settings_win, text='time unit',
+                                 style='Set.TLabel')
 
         # Specify number limit of counting cycles to run.
         self.cycles_max_entry.configure(
@@ -1137,7 +1137,8 @@ class CountViewer(tk.Frame):
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
                 self.cycles_max_entry.register(eval_digit_entry), '%P', '%d'))
-        cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles')
+        cycles_label1 = ttk.Label(self.settings_win, text='# Count cycles',
+                                  style='Set.TLabel')
         cycles_query_button = ttk.Button(self.settings_win, text='?', width=0,
                                          command=explain_zero_max)
 
@@ -1145,11 +1146,13 @@ class CountViewer(tk.Frame):
         # Checkbutton() kw "variable" automatically sets values.
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
-        log_label = ttk.Label(self.settings_win, text='Log results to file')
+        log_label = ttk.Label(self.settings_win, text='Log results to file',
+                              style='Set.TLabel')
 
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
-        update_label = ttk.Label(self.settings_win, text='Use Project auto-update')
+        update_label = ttk.Label(self.settings_win, text='Use Project auto-update',
+                                 style='Set.TLabel')
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
 
@@ -1399,9 +1402,10 @@ class CountViewer(tk.Frame):
                 elif MY_OS == 'win':
                     logwin.minsize(800, 200)
                 logwin.focus_set()
+                # Use a "dark" background/foreground theme for log text.
                 logtext = ScrolledText(logwin, width=os_width, height=30,
-                                       font='TkFixedFont',
-                                       bg='grey85', relief='raised', padx=5)
+                                       font='TkFixedFont', fg='grey80',
+                                       bg='grey25', relief='raised', padx=5)
                 logtext.insert(tk.INSERT, file.read())
                 logtext.see('end')
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
