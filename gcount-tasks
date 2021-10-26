@@ -401,6 +401,9 @@ class CountModeler:
                 cycles_remain = self.share.data['cycles_remain'].get()
                 interval_m = self.share.setting['interval_m'].get()
 
+                # Need to change to notice fg color from "All is well" row_fg color.
+                self.share.notice_l.config(fg=self.share.highlight)
+
                 # Need notices for task status that might need user attention,
                 #   conditioned in descending priority.
                 if num_running > 0:
@@ -418,7 +421,10 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}\n'
                             f'for the prior {tic_nnt} counting interval(s),')
-                    else:  # Everything is fine, remove any prior notice.
+                    else:  
+                        # Everything is fine, remove any prior notice.
+                        # Use a de-emhasized color for this non-notice status text.
+                        self.share.notice_l.config(fg=self.share.row_fg)
                         self.share.note['notice_txt'].set(
                             f'All is well (updates every {NOTICE_INTERVAL} seconds)')
 
@@ -480,7 +486,7 @@ class CountModeler:
     def log_it(self, called_from=None) -> None:
         """
         Write to file interval and summary metrics for recently reported
-        BOINC tasks. Provide notices for aberrant task status.
+        BOINC tasks. Provide information on aberrant task status.
         Called from set_interval_data() and notice_it().
         Is threaded as log_thread; start in Viewer.display_data()
 
@@ -651,14 +657,11 @@ class CountViewer(tk.Frame):
 
         # Set colors for row labels and data display.
         # These colors are compatible with red-green color-blindness.
-        self.row_fg = 'LightYellow' # foreground for row labels
+        self.share.row_fg = 'LightYellow' # foreground for row labels
         self.master_bg = 'SteelBlue4'  # also used for row header labels
-        self.notice_fg = 'gold1'  # also used for compliments
         self.data_bg = 'grey40'  # background for data labels and frame
-
-        # Label foreground configuration vars.
+        self.share.highlight = 'gold1' # fg for notices, compliments, et al.
         self.emphasize = 'grey90'
-        self.highlight = 'gold1'
         self.deemphasize = 'grey60'
 
         # Log text formatting vars:
@@ -744,7 +747,7 @@ class CountViewer(tk.Frame):
                                     textvariable=self.share.setting['summary_t'],
                                     relief='groove', bg=self.data_bg)
         self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
-                                     bg=self.master_bg, fg=self.row_fg)
+                                     bg=self.master_bg, fg=self.share.row_fg)
 
         # Labels for BOINC data; configured and gridded in display_data().
         self.task_count_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
@@ -770,25 +773,27 @@ class CountViewer(tk.Frame):
         # Data labels in master
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
-            bg=self.master_bg, fg=self.row_fg)
+            bg=self.master_bg, fg=self.share.row_fg)
         self.time_prev_sumry_l = tk.Label(
             textvariable=self.share.data['time_prev_sumry'],
-            bg=self.master_bg, fg=self.row_fg)
+            bg=self.master_bg, fg=self.share.row_fg)
         self.time_next_cnt_l = tk.Label(
             textvariable=self.share.data['time_next_cnt'],
-            bg=self.master_bg, fg=self.notice_fg)
+            bg=self.master_bg, fg=self.share.highlight)
         self.cycles_remain_l = tk.Label(
             textvariable=self.share.data['cycles_remain'],
-            bg=self.master_bg, fg=self.row_fg)
+            bg=self.master_bg, fg=self.share.row_fg)
         self.num_tasks_all_l = tk.Label(
             textvariable=self.share.data['num_tasks_all'],
-            bg=self.master_bg, fg=self.row_fg)
+            bg=self.master_bg, fg=self.share.row_fg)
         # Text for compliment_txt is configured in compliment_me()
-        self.share.compliment_txt = tk.Label(bg=self.master_bg, fg=self.notice_fg)
+        self.share.compliment_txt = tk.Label(bg=self.master_bg,
+                                             fg=self.share.highlight)
         # Notice label will share grid with complement_txt.
         self.share.notice_l = tk.Label(
             textvariable=self.share.note['notice_txt'],
-            fg=self.notice_fg, bg=self.master_bg, relief='flat', border=0)
+            fg=self.share.highlight, bg=self.master_bg,
+            relief='flat', border=0)
 
         self.master_widgets()
         self.config_master()
@@ -924,14 +929,14 @@ class CountViewer(tk.Frame):
                       }
         for header, rownum in row_header.items():
             tk.Label(self.master, text=f'{header}',
-                     bg=self.master_bg, fg=self.row_fg
+                     bg=self.master_bg, fg=self.share.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same rows.
         tk.Label(self.master, text='Summary from:',
-                 bg=self.master_bg, fg=self.row_fg
+                 bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
-                 bg=self.master_bg, fg=self.row_fg
+                 bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=12, column=2, sticky=tk.W)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
@@ -1016,7 +1021,8 @@ class CountViewer(tk.Frame):
         # Colors match those of master/parent window.
         self.settings_win.configure(bg=self.master_bg)
         style = ttk.Style()
-        style.configure('TLabel', background=self.master_bg, foreground=self.row_fg)
+        style.configure('TLabel', background=self.master_bg,
+                        foreground=self.share.row_fg)
 
         # Need a message in main window to prompt user to enter settings.
         #   In display_data() it will be re-gridded with time_start-l when
@@ -1277,12 +1283,12 @@ class CountViewer(tk.Frame):
         # self.share.data['time_prev_cnt'].set('The recent hourly BOINC report.')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
-        self.task_count_l.config(foreground=self.highlight)
+        self.task_count_l.config(foreground=self.share.highlight)
 
         # Starting count data and times (from past boinc-client hour).
         # Tk control variables are configured in __init__; their values
         #   are set in set_start_data().
-        self.tt_mean_l.configure(foreground=self.highlight)
+        self.tt_mean_l.configure(foreground=self.share.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
@@ -1309,8 +1315,8 @@ class CountViewer(tk.Frame):
         self.summary_t_l.config(foreground=self.deemphasize)
 
         # Interval data, column1
-        self.task_count_l.configure(foreground=self.highlight)
-        self.tt_mean_l.configure(foreground=self.highlight)
+        self.task_count_l.configure(foreground=self.share.highlight)
+        self.tt_mean_l.configure(foreground=self.share.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
@@ -1331,8 +1337,8 @@ class CountViewer(tk.Frame):
         self.summary_t_l.config(foreground=self.emphasize)
 
         # Summary data, column2, emphasize font color
-        self.task_count_sumry_l.configure(foreground=self.highlight)
-        self.ttmean_sumry_l.configure(foreground=self.highlight)
+        self.task_count_sumry_l.configure(foreground=self.share.highlight)
+        self.ttmean_sumry_l.configure(foreground=self.share.highlight)
         self.ttsd_sumry_l.configure(foreground=self.emphasize)
         self.ttrange_sumry_l.configure(text=self.share.data['tt_range'].get(),
                                        foreground=self.emphasize)
@@ -1686,8 +1692,8 @@ if __name__ == "__main__":
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
         #  like moving cursor over window, or a timer action.
-        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL) for immediate
-        #    exit, but that will bypass this exit message.
+        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL) to allow
+        #  immediate exit, but that would bypass this exit message.
         except KeyboardInterrupt:
             exit_msg = ('\n\n  *** Interrupted by user ***\n'
                         f'  Quitting now...{datetime.now()}\n\n')
