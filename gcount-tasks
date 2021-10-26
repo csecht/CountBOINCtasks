@@ -999,9 +999,10 @@ class CountViewer(tk.Frame):
     # NOTE: settings() is a bit of a mess; consider restructuring it.
     def settings(self) -> None:
         """
-        A Toplevel window called from master_widgets() at startup.
+        A Toplevel window that appears at startup.
         Use to confirm default parameters or set new ones for count and
         summary interval times, counting limit, and log file option.
+        Called from config_master().
         """
         # Toplevel window basics
         # Need self. b/c window parent is used for a messagebox in check_and_set().
@@ -1104,12 +1105,11 @@ class CountViewer(tk.Frame):
         # Have user select interval times for counting and summary cycles.
         # All interactive settings widgets are instantiated in Viewer __init__
         #   and configured and gridded here.
+        # Statements are generally sorted by their row order.
         self.intvl_choice.configure(state='readonly', width=4, height=12,
                                     textvariable=self.share.setting['interval_t'])
-
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
         self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
-
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval',
                                  style='Set.TLabel')
         intvl_label2 = ttk.Label(self.settings_win, text='minutes',
@@ -1120,12 +1120,10 @@ class CountViewer(tk.Frame):
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
                 self.sumry_t_value.register(eval_digit_entry), '%P', '%d'))
-
         self.sumry_t_unit.configure(state='readonly',
                                     textvariable=self.share.setting['sumry_t_unit'],
                                     values=('day', 'hr', 'min'), width=4)
         self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
-
         sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value',
                                  style='Set.TLabel')
         sumry_label2 = ttk.Label(self.settings_win, text='time unit',
@@ -1184,13 +1182,13 @@ class CountViewer(tk.Frame):
         confirm_button.grid(column=3, row=4, padx=10, pady=(0, 10), sticky=tk.E)
         default_button.grid(column=0, row=5, padx=10, pady=(0, 10), sticky=tk.W)
         self.countnow_button.grid(column=3, row=5, padx=10, pady=(0, 10), sticky=tk.E)
-        # Need OS-specific gridding:
+        # Need OS-specific gridding for proper alignments:
         if MY_OS in 'lin, dar':
             cycles_query_button.grid(column=0, row=2, padx=(80, 0), sticky=tk.W)
-            update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+            update_query_btn.grid(column=0, row=4, padx=(15, 0), sticky=tk.W)
         if MY_OS == 'win':
             cycles_query_button.grid(column=0, row=2, padx=(70, 0), sticky=tk.W)
-            update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
+            update_query_btn.grid(column=0, row=4, padx=(10, 0), sticky=tk.W)
 
     def check_and_set(self):
         """
