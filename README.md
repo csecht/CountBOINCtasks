@@ -105,8 +105,6 @@ commands from within the parent folder:
 
 For a brief description and version number, use the `--about` command line option.
 
-### NOTE: The prior version 4.12 is prone to freezing when tasks are suspended by user; It has been rolled back to version 4.6 until a fix is found.
-
 ![gcount-tasks](gcount-tasks_scrnshot.png)
 
 ### Stand-alone versions (no Python installation needed!)
