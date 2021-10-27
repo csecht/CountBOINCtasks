@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -831,29 +831,8 @@ class CountViewer(tk.Frame):
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
         help_menu = tk.Menu(self.menubar, tearoff=0)
-        info = tk.Menu(self.master, tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_cascade(label='Info...', menu=info)
-        info.add_command(
-            label='- Counting will not begin until run settings are confirmed at start.')
-        info.add_command(
-            label='- Interval and Summary data buttons switch visual emphasis...')
-        info.add_command(
-            label='     ...those buttons activate once their data post.')
-        info.add_command(
-            label='- At startup, # tasks reported and time of last count are from the')
-        info.add_command(
-            label='     most recent hourly BOINC report.')
-        info.add_command(
-            label='- Number of tasks in queue and Notices update every '
-                  f'{TC.string_to_m(f"{NOTICE_INTERVAL}s")} minutes')
-        info.add_command(
-            label='- Displayed countdown clock time is approximate.')
-        info.add_command(
-            label='- Review count data and Notices history with "View log file".')
-        info.add_command(
-            label="- Menu: File>'Backup log file' makes a copy in program's parent folder.")
-
+        help_menu.add_command(label='Information', command=self.share.info)
         help_menu.add_command(label="Compliment", command=self.share.complimentme,
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
@@ -1549,22 +1528,28 @@ class CountController(tk.Tk):
 
     # pylint: disable=unused-argument
     def quitgui(self, *event) -> None:
-        """Close down program. Called from button, menubar, and keybinding.
+        """
+        Close down program. Called from button, menu bar, and keybinding.
 
         :param event: Needed for implicit keybinding event
         """
         CountModeler(share=self).quit_gui()
 
+    def info(self) -> None:
+        """Is called from Help menu bar
+        """
+        CountFyi(share=self).information()
+
     # pylint: disable=unused-argument
     def complimentme(self, *event) -> None:
-        """Is called from Help menubar. A silly diversion.
+        """Is called from Help menu bar. A silly diversion.
 
         :param event: Needed for implicit keybinding event
         """
         CountFyi(share=self).compliment_me()
 
     def about(self):
-        """Is called from Viewer Help menubar.
+        """Is called from Viewer Help menu bar.
         """
         CountFyi(share=self).about()
 
@@ -1576,6 +1561,41 @@ class CountFyi:
 
     def __init__(self, share):
         self.share = share
+
+    @staticmethod
+    def information() -> None:
+        """
+        Basic information program usage and actions;
+        Toplevel window called from Help menu bar.
+        """
+        infowin = tk.Toplevel()
+        infowin.resizable(False, False)
+        infowin.title('Usage information')
+        information = ("""
+            - Counting begins once settings are confirmed at start.\n
+            - Interval and Summary data buttons switch visual emphasis;
+                    ...those buttons activate once their data post.\n
+            - At start, # tasks reported and time of last count are from
+                    the most recent hourly BOINC report.\n
+            - Number of tasks in queue and Notices update every""" 
+            f' {NOTICE_INTERVAL} seconds.\n'
+            """
+            - Displayed countdown clock time is approximate.\n
+            - Review counts and Notices history with "View log file".\n
+            - File>'Backup log file' copies log to program's parent folder.""")
+
+        num_doc_lines = information.count('\n')
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 62
+        elif MY_OS == 'dar':
+            os_width = '54'
+        infotxt = tk.Text(infowin, font='TkTextFont',
+                          width=os_width, height=num_doc_lines + 2,
+                          bg='grey20', fg='grey85',
+                          relief='groove', padx=15)
+        infotxt.insert(1.0, information)
+        infotxt.pack()
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menubar and keybinding.
@@ -1689,7 +1709,7 @@ if __name__ == "__main__":
             app.title(f"Count BOINC tasks on {node()}")
             # Note: cannot use Path(__file__).name with py2exe, so use
             #  literal file name for Windows standalone compilation.
-            # print('gcount-tasks now running...')  # Window py2exe compile only
+            # print('gcount-tasks now running...')  # Windows py2exe compile only.
             print(f'{Path(__file__).name} now running...')
             app.mainloop()
         # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
