@@ -379,7 +379,8 @@ class CountModeler:
 
     def notice_it(self) -> None:
         """
-        Notices for BOINC task state information run short time interval.
+        Notices for BOINC task state information should run on short
+        time intervals.
         Is threaded as notice_thread; start in Viewer.display_data().
         Calls to: set_task_states() and log_it().
         """
