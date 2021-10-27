@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.3'
+__version__ = '0.5.4'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -87,7 +87,7 @@ NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 # Use this for an immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-
+# ############# Functions not part of MVC, but necessary ###############
 def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
     """
     Sum and run statistics of BOINC task times. Called from Modeler.
@@ -126,7 +126,110 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         'tt_max': 'na'}
 
 
-# The engine that gets BOINC data and runs timed data counts.
+def view_log(event=None) -> None:
+    """
+    Create a separate window to view the log file as scrolled text.
+    Called from File in the menubar.
+
+    :param event: Needed for keybinding implicit event.
+    """
+    os_width = 0
+    if MY_OS in 'lin, win':
+        os_width = 79
+    elif MY_OS == 'dar':
+        os_width = 72
+
+    try:
+        with open(LOGFILE) as file:
+            logwin = tk.Toplevel()
+            logwin.title(f'{LOGFILE}, {node()}')
+            if MY_OS in 'lin, dar':
+                logwin.minsize(725, 200)
+            elif MY_OS == 'win':
+                logwin.minsize(800, 200)
+            logwin.focus_set()
+            # Use a "dark" background/foreground theme for log text.
+            logtext = ScrolledText(logwin, width=os_width, height=30,
+                                   font='TkFixedFont', fg='grey85',
+                                   bg='grey20', relief='raised', padx=5)
+            logtext.insert(tk.INSERT, file.read())
+            logtext.see('end')
+            logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+            def update():
+                """Replace log window text with log file content.
+                """
+                with open(LOGFILE) as new_text:
+                    logtext.delete('1.0', tk.END)
+                    logtext.insert('1.0', new_text.read())
+                    logtext.see(tk.END)
+                    logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+            def erase():
+                """Delete log file content and log window text.
+                """
+                okay = messagebox.askokcancel(
+                    parent=logwin,
+                    title='Confirmation needed',
+                    message='Delete log file content?',
+                    detail="'Enter' or space bar will also delete log file content.")
+                if okay:
+                    open(LOGFILE, 'w').close()
+                    logtext.delete('1.0', tk.END)
+
+            ttk.Button(logwin, text='Update', command=update).pack()
+            ttk.Button(logwin, text='Erase', command=erase).pack()
+    except FileNotFoundError:
+        warn_main = f'Log {LOGFILE} missing on {node()}.'
+        warn_detail = ('That file or a link(alias) with its name'
+                       ' should be in:\n'
+                       f'{Path.cwd()}\n'
+                       'Has it been deleted, moved or renamed?')
+        messagebox.showwarning(title='FILE NOT FOUND',
+                               message=warn_main, detail=warn_detail)
+
+
+def backup_log() -> None:
+    """
+    Copy the log file to the home folder. Overwrites previous
+    back-up file.
+    Called from File menubar.
+    """
+    # Could make this an outside function with backupfile and logfile as
+    #  arguments, but that would require import of partial from functools
+    #  to call it as a command from its menubar object, its only call.
+    destination = Path.home() / BKUPFILE
+    if Path.is_file(LOGFILE):
+        try:
+            shutil.copyfile(LOGFILE, destination)
+            success_msg = 'Log file has been copied to: '
+            success_detail = str(destination)
+            messagebox.showinfo(title='Backup completed',
+                                message=success_msg, detail=success_detail)
+        except PermissionError:
+            messagebox.showinfo(title='Log copy error',
+                                message="Permission denied")
+            print("Log file backup: Permission denied.")
+        except IsADirectoryError:
+            messagebox.showinfo(title='Log copy error',
+                                message="Backup file name is a directory")
+            print("Log file backup: Destination is a directory.")
+        except shutil.SameFileError:
+            messagebox.showinfo(
+                title='Log copy error',
+                message="Source and destination are the same file")
+            print("Log file backup: Source and destination are the same file.")
+    else:
+        warn_main = f'Log {LOGFILE} cannot be archived'
+        warn_detail = ('Log file should be in folder:\n'
+                       f'{Path.cwd()}\n'
+                       'Has it been moved or renamed?')
+        messagebox.showwarning(title='FILE NOT FOUND',
+                               message=warn_main, detail=warn_detail)
+
+
+# #############################MCV Classes #############################
+# MVC Modeler: The engine that gets BOINC data and runs count intervals.
 class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
@@ -632,10 +735,13 @@ class CountModeler:
         Safe and informative exit from the program.
         Called from multiple widgets via Controller.quitgui().
 
-        :param event: Needed for call from keybindings.
+        :param event: Needed for keybinding implicit event.
         """
+
+        # Note: quit_gui() is a method instead of a function b/c it needs
+        #   to evaluate the status of 'do_log' so the quit msg can be logged.
         time_now = datetime.now().strftime(LONG_STRFTIME)
-        quit_msg = f'\n{time_now}; *** User has quit the program. ***\n Exiting...\n'
+        quit_msg = f'\n{time_now}; *** User has quit the program. ***\n'
         print(quit_msg)
         if self.share.setting['do_log'].get():
             logging.info(quit_msg)
@@ -643,7 +749,7 @@ class CountModeler:
         sys.exit(0)
 
 
-# The tkinter GUI engine that runs as main thread.
+# MVC Viewer, the tkinter GUI engine; runs as main thread.
 class CountViewer(tk.Frame):
     """
     The Viewer communicates with Modeler via 'share' objects handled
@@ -819,7 +925,7 @@ class CountViewer(tk.Frame):
         # Note: 'self'.file b/c also used in check_and_set()
         self.file = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=self.file)
-        self.file.add_command(label="Backup log file", command=self.backup_log)
+        self.file.add_command(label="Backup log file", command=backup_log)
         self.file.add_separator()
         self.file.add_command(label='Quit', command=self.share.quitgui,
                               # Note: macOS won't display this accelerator text
@@ -828,7 +934,7 @@ class CountViewer(tk.Frame):
                               accelerator=f'{os_accelerator}+Q')
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
-        view.add_command(label="Log file", command=self.view_log,
+        view.add_command(label="Log file", command=view_log,
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
         help_menu = tk.Menu(self.menubar, tearoff=0)
@@ -838,7 +944,7 @@ class CountViewer(tk.Frame):
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
 
-        self.viewlog_b = ttk.Button(text='View log file', command=self.view_log)
+        self.viewlog_b = ttk.Button(text='View log file', command=view_log)
         # Set interval & summary focus button attributes with .share. b/c need
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with ttk intvl_b after first interval
@@ -879,7 +985,7 @@ class CountViewer(tk.Frame):
             cmdkey = 'Command'
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", self.view_log)
+        self.master.bind("<Control-l>", view_log)
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -1358,108 +1464,8 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             self.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
 
-    def view_log(*event) -> None:
-        """
-        Create a separate window to view the log file as scrolled text.
-        Called from File in the menubar.
 
-        :param event: Needed for keybinding implicit event.
-        """
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 79
-        elif MY_OS == 'dar':
-            os_width = 72
-
-        try:
-            with open(LOGFILE) as file:
-                logwin = tk.Toplevel()
-                logwin.title(f'{LOGFILE}, {node()}')
-                if MY_OS in 'lin, dar':
-                    logwin.minsize(725, 200)
-                elif MY_OS == 'win':
-                    logwin.minsize(800, 200)
-                logwin.focus_set()
-                # Use a "dark" background/foreground theme for log text.
-                logtext = ScrolledText(logwin, width=os_width, height=30,
-                                       font='TkFixedFont', fg='grey85',
-                                       bg='grey20', relief='raised', padx=5)
-                logtext.insert(tk.INSERT, file.read())
-                logtext.see('end')
-                logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                def update():
-                    """Replace log window text with log file content.
-                    """
-                    with open(LOGFILE) as new_text:
-                        logtext.delete('1.0', tk.END)
-                        logtext.insert('1.0', new_text.read())
-                        logtext.see(tk.END)
-                        logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                def erase():
-                    """Delete log file content and log window text.
-                    """
-                    okay = messagebox.askokcancel(
-                        parent=logwin,
-                        title='Confirmation needed',
-                        message='Delete log file content?',
-                        detail="'Enter' or space bar will also delete log file content.")
-                    if okay:
-                        open(LOGFILE, 'w').close()
-                        logtext.delete('1.0', tk.END)
-
-                ttk.Button(logwin, text='Update', command=update).pack()
-                ttk.Button(logwin, text='Erase', command=erase).pack()
-        except FileNotFoundError:
-            warn_main = f'Log {LOGFILE} missing on {node()}.'
-            warn_detail = ('That file or a link(alias) with its name'
-                           ' should be in:\n'
-                           f'{Path.cwd()}\n'
-                           'Has it been deleted, moved or renamed?')
-            messagebox.showwarning(title='FILE NOT FOUND',
-                                   message=warn_main, detail=warn_detail)
-
-    @staticmethod
-    def backup_log() -> None:
-        """
-        Copy the log file to the home folder. Overwrites previous
-        back-up file.
-        Called from File menubar.
-        """
-        # Could make this an outside function with backupfile and logfile as
-        #  arguments, but that would require import of partial from functools
-        #  to call it as a command from its menubar object, its only call.
-        destination = Path.home() / BKUPFILE
-        if Path.is_file(LOGFILE):
-            try:
-                shutil.copyfile(LOGFILE, destination)
-                success_msg = 'Log file has been copied to: '
-                success_detail = str(destination)
-                messagebox.showinfo(title='Backup completed',
-                                    message=success_msg, detail=success_detail)
-            except PermissionError:
-                messagebox.showinfo(title='Log copy error',
-                                    message="Permission denied")
-                print("Log file backup: Permission denied.")
-            except IsADirectoryError:
-                messagebox.showinfo(title='Log copy error',
-                                    message="Backup file name is a directory")
-                print("Log file backup: Destination is a directory.")
-            except shutil.SameFileError:
-                messagebox.showinfo(
-                    title='Log copy error',
-                    message="Source and destination are the same file")
-                print("Log file backup: Source and destination are the same file.")
-        else:
-            warn_main = f'Log {LOGFILE} cannot be archived'
-            warn_detail = ('Log file should be in folder:\n'
-                           f'{Path.cwd()}\n'
-                           'Has it been moved or renamed?')
-            messagebox.showwarning(title='FILE NOT FOUND',
-                                   message=warn_main, detail=warn_detail)
-
-
+# ################## MVC Controller; is app mainloop ##################
 class CountController(tk.Tk):
     """
     The Controller through which other MVC Count Classes can interact
@@ -1555,6 +1561,7 @@ class CountController(tk.Tk):
         CountFyi(share=self).about()
 
 
+# ############ An MVC add-on; independent of data functions ###########
 class CountFyi:
     """
     Methods to provide user with information and help.
