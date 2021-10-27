@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1588,9 +1588,9 @@ class CountFyi:
         num_doc_lines = information.count('\n')
         os_width = 0
         if MY_OS in 'lin, win':
-            os_width = 62
+            os_width = 64
         elif MY_OS == 'dar':
-            os_width = '54'
+            os_width = '56'
         infotxt = tk.Text(infowin, font='TkTextFont',
                           width=os_width, height=num_doc_lines + 2,
                           bg='grey20', fg='grey85',
