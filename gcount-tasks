@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.4'
+__version__ = '0.5.5'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -265,20 +265,18 @@ class CountModeler:
         """
         Gather initial task data and times; set data dictionary
         control variables.
-        Called once from display_data().
+        Called once from config_start_data().
         """
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
         #     tnames = BC.get_reported('tasks').
         ttimes_start = BC.get_reported('elapsed time')
         self.share.data['task_count'].set(len(ttimes_start))
+        self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
 
         # Begin set of used/old tasks to exclude from new tasks;
         #   used in set_interval_data() to track tasks across intervals.
         self.ttimes_used.update(ttimes_start)
-        # num_tasks_all Label config and grid are defined in Viewer __init__:
-        #  set value here for use in display_data()
-        self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
 
         # Need to parse data returned from ttimes_stats().
         startdict = ttimes_stats(
@@ -340,7 +338,7 @@ class CountModeler:
         Run timer and countdown clock to update and analyze regular and
         summary data for task status and times. Set control variables
         for data and note dictionaries.
-        Is threaded as interval_thread; start in Viewer.display_data()
+        Is threaded as interval_thread; start in Viewer.start_threads()
         Calls to: ttimes_stats(), get_minutes() log_it().
         """
         ttimes_new = set()
@@ -484,7 +482,7 @@ class CountModeler:
         """
         Notices for BOINC task state information should run on short
         time intervals.
-        Is threaded as notice_thread; start in Viewer.display_data().
+        Is threaded as notice_thread; start in Viewer.start_threads().
         Calls to: set_task_states() and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
@@ -588,7 +586,7 @@ class CountModeler:
         Write to file interval and summary metrics for recently reported
         BOINC tasks. Provide information on aberrant task status.
         Called from set_interval_data() and notice_it().
-        Is threaded as log_thread; start in Viewer.display_data()
+        Is threaded as log_thread; start in Viewer.start_threads()
 
         :param called_from: Either 'start', 'interval' or 'notice',
                             depending on type of data to be logged.
@@ -839,9 +837,9 @@ class CountViewer(tk.Frame):
         self.update_choice = tk.Checkbutton(self.settings_win)
 
         # Labels for settings values; configured and gridded in config_master().
-        # NOTE: self.time_start_l label is initially configured for text and
-        #   gridded in settings() to show a startup message, then reconfigured
-        #   in display_data() for the time_start.
+        # NOTE: self.time_start_l label is initially configured for text to
+        #   show a startup message, then reconfigured in config_start_data()
+        #   for the time_start.
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg, fg='grey90')
         self.interval_t_l = tk.Label(self.dataframe, width=21, borderwidth=2,
                                      textvariable=self.share.setting['interval_t'],
@@ -852,7 +850,7 @@ class CountViewer(tk.Frame):
         self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
                                      bg=self.master_bg, fg=self.share.row_fg)
 
-        # Labels for BOINC data; configured and gridded in display_data().
+        # Labels for BOINC data.
         self.task_count_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
                                      textvariable=self.share.data['task_count'])
         self.tt_mean_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
@@ -1033,7 +1031,8 @@ class CountViewer(tk.Frame):
         self.share.starting_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
         self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
         sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
-        # NOTE: time_start_label is gridded in settings(): row=2, column=1.
+        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
+                               columnspan=2)
         self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
         self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
         self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
@@ -1075,7 +1074,7 @@ class CountViewer(tk.Frame):
         #  Viewer methods are called; when interval_t is set at startup,
         #  subsequent starting functions will be skipped. Starting functions
         #  sequence: default_settings(), settings(), check_and_set(),
-        #  settings.check_start_close(), start_threads(), display_data(),
+        #  settings.check_start_close(), start_threads(), config_start_data(),
         #  set_start_data().
         # ^^^ Is there a cleaner way to structure start functions?
         if not self.share.setting['interval_t'].get():
@@ -1108,12 +1107,9 @@ class CountViewer(tk.Frame):
                                  foreground=self.share.row_fg)
 
         # Need a message in main window to prompt user to enter settings.
-        #   In display_data() it will be re-gridded with time_start-l when
-        #   settings_win closes. The message text is covered by
-        #   settings_win, but is there if user drags settings_win away.
+        #   The message text is covered by the settings_win, but is
+        #   there if user drags settings_win away.
         self.time_start_l.configure(text='Waiting for run settings...')
-        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
-                               columnspan=2)
 
         # Need to disable default window Exit; only allow exit from active Confirm button.
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
@@ -1167,7 +1163,7 @@ class CountViewer(tk.Frame):
         def check_start_close():
             """
             Calls check_and_set(); if all is good then starts threads,
-            calls display_data(), and closes settings() window, which
+            calls config_start_data(), and closes settings() window, which
             ends the startup sequence.
             Called from countnow_button.
             """
@@ -1181,11 +1177,11 @@ class CountViewer(tk.Frame):
                     self.share.setting['interval_t'].set('DISABLED')
                     self.share.setting['summary_t'].set('DISABLED')
                     self.share.note['notice_txt'].set('STATUS REPORT ONLY')
-                    self.display_data()
+                    self.config_start_data()
                     self.settings_win.destroy()
                 else:
                     self.start_threads()
-                    self.display_data()
+                    self.config_start_data()
                     self.settings_win.destroy()
 
         # Have user select interval times for counting and summary cycles.
@@ -1353,11 +1349,11 @@ class CountViewer(tk.Frame):
         notice_thread.start()
         log_thread.start()
 
-    def display_data(self) -> None:
+    def config_start_data(self) -> None:
         """
-        Config and grid data labels in master window; display settings
-        and start data as task metrics for the most recent BOINC report.
-        Log data to file if optioned.
+        Config data labels in master window for starting data emphasis.
+        Establish start time. Log data to file if optioned.
+        Calls set_startdata.
         Called from settings.check_and_close() with 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
@@ -1367,14 +1363,10 @@ class CountViewer(tk.Frame):
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
 
-        # self.share.data['time_prev_cnt'].set('The recent hourly BOINC report.')
         self.interval_t_l.config(foreground=self.emphasize)
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.share.highlight)
 
-        # Starting count data and times (from past boinc-client hour).
-        # Tk control variables are configured in __init__; their values
-        #   are set in set_start_data().
         self.tt_mean_l.configure(foreground=self.share.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
@@ -1391,7 +1383,6 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             self.share.logit('start')
 
-    # Methods for buttons, menubar items, keybindings.
     def emphasize_intvl_data(self) -> None:
         """
         Switches font emphasis from Summary data to Interval data.
@@ -1513,14 +1504,14 @@ class CountController(tk.Tk):
 
     def setintervaldata(self) -> None:
         """
-        Is called from Viewer.display_data(), which starts the Modeler
+        Is called from Viewer.start_threads(), which starts the Modeler
         interval thread.
         """
         CountModeler(share=self).set_interval_data()
 
     def taskstatenotices(self) -> None:
         """
-        Is called from Viewer.display_data(), which starts a the Modeler
+        Is called from Viewer.start_threads(), which starts a the Modeler
         task state notification thread.
         """
         CountModeler(share=self).notice_it()
