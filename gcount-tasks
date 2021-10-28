@@ -191,9 +191,9 @@ def view_log(event=None) -> None:
 
 def backup_log() -> None:
     """
-    Copy the log file to the home folder. Overwrites previous
+    Copy the log file to the current folder; overwrites previous
     back-up file.
-    Called from File menubar.
+    Called from File menu bar.
     """
     # Could make this an outside function with backupfile and logfile as
     #  arguments, but that would require import of partial from functools
@@ -213,7 +213,7 @@ def backup_log() -> None:
         except IsADirectoryError:
             messagebox.showinfo(title='Log copy error',
                                 message="Backup file name is a directory")
-            print("Log file backup: Destination is a directory.")
+            print("Log file backup: Destination file is a directory.")
         except shutil.SameFileError:
             messagebox.showinfo(
                 title='Log copy error',
@@ -749,7 +749,7 @@ class CountModeler:
         sys.exit(0)
 
 
-# MVC Viewer, the tkinter GUI engine; runs as main thread.
+# MVC Viewer, the tkinter GUI engine; runs in main thread.
 class CountViewer(tk.Frame):
     """
     The Viewer communicates with Modeler via 'share' objects handled
@@ -1590,7 +1590,7 @@ class CountFyi:
             """
             - Displayed countdown clock time is approximate.\n
             - Review counts and Notices history with "View log file".\n
-            - File>'Backup log file' copies log to program's parent folder.""")
+            - File>'Backup log file' copies log to the current folder.""")
 
         num_doc_lines = information.count('\n')
         os_width = 0
