@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.5'
+__version__ = '0.5.6'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -263,8 +263,8 @@ class CountModeler:
     def set_start_data(self):
         """
         Gather initial task data and times; set data dictionary
-        control variables.
-        Called once from config_start_data().
+        control variables. Log data to file if so optioned.
+        Called from check_start_close().
         """
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
@@ -293,6 +293,9 @@ class CountModeler:
         self.share.data['tt_total'].set(tt_total)
 
         self.share.data['time_prev_cnt'].set('The recent hourly BOINC report.')
+
+        if self.share.setting['do_log'].get():
+            self.share.logit('start')
 
     def set_task_states(self) -> None:
         """
@@ -901,6 +904,11 @@ class CountViewer(tk.Frame):
 
         self.master_widgets()
         self.master_layout()
+        self.share.defaultsettings()
+        self.settings()
+        # Starting functions sequence after settings() is called:
+        # check_and_set(), settings.check_start_close(), start_threads(),
+        # config_start_data(), CountModeler.set_start_data().
 
     def master_widgets(self) -> None:
         """
@@ -1070,24 +1078,12 @@ class CountViewer(tk.Frame):
         self.summary_t_l.config(foreground=self.data_bg)
         self.task_count_l.config(foreground=self.data_bg)
 
-        # Need 'if' condition so startup sequence isn't recalled when other
-        #  Viewer methods are called; when interval_t is set at startup,
-        #  subsequent starting functions will be skipped. Starting functions
-        #  sequence: default_settings(), settings(), check_and_set(),
-        #  settings.check_start_close(), start_threads(), config_start_data(),
-        #  set_start_data().
-        # ^^^ Is there a cleaner way to structure start functions?
-        if not self.share.setting['interval_t'].get():
-            self.share.defaultsettings()
-            self.settings()
-
     # NOTE: settings() is a bit of a mess; consider restructuring it.
     def settings(self) -> None:
         """
         A Toplevel window that appears at startup.
         Use to confirm default parameters or set new ones for count and
         summary interval times, counting limit, and log file option.
-        Called from master_layout().
         """
         # Toplevel window basics
         # Need self. b/c window parent is used for a messagebox in check_and_set().
@@ -1123,13 +1119,13 @@ class CountViewer(tk.Frame):
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
         # Functions for Combobox selections.
-        def set_intvl_selection(event):
+        def set_intvl_selection(event=None):
             """Interval time Combobox selection.
             :param event: Implicit event for <<ComboboxSelected>>
             """
             self.share.setting['interval_t'].set(self.intvl_choice.get())
 
-        def set_sumry_unit(event):
+        def set_sumry_unit(event=None):
             """Summary interval time unit Combobox selection.
             :param event: Implicit event for <<ComboboxSelected>>
             """
@@ -1163,8 +1159,8 @@ class CountViewer(tk.Frame):
         def check_start_close():
             """
             Calls check_and_set(); if all is good then starts threads,
-            calls config_start_data(), and closes settings() window, which
-            ends the startup sequence.
+            calls config_start_data(), and closes settings() window,
+            which ends the startup sequence.
             Called from countnow_button.
             """
             # Need to run final validation of settings in case user changed
@@ -1178,10 +1174,13 @@ class CountViewer(tk.Frame):
                     self.share.setting['summary_t'].set('DISABLED')
                     self.share.note['notice_txt'].set('STATUS REPORT ONLY')
                     self.config_start_data()
+                    self.share.setstartdata()
                     self.settings_win.destroy()
+                # Begin main interval counting functions...
                 else:
                     self.start_threads()
                     self.config_start_data()
+                    self.share.setstartdata()
                     self.settings_win.destroy()
 
         # Have user select interval times for counting and summary cycles.
@@ -1352,9 +1351,8 @@ class CountViewer(tk.Frame):
     def config_start_data(self) -> None:
         """
         Config data labels in master window for starting data emphasis.
-        Establish start time. Log data to file if optioned.
-        Calls set_startdata.
-        Called from settings.check_and_close() with 'Count now' button.
+        Establish start time.
+        Called from settings.check_start_close() with 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
         self.time_start_l.config(text=time_start)
@@ -1377,11 +1375,6 @@ class CountViewer(tk.Frame):
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
-
-        self.share.setstartdata()
-
-        if self.share.setting['do_log'].get():
-            self.share.logit('start')
 
     def emphasize_intvl_data(self) -> None:
         """
@@ -1511,13 +1504,15 @@ class CountController(tk.Tk):
 
     def taskstatenotices(self) -> None:
         """
-        Is called from Viewer.start_threads(), which starts a the Modeler
+        Is called from Viewer.start_threads(), which starts the Modeler
         task state notification thread.
         """
         CountModeler(share=self).notice_it()
 
     def logit(self, called_from=None) -> None:
         """Send data to log file.
+        Is called from Viewer.start_threads(), which starts the Modeler
+        log_it() thread.
 
         :param called_from: Either 'start', 'interval' or 'notice',
                             depending on type of data to be logged.
