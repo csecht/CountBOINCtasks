@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'time_convert.py'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -38,19 +38,21 @@ def string_to_m(time_string: str) -> Union[float, int]:
     :return: Time as integer minutes or as float for unit s.
     """
     t_min = {'s': 1 / 60, 'm': 1, 'h': 60, 'd': 1440}
-    val = int(time_string[:-1])
-    unit = time_string[-1]
+    val = None
+    unit = None
     try:
+        val = int(time_string[:-1])
+    except ValueError as valerr:
+        err_msg = f'Invalid value unit: {val}; must be an integer.'
+        raise ValueError(err_msg) from valerr
+    try:
+        unit = time_string[-1]
         if unit == 's':
             return round((t_min[unit] * val), 2)
         return t_min[unit] * val
-    # Error msgs to developer
     except KeyError as keyerr:
         err_msg = f'Invalid time unit: {unit} -  Use: s, m, h, or d'
         raise KeyError(err_msg) from keyerr
-    except ValueError as valerr:
-        err_msg = f'Invalid value unit: {val}; must be a integer.'
-        raise ValueError(err_msg) from valerr
 
 
 def sec_to_format(secs: int, time_format: str) -> str:

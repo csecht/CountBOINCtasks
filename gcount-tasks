@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.6'
+__version__ = '0.5.7'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -227,7 +227,19 @@ def backup_log() -> None:
         messagebox.showwarning(title='FILE NOT FOUND',
                                message=warn_main, detail=warn_detail)
 
-
+def eval_digit_entry(entry_string, action_type) -> bool:
+    """
+    Only digits are accepted and displayed in Entry field.
+    Used with .register() to configure Entry kw validatecommand.
+    """
+    # Need to restrict entries to only digits,
+    #   MUST use action type parameter to allow user to delete first number
+    #   entered when wants to re-enter following backspace deletion.
+    # source: https://stackoverflow.com/questions/4140437/
+    if action_type == '1':  # action type 1 is "insert"
+        if not entry_string.isdigit():
+            return False
+    return True
 # ############################ MCV Classes #############################
 # MVC Modeler: The engine that gets BOINC data and runs count intervals.
 class CountModeler:
@@ -1131,19 +1143,19 @@ class CountViewer(tk.Frame):
             """
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
 
-        # Need to restrict entries to only digits,
-        #   MUST use action type parameter to allow user to delete first number
-        #   entered when wants to re-enter following backspace deletion.
-        def eval_digit_entry(entry_string, action_type) -> bool:
-            """
-            Only digits are accepted and displayed in Entry field.
-            Used with .register() to configure Entry kw validatecommand.
-            """
-            # source: https://stackoverflow.com/questions/4140437/
-            if action_type == '1':  # action type 1 is "insert"
-                if not entry_string.isdigit():
-                    return False
-            return True
+        # # Need to restrict entries to only digits,
+        # #   MUST use action type parameter to allow user to delete first number
+        # #   entered when wants to re-enter following backspace deletion.
+        # def eval_digit_entry(entry_string, action_type) -> bool:
+        #     """
+        #     Only digits are accepted and displayed in Entry field.
+        #     Used with .register() to configure Entry kw validatecommand.
+        #     """
+        #     # source: https://stackoverflow.com/questions/4140437/
+        #     if action_type == '1':  # action type 1 is "insert"
+        #         if not entry_string.isdigit():
+        #             return False
+        #     return True
 
         def explain_zero_max():
             explain = ('Interval counting stops after entered number of '
@@ -1280,21 +1292,22 @@ class CountViewer(tk.Frame):
         """
         self.countnow_button.config(state=tk.DISABLED)
 
-        # Note: self.share.setting['interval_t'] is set in settings().
+        # Note: self.share.setting['interval_t'] and self.sumry_t_value
+        #    are set in settings().
         interval_m = int(self.share.setting['interval_t'].get()[:-1])
         self.share.setting['interval_m'].set(interval_m)
-
         sumry_value = self.sumry_t_value.get()
-        self.share.setting['sumry_t_value'].set(sumry_value)
-        # if sumry_value == 0 then it is caught by interval_m comparison.
+        # When sumry_value == 0, it will be caught by interval_m comparison.
         if not sumry_value:
             self.share.setting['sumry_t_value'].set(1)
+            sumry_value = 1
         elif sumry_value != '0':
             self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
 
-        # Need to set summary_t here as concat of two sumry_t_ element strings,
+        # Need to set summary_t here as concat of the two sumry_t element strings,
         #   then convert to minutes to use in comparisons.
         summary_t = f"{sumry_value}{self.sumry_t_unit.get()[:1]}"
+
         self.share.setting['summary_t'].set(summary_t)
         summary_m = TC.string_to_m(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
