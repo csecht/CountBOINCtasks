@@ -83,9 +83,9 @@ LOGFILE = Path('count-tasks_log.txt').resolve()
 BKUPFILE = Path('count-tasks_log(copy).txt').resolve()
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
-
 # Use this for an immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 
 # ############# Functions not part of MVC, but necessary ###############
 def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
@@ -227,6 +227,7 @@ def backup_log() -> None:
         messagebox.showwarning(title='FILE NOT FOUND',
                                message=warn_main, detail=warn_detail)
 
+
 def eval_digit_entry(entry_string, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
@@ -240,6 +241,8 @@ def eval_digit_entry(entry_string, action_type) -> bool:
         if not entry_string.isdigit():
             return False
     return True
+
+
 # ############################ MCV Classes #############################
 # MVC Modeler: The engine that gets BOINC data and runs count intervals.
 class CountModeler:
@@ -533,7 +536,7 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}\n'
                             f'for the prior {tic_nnt} counting interval(s),')
-                    else:  
+                    else:
                         # Everything is fine, remove any prior notice.
                         # Use a de-emhasized color for this non-notice status text.
                         self.share.notice_l.config(fg=self.share.row_fg)
@@ -609,7 +612,7 @@ class CountModeler:
         # Log text file formatting:
         indent = ' ' * 22
         bigindent = ' ' * 33
-        
+
         cycles_max = self.share.setting['cycles_max'].get()
         interval_t = self.share.setting['interval_t'].get()
         summary_t = self.share.setting['summary_t'].get()
@@ -1307,7 +1310,6 @@ class CountViewer(tk.Frame):
         # Need to set summary_t here as concat of the two sumry_t element strings,
         #   then convert to minutes to use in comparisons.
         summary_t = f"{sumry_value}{self.sumry_t_unit.get()[:1]}"
-
         self.share.setting['summary_t'].set(summary_t)
         summary_m = TC.string_to_m(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
@@ -1436,7 +1438,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def app_got_focus(self, event) -> None:
+    def app_got_focus(self, event=None) -> None:
         """Give menubar headings normal color when app has focus.
 
         :param event: <FocusIn> mouse click.
@@ -1449,7 +1451,7 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
-    def app_lost_focus(self, event) -> None:
+    def app_lost_focus(self, event=None) -> None:
         """Give menubar headings grey-out color when app looses focus.
 
         :param event: <FocusOut> mouse click.
@@ -1584,7 +1586,7 @@ class CountFyi:
                     ...those buttons activate once their data post.\n
             - At start, # tasks reported and time of last count are from
                     the most recent hourly BOINC report.\n
-            - Number of tasks in queue and Notices update every""" 
+            - Number of tasks in queue and Notices update every"""
             f' {NOTICE_INTERVAL} seconds.\n'
             """
             - Displayed countdown clock time is approximate.\n
