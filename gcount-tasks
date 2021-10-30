@@ -129,7 +129,7 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
 def view_log(event=None) -> None:
     """
     Create a separate window to view the log file as scrolled text.
-    Called from File in the menubar.
+    Called from File in the menu bar.
 
     :param event: Needed for keybinding implicit event.
     """
@@ -197,7 +197,7 @@ def backup_log() -> None:
     """
     # Could make this an outside function with backupfile and logfile as
     #  arguments, but that would require import of partial from functools
-    #  to call it as a command from its menubar object, its only call.
+    #  to call it as a command from its menu bar object, its only call.
     destination = Path.home() / BKUPFILE
     if Path.is_file(LOGFILE):
         try:
@@ -259,7 +259,6 @@ class CountModeler:
         self.share = share
         self.thread_lock = threading.Lock()
         self.proj_stalled = False
-        self.task_states = ['none']
         self.task_count_start = 0
         self.task_count_new = 0
 
@@ -330,13 +329,13 @@ class CountModeler:
         num_tasks_all = len([elem for elem in tasks_all if tags[0] in elem])
         tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
                         if tags[1] in elem]
-        self.task_states = [elem.replace(tags[2], '') for elem in tasks_all
-                            if tags[2] in elem]
+        task_states = [elem.replace(tags[2], '') for elem in tasks_all
+                       if tags[2] in elem]
         # When communication to server is stalled, all tasks will be
         #  "Ready to report" with a state of 'uploaded', so a forced
         #   Project update in notice_it() may prompt finalizing
         #   the task upload.
-        if 'uploaded' in self.task_states and 'downloaded' not in self.task_states:
+        if 'uploaded' in task_states and 'downloaded' not in task_states:
             self.share.note['proj_stalled'].set(True)
         num_running = len(
             [task for task in tasks_active if 'EXECUTING' in task])
@@ -786,7 +785,7 @@ class CountViewer(tk.Frame):
         self.emphasize = 'grey90'
         self.deemphasize = 'grey60'
 
-        # Need to grey-out menubar headings and View log button when
+        # Need to grey-out menu bar headings and View log button when
         #   another application has focus.
         #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
@@ -856,7 +855,7 @@ class CountViewer(tk.Frame):
         # Labels for settings values; gridded in master_layout(). They are
         #   fully configured here simply to reduce number of lines in code.
         # NOTE: self.time_start_l label is initially configured for text to
-        #   show a startup message, then reconfigured in config_start_data()
+        #   show a startup message, then reconfigured in emphasize_start_data()
         #   for the time_start.
         self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg, fg='grey90')
         self.interval_t_l = tk.Label(self.dataframe, width=21, borderwidth=2,
@@ -923,7 +922,7 @@ class CountViewer(tk.Frame):
         self.settings()
         # Starting functions sequence after settings() is called:
         # check_and_set(), settings.check_start_close(), start_threads(),
-        # config_start_data(), CountModeler.set_start_data().
+        # emphasize_start_data(), CountModeler.set_start_data().
 
     def master_widgets(self) -> None:
         """
@@ -1146,20 +1145,6 @@ class CountViewer(tk.Frame):
             """
             self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
 
-        # # Need to restrict entries to only digits,
-        # #   MUST use action type parameter to allow user to delete first number
-        # #   entered when wants to re-enter following backspace deletion.
-        # def eval_digit_entry(entry_string, action_type) -> bool:
-        #     """
-        #     Only digits are accepted and displayed in Entry field.
-        #     Used with .register() to configure Entry kw validatecommand.
-        #     """
-        #     # source: https://stackoverflow.com/questions/4140437/
-        #     if action_type == '1':  # action type 1 is "insert"
-        #         if not entry_string.isdigit():
-        #             return False
-        #     return True
-
         def explain_zero_max():
             explain = ('Interval counting stops after entered number of '
                        'cycles. Enter 0 (zero) for a status report.')
@@ -1174,7 +1159,7 @@ class CountViewer(tk.Frame):
         def check_start_close():
             """
             Calls check_and_set(); if all is good then starts threads,
-            calls config_start_data(), and closes settings() window,
+            calls emphasize_start_data(), and closes settings() window,
             which ends the startup sequence.
             Called from countnow_button.
             """
@@ -1188,13 +1173,13 @@ class CountViewer(tk.Frame):
                     self.share.setting['interval_t'].set('DISABLED')
                     self.share.setting['summary_t'].set('DISABLED')
                     self.share.note['notice_txt'].set('STATUS REPORT ONLY')
-                    self.config_start_data()
+                    self.emphasize_start_data()
                     self.share.setstartdata()
                     self.settings_win.destroy()
                 # Begin main interval counting functions...
                 else:
                     self.start_threads()
-                    self.config_start_data()
+                    self.emphasize_start_data()
                     self.share.setstartdata()
                     self.settings_win.destroy()
 
@@ -1363,7 +1348,7 @@ class CountViewer(tk.Frame):
         notice_thread.start()
         log_thread.start()
 
-    def config_start_data(self) -> None:
+    def emphasize_start_data(self) -> None:
         """
         Config data labels in master window for starting data emphasis.
         Establish start time.
@@ -1439,7 +1424,7 @@ class CountViewer(tk.Frame):
         self.tt_total_l.configure(foreground=self.deemphasize)
 
     def app_got_focus(self, event=None) -> None:
-        """Give menubar headings normal color when app has focus.
+        """Give menu bar headings normal color when app has focus.
 
         :param event: <FocusIn> mouse click.
         """
@@ -1452,7 +1437,7 @@ class CountViewer(tk.Frame):
             self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
     def app_lost_focus(self, event=None) -> None:
-        """Give menubar headings grey-out color when app looses focus.
+        """Give menu bar headings grey-out color when app looses focus.
 
         :param event: <FocusOut> mouse click.
         """
@@ -1607,7 +1592,7 @@ class CountFyi:
         infotxt.pack()
 
     def compliment_me(self) -> None:
-        """A silly diversion; called from Help menubar and keybinding.
+        """A silly diversion; called from Help menu bar and keybinding.
         """
         compliments = [
             "Hey there good lookin'!", 'I wish we had met sooner.',
@@ -1665,7 +1650,7 @@ class CountFyi:
     def about() -> None:
         """
         Basic information for gcount-tasks;
-        Toplevel window called from Help menubar.
+        Toplevel window called from Help menu bar.
         """
         aboutwin = tk.Toplevel()
         aboutwin.resizable(False, False)
