@@ -30,7 +30,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.26'
+__version__ = '0.4.27'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -184,15 +184,16 @@ class BoincCommand:
             #   Is stderr "can't connect to local host" exclusive to BOINC not running?
             if "can't connect to local host" in text:
                 print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
-                      f"The BOINC client associated with {cmd[0]} is not running.\n"
-                      f"Exiting now...")
+                      f"The BOINC client associated with {cmd[0]} is not running.\n")
+                # NOTE: exit works in count-tasks, not in gcount-tasks.
                 sys.exit(1)
             return text
         # This exception will only be raised by bad code calling one of the get_ methods.
         except CalledProcessError as cpe:
             msg = ('If the boinccmd usage message is displayed, then'
-                   ' boinccmd has a bad command argument. Exiting now...')
+                   ' boinccmd has a bad command argument.')
             print(f'\n{msg}\n{cpe}')
+            # NOTE: exit works in count-tasks, not in gcount-tasks.
             sys.exit(1)
 
     def get_reported(self, tag: str, cmd=' --get_old_tasks') -> list:
