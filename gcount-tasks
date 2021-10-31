@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.7'
+__version__ = '0.5.8'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -126,6 +126,7 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         'tt_max': 'na'}
 
 
+# pylint: disable=unused-argument
 def view_log(event=None) -> None:
     """
     Create a separate window to view the log file as scrolled text.
@@ -174,6 +175,7 @@ def view_log(event=None) -> None:
                     message='Delete log file content?',
                     detail="'Enter' or space bar will also delete log file content.")
                 if okay:
+                    # pylint: disable=consider-using-with
                     open(LOGFILE, 'w').close()
                     logtext.delete('1.0', tk.END)
 
@@ -294,17 +296,11 @@ class CountModeler:
         # Need to parse data returned from ttimes_stats().
         startdict = ttimes_stats(
             self.share.data['task_count'].get(), ttimes_start)
-        tt_mean = startdict['tt_mean']
-        tt_max = startdict['tt_max']
-        tt_min = startdict['tt_min']
-        tt_sd = startdict['tt_sd']
-        tt_total = startdict['tt_total']
-        tt_range = f'{tt_min} -- {tt_max}'
-
-        self.share.data['tt_mean'].set(tt_mean)
-        self.share.data['tt_sd'].set(tt_sd)
-        self.share.data['tt_range'].set(tt_range)
-        self.share.data['tt_total'].set(tt_total)
+        self.share.data['tt_mean'].set(startdict['tt_mean'])
+        self.share.data['tt_sd'].set(startdict['tt_sd'])
+        self.share.data['tt_range'].set(
+            f"{startdict['tt_min']} -- {startdict['tt_max']}")
+        self.share.data['tt_total'].set(startdict['tt_total'])
 
         self.share.data['time_prev_cnt'].set('The recent hourly BOINC report.')
 
@@ -387,10 +383,9 @@ class CountModeler:
                     self.share.data['time_next_cnt'].set('00:00')
                     break
                 interval_sec -= 1
-                _m, _s = divmod(interval_sec, 60)
-                _h, _m = divmod(_m, 60)
-                time_remain = f'{_m:02d}:{_s:02d}'
-                self.share.data['time_next_cnt'].set(time_remain)
+                # Need to show the time remaining in clock time format.
+                self.share.data['time_next_cnt'].set(
+                    TC.sec_to_format(interval_sec, 'clock'))
                 time.sleep(1.0)
 
             # NOTE: Starting tasks are not included in interval and summary
@@ -435,19 +430,13 @@ class CountModeler:
                     tic_nnt = 0
                 self.share.note['tic_nnt'].set(tic_nnt)
 
-                # Need to robustly parse data returned from ttimes_stats().
+                # Need to parse data returned from ttimes_stats().
                 intervaldict = ttimes_stats(task_count_new, ttimes_new)
-                tt_mean = intervaldict['tt_mean']
-                tt_max = intervaldict['tt_max']
-                tt_min = intervaldict['tt_min']
-                tt_sd = intervaldict['tt_sd']
-                tt_range = f'{tt_min} -- {tt_max}'
-                tt_total = intervaldict['tt_total']
-
-                self.share.data['tt_mean'].set(tt_mean)
-                self.share.data['tt_sd'].set(tt_sd)
-                self.share.data['tt_range'].set(tt_range)
-                self.share.data['tt_total'].set(tt_total)
+                self.share.data['tt_mean'].set(intervaldict['tt_mean'])
+                self.share.data['tt_sd'].set(intervaldict['tt_sd'])
+                self.share.data['tt_range'].set(
+                    f"{intervaldict['tt_min']} -- {intervaldict['tt_max']}")
+                self.share.data['tt_total'].set(intervaldict['tt_total'])
 
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
@@ -474,17 +463,11 @@ class CountModeler:
 
                     summarydict = ttimes_stats(
                         task_count_sumry, self.ttimes_smry)
-                    tt_mean = summarydict['tt_mean']
-                    tt_max = summarydict['tt_max']
-                    tt_min = summarydict['tt_min']
-                    tt_sd = summarydict['tt_sd']
-                    tt_range = f'{tt_min} -- {tt_max}'
-                    tt_total = summarydict['tt_total']
-
-                    self.share.data['tt_mean_sumry'].set(tt_mean)
-                    self.share.data['tt_sd_sumry'].set(tt_sd)
-                    self.share.data['tt_range_sumry'].set(tt_range)
-                    self.share.data['tt_total_sumry'].set(tt_total)
+                    self.share.data['tt_mean_sumry'].set(summarydict['tt_mean'])
+                    self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
+                    self.share.data['tt_range_sumry'].set(
+                        f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
+                    self.share.data['tt_total_sumry'].set(summarydict['tt_total'])
 
                     # Need to reset data set for the next summary interval.
                     self.ttimes_smry.clear()
@@ -545,25 +528,12 @@ class CountModeler:
                 if num_running == 0:
                     if proj_stalled:
                         if self.share.setting['proj_update'].get():
-                            local_boinc_urls = BC.get_project_url()
-                            # I'm not sure how to handle multiple concurrent Projects.
-                            # If they are all stalled, then updating the first works?
-                            # B/c of how BC.project_action is structured, here I use the
-                            #  url to get the Project name ID which is used to get the
-                            #  url needed for the project cmd.  Silly, but uses existing
-                            #  boinc_command.py methods. Is there a better way?
-                            first_local_url = local_boinc_urls[0]
-                            self.share.first_project = list(BC.project_url.keys())[
-                                list(BC.project_url.values()).index(first_local_url)]
-                            BC.project_action(self.share.first_project, 'update')
-                            # Need to provide time for BOINC Project server to respond.
-                            self.share.data['time_next_cnt'].set(
-                                'Project auto-update in progress...')
-                            time.sleep(70)
-
-                        self.share.note['notice_txt'].set(
-                            'PROJECT UPDATE REQUESTED; details in log file.\n'
-                            'Check BOINC Manager.')
+                            # Note: this will sleep notice_it() for 70 seconds.
+                            self.update_project()
+                        else:
+                            self.share.note['notice_txt'].set(
+                                'A PROJECT UPDATE MAY BE NEEDED.\n'
+                                'Check BOINC Manager.')
                     elif num_tasks_all == 0:
                         self.share.note['notice_txt'].set(
                             'BOINC client has no tasks to run!\n'
@@ -616,6 +586,8 @@ class CountModeler:
         interval_t = self.share.setting['interval_t'].get()
         summary_t = self.share.setting['summary_t'].get()
         intvl_count_t = self.share.data['intvl_count_t'].get()
+        # Note: Lots of local variables are used here to make the notice text
+        #   statements easier to read
         with self.thread_lock:
             if called_from == 'start':
                 self.task_count_start = self.share.data['task_count'].get()
@@ -633,7 +605,6 @@ class CountModeler:
             num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
             num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
             tic_nnt = self.share.note['tic_nnt'].get()
-            proj_stalled = self.share.note['proj_stalled'].get()
 
             tcount_sum = self.share.data['task_count_sumry'].get()
             ttmean_sum = self.share.data['tt_mean_sumry'].get()
@@ -654,7 +625,7 @@ class CountModeler:
                     f'{indent}Total tasks in queue: {num_tasks_all}\n'
                     f'{indent}Number of scheduled count intervals: {cycles_max}\n'
                     f'{indent}Counts every {interval_t}, summaries every {summary_t}.\n'
-                    f'{indent}BOINC status evaluation every {status_intvl} minutes.\n'
+                    f'{indent}BOINC status evaluation every {status_intvl}m.\n'
                     f'{indent}Project auto-update: {proj_update}\n'
                     'Timed intervals beginning now...\n')
                 logging.info(report)
@@ -688,7 +659,7 @@ class CountModeler:
                 report = (f'\n{self.share.status_time};'
                           ' *** NO TASKS RUNNING. Check BOINC Manager.***')
                 logging.info(report)
-                if proj_stalled:
+                if self.share.note['proj_stalled'].get():
                     report = (
                         f' *** PROJECT AUTO-UPDATE REQUESTED for {self.share.first_project}. ***\n'
                         '  All tasks were "Ready to report" and waiting to upload.\n'
@@ -744,6 +715,31 @@ class CountModeler:
                 report = f'\n### {cycles_max} counting cycles have ended. ###\n'
                 logging.info(report)
 
+    def update_project(self):
+        """
+        Called from notice_it() when update project setting is True.
+        """
+        # I'm not sure how to handle multiple concurrent Projects.
+        # If they are all stalled, then updating the first works?
+        # B/c of how BC.project_action is structured, here I use the
+        #  url to get the Project name ID which is used to get the
+        #  url needed for the project cmd.  Silly, but uses existing
+        #  boinc_command.py methods. Is there a better way?
+        lock = threading.RLock()
+        first_local_url = BC.get_project_url()[0]
+        self.share.first_project = list(BC.project_url.keys())[
+            list(BC.project_url.values()).index(first_local_url)]
+        BC.project_action(self.share.first_project, 'update')
+        self.share.note['notice_txt'].set(
+            'Project auto-update in progress for'
+            f' {self.share.first_project}...')
+        if self.share.setting['do_log'].get():
+            self.share.logit('notice')
+        # Need to provide time for BOINC Project server to respond before
+        #   continuing with notice_it() thread.
+        time.sleep(70)
+
+    # pylint: disable=unused-argument
     def quit_gui(self, event=None) -> None:
         """
         Safe and informative exit from the program.
@@ -1133,12 +1129,14 @@ class CountViewer(tk.Frame):
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
         # Functions for Combobox selections.
+        # pylint: disable=unused-argument
         def set_intvl_selection(event=None):
             """Interval time Combobox selection.
             :param event: Implicit event for <<ComboboxSelected>>
             """
             self.share.setting['interval_t'].set(self.intvl_choice.get())
 
+        # pylint: disable=unused-argument
         def set_sumry_unit(event=None):
             """Summary interval time unit Combobox selection.
             :param event: Implicit event for <<ComboboxSelected>>
@@ -1423,6 +1421,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
+    # pylint: disable=unused-argument
     def app_got_focus(self, event=None) -> None:
         """Give menu bar headings normal color when app has focus.
 
@@ -1436,6 +1435,7 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
+    # pylint: disable=unused-argument
     def app_lost_focus(self, event=None) -> None:
         """Give menu bar headings grey-out color when app looses focus.
 
@@ -1520,7 +1520,7 @@ class CountController(tk.Tk):
         CountModeler(share=self).log_it(called_from)
 
     # pylint: disable=unused-argument
-    def quitgui(self, *event) -> None:
+    def quitgui(self, event=None) -> None:
         """
         Close down program. Called from button, menu bar, and keybinding.
 
@@ -1534,7 +1534,7 @@ class CountController(tk.Tk):
         CountFyi(share=self).information()
 
     # pylint: disable=unused-argument
-    def complimentme(self, *event) -> None:
+    def complimentme(self, event=None) -> None:
         """Is called from Help menu bar. A silly diversion.
 
         :param event: Needed for implicit keybinding event

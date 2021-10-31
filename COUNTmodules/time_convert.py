@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'time_convert.py'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -59,8 +59,9 @@ def sec_to_format(secs: int, time_format: str) -> str:
     """Convert seconds to the specified time format for display.
 
     :param secs: Time in seconds, any integer except 0.
-    :param time_format: Either 'std' or 'short'
-    :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
+    :param time_format: Either 'std', 'short', or 'clock'
+    :return: 'std' time as 00:00:00; 'short' as s, m, h, or d;
+             'clock' as 00:00.
     """
     # Time conversion concept from Niko
     # https://stackoverflow.com/questions/3160699/python-progress-bar/3162864
@@ -79,6 +80,8 @@ def sec_to_format(secs: int, time_format: str) -> str:
         if secs >= 86400:
             return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
         return f'{_h:02d}:{_m:02d}:{_s:02d}'
+    if time_format == 'clock':
+        return f'{_m:02d}:{_s:02d}'
     # Error msg to developer
     return ('\nEnter secs as non-zero integer, time_format as either'
             f" 'std' or 'short'.\nArguments as entered: secs={secs}, "
