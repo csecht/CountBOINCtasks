@@ -725,7 +725,6 @@ class CountModeler:
         #  url to get the Project name ID which is used to get the
         #  url needed for the project cmd.  Silly, but uses existing
         #  boinc_command.py methods. Is there a better way?
-        lock = threading.RLock()
         first_local_url = BC.get_project_url()[0]
         self.share.first_project = list(BC.project_url.keys())[
             list(BC.project_url.values()).index(first_local_url)]
@@ -917,8 +916,8 @@ class CountViewer(tk.Frame):
         self.share.defaultsettings()
         self.settings()
         # Starting functions sequence after settings() is called:
-        # check_and_set(), settings.check_start_close(), start_threads(),
-        # emphasize_start_data(), CountModeler.set_start_data().
+        #   check_and_set(), settings.check_start_close(), start_threads(),
+        #   emphasize_start_data(), CountModeler.set_start_data().
 
     def master_widgets(self) -> None:
         """
@@ -1162,7 +1161,7 @@ class CountViewer(tk.Frame):
             Called from countnow_button.
             """
             # Need to run final validation of settings in case user changed
-            #   something since a prior "Confirm" call.
+            #   something since a prior "Confirm" check_and_set() call.
             self.check_and_set()
             if self.good_settings:
                 # Run 1-off status report or begin interval counts...
