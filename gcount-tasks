@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.10'
+__version__ = '0.5.11'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -92,14 +92,18 @@ def check_boinc():
     Before proceeding with implementing settings and starting count,
     check that BOINC client is running.
     """
+    # Note: any boinccmd command will return this list string is boinc-client
+    #   is not running; use BC.get_tasks('all') b/c it is short.
     if "can't connect to local host" in BC.get_tasks('all'):
         okay = messagebox.askokcancel(
             title='BOINC error',
             detail='BOINC commands cannot be executed. '
                    'Is the BOINC client running? Exiting now...')
         if okay:
+            app.destroy()
             sys.exit(1)
         else:
+            app.destroy()
             sys.exit(1)
 
 
@@ -499,6 +503,9 @@ class CountModeler:
         while self.share.data['cycles_remain'].get() > 0:
             time.sleep(NOTICE_INTERVAL)
             with self.thread_lock:
+                # Need to quit app if boinc-client is no longer running.
+                check_boinc()
+
                 self.set_task_states()
                 num_running = self.share.note['num_running'].get()
                 num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
