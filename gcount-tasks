@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.12'
+__version__ = '0.5.13'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -176,7 +176,7 @@ def view_log(event=None) -> None:
 
     try:
         with open(LOGFILE) as file:
-            logwin = tk.Toplevel()
+            logwin = tk.Toplevel(bg='SteelBlue4') # <- bg = master_bg
             logwin.title(f'{LOGFILE}, {node()}')
             if MY_OS in 'lin, dar':
                 logwin.minsize(725, 200)
@@ -185,8 +185,8 @@ def view_log(event=None) -> None:
             logwin.focus_set()
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, width=os_width, height=30,
-                                   font='TkFixedFont', fg='grey85',
-                                   bg='grey20', relief='raised', padx=5)
+                                   font='TkFixedFont', fg='grey85', bd=4,
+                                   bg='grey20', relief='groove', padx=10)
             logtext.insert(tk.INSERT, file.read())
             logtext.see('end')
             logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
@@ -612,7 +612,6 @@ class CountModeler:
                 self.task_count_start = self.share.data['task_count'].get()
             elif called_from == 'interval':
                 self.task_count_new = self.share.data['task_count'].get()
-            proj_update = self.share.setting['proj_update'].get()
             tt_mean = self.share.data['tt_mean'].get()
             tt_sd = self.share.data['tt_sd'].get()
             tt_range = self.share.data['tt_range'].get()
@@ -622,15 +621,7 @@ class CountModeler:
 
             num_running = self.share.note['num_running'].get()
             num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
-            num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
             tic_nnt = self.share.note['tic_nnt'].get()
-
-            tcount_sum = self.share.data['task_count_sumry'].get()
-            ttmean_sum = self.share.data['tt_mean_sumry'].get()
-            ttsd_sum = self.share.data['tt_sd_sumry'].get()
-            ttrange_sum = self.share.data['tt_range_sumry'].get()
-            tttotal_sum = self.share.data['tt_total_sumry'].get()
-            status_intvl = TC.string_to_m(f'{NOTICE_INTERVAL}s')
 
             if called_from == 'start' and cycles_max > 0:
                 report = (
@@ -644,8 +635,9 @@ class CountModeler:
                     f'{indent}Total tasks in queue: {num_tasks_all}\n'
                     f'{indent}Number of scheduled count intervals: {cycles_max}\n'
                     f'{indent}Counts every {interval_t}, summaries every {summary_t}.\n'
-                    f'{indent}BOINC status evaluation every {status_intvl}m.\n'
-                    f'{indent}Project auto-update: {proj_update}\n'
+                    f'{indent}BOINC status evaluations every {NOTICE_INTERVAL}s.\n'
+                    f'{indent}Project auto-update:'
+                    f" {self.share.setting['proj_update'].get()}\n"
                     'Timed intervals beginning now...\n')
                 logging.info(report)
             # Need to provide a truncated report for one-off "status" runs.
@@ -688,7 +680,7 @@ class CountModeler:
                 if num_tasks_all == 0:
                     report = f'{indent}BOINC client has no tasks!\n'
                     logging.info(report)
-                if num_suspended_by_boinc > 0:
+                if self.share.note['num_suspended_by_boinc'].get() > 0:
                     report = (f'{indent}BOINC Manager has suspended tasks;\n'
                               f'{indent}A "When to suspend" condition was met\n'
                               f'{indent}in BOINC Manager Computing preferences.')
@@ -721,11 +713,11 @@ class CountModeler:
             if called_from == 'interval' and self.share.data['log_summary'].get():
                 report = (
                     f'\n{intvl_count_t}; >>> SUMMARY: Count for the past'
-                    f' {summary_t}: {tcount_sum}\n'
-                    f'{indent}Task Time: mean {ttmean_sum},\n'
-                    f'{bigindent}range [{ttrange_sum}],\n'
-                    f'{bigindent}stdev {ttsd_sum}, total {tttotal_sum}\n'
-                )
+                    f" {summary_t}: {self.share.data['task_count_sumry'].get()}\n"
+                    f"{indent}Task Time: mean {self.share.data['tt_mean_sumry'].get()},\n"
+                    f"{bigindent}range [{self.share.data['tt_range_sumry'].get()}],\n"
+                    f"{bigindent}stdev {self.share.data['tt_sd_sumry'].get()},"
+                    f" total {self.share.data['tt_total_sumry'].get()}")
                 logging.info(report)
                 # Need to reset flag to toggle summary logging.
                 self.share.data['log_summary'].set(False)
@@ -937,7 +929,8 @@ class CountViewer(tk.Frame):
         # Starting functions sequence after settings() is called:
         #   check_and_set(), settings.check_start_close(), start_threads(),
         #   emphasize_start_data(), CountModeler.set_start_data().
-        # Note: none of that will happen, however, if BOINC client is not running...
+        # Note: none of that sequence will occur, however, if BOINC
+        #   client is not running, so...
         check_boinc()
 
     def master_widgets(self) -> None:
@@ -1677,7 +1670,7 @@ class CountFyi:
         aboutwin.title('About count-tasks')
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
                   'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
-                  'dark olive green', 'grey2', 'grey25', 'DodgerBlue4',
+                  'dark olive green', 'grey10', 'grey25', 'DodgerBlue4',
                   'DarkOrchid4']
         bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
