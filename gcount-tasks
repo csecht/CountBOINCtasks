@@ -1598,7 +1598,7 @@ class CountFyi:
         if MY_OS in 'lin, win':
             os_width = 64
         elif MY_OS == 'dar':
-            os_width = '56'
+            os_width = 56
         infotxt = tk.Text(infowin, font='TkTextFont',
                           width=os_width, height=num_doc_lines + 2,
                           bg='grey20', fg='grey85',
