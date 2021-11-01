@@ -761,7 +761,7 @@ class CountModeler:
         # Note: quit_gui() is a method instead of a function b/c it needs
         #   to evaluate the status of 'do_log' so the quit msg can be logged.
         time_now = datetime.now().strftime(LONG_STRFTIME)
-        quit_msg = f'\n{time_now}; *** User has quit the program. ***\n'
+        quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
         print(quit_msg)
         if self.share.setting['do_log'].get():
             logging.info(quit_msg)
@@ -1095,11 +1095,13 @@ class CountViewer(tk.Frame):
         self.share.compliment_l.grid(row=14, column=1, columnspan=2,
                                      padx=5, sticky=tk.W)
 
-        # These control variables have default values, so make invisible in
-        #   in pre-settings dataframe by matching the background color.
+        # These control variables have default or initial start values,
+        #   so make values invisible in pre-settings dataframe by matching
+        #   them to the background color.
         self.interval_t_l.config(foreground=self.data_bg)
         self.summary_t_l.config(foreground=self.data_bg)
         self.task_count_l.config(foreground=self.data_bg)
+        self.task_count_sumry_l.config(foreground=self.data_bg)
 
     # NOTE: settings() is a bit of a mess; consider restructuring it.
     def settings(self) -> None:
