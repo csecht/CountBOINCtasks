@@ -215,7 +215,7 @@ class BoincCommand:
             return output
 
         # Need only data from tagged lines of boinccmd output.
-        data = ['stub_boinc_data']
+        data = ['invalid_boinc_command']
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
             data = [line.replace(tag_str, '') for line in output if tag in line]

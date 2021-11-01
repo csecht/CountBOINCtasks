@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.9'
+__version__ = '0.5.10'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -87,6 +87,22 @@ NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
 
 # ############# Functions not part of MVC, but necessary ###############
+def check_boinc():
+    """
+    Before proceeding with implementing settings and starting count,
+    check that BOINC client is running.
+    """
+    if "can't connect to local host" in BC.get_tasks('all'):
+        okay = messagebox.askokcancel(
+            title='BOINC error',
+            detail='BOINC commands cannot be executed. '
+                   'Is the BOINC client running? Exiting now...')
+        if okay:
+            sys.exit(1)
+        else:
+            sys.exit(1)
+
+
 def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
     """
     Sum and run statistics of BOINC task times. Called from Modeler.
@@ -315,6 +331,7 @@ class CountModeler:
 
         self.share.status_time = datetime.now().strftime(LONG_STRFTIME)
         tasks_all = BC.get_tasks('all')
+
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
         #   Use tuple index to populate the list expressions.
@@ -446,22 +463,18 @@ class CountModeler:
                     self.share.data['time_prev_cnt'].set(
                         datetime.now().strftime(LONGSMRY_STRF))
                 summary_time = self.share.data['time_prev_cnt'].get()
-                summary_factor = summary_m // interval_m
-                if (cycle + 1) % summary_factor == 0 and num_running > 0:
+                if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
                     # Flag used in log_it() to log summary data.
                     self.share.data['log_summary'].set(True)
                     # Need to activate disabled Summary data button now; only need
                     #  statement for 1st summary, but, oh well, here we go again...
                     self.share.sumry_b.config(state=tk.NORMAL)
 
-                    # Display time of summary; gridded in same row as time prev count.
+                    # Display time and stats of summary count.
                     self.share.data['time_prev_sumry'].set(summary_time)
-
-                    task_count_sumry = len(self.ttimes_smry)
-                    self.share.data['task_count_sumry'].set(task_count_sumry)
-
+                    self.share.data['task_count_sumry'].set(len(self.ttimes_smry))
                     summarydict = ttimes_stats(
-                        task_count_sumry, self.ttimes_smry)
+                        len(self.ttimes_smry), self.ttimes_smry)
                     self.share.data['tt_mean_sumry'].set(summarydict['tt_mean'])
                     self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
                     self.share.data['tt_range_sumry'].set(
@@ -918,7 +931,7 @@ class CountViewer(tk.Frame):
         #   check_and_set(), settings.check_start_close(), start_threads(),
         #   emphasize_start_data(), CountModeler.set_start_data().
         # Note: none of that will happen, however, if BOINC client is not running...
-        self.check_boinc()
+        check_boinc()
 
     def master_widgets(self) -> None:
         """
@@ -1268,21 +1281,6 @@ class CountViewer(tk.Frame):
         if MY_OS == 'win':
             cycles_query_button.grid(column=0, row=2, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(column=0, row=4, padx=(10, 0), sticky=tk.W)
-
-    def check_boinc(self):
-        """
-        Before proceeding with implementing settings and starting count,
-        check that BOINC client is running.
-        """
-        if "can't connect to local host" in BC.get_tasks('all'):
-            okay = messagebox.askokcancel(
-                title='BOINC error',
-                detail='BOINC commands cannot be executed. '
-                       'Is the BOINC client running? Exiting now...')
-            if okay:
-                sys.exit(1)
-            else:
-                sys.exit(1)
 
     def check_and_set(self):
         """
