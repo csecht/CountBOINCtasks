@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.8'
+__version__ = '0.5.9'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -52,7 +52,6 @@ from COUNTmodules import boinc_command, time_convert
 
 try:
     import tkinter as tk
-    # import tkinter.ttk as ttk
     from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
@@ -918,6 +917,8 @@ class CountViewer(tk.Frame):
         # Starting functions sequence after settings() is called:
         #   check_and_set(), settings.check_start_close(), start_threads(),
         #   emphasize_start_data(), CountModeler.set_start_data().
+        # Note: none of that will happen, however, if BOINC client is not running...
+        self.check_boinc()
 
     def master_widgets(self) -> None:
         """
@@ -1267,6 +1268,21 @@ class CountViewer(tk.Frame):
         if MY_OS == 'win':
             cycles_query_button.grid(column=0, row=2, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(column=0, row=4, padx=(10, 0), sticky=tk.W)
+
+    def check_boinc(self):
+        """
+        Before proceeding with implementing settings and starting count,
+        check that BOINC client is running.
+        """
+        if "can't connect to local host" in BC.get_tasks('all'):
+            okay = messagebox.askokcancel(
+                title='BOINC error',
+                detail='BOINC commands cannot be executed. '
+                       'Is the BOINC client running? Exiting now...')
+            if okay:
+                sys.exit(1)
+            else:
+                sys.exit(1)
 
     def check_and_set(self):
         """

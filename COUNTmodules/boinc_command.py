@@ -184,9 +184,12 @@ class BoincCommand:
             #   Is stderr "can't connect to local host" exclusive to BOINC not running?
             if "can't connect to local host" in text:
                 print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
-                      f"The BOINC client associated with {cmd[0]} is not running.\n")
+                      f"The BOINC client associated with {cmd[0]} is not running.\n"
+                      "You need to quit now and get BOINC running.")
+                # If boinc not running, then text will be a null list.
+                return text
                 # NOTE: exit works in count-tasks, not in gcount-tasks.
-                sys.exit(1)
+                #sys.exit(1)
             return text
         # This exception will only be raised by bad code calling one of the get_ methods.
         except CalledProcessError as cpe:
