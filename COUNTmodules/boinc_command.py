@@ -30,7 +30,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.27'
+__version__ = '0.4.28'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -253,6 +253,17 @@ class BoincCommand:
             return data
         print(f'Unrecognized data tag: {tag}')
         return data
+
+    def get_version(self, cmd=' --client_version') -> list:
+        """
+        Get version number of the boinc client.
+
+        :param cmd: The boinc command to get the client version.
+        :return: version, as list one.
+        """
+        # Note: run_boinc() always returns a list.
+        output = self.run_boinc(self.boincpath + cmd)
+        return output
 
     def get_runningtasks(self, tag: str, app_type: str,
                          cmd=' --get_simple_gui_info') -> list:

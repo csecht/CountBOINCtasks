@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.11'
+__version__ = '0.5.12'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -89,12 +89,12 @@ NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 # ############# Functions not part of MVC, but necessary ###############
 def check_boinc():
     """
-    Before proceeding with implementing settings and starting count,
-    check that BOINC client is running.
+    Check whether BOINC client is running before proceeding to implement
+    settings and begin counting.
     """
-    # Note: any boinccmd command will return this list string is boinc-client
-    #   is not running; use BC.get_tasks('all') b/c it is short.
-    if "can't connect to local host" in BC.get_tasks('all'):
+    # Note: Any BC boinccmd will return this string (in a list)
+    #   if boinc-client is not running; use BC.get_version() b/c it is short.
+    if "can't connect to local host" in BC.get_version():
         okay = messagebox.askokcancel(
             title='BOINC error',
             detail='BOINC commands cannot be executed. '
@@ -105,6 +105,21 @@ def check_boinc():
         else:
             app.destroy()
             sys.exit(1)
+
+
+def eval_digit_entry(entry_string, action_type) -> bool:
+    """
+    Only digits are accepted and displayed in Entry field.
+    Used with .register() to configure Entry kw validatecommand.
+    """
+    # Need to restrict entries to only digits,
+    #   MUST use action type parameter to allow user to delete first number
+    #   entered when wants to re-enter following backspace deletion.
+    # source: https://stackoverflow.com/questions/4140437/
+    if action_type == '1':  # action type 1 is "insert"
+        if not entry_string.isdigit():
+            return False
+    return True
 
 
 def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
@@ -247,21 +262,6 @@ def backup_log() -> None:
                        'Has it been moved or renamed?')
         messagebox.showwarning(title='FILE NOT FOUND',
                                message=warn_main, detail=warn_detail)
-
-
-def eval_digit_entry(entry_string, action_type) -> bool:
-    """
-    Only digits are accepted and displayed in Entry field.
-    Used with .register() to configure Entry kw validatecommand.
-    """
-    # Need to restrict entries to only digits,
-    #   MUST use action type parameter to allow user to delete first number
-    #   entered when wants to re-enter following backspace deletion.
-    # source: https://stackoverflow.com/questions/4140437/
-    if action_type == '1':  # action type 1 is "insert"
-        if not entry_string.isdigit():
-            return False
-    return True
 
 
 # ############################ MCV Classes #############################
