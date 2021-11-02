@@ -259,7 +259,7 @@ class BoincCommand:
         Get version number of the boinc client.
 
         :param cmd: The boinc command to get the client version.
-        :return: version, as list one.
+        :return: version info, as a list of one string.
         """
         # Note: run_boinc() always returns a list.
         output = self.run_boinc(self.boincpath + cmd)
@@ -327,8 +327,7 @@ class BoincCommand:
         """
         # Project commands require the Project URL, others commands don't
         if action in self.projectcmd:
-            cmd_str = self.boincpath + \
-                      f' --project {self.project_url[project]} {action}'
+            cmd_str = self.boincpath + f' --project {self.project_url[project]} {action}'
             return self.run_boinc(cmd_str)
         msg = (f"Unrecognized action: {action}. Expecting one of these: "
                f"{self.projectcmd}")

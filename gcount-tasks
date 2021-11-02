@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.13'
+__version__ = '0.5.14'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -96,9 +96,9 @@ def check_boinc():
     #   if boinc-client is not running; use BC.get_version() b/c it is short.
     if "can't connect to local host" in BC.get_version():
         okay = messagebox.askokcancel(
-            title='BOINC error',
-            detail='BOINC commands cannot be executed. '
-                   'Is the BOINC client running? Exiting now...')
+            title='BOINC ERROR',
+            detail='BOINC commands cannot be executed.\n'
+                   'Is the BOINC client running?\nExiting now...')
         if okay:
             app.destroy()
             sys.exit(1)
@@ -124,7 +124,8 @@ def eval_digit_entry(entry_string, action_type) -> bool:
 
 def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
     """
-    Sum and run statistics of BOINC task times. Called from Modeler.
+    Sum and run statistics of BOINC task times.
+    Called from Modeler. Calls to time_convert.sec_to_format().
 
     :param numtasks: The number of elements in tasktimes.
     :param tasktimes: A list, tuple, or set of times, in seconds as
@@ -185,8 +186,8 @@ def view_log(event=None) -> None:
             logwin.focus_set()
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, width=os_width, height=30,
-                                   font='TkFixedFont', fg='grey85', bd=4,
-                                   bg='grey20', relief='groove', padx=10)
+                                   font='TkFixedFont', fg='grey80', bd=4,
+                                   bg='grey20', relief='groove', padx=12)
             logtext.insert(tk.INSERT, file.read())
             logtext.see('end')
             logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
@@ -565,7 +566,7 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running.\n'
                             'A BOINC Manager "When to suspend" condition was met.\n'
-                            'Change BOINC Manager Computing preferences if this becomes a problem.')
+                            'Edit BOINC Manager Computing preferences if this is a problem.')
                     else:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running. Is Project suspended?\nCheck BOINC Manager.')
@@ -601,12 +602,13 @@ class CountModeler:
         indent = ' ' * 22
         bigindent = ' ' * 33
 
+        # Note: Lots of local variables are used here to make the notice text
+        #   statements easier to read
+        #   Var outside of thread lock are set in settings() and invariant.
         cycles_max = self.share.setting['cycles_max'].get()
         interval_t = self.share.setting['interval_t'].get()
         summary_t = self.share.setting['summary_t'].get()
         intvl_count_t = self.share.data['intvl_count_t'].get()
-        # Note: Lots of local variables are used here to make the notice text
-        #   statements easier to read
         with self.thread_lock:
             if called_from == 'start':
                 self.task_count_start = self.share.data['task_count'].get()
@@ -618,7 +620,6 @@ class CountModeler:
             tt_total = self.share.data['tt_total'].get()
             num_tasks_all = self.share.data['num_tasks_all'].get()
             cycles_remain = self.share.data['cycles_remain'].get()
-
             num_running = self.share.note['num_running'].get()
             num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
             tic_nnt = self.share.note['tic_nnt'].get()
@@ -1089,7 +1090,7 @@ class CountViewer(tk.Frame):
             self.cycles_remain_l.grid(row=12, column=2, padx=(110, 0), sticky=tk.W)
         # Need rowspan=2 for proper vertical alignment and to avoid gap artifact in
         #   frame border from row 14 exceeding vertical geometry when notices >1 row.
-        #   Unsure why pady is needed for alignment with its row header.
+        #   Need pady for alignment with the row header.
         self.share.notice_l.grid(row=13, column=1, columnspan=2, rowspan=2,
                                  padx=5, pady=(1, 0), sticky=tk.NW)
         self.share.compliment_l.grid(row=14, column=1, columnspan=2,
@@ -1716,8 +1717,8 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title(f"Count BOINC tasks on {node()}")
-            # Note: cannot use Path(__file__).name with py2exe, so use
-            #  literal file name for Windows standalone compilation.
+            # Note: cannot use Path(__file__).name with py2exe, so instead
+            #  use literal file name for Windows standalone compilation.
             # print('gcount-tasks now running...')  # Windows py2exe compile only.
             print(f'{Path(__file__).name} now running...')
             app.mainloop()
