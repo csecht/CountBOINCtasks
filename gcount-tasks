@@ -112,6 +112,7 @@ def app_position() -> tuple:
     """
     Get position of the master (app) window.
     Use to set position of an app Toplevel child with respect to app.
+
     :return: x,y screen geometry coordinates of the app window.
     :rtype: tuple
     """
@@ -125,12 +126,29 @@ def eval_digit_entry(entry_string, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
     Used with .register() to configure Entry kw validatecommand.
+    valid percent substitutions (from the Tk entry man page)
+    %d = Type of action (1=insert, 0=delete, -1 for others).
+    %i = index of char string to be inserted/deleted, or -1.
+    %P = value of the entry if the edit is allowed.
+    %s = value of entry prior to editing.
+    %S = the text string being inserted or deleted, if any.
+    %v = the type of validation that is currently set.
+    %V = the type of validation that triggered the callback
+         (key, focusin, focusout, forced).
+    %W = the tk name of the widget.
+
+    :param entry_string: value entered into an Entry() widget.
+    :param action_type: edit action code.
+    :return: True, False
+    :rtype: bool
     """
     # Need to restrict entries to only digits,
     #   MUST use action type parameter to allow user to delete first number
     #   entered when wants to re-enter following backspace deletion.
     # source: https://stackoverflow.com/questions/4140437/
-    if action_type == '1':  # action type 1 is "insert"
+    # %P = value of the entry if the edit is allowed
+    # Desired action type 1 is "insert", %d.
+    if action_type == '1':
         if not entry_string.isdigit():
             return False
     return True
@@ -146,6 +164,7 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
                       integers or floats.
     :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
              Dict values as: 00:00:00.
+    :rtype: dict
     """
     total = TC.sec_to_format(int(sum(tasktimes)), 'std')
     if numtasks > 1:
