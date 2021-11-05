@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.14'
+__version__ = '0.5.15'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -39,6 +39,7 @@ __status__ = 'Development Status :: 2 - Beta'
 import argparse
 import logging
 import random
+import re
 import shutil
 import statistics as stats
 import sys
@@ -86,7 +87,7 @@ NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
-# ############# Functions not part of MVC, but necessary ###############
+# ################# Useful functions not part of MVC ###################
 def check_boinc():
     """
     Check whether BOINC client is running before proceeding to implement
@@ -152,7 +153,7 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
             'tt_sd': 'na',
             'tt_min': 'na',
             'tt_max': 'na'}
-    # numtasks are 0...
+    # numtasks is 0...
     return {
         'tt_total': '00:00:00',
         'tt_mean': '00:00:00',
@@ -165,7 +166,7 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
 def view_log(event=None) -> None:
     """
     Create a separate window to view the log file as scrolled text.
-    Called from File in the menu bar.
+    Called from File menu bar or keybinding.
 
     :param event: Needed for keybinding implicit event.
     """
@@ -177,10 +178,10 @@ def view_log(event=None) -> None:
 
     try:
         with open(LOGFILE) as file:
-            logwin = tk.Toplevel(bg='SteelBlue4') # <- bg = master_bg
+            logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
             logwin.title(f'{LOGFILE}, {node()}')
             if MY_OS in 'lin, dar':
-                logwin.minsize(725, 200)
+                logwin.minsize(800, 220)
             elif MY_OS == 'win':
                 logwin.minsize(800, 200)
             logwin.focus_set()
@@ -216,14 +217,12 @@ def view_log(event=None) -> None:
 
             ttk.Button(logwin, text='Update', command=update).pack()
             ttk.Button(logwin, text='Erase', command=erase).pack()
+            ttk.Button(logwin, text='Analysis', command=summary_stats).pack(padx=4)
     except FileNotFoundError:
-        warn_main = f'Log {LOGFILE} missing on {node()}.'
-        warn_detail = ('That file or a link(alias) with its name'
-                       ' should be in:\n'
-                       f'{Path.cwd()}\n'
-                       'Has it been deleted, moved or renamed?')
-        messagebox.showwarning(title='FILE NOT FOUND',
-                               message=warn_main, detail=warn_detail)
+        info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
+                'Was the settings log option used?\n'
+                'Was file deleted, moved or renamed?')
+        messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
 
 def backup_log() -> None:
@@ -265,7 +264,113 @@ def backup_log() -> None:
                                message=warn_main, detail=warn_detail)
 
 
-# ############################ MCV Classes #############################
+def summary_stats(event=None) -> None:
+    """
+    Reads log file, analyses Summary counts, shows results in new window.
+    Provides option to append results to a file.
+    Called from a view_log() button or a keybinding.
+
+
+    :param event: Needed for keybinding implicit event.
+    """
+    dates = ""
+    summary_intvls = []
+    num_uniq_intvls = 0
+    summary_counts = []
+    summary_avg = 0
+    summary_range = ""
+    do_analysis = True
+    os_width = 0
+
+    try:
+        with open(LOGFILE) as file:
+            logtext = file.read()
+    except FileNotFoundError:
+        info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
+                'Was the settings log option used?\n'
+                'Was file deleted, moved or renamed?')
+        messagebox.showerror(title='FILE NOT FOUND', detail=info)
+        return
+
+    # Need a match to summary lines in log, like this:
+    #   "2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330";
+    #   the line format is specified in CountModeler.log_it().
+    capture_list = re.findall(
+        r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
+    try:
+        dates, summary_intvls, sumry_counts = zip(*capture_list)
+        num_uniq_intvls = len(set(summary_intvls))
+        summary_counts = list(map(int, sumry_counts))
+        summary_avg = round(sum(summary_counts) / len(summary_counts), 1)
+        summary_range = f'[{min(summary_counts)} -- {max(summary_counts)}]'
+    except (TypeError, ValueError):
+        messagebox.showerror(message='Analysis error',
+                             detail='There are not enough data to analyze.\n'
+                                    'Need at least one summary count in log file.')
+        do_analysis = False
+
+    # Separator dashes from https://coolsymbol.com/line-symbols.html.
+    if do_analysis:
+        if num_uniq_intvls == 1:
+            analysis = (
+                'Summary counts listed in the log file from\n'
+                f'{dates[0]} to {dates[-1]}\n\n'
+                f'   {len(summary_counts)} summaries logged\n'
+                f'   {sum(summary_counts)} reported tasks\n'
+                f'   {summary_avg} tasks per {summary_intvls[-1]} summary interval\n'
+                f'   {summary_range} range of summary counts\n'
+                '─────────────────────────────────────────────'
+            )
+        else:
+            analysis = (
+                'Summary counts listed in the log file from\n'
+                f'{dates[0]} to {dates[-1]}\n\n'
+                f'There are {num_uniq_intvls} different Summary interval times\n'
+                f'logged, {set(summary_intvls)},\n'
+                'so results may be inaccurate.\n\n'
+                f'   {len(summary_counts)} summaries logged\n'
+                f'   {sum(summary_counts)} reported tasks\n'
+                f'   {summary_avg} tasks per summary\n'
+                f'   {summary_range} range of summary counts\n'
+                '─────────────────────────────────────────────'
+            )
+
+        # Want analysis window to appear over app/master window, so need to
+        #  update app position, grab coordinates, apply geometry to new window.
+        app.update_idletasks()
+        app_x = app.winfo_x()
+        app_y = app.winfo_y()
+        analysiswin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg)
+        analysiswin.title('Analysis of logged summary values')
+        analysiswin.geometry(f"+{app_x}+{+app_y}")
+        analysiswin.minsize(520, 150)
+        analysiswin.focus_set()
+        if MY_OS in 'lin, win':
+            os_width = 46
+        elif MY_OS == 'dar':
+            os_width = 50
+        num_lines = analysis.count('\n') + 1
+        analysistext = tk.Text(analysiswin, font='TkFixedFont',
+                               width=os_width, height=num_lines,
+                               background='grey85', foreground='grey5',
+                               relief='groove', borderwidth=4,
+                               padx=15, pady=10)
+        analysistext.insert(1.0, analysis)
+        analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+        def save_results():
+            destination = Path('summary_analysis.txt').resolve()
+            savetxt = analysistext.get(1.0, tk.END)
+            with open(destination, 'a') as saved_analysis:
+                saved_analysis.write(savetxt)
+            messagebox.showinfo(message='Results saved to:',
+                                detail=destination,
+                                parent=analysiswin)
+        ttk.Button(
+            analysiswin, text='Save results', command=save_results).pack(padx=4)
+
+
+# ############################ MVC Classes #############################
 # MVC Modeler: The engine that gets BOINC data and runs count intervals.
 class CountModeler:
     """
@@ -322,7 +427,7 @@ class CountModeler:
             f"{startdict['tt_min']} -- {startdict['tt_max']}")
         self.share.data['tt_total'].set(startdict['tt_total'])
 
-        self.share.data['time_prev_cnt'].set('The recent hourly BOINC report.')
+        self.share.data['time_prev_cnt'].set('Last hourly BOINC report.')
 
         if self.share.setting['do_log'].get():
             self.share.logit('start')
@@ -537,7 +642,7 @@ class CountModeler:
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}\n'
-                            f'for the prior {tic_nnt} counting interval(s),')
+                            f'for the prior {tic_nnt} counting interval(s).')
                     else:
                         # Everything is fine, remove any prior notice.
                         # Use a de-emhasized color for this non-notice status text.
@@ -785,10 +890,10 @@ class CountViewer(tk.Frame):
 
         # Set colors for row labels and data display.
         # These colors are compatible with red-green color-blindness.
-        self.share.row_fg = 'LightYellow' # foreground for row labels
+        self.share.row_fg = 'LightYellow'  # foreground for row labels
         self.master_bg = 'SteelBlue4'  # also used for row header labels
         self.data_bg = 'grey40'  # background for data labels and frame
-        self.share.highlight = 'gold1' # fg for notices, compliments, et al.
+        self.share.highlight = 'gold1'  # fg for notices, compliments, et al.
         self.emphasize = 'grey90'
         self.deemphasize = 'grey60'
 
@@ -967,6 +1072,8 @@ class CountViewer(tk.Frame):
         view.add_command(label="Log file", command=view_log,
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
+        view.add_command(label="Summary analysis", command=summary_stats,
+                         accelerator="Ctrl+A")
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
@@ -1016,6 +1123,7 @@ class CountViewer(tk.Frame):
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
         self.master.bind("<Control-l>", view_log)
+        self.master.bind("<Control-a>", summary_stats)
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -1032,8 +1140,8 @@ class CountViewer(tk.Frame):
                       'stdev': 6,
                       'range': 7,
                       'total': 8,
-                      'Interval from:': 10,
-                      # 'Summary from:': 10,
+                      'Interval time:': 10,
+                      # 'Summary time:': 10,
                       'Next count in:': 11,
                       # 'Counts remaining:': 12,
                       'Tasks in queue:': 12,
@@ -1044,7 +1152,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.share.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
         # Need to accommodate instances of two headers in same row.
-        tk.Label(self.master, text='Summary from:',
+        tk.Label(self.master, text='Summary time:',
                  bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(self.master, text='Counts remaining:',
@@ -1588,8 +1696,8 @@ class CountFyi:
             - At start, # tasks reported and time of last count are from
                     the most recent hourly BOINC report.\n
             - Number of tasks in queue and Notices update every"""
-            f' {NOTICE_INTERVAL} seconds.\n'
-            """
+                       f' {NOTICE_INTERVAL} seconds.\n'
+                       """
             - Displayed countdown clock time is approximate.\n
             - Review counts and Notices history with "View log file".\n
             - File>'Backup log file' copies log to the current folder.""")
