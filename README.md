@@ -124,7 +124,7 @@ The process of opening apps from unrecognized Apple developers can be somewhat s
 * Wait for user feedback...
 
 ### Known Issues
-* Versions 0.4.10 - 0.4.12 were prone to freezes. Current stable version: 0.5.0
+* Versions 0.4.10 - 0.4.12 were prone to freezes. 
 
 * BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different 
   boinccmd path from the default path used by count-tasks. I've yet to 
