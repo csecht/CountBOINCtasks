@@ -113,15 +113,15 @@ def app_position(add_x=0, add_y=0) -> tuple:
     Get position of the app (MASTER) window.
     Use to set position of a Toplevel child with respect to app.
 
-    :param add_x: optional pixels to add to app x coordinate, integer.
-    :param add_y: optional pixels to add to app y coordinate, integer.
+    :param add_x: optional pixels to add to app's x coordinate.
+    :param add_y: optional pixels to add to app's y coordinate.
     :return: x,y screen geometry coordinates of the app window.
     :rtype: tuple
     """
     app.update_idletasks()
-    app_x = app.winfo_x() + add_x
-    app_y = app.winfo_y() + add_y
-    return app_x, app_y
+    pos_x = app.winfo_x() + add_x
+    pos_y = app.winfo_y() + add_y
+    return pos_x, pos_y
 
 
 def eval_digit_entry(entry_string, action_type) -> bool:
