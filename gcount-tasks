@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.17'
+__version__ = '0.5.18'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -108,17 +108,19 @@ def check_boinc():
             sys.exit(1)
 
 
-def app_position() -> tuple:
+def app_position(add_x=0, add_y=0) -> tuple:
     """
-    Get position of the master (app) window.
-    Use to set position of an app Toplevel child with respect to app.
+    Get position of the app (MASTER) window.
+    Use to set position of a Toplevel child with respect to app.
 
+    :param add_x: optional pixels to add to app x coordinate, integer.
+    :param add_y: optional pixels to add to app y coordinate, integer.
     :return: x,y screen geometry coordinates of the app window.
     :rtype: tuple
     """
     app.update_idletasks()
-    app_x = app.winfo_x()
-    app_y = app.winfo_y()
+    app_x = app.winfo_x() + add_x
+    app_y = app.winfo_y() + add_y
     return app_x, app_y
 
 
@@ -126,16 +128,6 @@ def eval_digit_entry(entry_string, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
     Used with .register() to configure Entry kw validatecommand.
-    valid percent substitutions (from the Tk entry man page)
-    %d = Type of action (1=insert, 0=delete, -1 for others).
-    %i = index of char string to be inserted/deleted, or -1.
-    %P = value of the entry if the edit is allowed.
-    %s = value of entry prior to editing.
-    %S = the text string being inserted or deleted, if any.
-    %v = the type of validation that is currently set.
-    %V = the type of validation that triggered the callback
-         (key, focusin, focusout, forced).
-    %W = the tk name of the widget.
 
     :param entry_string: value entered into an Entry() widget.
     :param action_type: edit action code.
@@ -345,7 +337,7 @@ def summary_stats(event=None) -> None:
     if do_analysis:
         if num_uniq_intvls == 1:
             analysis = (
-                'Summary counts listed in the log file from\n'
+                'Summary data in the log file from\n'
                 f'{dates[0]} to {dates[-1]}\n\n'
                 f'   {len(summary_counts)} summaries logged\n'
                 f'   {sum(summary_counts)} reported tasks\n'
@@ -369,8 +361,8 @@ def summary_stats(event=None) -> None:
 
         # Want analysis window to appear over app/master window, so need to
         #  update app position, grab coordinates, apply geometry to new window.
-        app_x, app_y = app_position()
-        analysiswin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg)
+        app_x, app_y = app_position(15, 15)
+        analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged summary values')
         analysiswin.geometry(f"+{app_x}+{+app_y}")
         analysiswin.minsize(520, 150)
@@ -1716,8 +1708,8 @@ class CountFyi:
         Basic information program usage and actions;
         Toplevel window called from Help menu bar.
         """
-        app_x, app_y = app_position()
-        infowin = tk.Toplevel(app)
+        app_x, app_y = app_position(15, 15)
+        infowin = tk.Toplevel()
         infowin.geometry(f"+{app_x}+{+app_y}")
         infowin.resizable(False, False)
         infowin.title('Usage information')
@@ -1808,8 +1800,8 @@ class CountFyi:
         Basic information for gcount-tasks;
         Toplevel window called from Help menu bar.
         """
-        app_x, app_y = app_position()
-        aboutwin = tk.Toplevel(app)
+        app_x, app_y = app_position(10)
+        aboutwin = tk.Toplevel()
         aboutwin.geometry(f"+{app_x}+{+app_y}")
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
