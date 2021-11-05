@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.15'
+__version__ = '0.5.16'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -361,7 +361,7 @@ def summary_stats(event=None) -> None:
         def save_results():
             destination = Path('summary_analysis.txt').resolve()
             savetxt = analysistext.get(1.0, tk.END)
-            with open(destination, 'a') as saved_analysis:
+            with open(destination, 'a', encoding='utf-8') as saved_analysis:
                 saved_analysis.write(savetxt)
             messagebox.showinfo(message='Results saved to:',
                                 detail=destination,
