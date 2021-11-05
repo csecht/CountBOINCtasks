@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.16'
+__version__ = '0.5.17'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -106,6 +106,19 @@ def check_boinc():
         else:
             app.destroy()
             sys.exit(1)
+
+
+def app_position() -> tuple:
+    """
+    Get position of the master (app) window.
+    Use to set position of an app Toplevel child with respect to app.
+    :return: x,y screen geometry coordinates of the app window.
+    :rtype: tuple
+    """
+    app.update_idletasks()
+    app_x = app.winfo_x()
+    app_y = app.winfo_y()
+    return app_x, app_y
 
 
 def eval_digit_entry(entry_string, action_type) -> bool:
@@ -337,9 +350,7 @@ def summary_stats(event=None) -> None:
 
         # Want analysis window to appear over app/master window, so need to
         #  update app position, grab coordinates, apply geometry to new window.
-        app.update_idletasks()
-        app_x = app.winfo_x()
-        app_y = app.winfo_y()
+        app_x, app_y = app_position()
         analysiswin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged summary values')
         analysiswin.geometry(f"+{app_x}+{+app_y}")
@@ -1686,7 +1697,9 @@ class CountFyi:
         Basic information program usage and actions;
         Toplevel window called from Help menu bar.
         """
-        infowin = tk.Toplevel()
+        app_x, app_y = app_position()
+        infowin = tk.Toplevel(app)
+        infowin.geometry(f"+{app_x}+{+app_y}")
         infowin.resizable(False, False)
         infowin.title('Usage information')
         information = ("""
@@ -1776,7 +1789,9 @@ class CountFyi:
         Basic information for gcount-tasks;
         Toplevel window called from Help menu bar.
         """
-        aboutwin = tk.Toplevel()
+        app_x, app_y = app_position()
+        aboutwin = tk.Toplevel(app)
+        aboutwin.geometry(f"+{app_x}+{+app_y}")
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
