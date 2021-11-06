@@ -113,8 +113,8 @@ def app_position(add_x=0, add_y=0) -> tuple:
     Get position of the app (MASTER) window.
     Use to set position of a Toplevel child with respect to app.
 
-    :param add_x: optional pixels to add to app's x coordinate.
-    :param add_y: optional pixels to add to app's y coordinate.
+    :param add_x: optional pixels added to app's x coordinate.
+    :param add_y: optional pixels added to app's y coordinate.
     :return: x,y screen geometry coordinates of the app window.
     :rtype: tuple
     """
@@ -359,21 +359,15 @@ def summary_stats(event=None) -> None:
                 '─────────────────────────────────────────────'
             )
 
-        # Want analysis window to appear over app/master window, so need to
-        #  update app position, grab coordinates, apply geometry to new window.
         app_x, app_y = app_position(15, 15)
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged summary values')
         analysiswin.geometry(f"+{app_x}+{+app_y}")
-        analysiswin.minsize(520, 150)
+        analysiswin.minsize(400, 150)
         analysiswin.focus_set()
-        if MY_OS in 'lin, win':
-            os_width = 46
-        elif MY_OS == 'dar':
-            os_width = 50
         num_lines = analysis.count('\n') + 1
         analysistext = tk.Text(analysiswin, font='TkFixedFont',
-                               width=os_width, height=num_lines,
+                               width=46, height=num_lines,
                                background='grey85', foreground='grey5',
                                relief='groove', borderwidth=4,
                                padx=15, pady=10)
@@ -1800,7 +1794,7 @@ class CountFyi:
         Basic information for gcount-tasks;
         Toplevel window called from Help menu bar.
         """
-        app_x, app_y = app_position(10)
+        app_x, app_y = app_position(15, 15)
         aboutwin = tk.Toplevel()
         aboutwin.geometry(f"+{app_x}+{+app_y}")
         aboutwin.resizable(False, False)
