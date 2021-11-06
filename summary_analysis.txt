@@ -1,0 +1,16 @@
+Summary counts listed in the log file from
+2021-Sep-15 10:11:38 to 2021-Sep-15 10:11:38
+
+   1 summaries logged
+   2 reported tasks
+   2.0 tasks per 20m summary interval
+   [2 -- 2] range of summary counts
+─────────────────────────────────────────────
+Summary counts listed in the log file from
+2021-Sep-15 10:11:38 to 2021-Sep-15 10:11:38
+
+   1 summaries logged
+   2 reported tasks
+   2.0 tasks per 20m summary interval
+   [2 -- 2] range of summary counts
+─────────────────────────────────────────────
