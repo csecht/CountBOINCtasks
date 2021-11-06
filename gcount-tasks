@@ -294,17 +294,15 @@ def summary_stats(event=None) -> None:
     Provides option to append results to a file.
     Called from a view_log() button or a keybinding.
 
-
     :param event: Needed for keybinding implicit event.
     """
     dates = ""
     summary_intvls = []
     num_uniq_intvls = 0
-    summary_counts = []
-    summary_avg = 0
-    summary_range = ""
+    all_task_sumrys = []
+    task_cnt_avg = 0
+    task_sum_range = ""
     do_analysis = True
-    os_width = 0
 
     try:
         with open(LOGFILE) as file:
@@ -322,11 +320,11 @@ def summary_stats(event=None) -> None:
     capture_list = re.findall(
         r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
     try:
-        dates, summary_intvls, sumry_counts = zip(*capture_list)
+        dates, summary_intvls, tasks_sumry = zip(*capture_list)
         num_uniq_intvls = len(set(summary_intvls))
-        summary_counts = list(map(int, sumry_counts))
-        summary_avg = round(sum(summary_counts) / len(summary_counts), 1)
-        summary_range = f'[{min(summary_counts)} -- {max(summary_counts)}]'
+        all_task_sumrys = list(map(int, tasks_sumry))
+        task_cnt_avg = round(sum(all_task_sumrys) / len(all_task_sumrys), 1)
+        task_sum_range = f'[{min(all_task_sumrys)} -- {max(all_task_sumrys)}]'
     except (TypeError, ValueError):
         messagebox.showerror(message='Analysis error',
                              detail='There are not enough data to analyze.\n'
@@ -339,10 +337,10 @@ def summary_stats(event=None) -> None:
             analysis = (
                 'Summary data in the log file from\n'
                 f'{dates[0]} to {dates[-1]}\n\n'
-                f'   {len(summary_counts)} summaries logged\n'
-                f'   {sum(summary_counts)} reported tasks\n'
-                f'   {summary_avg} tasks per {summary_intvls[-1]} summary interval\n'
-                f'   {summary_range} range of summary counts\n'
+                f'   {len(all_task_sumrys)} summaries logged\n'
+                f'   {sum(all_task_sumrys)} reported tasks\n'
+                f'   {task_cnt_avg} tasks per {summary_intvls[-1]} summary interval\n'
+                f'   {task_sum_range} range of summary counts\n'
                 '─────────────────────────────────────────────'
             )
         else:
@@ -352,10 +350,10 @@ def summary_stats(event=None) -> None:
                 f'There are {num_uniq_intvls} different Summary interval times\n'
                 f'logged, {set(summary_intvls)},\n'
                 'so results may be inaccurate.\n\n'
-                f'   {len(summary_counts)} summaries logged\n'
-                f'   {sum(summary_counts)} reported tasks\n'
-                f'   {summary_avg} tasks per summary\n'
-                f'   {summary_range} range of summary counts\n'
+                f'   {len(all_task_sumrys)} summaries logged\n'
+                f'   {sum(all_task_sumrys)} reported tasks\n'
+                f'   {task_cnt_avg} tasks per summary\n'
+                f'   {task_sum_range} range of summary counts\n'
                 '─────────────────────────────────────────────'
             )
 
