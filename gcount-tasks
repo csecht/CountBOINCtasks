@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.18'
+__version__ = '0.5.19'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -359,10 +359,10 @@ def summary_stats(event=None) -> None:
                 '─────────────────────────────────────────────'
             )
 
-        app_x, app_y = app_position(15, 15)
+        pos_x, pos_y = app_position(15, 15)
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged summary values')
-        analysiswin.geometry(f"+{app_x}+{+app_y}")
+        analysiswin.geometry(f"+{pos_x}+{+pos_y}")
         analysiswin.minsize(400, 150)
         analysiswin.focus_set()
         num_lines = analysis.count('\n') + 1
@@ -421,7 +421,7 @@ class CountModeler:
         """
         Gather initial task data and times; set data dictionary
         control variables. Log data to file if so optioned.
-        Called from check_start_close().
+        Called from check_and_start().
         """
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
@@ -1049,7 +1049,7 @@ class CountViewer(tk.Frame):
         self.share.defaultsettings()
         self.settings()
         # Starting functions sequence after settings() is called:
-        #   check_and_set(), settings.check_start_close(), start_threads(),
+        #   check_and_set(), check_and_start(), start_threads(),
         #   emphasize_start_data(), CountModeler.set_start_data().
         # Note: none of that sequence will occur, however, if BOINC
         #   client is not running, so...
@@ -1228,7 +1228,6 @@ class CountViewer(tk.Frame):
         self.task_count_l.config(foreground=self.data_bg)
         self.task_count_sumry_l.config(foreground=self.data_bg)
 
-    # NOTE: settings() is a bit of a mess; consider restructuring it.
     def settings(self) -> None:
         """
         A Toplevel window that appears at startup.
@@ -1257,6 +1256,7 @@ class CountViewer(tk.Frame):
         #   there if user drags settings_win away.
         self.time_start_l.configure(text='Waiting for run settings...')
 
+        # Inner functions for user FYI:
         # Need to disable default window Exit; only allow exit from active Confirm button.
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
         #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
@@ -1265,23 +1265,7 @@ class CountViewer(tk.Frame):
                    '"Count now" is allowed once "Confirm" checks settings.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
-
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
-
-        # Functions for Combobox selections.
-        # pylint: disable=unused-argument
-        def set_intvl_selection(event=None):
-            """Interval time Combobox selection.
-            :param event: Implicit event for <<ComboboxSelected>>
-            """
-            self.share.setting['interval_t'].set(self.intvl_choice.get())
-
-        # pylint: disable=unused-argument
-        def set_sumry_unit(event=None):
-            """Summary interval time unit Combobox selection.
-            :param event: Implicit event for <<ComboboxSelected>>
-            """
-            self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get())
 
         def explain_zero_max():
             explain = ('Interval counting stops after entered number of '
@@ -1294,41 +1278,11 @@ class CountViewer(tk.Frame):
                        ' all tasks are "Ready to report" in the BOINC Manager.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
-        def check_start_close():
-            """
-            Calls check_and_set(); if all is good then starts threads,
-            calls emphasize_start_data(), and closes settings() window,
-            which ends the startup sequence.
-            Called from countnow_button.
-            """
-            # Need to run final validation of settings in case user changed
-            #   something since a prior "Confirm" check_and_set() call.
-            self.check_and_set()
-            if self.good_settings:
-                # Run 1-off status report or begin interval counts...
-                if self.share.setting['cycles_max'].get() == 0:
-                    self.share.data['cycles_remain'].set(0)
-                    self.share.setting['interval_t'].set('DISABLED')
-                    self.share.setting['summary_t'].set('DISABLED')
-                    self.share.note['notice_txt'].set('STATUS REPORT ONLY')
-                    self.emphasize_start_data()
-                    self.share.setstartdata()
-                    self.settings_win.destroy()
-                # Begin main interval counting functions...
-                else:
-                    self.start_threads()
-                    self.emphasize_start_data()
-                    self.share.setstartdata()
-                    self.settings_win.destroy()
-
-        # Have user select interval times for counting and summary cycles.
-        # All interactive settings widgets are instantiated in Viewer __init__
-        #   and configured and gridded here.
-        # Statements are generally sorted by their row order.
         self.intvl_choice.configure(state='readonly', width=4, height=12,
                                     textvariable=self.share.setting['interval_t'])
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
-        self.intvl_choice.bind("<<ComboboxSelected>>", set_intvl_selection)
+        self.intvl_choice.bind(
+            "<<ComboboxSelected>>", self.share.setting['interval_t'].set(self.intvl_choice.get()))
         intvl_label1 = ttk.Label(self.settings_win, text='Count interval',
                                  style='Set.TLabel')
         intvl_label2 = ttk.Label(self.settings_win, text='minutes',
@@ -1342,11 +1296,13 @@ class CountViewer(tk.Frame):
         self.sumry_t_unit.configure(state='readonly',
                                     textvariable=self.share.setting['sumry_t_unit'],
                                     values=('day', 'hr', 'min'), width=4)
-        self.sumry_t_unit.bind("<<ComboboxSelected>>", set_sumry_unit)
-        sumry_label1 = ttk.Label(self.settings_win, text='Summary interval: time value',
-                                 style='Set.TLabel')
-        sumry_label2 = ttk.Label(self.settings_win, text='time unit',
-                                 style='Set.TLabel')
+        self.sumry_t_unit.bind(
+            "<<ComboboxSelected>>", self.share.setting['sumry_t_unit'].set(self.sumry_t_unit.get()))
+        sumry_label1 = ttk.Label(
+            self.settings_win, text='Summary interval: time value',
+            style='Set.TLabel')
+        sumry_label2 = ttk.Label(
+            self.settings_win, text='time unit', style='Set.TLabel')
 
         # Specify number limit of counting cycles to run.
         self.cycles_max_entry.configure(
@@ -1378,7 +1334,7 @@ class CountViewer(tk.Frame):
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
-                                       command=check_start_close)
+                                       command=self.check_and_start)
         # Need to disable button to force user to first "Confirm" settings,
         #    even when using default settings: it is a 2-click closing.
         #    'Count now' button is enabled (tk.NORMAL) in check_and_set().
@@ -1469,10 +1425,38 @@ class CountViewer(tk.Frame):
             self.file.entryconfig("Backup log file", state=tk.DISABLED)
             self.master.unbind("<Control-l>")
 
+    def check_and_start(self):
+        """
+        Main gatekeeper for settings().
+        Calls check_and_set(); if all is good then starts threads,
+        calls emphasize_start_data(), and closes settings() window,
+        which ends the startup sequence.
+        Called from settings() countnow_button.
+        """
+        # Need to run final validation of settings in case user changed
+        #   something since a prior "Confirm" check_and_set() call.
+        self.check_and_set()
+        if self.good_settings:
+            # Run 1-off status report or begin interval counts...
+            if self.share.setting['cycles_max'].get() == 0:
+                self.share.data['cycles_remain'].set(0)
+                self.share.setting['interval_t'].set('DISABLED')
+                self.share.setting['summary_t'].set('DISABLED')
+                self.share.note['notice_txt'].set('STATUS REPORT ONLY')
+                self.emphasize_start_data()
+                self.share.setstartdata()
+                self.settings_win.destroy()
+            # Begin main interval counting functions...
+            else:
+                self.start_threads()
+                self.emphasize_start_data()
+                self.share.setstartdata()
+                self.settings_win.destroy()
+
     def start_threads(self) -> None:
         """
         Set up and start threads for intervals, notices, and logging.
-        Called from check_start_close() in Viewer.settings() as part of
+        Called from check_and_start() in Viewer as part of
         startup sequence.
         """
         # There are no thread.join(), so use daemon for clean exits.
@@ -1490,7 +1474,7 @@ class CountViewer(tk.Frame):
         """
         Config data labels in master window for starting data emphasis.
         Establish start time.
-        Called from settings.check_start_close() with 'Count now' button.
+        Called from check_and_start() with 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
         self.time_start_l.config(text=time_start)
@@ -1702,9 +1686,9 @@ class CountFyi:
         Basic information program usage and actions;
         Toplevel window called from Help menu bar.
         """
-        app_x, app_y = app_position(15, 15)
+        pos_x, pos_y = app_position(15, 15)
         infowin = tk.Toplevel()
-        infowin.geometry(f"+{app_x}+{+app_y}")
+        infowin.geometry(f"+{pos_x}+{+pos_y}")
         infowin.resizable(False, False)
         infowin.title('Usage information')
         information = ("""
@@ -1794,9 +1778,9 @@ class CountFyi:
         Basic information for gcount-tasks;
         Toplevel window called from Help menu bar.
         """
-        app_x, app_y = app_position(15, 15)
+        pos_x, pos_y = app_position(15, 15)
         aboutwin = tk.Toplevel()
-        aboutwin.geometry(f"+{app_x}+{+app_y}")
+        aboutwin.geometry(f"+{pos_x}+{+pos_y}")
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
@@ -1807,9 +1791,9 @@ class CountFyi:
         num_doc_lines = __doc__.count('\n') + 2
         os_width = 0
         if MY_OS in 'lin, win':
-            os_width = 62
+            os_width = 60
         elif MY_OS == 'dar':
-            os_width = '54'
+            os_width = 54
         abouttxt = tk.Text(aboutwin, font='TkTextFont',
                            width=os_width, height=num_doc_lines + 6,
                            bg=bkg, fg='grey98', relief='groove',
