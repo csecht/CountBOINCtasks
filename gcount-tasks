@@ -1234,31 +1234,29 @@ class CountViewer(tk.Frame):
         """
         # Toplevel window basics
         self.settings_win.title('Set and confirm run settings')
-        self.settings_win.geometry('+96+134') # <- match geometry of app window.
-        self.settings_win.config(relief='raised',
+        self.settings_win.geometry('+96+134') # <- match position of app window.
+        self.settings_win.resizable(False, False)
+        self.settings_win.config(relief='raised', bg=self.master_bg,
                                  highlightthickness=3,
                                  highlightcolor=self.share.highlight,
                                  highlightbackground=self.deemphasize)
         if MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
         # In macOS, topmost places Combobox selections BEHIND the window,
-        #    but focus_force() does not; must be a tkinter bug?
+        #    but focus_force() makes it visible; must be a tkinter bug?
         elif MY_OS == 'dar':
             self.settings_win.focus_force()
-        self.settings_win.resizable(False, False)
 
-        # Colors match those of master/parent window.
-        self.settings_win.configure(bg=self.master_bg)
         settings_style = ttk.Style()
         settings_style.configure('Set.TLabel', background=self.master_bg,
                                  foreground=self.share.row_fg)
 
-        # Need a message in main window to prompt user to enter settings.
+        # Need text in master window to prompt user to enter settings.
         #   The message text is covered by the settings_win, but is
-        #   there if user drags settings_win away.
+        #   seen if user drags settings_win away.
         self.time_start_l.configure(text='Waiting for run settings...')
 
-        # Inner functions for flow control and user FYI:
+        # Inner functions for window control and user FYI:
         # Need to disable default window Exit; only allow exit from active Confirm button.
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
         #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
