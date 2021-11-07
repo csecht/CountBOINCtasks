@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.19'
+__version__ = '0.5.20'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -360,7 +360,7 @@ def summary_stats(event=None) -> None:
         pos_x, pos_y = app_position(15, 15)
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged summary values')
-        analysiswin.geometry(f"+{pos_x}+{+pos_y}")
+        analysiswin.geometry(f'+{pos_x}+{+pos_y}')
         analysiswin.minsize(400, 150)
         analysiswin.focus_set()
         num_lines = analysis.count('\n') + 1
@@ -969,7 +969,7 @@ class CountViewer(tk.Frame):
         }
 
         # settings() window widgets:
-        self.settings_win = tk.Toplevel(relief='raised', bd=3)
+        self.settings_win = tk.Toplevel()
         self.sumry_t_value = ttk.Entry(self.settings_win)
         self.sumry_t_unit = ttk.Combobox(self.settings_win)
         self.cycles_max_entry = ttk.Entry(self.settings_win)
@@ -1228,17 +1228,21 @@ class CountViewer(tk.Frame):
 
     def settings(self) -> None:
         """
-        A Toplevel window that appears at startup.
-        Use to confirm default parameters or set new ones for count and
+        Configures the Toplevel window that appears at startup.
+        Confirms default parameters or sets new ones for count and
         summary interval times, counting limit, and log file option.
         """
         # Toplevel window basics
-        # Need self. b/c window parent is used for a messagebox in check_and_set().
         self.settings_win.title('Set and confirm run settings')
+        self.settings_win.geometry('+96+134') # <- match geometry of app window.
+        self.settings_win.config(relief='raised',
+                                 highlightthickness=3,
+                                 highlightcolor=self.share.highlight,
+                                 highlightbackground=self.deemphasize)
         if MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
         # In macOS, topmost places Combobox selections BEHIND the window,
-        #    but focus_focus() does not.
+        #    but focus_force() does not; must be a tkinter bug?
         elif MY_OS == 'dar':
             self.settings_win.focus_force()
         self.settings_win.resizable(False, False)
@@ -1254,7 +1258,7 @@ class CountViewer(tk.Frame):
         #   there if user drags settings_win away.
         self.time_start_l.configure(text='Waiting for run settings...')
 
-        # Inner functions for user FYI:
+        # Inner functions for flow control and user FYI:
         # Need to disable default window Exit; only allow exit from active Confirm button.
         # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
         #    to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
@@ -1276,6 +1280,7 @@ class CountViewer(tk.Frame):
                        ' all tasks are "Ready to report" in the BOINC Manager.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
+        # Settings widget configurations and grids.
         self.intvl_choice.configure(state='readonly', width=4, height=12,
                                     textvariable=self.share.setting['interval_t'])
         self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
@@ -1314,7 +1319,6 @@ class CountViewer(tk.Frame):
                                          command=explain_zero_max)
 
         # Need user options to log results to file and to use auto-updates.
-        # Checkbutton() kw "variable" automatically sets values.
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
         log_label = ttk.Label(self.settings_win, text='Log results to file',
@@ -1585,10 +1589,12 @@ class CountController(tk.Tk):
 
         # Need geometry so that master window will be under settings()
         #   Toplevel window at startup.
+        #   Not setting geometry here places app window below settings_win
         # These x, y coordinates match default window placement on Ubuntu desktop.
         self.geometry('+96+134')
+
         # Need window sizes to make room for multi-line notices,
-        # but not get minimized enough to exclude notices row.
+        #    but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
             self.minsize(580, 360)
@@ -1686,7 +1692,7 @@ class CountFyi:
         """
         pos_x, pos_y = app_position(15, 15)
         infowin = tk.Toplevel()
-        infowin.geometry(f"+{pos_x}+{+pos_y}")
+        infowin.geometry(f'+{pos_x}+{+pos_y}')
         infowin.resizable(False, False)
         infowin.title('Usage information')
         information = ("""
@@ -1778,7 +1784,7 @@ class CountFyi:
         """
         pos_x, pos_y = app_position(15, 15)
         aboutwin = tk.Toplevel()
-        aboutwin.geometry(f"+{pos_x}+{+pos_y}")
+        aboutwin.geometry(f'+{pos_x}+{+pos_y}')
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
         colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
