@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.20'
+__version__ = '0.5.21'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -241,7 +241,7 @@ def view_log(event=None) -> None:
 
             ttk.Button(logwin, text='Update', command=update).pack()
             ttk.Button(logwin, text='Erase', command=erase).pack()
-            ttk.Button(logwin, text='Analysis', command=summary_stats).pack(padx=4)
+            ttk.Button(logwin, text='Analysis', command=show_cumulative_data).pack(padx=4)
     except FileNotFoundError:
         info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
                 'Was the settings log option used?\n'
@@ -288,21 +288,31 @@ def backup_log() -> None:
                                message=warn_main, detail=warn_detail)
 
 
-def summary_stats(event=None) -> None:
+def cumulative_data() -> tuple:
     """
-    Reads log file, analyses Summary counts, shows results in new window.
-    Provides option to append results to a file.
-    Called from a view_log() button or a keybinding.
+    Reads log file and analyses Summary and Interval counts.
+    Calls to show_cumulative_data().
 
-    :param event: Needed for keybinding implicit event.
+    :return: text strings to print in show_cumulative_data()
+             Toplevel window.
     """
-    dates = ""
+    sumry_dates = []
     summary_intvls = []
+    num_uniq_sumintvls = 0
+    sumry_counts = []
+    sumry_cnt_avg = 0
+    sumry_cnt_range = ''
+    intvl_dates = []
+    reg_intvls = []
     num_uniq_intvls = 0
-    all_task_sumrys = []
-    task_cnt_avg = 0
-    task_sum_range = ""
-    do_analysis = True
+    intvl_counts = []
+    intvl_cnt_avg = 0
+    intvl_cnt_range = ''
+    recent_dates = []
+    recent_counts = []
+    recent_intvls = []
+    sumry_analysis = ''
+    mop_up = ''
 
     try:
         with open(LOGFILE) as file:
@@ -312,76 +322,154 @@ def summary_stats(event=None) -> None:
                 'Was the settings log option used?\n'
                 'Was file deleted, moved or renamed?')
         messagebox.showerror(title='FILE NOT FOUND', detail=info)
-        return
+        return sumry_analysis, mop_up
 
     # Need a match to summary lines in log, like this:
-    #   "2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330";
-    #   the line format is specified in CountModeler.log_it().
-    capture_list = re.findall(
+    #   2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330
+    #   and to regular interval lines, like this:
+    #   2021-Oct-28 09:37:33; Tasks reported in the past 60m: 17
+    #   The line formats are specified in CountModeler.log_it().
+    capture_sumrys = re.findall(
         r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
-    try:
-        dates, summary_intvls, tasks_sumry = zip(*capture_list)
-        num_uniq_intvls = len(set(summary_intvls))
-        all_task_sumrys = list(map(int, tasks_sumry))
-        task_cnt_avg = round(sum(all_task_sumrys) / len(all_task_sumrys), 1)
-        task_sum_range = f'[{min(all_task_sumrys)} -- {max(all_task_sumrys)}]'
-    except (TypeError, ValueError):
-        messagebox.showerror(message='Analysis error',
-                             detail='There are not enough data to analyze.\n'
-                                    'Need at least one summary count in log file.')
-        do_analysis = False
+    capture_intvls = re.findall(
+        r'^(.*); Tasks reported .* (\d+m): (\d+$)', logtext, re.MULTILINE)
+
+    if capture_sumrys:
+        sumry_dates, summary_intvls, sumry_cnts = zip(*capture_sumrys)
+        num_uniq_sumintvls = len(set(summary_intvls))
+        sumry_counts = list(map(int, sumry_cnts))
+        sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
+        sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
+    if capture_intvls:
+        intvl_dates, reg_intvls, intvl_cnts = zip(*capture_intvls)
+        num_uniq_intvls = len(set(reg_intvls))
+        intvl_counts = list(map(int, intvl_cnts))
+        intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
+        intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
+    if capture_sumrys and capture_intvls:
+        # Need the list index of first interval count after the last summary count.
+        indicies = [
+            i for i, tupl in enumerate(capture_intvls) if sumry_dates[-1] == tupl[0]]
+        # Need only interval counts after the last summary count.
+        recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[indicies[0]:])
+        num_uniq_intvls = len(set(recent_intvls))
+        recent_counts = list(map(int, recent_cnts))
+        intvl_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
+        intvl_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
+
+    if not capture_sumrys and not capture_intvls:
+        sumry_analysis = ('There are not enough data to analyze.\n'
+                          '    Need at least one summary or one\n'
+                          '    interval count in the log file.\n')
+    if not capture_sumrys and capture_intvls:
+        sumry_analysis = 'No summary counts are logged yet.\n'
+        if num_uniq_intvls == 1:
+            mop_up = (
+                'Analysis of logged task counts from:\n'
+                f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                f'{len(intvl_counts)} intervals have been logged.\n'
+                f'{sum(intvl_counts)} reported tasks\n'
+                f'{intvl_cnt_avg} tasks per {reg_intvls[-1]} interval\n'
+                f'{intvl_cnt_range} range of task counts\n')
+        else:
+            mop_up = (
+                'Analysis of logged task counts from:\n'
+                f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                f'There are {num_uniq_intvls} different interval times\n'
+                f'logged, {set(reg_intvls)},\n'
+                'so results may be inaccurate.\n\n'
+                f'{len(intvl_counts)} count intervals have been logged.\n'
+                f'{sum(intvl_counts)} reported tasks\n'
+                f'{intvl_cnt_avg} tasks per {num_uniq_intvls} interval\n'
+                f'{intvl_cnt_range} range of task counts\n')
+    if capture_sumrys:
+        if num_uniq_sumintvls == 1:
+            sumry_analysis = (
+                'Summary data in the log file from:\n'
+                f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
+                f'   {len(sumry_counts)} summaries logged\n'
+                f'   {sum(sumry_counts)} reported tasks\n'
+                f'   {sumry_cnt_avg} tasks per {summary_intvls[-1]} summary interval\n'
+                f'   {sumry_cnt_range} range of summary counts\n')
+        else:
+            sumry_analysis = (
+                'Summary data in the log file from:\n'
+                f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
+                f'There are {num_uniq_sumintvls} different logged Summary\n'
+                f' interval times, {set(summary_intvls)},\n'
+                'so results may be inaccurate.\n\n'
+                f'   {len(sumry_counts)} summaries logged\n'
+                f'   {sum(sumry_counts)} reported tasks\n'
+                f'   {sumry_cnt_avg} tasks per summary\n'
+                f'   {sumry_cnt_range} range of summary counts\n')
+    if capture_sumrys and capture_intvls:
+        if num_uniq_intvls == 1:
+            mop_up = (
+                '\nSince last Summary, interval counts from:\n'
+                f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                f'   {len(recent_counts)} interval counts were logged.\n'
+                f'   {sum(recent_counts)} reported tasks\n'
+                f'   {intvl_cnt_avg} tasks per {recent_intvls[0]} interval\n'
+                f'   {intvl_cnt_range} range of interval counts\n')
+        else:
+            mop_up = (
+                'Since last Summary, interval counts from:\n'
+                f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                f'There are {num_uniq_intvls} different logged\n'
+                f' interval times, {set(recent_intvls)},\n'
+                'so results may be inaccurate.\n\n'
+                f'   {len(intvl_counts)} count intervals have been logged.\n'
+                f'   {sum(intvl_counts)} reported tasks\n'
+                f'   {intvl_cnt_avg} tasks per interval\n'
+                f'   {intvl_cnt_range} range of interval counts\n')
+
+    return sumry_analysis, mop_up
+
+
+def show_cumulative_data(event=None) -> None:
+    """
+    Generates a Toplevel window to display cumulative task counts that
+    have been logged.
+    Called from a view_log() button or a keybinding.
+    Provides option to append results to a file.
+
+    :param event: Needed for keybinding implicit event.
+    """
+
+    # NOTE: When the log file is not found by cumulative_data(), the returned
+    #   texts will be empty, so there is no need to continue with function.
+    summary_text, interval_text = cumulative_data()
+    if not summary_text and not interval_text:
+        return
+    pos_x, pos_y = app_position(15, 15)
+    analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
+    analysiswin.title('Analysis of logged data')
+    analysiswin.geometry(f'+{pos_x}+{+pos_y}')
+    analysiswin.minsize(400, 150)
+    analysiswin.focus_set()
 
     # Separator dashes from https://coolsymbol.com/line-symbols.html.
-    if do_analysis:
-        if num_uniq_intvls == 1:
-            analysis = (
-                'Summary data in the log file from\n'
-                f'{dates[0]} to {dates[-1]}\n\n'
-                f'   {len(all_task_sumrys)} summaries logged\n'
-                f'   {sum(all_task_sumrys)} reported tasks\n'
-                f'   {task_cnt_avg} tasks per {summary_intvls[-1]} summary interval\n'
-                f'   {task_sum_range} range of summary counts\n'
-                '─────────────────────────────────────────────'
-            )
-        else:
-            analysis = (
-                'Summary counts listed in the log file from\n'
-                f'{dates[0]} to {dates[-1]}\n\n'
-                f'There are {num_uniq_intvls} different Summary interval times\n'
-                f'logged, {set(summary_intvls)},\n'
-                'so results may be inaccurate.\n\n'
-                f'   {len(all_task_sumrys)} summaries logged\n'
-                f'   {sum(all_task_sumrys)} reported tasks\n'
-                f'   {task_cnt_avg} tasks per summary\n'
-                f'   {task_sum_range} range of summary counts\n'
-                '─────────────────────────────────────────────'
-            )
+    sep = '─────────────────────────────────────────────\n'
+    text = summary_text + interval_text + sep
+    num_lines = text.count('\n') + 1
+    analysistext = tk.Text(analysiswin, font='TkFixedFont',
+                           width=46, height=num_lines,
+                           background='grey85', foreground='grey5',
+                           relief='groove', borderwidth=4,
+                           padx=15, pady=10)
+    analysistext.insert(1.0, text)
+    analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        pos_x, pos_y = app_position(15, 15)
-        analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
-        analysiswin.title('Analysis of logged summary values')
-        analysiswin.geometry(f'+{pos_x}+{+pos_y}')
-        analysiswin.minsize(400, 150)
-        analysiswin.focus_set()
-        num_lines = analysis.count('\n') + 1
-        analysistext = tk.Text(analysiswin, font='TkFixedFont',
-                               width=46, height=num_lines,
-                               background='grey85', foreground='grey5',
-                               relief='groove', borderwidth=4,
-                               padx=15, pady=10)
-        analysistext.insert(1.0, analysis)
-        analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-        def save_results():
-            destination = Path('summary_analysis.txt').resolve()
-            savetxt = analysistext.get(1.0, tk.END)
-            with open(destination, 'a', encoding='utf-8') as saved_analysis:
-                saved_analysis.write(savetxt)
-            messagebox.showinfo(message='Results saved to:',
-                                detail=destination,
-                                parent=analysiswin)
-        ttk.Button(
-            analysiswin, text='Save results', command=save_results).pack(padx=4)
+    def save_results():
+        destination = Path('cumulative_analysis.txt').resolve()
+        savetxt = analysistext.get(1.0, tk.END)
+        with open(destination, 'a', encoding='utf-8') as saved_analysis:
+            saved_analysis.write(savetxt)
+        messagebox.showinfo(message='Results saved to:',
+                            detail=destination,
+                            parent=analysiswin)
+    ttk.Button(
+        analysiswin, text='Save results', command=save_results).pack(padx=4)
 
 
 # ############################ MVC Classes #############################
@@ -1086,7 +1174,7 @@ class CountViewer(tk.Frame):
         view.add_command(label="Log file", command=view_log,
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
-        view.add_command(label="Summary analysis", command=summary_stats,
+        view.add_command(label="Analysis", command=show_cumulative_data,
                          accelerator="Ctrl+A")
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
@@ -1137,7 +1225,7 @@ class CountViewer(tk.Frame):
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
         self.master.bind("<Control-l>", view_log)
-        self.master.bind("<Control-a>", summary_stats)
+        self.master.bind("<Control-a>", show_cumulative_data)
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -1234,7 +1322,8 @@ class CountViewer(tk.Frame):
         """
         # Toplevel window basics
         self.settings_win.title('Set and confirm run settings')
-        self.settings_win.geometry('+96+134') # <- match position of app window.
+        # Need to position over app window, which is at '+96+134'.
+        self.settings_win.geometry('+136+174')
         self.settings_win.resizable(False, False)
         self.settings_win.config(relief='raised', bg=self.master_bg,
                                  highlightthickness=3,
