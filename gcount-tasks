@@ -205,7 +205,7 @@ def view_log(event=None) -> None:
     try:
         with open(LOGFILE) as file:
             logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-            logwin.title(f'{LOGFILE}, {node()}')
+            logwin.title(f'{LOGFILE} on {node()}')
             if MY_OS in 'lin, dar':
                 logwin.minsize(800, 220)
             elif MY_OS == 'win':
@@ -441,6 +441,7 @@ def analyze_data() -> tuple:
     return sumry_analysis, mop_up
 
 
+# pylint: disable=unused-argument
 def show_analysis_data(event=None) -> None:
     """
     Generates a Toplevel window to display cumulative task counts that
@@ -487,6 +488,7 @@ def show_analysis_data(event=None) -> None:
         analysiswin, text='Save results', command=save_results).pack(padx=4)
 
 
+# pylint: disable=unused-argument
 def view_saved_analyses(event=None) -> None:
     """
     Create a separate window to view the count analysis file, as
@@ -501,18 +503,21 @@ def view_saved_analyses(event=None) -> None:
     elif MY_OS == 'dar':
         os_width = 42
 
+    pos_x, pos_y = app_position(15, 15)
+
     try:
         with open(ANALYSISFILE) as file:
-            analysiswin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-            analysiswin.title(f'{ANALYSISFILE}, {node()}')
+            analysisfilewin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
+            analysisfilewin.title(f'{ANALYSISFILE} on {node()}')
+            analysisfilewin.geometry(f'+{pos_x}+{+pos_y}')
             if MY_OS in 'lin, dar':
-                analysiswin.minsize(400, 450)
+                analysisfilewin.minsize(420, 450)
             elif MY_OS == 'win':
-                analysiswin.minsize(400, 450)
-            analysiswin.focus_set()
+                analysisfilewin.minsize(400, 450)
+            analysisfilewin.focus_set()
             # Use a "dark" background/foreground theme for analysis text.
             analysistext = ScrolledText(
-                analysiswin, width=os_width, height=30,
+                analysisfilewin, width=os_width, height=30,
                 font='TkFixedFont', fg='grey80', bd=4,
                 bg='grey20', relief='groove', padx=12)
             analysistext.insert(tk.INSERT, file.read())
@@ -523,7 +528,7 @@ def view_saved_analyses(event=None) -> None:
                 """Delete analysis file content and analysis window text.
                 """
                 okay = messagebox.askokcancel(
-                    parent=analysiswin,
+                    parent=analysisfilewin,
                     title='Confirmation needed',
                     message='Delete analysis file content?',
                     detail="'Enter' or space bar will also delete file content.")
@@ -532,7 +537,7 @@ def view_saved_analyses(event=None) -> None:
                     open(ANALYSISFILE, 'w').close()
                     analysistext.delete('1.0', tk.END)
 
-            ttk.Button(analysiswin, text='Erase', command=erase).pack(padx=4)
+            ttk.Button(analysisfilewin, text='Erase', command=erase).pack(padx=4)
     except FileNotFoundError:
         info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
                 'Have any analysis results been saved yet?\n'
@@ -2025,7 +2030,7 @@ if __name__ == "__main__":
     else:
         try:
             app = CountController()
-            app.title(f"Count BOINC tasks on {node()}")
+            app.title(f'Count BOINC tasks on {node()}')
             # Note: cannot use Path(__file__).name with py2exe, so instead
             #  use literal file name for Windows standalone compilation.
             # print('gcount-tasks now running...')  # Windows py2exe compile only.
