@@ -30,7 +30,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.28'
+__version__ = '0.4.29'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -199,6 +199,29 @@ class BoincCommand:
             # NOTE: exit works in count-tasks, not in gcount-tasks.
             sys.exit(1)
 
+    def get_version(self, cmd=' --client_version') -> list:
+        """
+        Get version number of the boinc client.
+
+        :param cmd: The boinc command to get the client version.
+        :return: version info, as a list of one string.
+        """
+        # Note: run_boinc() always returns a list.
+        output = self.run_boinc(self.boincpath + cmd)
+        return output
+
+    def check_boinc(self):
+        """
+        Check whether BOINC client is running before proceeding to implement
+        settings and begin counting.
+        """
+        # Note: Any BC boinccmd will return this string (as a list)
+        #   if boinc-client is not running; use get_version() b/c it is short.
+        if "can't connect to local host" in self.get_version():
+            print('BOINC ERROR: BOINC commands cannot be executed.\n'
+                  'Is the BOINC client running?   Exiting now...')
+            sys.exit(1)
+
     def get_reported(self, tag: str, cmd=' --get_old_tasks') -> list:
         """
         Get data from reported boinc-client tasks.
@@ -254,16 +277,6 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-    def get_version(self, cmd=' --client_version') -> list:
-        """
-        Get version number of the boinc client.
-
-        :param cmd: The boinc command to get the client version.
-        :return: version info, as a list of one string.
-        """
-        # Note: run_boinc() always returns a list.
-        output = self.run_boinc(self.boincpath + cmd)
-        return output
 
     def get_runningtasks(self, tag: str, app_type: str,
                          cmd=' --get_simple_gui_info') -> list:
