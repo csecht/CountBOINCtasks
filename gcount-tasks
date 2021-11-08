@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.23'
+__version__ = '0.5.24'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -96,6 +96,7 @@ def check_boinc():
     """
     # Note: Any BC boinccmd will return this string (in a list)
     #   if boinc-client is not running; use BC.get_version() b/c it is short.
+    #   Could be run with BC.check_boinc(), but only for Terminal output.
     if "can't connect to local host" in BC.get_version():
         okay = messagebox.askokcancel(
             title='BOINC ERROR',
@@ -242,7 +243,8 @@ def view_log(event=None) -> None:
 
             ttk.Button(logwin, text='Update', command=update).pack()
             ttk.Button(logwin, text='Erase', command=erase).pack()
-            ttk.Button(logwin, text='Analysis', command=show_analysis_data).pack(padx=4)
+            ttk.Button(
+                logwin, text='Analysis', command=show_analysis_data).pack(padx=4)
     except FileNotFoundError:
         info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
                 'Was the settings log option used?\n'
@@ -530,7 +532,7 @@ def view_saved_analyses(event=None) -> None:
                     open(ANALYSISFILE, 'w').close()
                     analysistext.delete('1.0', tk.END)
 
-            ttk.Button(analysiswin, text='Erase', command=erase).pack()
+            ttk.Button(analysiswin, text='Erase', command=erase).pack(padx=4)
     except FileNotFoundError:
         info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
                 'Have any analysis results been saved yet?\n'
@@ -1137,37 +1139,51 @@ class CountViewer(tk.Frame):
         # NOTE: self.time_start_l label is initially configured for text to
         #   show a startup message, then reconfigured in emphasize_start_data()
         #   for the time_start.
-        self.time_start_l = tk.Label(self.dataframe, bg=self.data_bg, fg='grey90')
-        self.interval_t_l = tk.Label(self.dataframe, width=21, borderwidth=2,
-                                     textvariable=self.share.setting['interval_t'],
-                                     relief='groove', bg=self.data_bg)
-        self.summary_t_l = tk.Label(self.dataframe, width=21, borderwidth=2,
-                                    textvariable=self.share.setting['summary_t'],
-                                    relief='groove', bg=self.data_bg)
-        self.cycles_max_l = tk.Label(textvariable=self.share.setting['cycles_max'],
-                                     bg=self.master_bg, fg=self.share.row_fg)
+        self.time_start_l = tk.Label(
+            self.dataframe, bg=self.data_bg, fg='grey90')
+        self.interval_t_l = tk.Label(
+            self.dataframe, width=21, borderwidth=2,
+            textvariable=self.share.setting['interval_t'],
+            relief='groove', bg=self.data_bg)
+        self.summary_t_l = tk.Label(
+            self.dataframe, width=21, borderwidth=2,
+            textvariable=self.share.setting['summary_t'],
+            relief='groove', bg=self.data_bg)
+        self.cycles_max_l = tk.Label(
+            textvariable=self.share.setting['cycles_max'],
+            bg=self.master_bg, fg=self.share.row_fg)
 
         # Labels for BOINC data.
-        self.task_count_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                     textvariable=self.share.data['task_count'])
-        self.tt_mean_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                  textvariable=self.share.data['tt_mean'])
-        self.tt_sd_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                textvariable=self.share.data['tt_sd'])
-        self.tt_range_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                   textvariable=self.share.data['tt_range'])
-        self.tt_total_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                   textvariable=self.share.data['tt_total'])
-        self.task_count_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                           textvariable=self.share.data['task_count_sumry'])
-        self.ttmean_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                       textvariable=self.share.data['tt_mean_sumry'])
-        self.ttsd_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                     textvariable=self.share.data['tt_sd_sumry'])
-        self.ttrange_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                        textvariable=self.share.data['tt_range_sumry'])
-        self.ttsum_sumry_l = tk.Label(self.dataframe, width=3, bg=self.data_bg,
-                                      textvariable=self.share.data['tt_total_sumry'])
+        self.task_count_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['task_count'])
+        self.tt_mean_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_mean'])
+        self.tt_sd_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_sd'])
+        self.tt_range_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_range'])
+        self.tt_total_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_total'])
+        self.task_count_sumry_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['task_count_sumry'])
+        self.ttmean_sumry_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_mean_sumry'])
+        self.ttsd_sumry_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_sd_sumry'])
+        self.ttrange_sumry_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_range_sumry'])
+        self.ttsum_sumry_l = tk.Label(
+            self.dataframe, width=3, bg=self.data_bg,
+            textvariable=self.share.data['tt_total_sumry'])
         # Data labels in master
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
@@ -1185,8 +1201,8 @@ class CountViewer(tk.Frame):
             textvariable=self.share.data['num_tasks_all'],
             bg=self.master_bg, fg=self.share.row_fg)
         # Text for compliment_l is configured in compliment_me()
-        self.share.compliment_l = tk.Label(bg=self.master_bg,
-                                           fg=self.share.highlight)
+        self.share.compliment_l = tk.Label(
+            bg=self.master_bg, fg=self.share.highlight)
         self.share.notice_l = tk.Label(
             textvariable=self.share.note['notice_txt'],
             fg=self.share.highlight, bg=self.master_bg,
@@ -1203,7 +1219,7 @@ class CountViewer(tk.Frame):
         # Starting functions sequence after settings() is called:
         #   check_and_set(), check_and_start(), start_threads(),
         #   emphasize_start_data(), CountModeler.set_start_data().
-        # Note: none of that sequence will occur, however, if BOINC
+        # Note: none of that sequence matters, however, if BOINC
         #   client is not running, so...
         check_boinc()
 
@@ -1255,7 +1271,7 @@ class CountViewer(tk.Frame):
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with ttk intvl_b after first interval
         #   completes; it is re-grid in set_interval_data().
-        # starting_b is tk.B b/c that accepts disabledforeground keyword.
+        # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
         self.share.starting_b = tk.Button(text='Starting data', width=18,
                                           disabledforeground='grey10',
                                           state=tk.DISABLED)
@@ -1336,42 +1352,65 @@ class CountViewer(tk.Frame):
         sep2 = ttk.Frame(style='Sep.TFrame', relief="raised", height=6)
 
         # %%%%%%%%%%%%%%%%%%% grid: sorted by row number %%%%%%%%%%%%%%%%%%%%%%
-        self.viewlog_b.grid(row=0, column=0, padx=5, pady=(8, 4))
-        self.share.starting_b.grid(row=0, column=1, padx=(16, 0), pady=(6, 4))
-        self.share.sumry_b.grid(row=0, column=2, padx=(0, 22), pady=(8, 4))
-        sep1.grid(row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
-        self.time_start_l.grid(row=2, column=1, padx=(10, 16), sticky=tk.EW,
-                               columnspan=2)
-        self.interval_t_l.grid(row=3, column=1, padx=(12, 6), sticky=tk.EW)
-        self.summary_t_l.grid(row=3, column=2, padx=(0, 16), sticky=tk.EW)
-        self.task_count_l.grid(row=4, column=1, padx=10, sticky=tk.EW)
-        self.task_count_sumry_l.grid(row=4, column=2, padx=(0, 16), sticky=tk.EW)
-        self.tt_mean_l.grid(row=5, column=1, padx=10, sticky=tk.EW)
-        self.ttmean_sumry_l.grid(row=5, column=2, padx=(0, 16), sticky=tk.EW)
-        self.tt_sd_l.grid(row=6, column=1, padx=10, sticky=tk.EW)
-        self.ttsd_sumry_l.grid(row=6, column=2, padx=(0, 16), sticky=tk.EW)
-        self.tt_range_l.grid(row=7, column=1, padx=10, sticky=tk.EW)
-        self.ttrange_sumry_l.grid(row=7, column=2, padx=(0, 16), sticky=tk.EW)
-        self.tt_total_l.grid(row=8, column=1, padx=10, sticky=tk.EW)
-        self.ttsum_sumry_l.grid(row=8, column=2, padx=(0, 16), sticky=tk.EW)
-        sep2.grid(row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
-        self.time_prev_cnt_l.grid(row=10, column=1, padx=3, sticky=tk.W,
-                                  columnspan=2)
-        self.time_prev_sumry_l.grid(row=10, column=2, padx=(108, 0), sticky=tk.W)
-        self.time_next_cnt_l.grid(row=11, column=1, padx=3, sticky=tk.W)
-        self.num_tasks_all_l.grid(row=12, column=1, padx=3, sticky=tk.W)
+        self.viewlog_b.grid(
+            row=0, column=0, padx=5, pady=(8, 4))
+        self.share.starting_b.grid(
+            row=0, column=1, padx=(16, 0), pady=(6, 4))
+        self.share.sumry_b.grid(
+            row=0, column=2, padx=(0, 22), pady=(8, 4))
+        sep1.grid(
+            row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
+        self.time_start_l.grid(
+            row=2, column=1, columnspan=2, padx=(10, 16), sticky=tk.EW)
+        self.interval_t_l.grid(
+            row=3, column=1, padx=(12, 6), sticky=tk.EW)
+        self.summary_t_l.grid(
+            row=3, column=2, padx=(0, 16), sticky=tk.EW)
+        self.task_count_l.grid(
+            row=4, column=1, padx=10, sticky=tk.EW)
+        self.task_count_sumry_l.grid(
+            row=4, column=2, padx=(0, 16), sticky=tk.EW)
+        self.tt_mean_l.grid(
+            row=5, column=1, padx=10, sticky=tk.EW)
+        self.ttmean_sumry_l.grid(
+            row=5, column=2, padx=(0, 16), sticky=tk.EW)
+        self.tt_sd_l.grid(
+            row=6, column=1, padx=10, sticky=tk.EW)
+        self.ttsd_sumry_l.grid(
+            row=6, column=2, padx=(0, 16), sticky=tk.EW)
+        self.tt_range_l.grid(
+            row=7, column=1, padx=10, sticky=tk.EW)
+        self.ttrange_sumry_l.grid(
+            row=7, column=2, padx=(0, 16), sticky=tk.EW)
+        self.tt_total_l.grid(
+            row=8, column=1, padx=10, sticky=tk.EW)
+        self.ttsum_sumry_l.grid(
+            row=8, column=2, padx=(0, 16), sticky=tk.EW)
+        sep2.grid(
+            row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
+        self.time_prev_cnt_l.grid(
+            row=10, column=1, columnspan=2, padx=3, sticky=tk.W)
+        self.time_prev_sumry_l.grid(
+            row=10, column=2, padx=(108, 0), sticky=tk.W)
+        self.time_next_cnt_l.grid(
+            row=11, column=1, padx=3, sticky=tk.W)
+        self.num_tasks_all_l.grid(
+            row=12, column=1, padx=3, sticky=tk.W)
         # Place cycles_remain value in same cell as its header, but shifted right.
         if MY_OS in 'lin, dar':
-            self.cycles_remain_l.grid(row=12, column=2, padx=(123, 0), sticky=tk.W)
+            self.cycles_remain_l.grid(
+                row=12, column=2, padx=(123, 0), sticky=tk.W)
         elif MY_OS == 'win':
-            self.cycles_remain_l.grid(row=12, column=2, padx=(110, 0), sticky=tk.W)
+            self.cycles_remain_l.grid(
+                row=12, column=2, padx=(110, 0), sticky=tk.W)
         # Need rowspan=2 for proper vertical alignment and to avoid gap artifact in
         #   frame border from row 14 exceeding vertical geometry when notices >1 row.
         #   Need pady for alignment with the row header.
-        self.share.notice_l.grid(row=13, column=1, columnspan=2, rowspan=2,
-                                 padx=5, pady=(1, 0), sticky=tk.NW)
-        self.share.compliment_l.grid(row=14, column=1, columnspan=2,
-                                     padx=5, sticky=tk.W)
+        self.share.notice_l.grid(
+            row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0),
+            sticky=tk.NW)
+        self.share.compliment_l.grid(
+            row=14, column=1, columnspan=2, padx=5, sticky=tk.W)
 
         # These control variables have default or initial start values,
         #   so make values invisible in pre-settings dataframe by matching
