@@ -340,23 +340,26 @@ def cumulative_data() -> tuple:
         sumry_counts = list(map(int, sumry_cnts))
         sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
         sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
+    # Need these intvl vars when there are no summary data.
     if capture_intvls:
         intvl_dates, reg_intvls, intvl_cnts = zip(*capture_intvls)
         num_uniq_intvls = len(set(reg_intvls))
         intvl_counts = list(map(int, intvl_cnts))
         intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
         intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
+    # Need these interval vars when there are interval counts following last summary.
+    #    But need only interval data following the last summary count.
     if capture_sumrys and capture_intvls:
         # Need the list index of first interval count after the last summary count.
         indicies = [
             i for i, tupl in enumerate(capture_intvls) if sumry_dates[-1] == tupl[0]]
-        # Need only interval counts after the last summary count.
         recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[indicies[0]:])
         num_uniq_intvls = len(set(recent_intvls))
         recent_counts = list(map(int, recent_cnts))
         intvl_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
         intvl_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
 
+    # Need to tailor report texts for various counting conditions.
     if not capture_sumrys and not capture_intvls:
         sumry_analysis = ('There are not enough data to analyze.\n'
                           '    Need at least one summary or one\n'
@@ -367,10 +370,10 @@ def cumulative_data() -> tuple:
             mop_up = (
                 'Analysis of logged task counts from:\n'
                 f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
-                f'{len(intvl_counts)} intervals have been logged.\n'
-                f'{sum(intvl_counts)} reported tasks\n'
-                f'{intvl_cnt_avg} tasks per {reg_intvls[-1]} interval\n'
-                f'{intvl_cnt_range} range of task counts\n')
+                f'   {len(intvl_counts)} intervals have been logged.\n'
+                f'   {sum(intvl_counts)} reported tasks\n'
+                f'   {intvl_cnt_avg} tasks per {reg_intvls[-1]} interval\n'
+                f'   {intvl_cnt_range} range of task counts\n')
         else:
             mop_up = (
                 'Analysis of logged task counts from:\n'
@@ -378,10 +381,10 @@ def cumulative_data() -> tuple:
                 f'There are {num_uniq_intvls} different interval times\n'
                 f'logged, {set(reg_intvls)},\n'
                 'so results may be inaccurate.\n\n'
-                f'{len(intvl_counts)} count intervals have been logged.\n'
-                f'{sum(intvl_counts)} reported tasks\n'
-                f'{intvl_cnt_avg} tasks per {num_uniq_intvls} interval\n'
-                f'{intvl_cnt_range} range of task counts\n')
+                f'   {len(intvl_counts)} count intervals have been logged.\n'
+                f'   {sum(intvl_counts)} reported tasks\n'
+                f'   {intvl_cnt_avg} tasks per {num_uniq_intvls} interval\n'
+                f'   {intvl_cnt_range} range of task counts\n')
     if capture_sumrys:
         if num_uniq_sumintvls == 1:
             sumry_analysis = (
