@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.26'
+__version__ = '0.5.27'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2012,7 +2012,13 @@ class CountFyi:
         abouttxt.pack()
 
 
-if __name__ == "__main__":
+def parse_args(argv=None) -> None:
+    """
+    Allow handling of common execution arguments.
+
+    :param argv: Optional argument.
+
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--about',
                         help='Provides description, version, GNU license',
@@ -2029,21 +2035,19 @@ if __name__ == "__main__":
         print('Status:    ', __status__)
         print()
         sys.exit(0)
-    else:
-        try:
-            app = CountController()
-            app.title(f'Count BOINC tasks on {node()}')
-            # Note: cannot use Path(__file__).name with py2exe, so instead
-            #  use literal file name for Windows standalone compilation.
-            # print('gcount-tasks now running...')  # Windows py2exe compile only.
-            print(f'{Path(__file__).name} now running...')
-            app.mainloop()
-        # Ctrl-C from Terminal is not recognized by tk/tcl until an event occurs,
-        #  like moving cursor over window, or a timer action.
-        #  Can use signal.signal(signal.SIGINT, signal.SIG_DFL) to allow
-        #  immediate exit, but that would bypass this exit message.
-        except KeyboardInterrupt:
-            exit_msg = ('\n\n  *** Interrupted by user ***\n'
-                        f'  Quitting now...{datetime.now()}\n\n')
-            print(exit_msg)
-            logging.info(msg=exit_msg)
+
+
+if __name__ == "__main__":
+    parse_args()
+    try:
+        app = CountController()
+        app.title(f'Count BOINC tasks on {node()}')
+        # Note: cannot use Path(__file__).name with py2exe, so instead
+        #  use literal file name for Windows standalone setup.py compilation.
+        # print('gcount-tasks now running...')  # Windows py2exe compile only.
+        print(f'{Path(__file__).name} now running...')
+        app.mainloop()
+    except KeyboardInterrupt:
+        exit_msg = f'\n   *** ...interrupted by user at {datetime.now()} ***\n'
+        print(exit_msg)
+        logging.info(msg=exit_msg)
