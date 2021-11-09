@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.24'
+__version__ = '0.5.25'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -461,13 +461,13 @@ def show_analysis_data(event=None) -> None:
     analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
     analysiswin.title('Analysis of logged data')
     analysiswin.geometry(f'+{pos_x}+{+pos_y}')
-    analysiswin.minsize(600, 150)
+    analysiswin.minsize(520, 320)
     analysiswin.focus_set()
 
     # Separator dash from https://coolsymbol.com/line-symbols.html.
     sep = f'{"─" * 46}\n\n'
     text = summary_text + interval_text + sep
-    num_lines = text.count('\n') + 1
+    num_lines = text.count('\n')
     analysistext = tk.Text(analysiswin, font='TkFixedFont',
                            width=46, height=num_lines,
                            background='grey85', foreground='grey5',
