@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.25'
+__version__ = '0.5.26'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -203,7 +203,7 @@ def view_log(event=None) -> None:
         os_width = 72
 
     try:
-        with open(LOGFILE) as file:
+        with open(LOGFILE, encoding='utf-8') as file:
             logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
             logwin.title(f'{LOGFILE} on {node()}')
             if MY_OS in 'lin, dar':
@@ -222,7 +222,7 @@ def view_log(event=None) -> None:
             def update():
                 """Replace log window text with log file content.
                 """
-                with open(LOGFILE) as new_text:
+                with open(LOGFILE, encoding='utf-8') as new_text:
                     logtext.delete('1.0', tk.END)
                     logtext.insert('1.0', new_text.read())
                     logtext.see(tk.END)
@@ -325,7 +325,7 @@ def analyze_data() -> tuple:
     mop_up = ''
 
     try:
-        with open(LOGFILE) as file:
+        with open(LOGFILE, encoding='utf-8') as file:
             logtext = file.read()
     except FileNotFoundError:
         info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
@@ -418,7 +418,7 @@ def analyze_data() -> tuple:
                 f'   {sumry_cnt_avg} tasks per summary\n'
                 f'   {sumry_cnt_range} range of task counts\n')
     if capture_sumrys and capture_intvls:
-        if regular_num_intvls == 1:
+        if recent_num_intvls == 1:
             mop_up = (
                 '\nSince last Summary, additional counts from:\n'
                 f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
@@ -479,6 +479,8 @@ def show_analysis_data(event=None) -> None:
     def save_results():
         destination = ANALYSISFILE
         savetxt = analysistext.get(1.0, tk.END)
+        # if encoding == "locale":
+        #     encoding = locale.getpreferredencoding(False)
         with open(destination, 'a', encoding='utf-8') as saved_analysis:
             saved_analysis.write(savetxt)
         messagebox.showinfo(message='Results saved to:',
@@ -506,7 +508,7 @@ def view_saved_analyses(event=None) -> None:
     pos_x, pos_y = app_position(15, 15)
 
     try:
-        with open(ANALYSISFILE) as file:
+        with open(ANALYSISFILE, encoding='utf-8') as file:
             analysisfilewin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
             analysisfilewin.title(f'{ANALYSISFILE} on {node()}')
             analysisfilewin.geometry(f'+{pos_x}+{+pos_y}')
