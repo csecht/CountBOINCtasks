@@ -499,11 +499,6 @@ def view_saved_analyses(event=None) -> None:
 
     :param event: Needed for keybinding implicit event.
     """
-    os_width = 0
-    if MY_OS in 'lin, win':
-        os_width = 46
-    elif MY_OS == 'dar':
-        os_width = 42
 
     pos_x, pos_y = app_position(15, 15)
 
@@ -519,7 +514,7 @@ def view_saved_analyses(event=None) -> None:
             analysisfilewin.focus_set()
             # Use a "dark" background/foreground theme for analysis text.
             analysistext = ScrolledText(
-                analysisfilewin, width=os_width, height=30,
+                analysisfilewin, width=46, height=30,
                 font='TkFixedFont', fg='grey80', bd=4,
                 bg='grey20', relief='groove', padx=12)
             analysistext.insert(tk.INSERT, file.read())
