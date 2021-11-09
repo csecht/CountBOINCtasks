@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.27'
+__version__ = '0.5.28'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2042,10 +2042,8 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
-        # Note: cannot use Path(__file__).name with py2exe, so instead
-        #  use literal file name for Windows standalone setup.py compilation.
-        # print('gcount-tasks now running...')  # Windows py2exe compile only.
-        print(f'{Path(__file__).name} now running...')
+        # Note: need to use sys.argv for Windows py2exe setup.py compiling.
+        print(f'{Path(sys.argv[0]).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = f'\n   *** ...interrupted by user at {datetime.now()} ***\n'
