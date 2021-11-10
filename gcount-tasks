@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.30'
+__version__ = '0.5.31'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -205,6 +205,26 @@ class Log:
                             filemode="a", format='%(message)s')
 
     @classmethod
+    def erase(cls, parentwin, wintext, logfile):
+        """Delete log file content and log window text.
+
+        :param parentwin: The tk.Toplevel window over which to place
+                          the erase confirmation messagebox.
+        :param wintext: A tkinter.scrolledtext.ScrolledText or
+                        tkinter.Text object for the parentwin text.
+        :param logfile: Path object of the file's content to erase.
+        """
+        okay = messagebox.askokcancel(
+            parent=parentwin,
+            title='Confirmation needed',
+            message='Delete file content?',
+            detail="'Enter' or space bar will also delete file content.")
+        if okay:
+            # pylint: disable=consider-using-with
+            wintext.delete('1.0', tk.END)
+            open(logfile, 'w').close()
+
+    @classmethod
     # pylint: disable=unused-argument
     def view_log(cls, event=None) -> None:
         """
@@ -244,29 +264,21 @@ class Log:
                         logtext.insert('1.0', new_text.read())
                         logtext.see(tk.END)
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                def erase():
-                    """Delete log file content and log window text.
-                    """
-                    okay = messagebox.askokcancel(
-                        parent=logwin,
-                        title='Confirmation needed',
-                        message='Delete log file content?',
-                        detail="'Enter' or space bar will also delete log file content.")
-                    if okay:
-                        # pylint: disable=consider-using-with
-                        open(cls.LOGFILE, 'w').close()
-                        logtext.delete('1.0', tk.END)
-
-                ttk.Button(logwin, text='Update', command=update).pack()
-                ttk.Button(logwin, text='Erase', command=erase).pack()
-                ttk.Button(
-                    logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
         except FileNotFoundError:
             info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
                     'Was the settings log option used?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
+        ttk.Button(
+            logwin, text='Update', command=update).pack(padx=4)
+        ttk.Button(
+            logwin, text='Erase',
+            command=(
+                lambda p=logwin, t=logtext, f=cls.LOGFILE: cls.erase(p, t, f))
+            ).pack(padx=4)
+        ttk.Button(
+            logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
 
     @classmethod
     def backup_log(cls) -> None:
@@ -485,17 +497,17 @@ class Log:
         sep = f'{"─" * 46}\n\n'
         text = summary_text + interval_text + sep
         num_lines = text.count('\n')
-        analysistext = tk.Text(analysiswin, font='TkFixedFont',
-                               width=46, height=num_lines,
-                               background='grey85', foreground='grey5',
-                               relief='groove', borderwidth=4,
-                               padx=15, pady=10)
-        analysistext.insert(1.0, text)
-        analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        analysistxt = tk.Text(analysiswin, font='TkFixedFont',
+                              width=46, height=num_lines,
+                              background='grey85', foreground='grey5',
+                              relief='groove', borderwidth=4,
+                              padx=15, pady=10)
+        analysistxt.insert(1.0, text)
+        analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
         def save_results():
             destination = cls.ANALYSISFILE
-            savetxt = analysistext.get(1.0, tk.END)
+            savetxt = analysistxt.get(1.0, tk.END)
             with open(destination, 'a', encoding='utf-8') as saved_analysis:
                 saved_analysis.write(savetxt)
             messagebox.showinfo(message='Results saved to:',
@@ -519,42 +531,33 @@ class Log:
 
         try:
             with open(cls.ANALYSISFILE, encoding='utf-8') as file:
-                analysisfilewin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-                analysisfilewin.title(f'{cls.ANALYSISFILE} on {node()}')
-                analysisfilewin.geometry(f'+{pos_x}+{+pos_y}')
+                analylogwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
+                analylogwin.title(f'{cls.ANALYSISFILE} on {node()}')
+                analylogwin.geometry(f'+{pos_x}+{+pos_y}')
                 if MY_OS in 'lin, dar':
-                    analysisfilewin.minsize(420, 450)
+                    analylogwin.minsize(420, 450)
                 elif MY_OS == 'win':
-                    analysisfilewin.minsize(400, 450)
-                analysisfilewin.focus_set()
+                    analylogwin.minsize(400, 450)
+                analylogwin.focus_set()
                 # Use a "dark" background/foreground theme for analysis text.
-                analysistext = ScrolledText(
-                    analysisfilewin, width=46, height=30,
+                analytxt = ScrolledText(
+                    analylogwin, width=46, height=30,
                     font='TkFixedFont', fg='grey80', bd=4,
                     bg='grey20', relief='groove', padx=12)
-                analysistext.insert(tk.INSERT, file.read())
-                analysistext.see('end')
-                analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-                def erase():
-                    """Delete analysis file content and analysis window text.
-                    """
-                    okay = messagebox.askokcancel(
-                        parent=analysisfilewin,
-                        title='Confirmation needed',
-                        message='Delete analysis file content?',
-                        detail="'Enter' or space bar will also delete file content.")
-                    if okay:
-                        # pylint: disable=consider-using-with
-                        open(cls.ANALYSISFILE, 'w').close()
-                        analysistext.delete('1.0', tk.END)
-
-                ttk.Button(analysisfilewin, text='Erase', command=erase).pack(padx=4)
+                analytxt.insert(tk.INSERT, file.read())
+                analytxt.see('end')
+                analytxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         except FileNotFoundError:
             info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
                     'Have any analysis results been saved yet?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
+        ttk.Button(
+            analylogwin, text='Erase',
+            command=(
+                lambda p=analylogwin, t=analytxt, f=cls.ANALYSISFILE: cls.erase(p, t, f))
+            ).pack(padx=4)
 
 
 # ############################ MVC Classes #############################
