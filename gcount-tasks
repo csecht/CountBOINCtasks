@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.28'
+__version__ = '0.5.29'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -72,23 +72,17 @@ if sys.version_info < (3, 6):
 BC = boinc_command.BoincCommand()
 TC = time_convert
 MY_OS = sys.platform[:3]
-GUI_TITLE = 'BOINC task counter'
 SHORT_STRFTIME = '%Y %b %d %H:%M'
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 DAY_STRFTIME = '%A %H:%M'
 LONGSMRY_STRF = '%b %d %H:%M'
-# Log file or its link should be in the CountBOINCtasks-master folder.
-#  But use .resolve() to handle symlinks.
-LOGFILE = Path('count-tasks_log.txt').resolve()
-BKUPFILE = Path('count-tasks_log(copy).txt').resolve()
-ANALYSISFILE = Path('count-analysis.txt').resolve()
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
 # Use this for an immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
-# ################# Useful functions not part of MVC ###################
+# ################ Useful functions, not part of MVC ###################
 def check_boinc():
     """
     Check whether BOINC client is running before proceeding to implement
@@ -188,358 +182,382 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         'tt_max': 'na'}
 
 
-# pylint: disable=unused-argument
-def view_log(event=None) -> None:
+class Log:
     """
-    Create a separate window to view the log file as scrolled text.
-    Called from View menu bar or keybinding.
-
-    :param event: Needed for keybinding implicit event.
+    Methods to write and read log files of task count data.
     """
-    os_width = 0
-    if MY_OS in 'lin, win':
-        os_width = 79
-    elif MY_OS == 'dar':
-        os_width = 72
 
-    try:
-        with open(LOGFILE, encoding='utf-8') as file:
-            logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-            logwin.title(f'{LOGFILE} on {node()}')
-            if MY_OS in 'lin, dar':
-                logwin.minsize(800, 220)
-            elif MY_OS == 'win':
-                logwin.minsize(800, 200)
-            logwin.focus_set()
-            # Use a "dark" background/foreground theme for log text.
-            logtext = ScrolledText(logwin, width=os_width, height=30,
-                                   font='TkFixedFont', fg='grey80', bd=4,
-                                   bg='grey20', relief='groove', padx=12)
-            logtext.insert(tk.INSERT, file.read())
-            logtext.see('end')
-            logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+    # Log file or its link should be in the CountBOINCtasks-master folder.
+    #  But use .resolve() to handle symlinks.
+    LOGFILE = Path('count-tasks_log.txt').resolve()
+    BACKUPFILE = Path('count-tasks_log(copy).txt').resolve()
+    ANALYSISFILE = Path('count-analysis_log.txt').resolve()
 
-            def update():
-                """Replace log window text with log file content.
-                """
-                with open(LOGFILE, encoding='utf-8') as new_text:
-                    logtext.delete('1.0', tk.END)
-                    logtext.insert('1.0', new_text.read())
-                    logtext.see(tk.END)
-                    logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+    @staticmethod
+    def do_logging() -> None:
+        """
+        Establish logging to file of task data.
+        As used here, non-conventional logging is lazily employed to
+        manage the file of task report data, instead of using normal
+        read-write methods.
+        Called in response to settings() log option.
+        """
+        logging.basicConfig(filename=str(Log.LOGFILE), level=logging.INFO,
+                            filemode="a", format='%(message)s')
 
-            def erase():
-                """Delete log file content and log window text.
-                """
-                okay = messagebox.askokcancel(
-                    parent=logwin,
-                    title='Confirmation needed',
-                    message='Delete log file content?',
-                    detail="'Enter' or space bar will also delete log file content.")
-                if okay:
-                    # pylint: disable=consider-using-with
-                    open(LOGFILE, 'w').close()
-                    logtext.delete('1.0', tk.END)
+    @staticmethod
+    # pylint: disable=unused-argument
+    def view_log(event=None) -> None:
+        """
+        Create a separate window to view the log file as scrolled text.
+        Called from View menu bar or keybinding.
 
-            ttk.Button(logwin, text='Update', command=update).pack()
-            ttk.Button(logwin, text='Erase', command=erase).pack()
-            ttk.Button(
-                logwin, text='Analysis', command=show_analysis_data).pack(padx=4)
-    except FileNotFoundError:
-        info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
-                'Was the settings log option used?\n'
-                'Was file deleted, moved or renamed?')
-        messagebox.showerror(title='FILE NOT FOUND', detail=info)
+        :param event: Needed for keybinding implicit event.
+        """
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 79
+        elif MY_OS == 'dar':
+            os_width = 72
 
-
-def backup_log() -> None:
-    """
-    Copy the log file to the current folder; overwrites previous
-    back-up file.
-    Called from File menu bar.
-    """
-    # Could make this an outside function with backupfile and logfile as
-    #  arguments, but that would require import of partial from functools
-    #  to call it as a command from its menu bar object, its only call.
-    destination = BKUPFILE
-
-    if Path.is_file(LOGFILE):
         try:
-            shutil.copyfile(LOGFILE, destination)
-            success_msg = 'Log file has been copied to: '
-            success_detail = str(destination)
-            messagebox.showinfo(title='Backup completed',
-                                message=success_msg, detail=success_detail)
-        except PermissionError:
-            messagebox.showinfo(title='Log copy error',
-                                message="Permission denied")
-            print("Log file backup: Permission denied.")
-        except IsADirectoryError:
-            messagebox.showinfo(title='Log copy error',
-                                message="Backup file name is a directory")
-            print("Log file backup: Destination file is a directory.")
-        except shutil.SameFileError:
-            messagebox.showinfo(
-                title='Log copy error',
-                message="Source and destination are the same file")
-            print("Log file backup: Source and destination are the same file.")
-    else:
-        warn_main = f'Log {LOGFILE} cannot be archived'
-        warn_detail = ('Log file should be in folder:\n'
-                       f'{Path.cwd()}\n'
-                       'Has it been moved or renamed?')
-        messagebox.showwarning(title='FILE NOT FOUND',
-                               message=warn_main, detail=warn_detail)
+            with open(Log.LOGFILE, encoding='utf-8') as file:
+                logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
+                logwin.title(f'{Log.LOGFILE} on {node()}')
+                if MY_OS in 'lin, dar':
+                    logwin.minsize(800, 220)
+                elif MY_OS == 'win':
+                    logwin.minsize(800, 200)
+                logwin.focus_set()
+                # Use a "dark" background/foreground theme for log text.
+                logtext = ScrolledText(logwin, width=os_width, height=30,
+                                       font='TkFixedFont', fg='grey80', bd=4,
+                                       bg='grey20', relief='groove', padx=12)
+                logtext.insert(tk.INSERT, file.read())
+                logtext.see('end')
+                logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
+                def update():
+                    """Replace log window text with log file content.
+                    """
+                    with open(Log.LOGFILE, encoding='utf-8') as new_text:
+                        logtext.delete('1.0', tk.END)
+                        logtext.insert('1.0', new_text.read())
+                        logtext.see(tk.END)
+                        logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-def analyze_data() -> tuple:
-    """
-    Reads log file and analyses Summary and Interval counts.
-    Calls to show_analysis_data().
+                def erase():
+                    """Delete log file content and log window text.
+                    """
+                    okay = messagebox.askokcancel(
+                        parent=logwin,
+                        title='Confirmation needed',
+                        message='Delete log file content?',
+                        detail="'Enter' or space bar will also delete log file content.")
+                    if okay:
+                        # pylint: disable=consider-using-with
+                        open(Log.LOGFILE, 'w').close()
+                        logtext.delete('1.0', tk.END)
 
-    :return: text strings to print in a show_analysis_data()
-             Toplevel window.
-    """
-    sumry_dates = []
-    summary_intvls = []
-    sumry_num_intvls = 0
-    sumry_counts = []
-    sumry_cnt_avg = 0.0
-    sumry_cnt_range = ''
+                ttk.Button(logwin, text='Update', command=update).pack()
+                ttk.Button(logwin, text='Erase', command=erase).pack()
+                ttk.Button(
+                    logwin, text='Analysis', command=Log.show_analysis).pack(padx=4)
+        except FileNotFoundError:
+            info = (f'On {node()}, this file is missing:\n{Log.LOGFILE}\n'
+                    'Was the settings log option used?\n'
+                    'Was file deleted, moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
-    intvl_dates = []
-    regular_intvls = []
-    regular_num_intvls = 0
-    intvl_counts = []
-    intvl_cnt_avg = 0.0
-    intvl_cnt_range = ''
+    @staticmethod
+    def backup_log() -> None:
+        """
+        Copy the log file to the current folder; overwrites previous
+        back-up file.
+        Called from File menu bar.
+        """
+        # Could make this an outside function with backupfile and logfile as
+        #  arguments, but that would require import of partial from functools
+        #  to call it as a command from its menu bar object, its only call.
+        destination = Log.BACKUPFILE
 
-    recent_dates = []
-    recent_intvls = []
-    recent_num_intvls = 0
-    recent_counts = []
-    recent_cnt_avg = 0.0
-    recent_cnt_range = ''
+        if Path.is_file(Log.LOGFILE):
+            try:
+                shutil.copyfile(Log.LOGFILE, destination)
+                success_msg = 'Log file has been copied to: '
+                success_detail = str(destination)
+                messagebox.showinfo(title='Backup completed',
+                                    message=success_msg, detail=success_detail)
+            except PermissionError:
+                messagebox.showinfo(title='Log copy error',
+                                    message="Permission denied")
+                print("Log file backup: Permission denied.")
+            except IsADirectoryError:
+                messagebox.showinfo(title='Log copy error',
+                                    message="Backup file name is a directory")
+                print("Log file backup: Destination file is a directory.")
+            except shutil.SameFileError:
+                messagebox.showinfo(
+                    title='Log copy error',
+                    message="Source and destination are the same file")
+                print("Log file backup: Source and destination are the same file.")
+        else:
+            warn_main = f'Log {Log.LOGFILE} cannot be archived'
+            warn_detail = ('Log file should be in folder:\n'
+                           f'{Path.cwd()}\n'
+                           'Has it been moved or renamed?')
+            messagebox.showwarning(title='FILE NOT FOUND',
+                                   message=warn_main, detail=warn_detail)
 
-    sumry_analysis = ''
-    mop_up = ''
+    @staticmethod
+    def analyze_data() -> tuple:
+        """
+        Reads log file and analyses Summary and Interval counts.
+        Calls to show_analysis().
 
-    try:
-        with open(LOGFILE, encoding='utf-8') as file:
-            logtext = file.read()
-    except FileNotFoundError:
-        info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
-                'Was the settings log option used?\n'
-                'Was file deleted, moved or renamed?')
-        messagebox.showerror(title='FILE NOT FOUND', detail=info)
+        :return: text strings to print in a show_analysis()
+                 Toplevel window.
+        """
+        sumry_dates = []
+        summary_intvls = []
+        sumry_num_intvls = 0
+        sumry_counts = []
+        sumry_cnt_avg = 0.0
+        sumry_cnt_range = ''
+
+        intvl_dates = []
+        regular_intvls = []
+        regular_num_intvls = 0
+        intvl_counts = []
+        intvl_cnt_avg = 0.0
+        intvl_cnt_range = ''
+
+        recent_dates = []
+        recent_intvls = []
+        recent_num_intvls = 0
+        recent_counts = []
+        recent_cnt_avg = 0.0
+        recent_cnt_range = ''
+
+        sumry_analysis = ''
+        mop_up = ''
+
+        try:
+            with open(Log.LOGFILE, encoding='utf-8') as file:
+                logtext = file.read()
+        except FileNotFoundError:
+            info = (f'On {node()}, this file is missing:\n{Log.LOGFILE}\n'
+                    'Was the settings log option used?\n'
+                    'Was file deleted, moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return sumry_analysis, mop_up
+
+        # Need a match to summary lines in log, like this:
+        #   2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330
+        #   and to regular interval lines, like this:
+        #   2021-Oct-28 09:37:33; Tasks reported in the past 60m: 17
+        #   The line formats are specified in CountModeler.log_it().
+        capture_sumrys = re.findall(
+            r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
+        capture_intvls = re.findall(
+            r'^(.*); Tasks reported .* (\d+m): (\d+$)', logtext, re.MULTILINE)
+
+        if capture_sumrys:
+            sumry_dates, summary_intvls, sumry_cnts = zip(*capture_sumrys)
+            sumry_num_intvls = len(set(summary_intvls))
+            sumry_counts = list(map(int, sumry_cnts))
+            sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
+            sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
+        # Need these intvl vars when there are no summary data.
+        if capture_intvls:
+            intvl_dates, regular_intvls, intvl_cnts = zip(*capture_intvls)
+            regular_num_intvls = len(set(regular_intvls))
+            intvl_counts = list(map(int, intvl_cnts))
+            intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
+            intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
+        # Need these interval vars when there are interval counts following last summary.
+        #    But need only interval data following the last summary count.
+        if capture_sumrys and capture_intvls:
+            # Need the list index of first interval count after the last summary count.
+            indicies = [
+                i for i, tupl in enumerate(capture_intvls) if sumry_dates[-1] == tupl[0]]
+            recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[indicies[0]:])
+            recent_num_intvls = len(set(recent_intvls))
+            recent_counts = list(map(int, recent_cnts))
+            recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
+            recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
+
+        # Need to tailor report texts for various counting conditions.
+        if not capture_sumrys and not capture_intvls:
+            sumry_analysis = (
+                f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
+                '   There are not enough data to analyze.\n'
+                '   Need at least one summary or one\n'
+                '   interval count in the log file.\n')
+        if not capture_sumrys and capture_intvls:
+            sumry_analysis = '\nNo summary counts are logged yet.\n'
+            if regular_num_intvls == 1:
+                mop_up = (
+                    'Analysis of logged task counts from:\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    f'   {len(intvl_counts)} intervals logged\n'
+                    f'   {sum(intvl_counts)} reported tasks\n'
+                    f'   {intvl_cnt_avg} tasks per {regular_intvls[0]} interval\n'
+                    f'   {intvl_cnt_range} range of task counts\n')
+            else:
+                mop_up = (
+                    'Analysis of logged task counts from:\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    f'There are {regular_num_intvls} different interval times\n'
+                    f'logged, {set(regular_intvls)},\n'
+                    'so results may be inaccurate.\n\n'
+                    f'   {len(intvl_counts)} intervals logged\n'
+                    f'   {sum(intvl_counts)} reported tasks\n'
+                    f'   {intvl_cnt_avg} tasks per {regular_num_intvls} interval\n'
+                    f'   {intvl_cnt_range} range of task counts\n')
+        if capture_sumrys:
+            if sumry_num_intvls == 1:
+                sumry_analysis = (
+                    'Summary data in the log file from:\n'
+                    f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
+                    f'   {len(sumry_counts)} summaries logged\n'
+                    f'   {sum(sumry_counts)} reported tasks\n'
+                    f'   {sumry_cnt_avg} tasks per {summary_intvls[0]} summary interval\n'
+                    f'   {sumry_cnt_range} range of task counts\n')
+            else:
+                sumry_analysis = (
+                    'Summary data in the log file from:\n'
+                    f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
+                    f'There are {sumry_num_intvls} different logged Summary\n'
+                    f' interval times, {set(summary_intvls)},\n'
+                    'so results may be inaccurate.\n\n'
+                    f'   {len(sumry_counts)} summaries logged\n'
+                    f'   {sum(sumry_counts)} reported tasks\n'
+                    f'   {sumry_cnt_avg} tasks per summary\n'
+                    f'   {sumry_cnt_range} range of task counts\n')
+        if capture_sumrys and capture_intvls:
+            if recent_num_intvls == 1:
+                mop_up = (
+                    '\nSince last Summary, additional counts from:\n'
+                    f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                    f'   {len(recent_counts)} intervals logged\n'
+                    f'   {sum(recent_counts)} reported tasks\n'
+                    f'   {recent_cnt_avg} tasks per {recent_intvls[0]} interval\n'
+                    f'   {recent_cnt_range} range of task counts\n')
+            else:
+                mop_up = (
+                    '\nSince last Summary, additional counts from:\n'
+                    f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                    f'There are {recent_num_intvls} different logged\n'
+                    f' interval times, {set(recent_intvls)},\n'
+                    'so results may be inaccurate.\n\n'
+                    f'   {len(intvl_counts)} intervals logged\n'
+                    f'   {sum(intvl_counts)} reported tasks\n'
+                    f'   {recent_cnt_avg} tasks per interval\n'
+                    f'   {recent_cnt_range} range of task counts\n')
+
         return sumry_analysis, mop_up
 
-    # Need a match to summary lines in log, like this:
-    #   2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330
-    #   and to regular interval lines, like this:
-    #   2021-Oct-28 09:37:33; Tasks reported in the past 60m: 17
-    #   The line formats are specified in CountModeler.log_it().
-    capture_sumrys = re.findall(
-        r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
-    capture_intvls = re.findall(
-        r'^(.*); Tasks reported .* (\d+m): (\d+$)', logtext, re.MULTILINE)
+    @classmethod
+    # pylint: disable=unused-argument
+    def show_analysis(cls, event=None) -> None:
+        """
+        Generates a Toplevel window to display cumulative task counts that
+        have been logged.
+        Called from a view_log() button or a keybinding.
+        Provides option to append results to a file.
 
-    if capture_sumrys:
-        sumry_dates, summary_intvls, sumry_cnts = zip(*capture_sumrys)
-        sumry_num_intvls = len(set(summary_intvls))
-        sumry_counts = list(map(int, sumry_cnts))
-        sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
-        sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
-    # Need these intvl vars when there are no summary data.
-    if capture_intvls:
-        intvl_dates, regular_intvls, intvl_cnts = zip(*capture_intvls)
-        regular_num_intvls = len(set(regular_intvls))
-        intvl_counts = list(map(int, intvl_cnts))
-        intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
-        intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-    # Need these interval vars when there are interval counts following last summary.
-    #    But need only interval data following the last summary count.
-    if capture_sumrys and capture_intvls:
-        # Need the list index of first interval count after the last summary count.
-        indicies = [
-            i for i, tupl in enumerate(capture_intvls) if sumry_dates[-1] == tupl[0]]
-        recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[indicies[0]:])
-        recent_num_intvls = len(set(recent_intvls))
-        recent_counts = list(map(int, recent_cnts))
-        recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
-        recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
+        :param event: Needed for keybinding implicit event.
+        """
 
-    # Need to tailor report texts for various counting conditions.
-    if not capture_sumrys and not capture_intvls:
-        sumry_analysis = (
-            f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
-            '   There are not enough data to analyze.\n'
-            '   Need at least one summary or one\n'
-            '   interval count in the log file.\n')
-    if not capture_sumrys and capture_intvls:
-        sumry_analysis = '\nNo summary counts are logged yet.\n'
-        if regular_num_intvls == 1:
-            mop_up = (
-                'Analysis of logged task counts from:\n'
-                f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
-                f'   {len(intvl_counts)} intervals logged\n'
-                f'   {sum(intvl_counts)} reported tasks\n'
-                f'   {intvl_cnt_avg} tasks per {regular_intvls[0]} interval\n'
-                f'   {intvl_cnt_range} range of task counts\n')
-        else:
-            mop_up = (
-                'Analysis of logged task counts from:\n'
-                f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
-                f'There are {regular_num_intvls} different interval times\n'
-                f'logged, {set(regular_intvls)},\n'
-                'so results may be inaccurate.\n\n'
-                f'   {len(intvl_counts)} intervals logged\n'
-                f'   {sum(intvl_counts)} reported tasks\n'
-                f'   {intvl_cnt_avg} tasks per {regular_num_intvls} interval\n'
-                f'   {intvl_cnt_range} range of task counts\n')
-    if capture_sumrys:
-        if sumry_num_intvls == 1:
-            sumry_analysis = (
-                'Summary data in the log file from:\n'
-                f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
-                f'   {len(sumry_counts)} summaries logged\n'
-                f'   {sum(sumry_counts)} reported tasks\n'
-                f'   {sumry_cnt_avg} tasks per {summary_intvls[0]} summary interval\n'
-                f'   {sumry_cnt_range} range of task counts\n')
-        else:
-            sumry_analysis = (
-                'Summary data in the log file from:\n'
-                f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
-                f'There are {sumry_num_intvls} different logged Summary\n'
-                f' interval times, {set(summary_intvls)},\n'
-                'so results may be inaccurate.\n\n'
-                f'   {len(sumry_counts)} summaries logged\n'
-                f'   {sum(sumry_counts)} reported tasks\n'
-                f'   {sumry_cnt_avg} tasks per summary\n'
-                f'   {sumry_cnt_range} range of task counts\n')
-    if capture_sumrys and capture_intvls:
-        if recent_num_intvls == 1:
-            mop_up = (
-                '\nSince last Summary, additional counts from:\n'
-                f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                f'   {len(recent_counts)} intervals logged\n'
-                f'   {sum(recent_counts)} reported tasks\n'
-                f'   {recent_cnt_avg} tasks per {recent_intvls[0]} interval\n'
-                f'   {recent_cnt_range} range of task counts\n')
-        else:
-            mop_up = (
-                '\nSince last Summary, additional counts from:\n'
-                f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                f'There are {recent_num_intvls} different logged\n'
-                f' interval times, {set(recent_intvls)},\n'
-                'so results may be inaccurate.\n\n'
-                f'   {len(intvl_counts)} intervals logged\n'
-                f'   {sum(intvl_counts)} reported tasks\n'
-                f'   {recent_cnt_avg} tasks per interval\n'
-                f'   {recent_cnt_range} range of task counts\n')
+        # NOTE: When the log file is not found by analyze_data(), the returned
+        #   texts will be empty, so there is no need to continue with function.
+        summary_text, interval_text = Log.analyze_data()
+        if not summary_text and not interval_text:
+            return
+        pos_x, pos_y = app_position(15, 15)
+        analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
+        analysiswin.title('Analysis of logged data')
+        analysiswin.geometry(f'+{pos_x}+{+pos_y}')
+        analysiswin.minsize(520, 320)
+        analysiswin.focus_set()
 
-    return sumry_analysis, mop_up
+        # Separator dash from https://coolsymbol.com/line-symbols.html.
+        sep = f'{"─" * 46}\n\n'
+        text = summary_text + interval_text + sep
+        num_lines = text.count('\n')
+        analysistext = tk.Text(analysiswin, font='TkFixedFont',
+                               width=46, height=num_lines,
+                               background='grey85', foreground='grey5',
+                               relief='groove', borderwidth=4,
+                               padx=15, pady=10)
+        analysistext.insert(1.0, text)
+        analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
+        def save_results():
+            destination = Log.ANALYSISFILE
+            savetxt = analysistext.get(1.0, tk.END)
+            # if encoding == "locale":
+            #     encoding = locale.getpreferredencoding(False)
+            with open(destination, 'a', encoding='utf-8') as saved_analysis:
+                saved_analysis.write(savetxt)
+            messagebox.showinfo(message='Results saved to:',
+                                detail=destination,
+                                parent=analysiswin)
+        ttk.Button(
+            analysiswin, text='Save results', command=save_results).pack(padx=4)
 
-# pylint: disable=unused-argument
-def show_analysis_data(event=None) -> None:
-    """
-    Generates a Toplevel window to display cumulative task counts that
-    have been logged.
-    Called from a view_log() button or a keybinding.
-    Provides option to append results to a file.
+    @staticmethod
+    # pylint: disable=unused-argument
+    def view_analysis_log(event=None) -> None:
+        """
+        Create a separate window to view the count analysis file, as
+        scrolled text.
+        Called from View menu bar or keybinding.
 
-    :param event: Needed for keybinding implicit event.
-    """
+        :param event: Needed for keybinding implicit event.
+        """
 
-    # NOTE: When the log file is not found by analyze_data(), the returned
-    #   texts will be empty, so there is no need to continue with function.
-    summary_text, interval_text = analyze_data()
-    if not summary_text and not interval_text:
-        return
-    pos_x, pos_y = app_position(15, 15)
-    analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
-    analysiswin.title('Analysis of logged data')
-    analysiswin.geometry(f'+{pos_x}+{+pos_y}')
-    analysiswin.minsize(520, 320)
-    analysiswin.focus_set()
+        pos_x, pos_y = app_position(15, 15)
 
-    # Separator dash from https://coolsymbol.com/line-symbols.html.
-    sep = f'{"─" * 46}\n\n'
-    text = summary_text + interval_text + sep
-    num_lines = text.count('\n')
-    analysistext = tk.Text(analysiswin, font='TkFixedFont',
-                           width=46, height=num_lines,
-                           background='grey85', foreground='grey5',
-                           relief='groove', borderwidth=4,
-                           padx=15, pady=10)
-    analysistext.insert(1.0, text)
-    analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        try:
+            with open(Log.ANALYSISFILE, encoding='utf-8') as file:
+                analysisfilewin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
+                analysisfilewin.title(f'{Log.ANALYSISFILE} on {node()}')
+                analysisfilewin.geometry(f'+{pos_x}+{+pos_y}')
+                if MY_OS in 'lin, dar':
+                    analysisfilewin.minsize(420, 450)
+                elif MY_OS == 'win':
+                    analysisfilewin.minsize(400, 450)
+                analysisfilewin.focus_set()
+                # Use a "dark" background/foreground theme for analysis text.
+                analysistext = ScrolledText(
+                    analysisfilewin, width=46, height=30,
+                    font='TkFixedFont', fg='grey80', bd=4,
+                    bg='grey20', relief='groove', padx=12)
+                analysistext.insert(tk.INSERT, file.read())
+                analysistext.see('end')
+                analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-    def save_results():
-        destination = ANALYSISFILE
-        savetxt = analysistext.get(1.0, tk.END)
-        # if encoding == "locale":
-        #     encoding = locale.getpreferredencoding(False)
-        with open(destination, 'a', encoding='utf-8') as saved_analysis:
-            saved_analysis.write(savetxt)
-        messagebox.showinfo(message='Results saved to:',
-                            detail=destination,
-                            parent=analysiswin)
-    ttk.Button(
-        analysiswin, text='Save results', command=save_results).pack(padx=4)
+                def erase():
+                    """Delete analysis file content and analysis window text.
+                    """
+                    okay = messagebox.askokcancel(
+                        parent=analysisfilewin,
+                        title='Confirmation needed',
+                        message='Delete analysis file content?',
+                        detail="'Enter' or space bar will also delete file content.")
+                    if okay:
+                        # pylint: disable=consider-using-with
+                        open(Log.ANALYSISFILE, 'w').close()
+                        analysistext.delete('1.0', tk.END)
 
-
-# pylint: disable=unused-argument
-def view_saved_analyses(event=None) -> None:
-    """
-    Create a separate window to view the count analysis file, as
-    scrolled text.
-    Called from View menu bar or keybinding.
-
-    :param event: Needed for keybinding implicit event.
-    """
-
-    pos_x, pos_y = app_position(15, 15)
-
-    try:
-        with open(ANALYSISFILE, encoding='utf-8') as file:
-            analysisfilewin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-            analysisfilewin.title(f'{ANALYSISFILE} on {node()}')
-            analysisfilewin.geometry(f'+{pos_x}+{+pos_y}')
-            if MY_OS in 'lin, dar':
-                analysisfilewin.minsize(420, 450)
-            elif MY_OS == 'win':
-                analysisfilewin.minsize(400, 450)
-            analysisfilewin.focus_set()
-            # Use a "dark" background/foreground theme for analysis text.
-            analysistext = ScrolledText(
-                analysisfilewin, width=46, height=30,
-                font='TkFixedFont', fg='grey80', bd=4,
-                bg='grey20', relief='groove', padx=12)
-            analysistext.insert(tk.INSERT, file.read())
-            analysistext.see('end')
-            analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-            def erase():
-                """Delete analysis file content and analysis window text.
-                """
-                okay = messagebox.askokcancel(
-                    parent=analysisfilewin,
-                    title='Confirmation needed',
-                    message='Delete analysis file content?',
-                    detail="'Enter' or space bar will also delete file content.")
-                if okay:
-                    # pylint: disable=consider-using-with
-                    open(ANALYSISFILE, 'w').close()
-                    analysistext.delete('1.0', tk.END)
-
-            ttk.Button(analysisfilewin, text='Erase', command=erase).pack(padx=4)
-    except FileNotFoundError:
-        info = (f'On {node()}, this file is missing:\n{LOGFILE}\n'
-                'Have any analysis results been saved yet?\n'
-                'Was file deleted, moved or renamed?')
-        messagebox.showerror(title='FILE NOT FOUND', detail=info)
+                ttk.Button(analysisfilewin, text='Erase', command=erase).pack(padx=4)
+        except FileNotFoundError:
+            info = (f'On {node()}, this file is missing:\n{Log.LOGFILE}\n'
+                    'Have any analysis results been saved yet?\n'
+                    'Was file deleted, moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
 
 # ############################ MVC Classes #############################
@@ -1246,7 +1264,7 @@ class CountViewer(tk.Frame):
         # Note: 'self'.file b/c also used in check_and_set()
         self.file = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=self.file)
-        self.file.add_command(label="Backup log file", command=backup_log)
+        self.file.add_command(label="Backup log file", command=Log.backup_log)
         self.file.add_separator()
         self.file.add_command(label='Quit', command=self.share.quitgui,
                               # Note: macOS won't display this accelerator text
@@ -1255,12 +1273,12 @@ class CountViewer(tk.Frame):
                               accelerator=f'{os_accelerator}+Q')
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
-        view.add_command(label="Log file", command=view_log,
+        view.add_command(label="Log file", command=Log.view_log,
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
-        view.add_command(label="Analysis", command=show_analysis_data,
+        view.add_command(label="Analysis", command=Log.show_analysis,
                          accelerator="Ctrl+A")
-        view.add_command(label="Saved analyses", command=view_saved_analyses)
+        view.add_command(label="Saved analyses", command=Log.view_analysis_log)
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
@@ -1268,7 +1286,7 @@ class CountViewer(tk.Frame):
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
 
-        self.viewlog_b = ttk.Button(text='View log file', command=view_log)
+        self.viewlog_b = ttk.Button(text='View log file', command=Log.view_log)
         # Set interval & summary focus button attributes with .share. b/c need
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with ttk intvl_b after first interval
@@ -1289,7 +1307,7 @@ class CountViewer(tk.Frame):
         """
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
-        self.master.title(GUI_TITLE)
+        self.master.title('BOINC task counter')
         # Need to color in all of master Frame, and use near-white border;
         #    changes to grey for click-drag and loss of focus.
         self.master.configure(bg=self.master_bg,
@@ -1309,8 +1327,8 @@ class CountViewer(tk.Frame):
             cmdkey = 'Command'
         self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", view_log)
-        self.master.bind("<Control-a>", show_analysis_data)
+        self.master.bind("<Control-l>", Log.view_log)
+        self.master.bind("<Control-a>", Log.show_analysis)
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -1611,11 +1629,8 @@ class CountViewer(tk.Frame):
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
-        # Here logging is lazily employed to manage the file of report data.
-        # A log file will be created only if so optioned (default).
         if self.share.setting['do_log'].get():
-            logging.basicConfig(filename=str(LOGFILE), level=logging.INFO,
-                                filemode="a", format='%(message)s')
+            Log.do_logging()
         else:
             self.viewlog_b.config(state=tk.DISABLED)
             self.file.entryconfig("Backup log file", state=tk.DISABLED)
@@ -2006,6 +2021,7 @@ class CountFyi:
         abouttxt.pack()
 
 
+# pylint: disable=unused-argument
 def parse_args(argv=None) -> None:
     """
     Allow handling of common execution arguments.
