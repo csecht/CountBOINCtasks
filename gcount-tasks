@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.32'
+__version__ = '0.5.33'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -347,12 +347,10 @@ class Log:
                     message="Source and destination are the same file")
                 print("Log file backup: Source and destination are the same file.")
         except FileNotFoundError:
-            warn_main = f'Log {cls.LOGFILE} cannot be archived'
-            warn_detail = ('Log file should be in folder:\n'
-                           f'{Path.cwd()}\n'
+            warn_detail = (f'On {node()}, cannot be back up:\n'
+                           f'{cls.LOGFILE}\n'
                            'Has it been moved or renamed?')
-            messagebox.showwarning(title='FILE NOT FOUND',
-                                   message=warn_main, detail=warn_detail)
+            messagebox.showwarning(title='FILE NOT FOUND', detail=warn_detail)
 
     @classmethod
     def analyze_data(cls) -> tuple:
@@ -391,7 +389,7 @@ class Log:
             with open(cls.LOGFILE, encoding='utf-8') as file:
                 logtext = file.read()
         except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
+            info = (f'On {node()}, missing the file:\n{cls.LOGFILE}\n'
                     'Was the settings log option used?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
@@ -496,8 +494,8 @@ class Log:
                     f'There are {recent_num_intvls} different logged\n'
                     f' interval times, {set(recent_intvls)},\n'
                     'so results may be inaccurate.\n\n'
-                    f'   {len(intvl_counts)} intervals logged\n'
-                    f'   {sum(intvl_counts)} reported tasks\n'
+                    f'   {len(recent_counts)} intervals logged\n'
+                    f'   {sum(recent_counts)} reported tasks\n'
                     f'   {recent_cnt_avg} tasks per interval\n'
                     f'   {recent_cnt_range} range of task counts\n')
 
