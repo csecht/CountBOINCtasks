@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.33'
+__version__ = '0.5.34'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -205,18 +205,16 @@ class Log:
                             filemode="a", format='%(message)s')
 
     @classmethod
-    def save(cls, dest, savetxt: str, parentwin=None) -> None:
+    def save(cls, dest: Path, savetxt: str) -> None:
         """Save text to a file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
-        :param parentwin: Window over which to place save confirmation.
         """
         try:
             with open(dest, 'a', encoding='utf-8') as saved:
                 saved.write(savetxt)
-            messagebox.showinfo(message='Results saved to:',
-                                detail=dest, parent=parentwin)
+            messagebox.showinfo(message='Results saved to:', detail=dest)
         except FileNotFoundError:
             info = (f'On {node()}, this file is missing:\n{dest}\n'
                     'Was file deleted, moved or renamed?')
@@ -230,17 +228,14 @@ class Log:
             print(err)
 
     @classmethod
-    def erase(cls, parentwin, wintext, logfile) -> None:
+    def erase(cls, tktext: tk.Text, logfile: Path) -> None:
         """Delete log file content and log window text.
 
-        :param parentwin: The tk.Toplevel window over which to place
-                          the erase confirmation messagebox.
-        :param wintext: A tkinter.scrolledtext.ScrolledText or
-                        tkinter.Text object for the parentwin text.
+        :param tktext: A tkinter.scrolledtext.ScrolledText or
+                        tkinter.Text insert.
         :param logfile: Path object of the file's content to erase.
         """
         okay = messagebox.askokcancel(
-            parent=parentwin,
             title='Confirmation needed',
             message='Delete file content?',
             detail="'Enter' or space bar will also delete file content.")
@@ -248,7 +243,7 @@ class Log:
             try:
                 open(logfile, 'w').close()
                 # pylint: disable=consider-using-with
-                wintext.delete('1.0', tk.END)
+                tktext.delete('1.0', tk.END)
             except FileNotFoundError:
                 info = (f'On {node()}, could not erase contents of\n'
                         f'{logfile}\nbecause file is missing.\n'
@@ -308,7 +303,7 @@ class Log:
         ttk.Button(logwin, text='Update', command=update).pack(padx=4)
         ttk.Button(
             logwin, text='Erase',
-            command=(lambda p=logwin, t=logtext, f=cls.LOGFILE: cls.erase(p, t, f))
+            command=(lambda t=logtext, f=cls.LOGFILE: cls.erase(t, f))
             ).pack(padx=4)
         ttk.Button(
             logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
@@ -538,8 +533,8 @@ class Log:
 
         ttk.Button(
             analysiswin, text='Save results',
-            command=lambda d=cls.ANALYSISFILE, t=text, p=analysiswin: cls.save(d, t, p)
-            ).pack(padx=4)
+            command=lambda d=cls.ANALYSISFILE, t=text: cls.save(d, t)
+        ).pack(padx=4)
 
     @classmethod
     # pylint: disable=unused-argument
@@ -581,7 +576,7 @@ class Log:
         ttk.Button(
             analylogwin, text='Erase',
             command=(
-                lambda p=analylogwin, t=analytxt, f=cls.ANALYSISFILE: cls.erase(p, t, f))
+                lambda t=analytxt, f=cls.ANALYSISFILE: cls.erase(t, f))
             ).pack(padx=4)
 
 
