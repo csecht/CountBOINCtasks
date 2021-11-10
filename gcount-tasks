@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.29'
+__version__ = '0.5.30'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -187,27 +187,26 @@ class Log:
     Methods to write and read log files of task count data.
     """
 
-    # Log file or its link should be in the CountBOINCtasks-master folder.
-    #  But use .resolve() to handle symlinks.
+    # Log files should be in the parent (CountBOINCtasks-master) folder
+    #   but need .resolve() to handle symlinks.
     LOGFILE = Path('count-tasks_log.txt').resolve()
     BACKUPFILE = Path('count-tasks_log(copy).txt').resolve()
     ANALYSISFILE = Path('count-analysis_log.txt').resolve()
 
-    @staticmethod
-    def do_logging() -> None:
+    @classmethod
+    def do_logging(cls) -> None:
         """
         Establish logging to file of task data.
-        As used here, non-conventional logging is lazily employed to
-        manage the file of task report data, instead of using normal
-        read-write methods.
+        As used here, logging is lazily employed to manage the file of
+        task report data, instead of using normal read-write methods.
         Called in response to settings() log option.
         """
-        logging.basicConfig(filename=str(Log.LOGFILE), level=logging.INFO,
+        logging.basicConfig(filename=str(cls.LOGFILE), level=logging.INFO,
                             filemode="a", format='%(message)s')
 
-    @staticmethod
+    @classmethod
     # pylint: disable=unused-argument
-    def view_log(event=None) -> None:
+    def view_log(cls, event=None) -> None:
         """
         Create a separate window to view the log file as scrolled text.
         Called from View menu bar or keybinding.
@@ -221,9 +220,9 @@ class Log:
             os_width = 72
 
         try:
-            with open(Log.LOGFILE, encoding='utf-8') as file:
+            with open(cls.LOGFILE, encoding='utf-8') as file:
                 logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-                logwin.title(f'{Log.LOGFILE} on {node()}')
+                logwin.title(f'{cls.LOGFILE} on {node()}')
                 if MY_OS in 'lin, dar':
                     logwin.minsize(800, 220)
                 elif MY_OS == 'win':
@@ -240,7 +239,7 @@ class Log:
                 def update():
                     """Replace log window text with log file content.
                     """
-                    with open(Log.LOGFILE, encoding='utf-8') as new_text:
+                    with open(cls.LOGFILE, encoding='utf-8') as new_text:
                         logtext.delete('1.0', tk.END)
                         logtext.insert('1.0', new_text.read())
                         logtext.see(tk.END)
@@ -256,21 +255,21 @@ class Log:
                         detail="'Enter' or space bar will also delete log file content.")
                     if okay:
                         # pylint: disable=consider-using-with
-                        open(Log.LOGFILE, 'w').close()
+                        open(cls.LOGFILE, 'w').close()
                         logtext.delete('1.0', tk.END)
 
                 ttk.Button(logwin, text='Update', command=update).pack()
                 ttk.Button(logwin, text='Erase', command=erase).pack()
                 ttk.Button(
-                    logwin, text='Analysis', command=Log.show_analysis).pack(padx=4)
+                    logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
         except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{Log.LOGFILE}\n'
+            info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
                     'Was the settings log option used?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
-    @staticmethod
-    def backup_log() -> None:
+    @classmethod
+    def backup_log(cls) -> None:
         """
         Copy the log file to the current folder; overwrites previous
         back-up file.
@@ -279,11 +278,11 @@ class Log:
         # Could make this an outside function with backupfile and logfile as
         #  arguments, but that would require import of partial from functools
         #  to call it as a command from its menu bar object, its only call.
-        destination = Log.BACKUPFILE
+        destination = cls.BACKUPFILE
 
-        if Path.is_file(Log.LOGFILE):
+        if Path.is_file(cls.LOGFILE):
             try:
-                shutil.copyfile(Log.LOGFILE, destination)
+                shutil.copyfile(cls.LOGFILE, destination)
                 success_msg = 'Log file has been copied to: '
                 success_detail = str(destination)
                 messagebox.showinfo(title='Backup completed',
@@ -302,15 +301,15 @@ class Log:
                     message="Source and destination are the same file")
                 print("Log file backup: Source and destination are the same file.")
         else:
-            warn_main = f'Log {Log.LOGFILE} cannot be archived'
+            warn_main = f'Log {cls.LOGFILE} cannot be archived'
             warn_detail = ('Log file should be in folder:\n'
                            f'{Path.cwd()}\n'
                            'Has it been moved or renamed?')
             messagebox.showwarning(title='FILE NOT FOUND',
                                    message=warn_main, detail=warn_detail)
 
-    @staticmethod
-    def analyze_data() -> tuple:
+    @classmethod
+    def analyze_data(cls) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Calls to show_analysis().
@@ -343,10 +342,10 @@ class Log:
         mop_up = ''
 
         try:
-            with open(Log.LOGFILE, encoding='utf-8') as file:
+            with open(cls.LOGFILE, encoding='utf-8') as file:
                 logtext = file.read()
         except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{Log.LOGFILE}\n'
+            info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
                     'Was the settings log option used?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
@@ -472,7 +471,7 @@ class Log:
 
         # NOTE: When the log file is not found by analyze_data(), the returned
         #   texts will be empty, so there is no need to continue with function.
-        summary_text, interval_text = Log.analyze_data()
+        summary_text, interval_text = cls.analyze_data()
         if not summary_text and not interval_text:
             return
         pos_x, pos_y = app_position(15, 15)
@@ -495,10 +494,8 @@ class Log:
         analysistext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
         def save_results():
-            destination = Log.ANALYSISFILE
+            destination = cls.ANALYSISFILE
             savetxt = analysistext.get(1.0, tk.END)
-            # if encoding == "locale":
-            #     encoding = locale.getpreferredencoding(False)
             with open(destination, 'a', encoding='utf-8') as saved_analysis:
                 saved_analysis.write(savetxt)
             messagebox.showinfo(message='Results saved to:',
@@ -507,9 +504,9 @@ class Log:
         ttk.Button(
             analysiswin, text='Save results', command=save_results).pack(padx=4)
 
-    @staticmethod
+    @classmethod
     # pylint: disable=unused-argument
-    def view_analysis_log(event=None) -> None:
+    def view_analysis_log(cls, event=None) -> None:
         """
         Create a separate window to view the count analysis file, as
         scrolled text.
@@ -521,9 +518,9 @@ class Log:
         pos_x, pos_y = app_position(15, 15)
 
         try:
-            with open(Log.ANALYSISFILE, encoding='utf-8') as file:
+            with open(cls.ANALYSISFILE, encoding='utf-8') as file:
                 analysisfilewin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-                analysisfilewin.title(f'{Log.ANALYSISFILE} on {node()}')
+                analysisfilewin.title(f'{cls.ANALYSISFILE} on {node()}')
                 analysisfilewin.geometry(f'+{pos_x}+{+pos_y}')
                 if MY_OS in 'lin, dar':
                     analysisfilewin.minsize(420, 450)
@@ -549,12 +546,12 @@ class Log:
                         detail="'Enter' or space bar will also delete file content.")
                     if okay:
                         # pylint: disable=consider-using-with
-                        open(Log.ANALYSISFILE, 'w').close()
+                        open(cls.ANALYSISFILE, 'w').close()
                         analysistext.delete('1.0', tk.END)
 
                 ttk.Button(analysisfilewin, text='Erase', command=erase).pack(padx=4)
         except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{Log.LOGFILE}\n'
+            info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
                     'Have any analysis results been saved yet?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
