@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.37'
+__version__ = '0.5.38'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -228,7 +228,8 @@ class Log:
             info = (f'On {node()}, file is missing:\n{dest}\n'
                     'Have any analysis results been saved yet?\n'
                     'Was file deleted, moved or renamed?')
-            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return
 
     @classmethod
     def erase(cls, tktext: tk.Text, file: Path, parent=None) -> None:
@@ -245,7 +246,8 @@ class Log:
             info = (f'On {node()}, could not erase contents of\n'
                     f'{file}\nbecause file is missing.\n'
                     'Was it deleted, moved or renamed?')
-            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return
 
         msgdetail = "'Enter/Return' or space bar will also delete file content."
         if MY_OS == 'dar':
@@ -279,7 +281,8 @@ class Log:
             info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
                     'Was the settings log option used?\n'
                     'Was file deleted, moved or renamed?')
-            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return
 
         os_width = 0
         if MY_OS in 'lin, win':
@@ -309,10 +312,11 @@ class Log:
             """
 
             if not Path.exists(cls.LOGFILE):
-                info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
-                        'Was the settings log option used?\n'
-                        'Was file deleted, moved or renamed?')
-                return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+                msg = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
+                       'Was the settings log option used?\n'
+                       'Was file deleted, moved or renamed?')
+                messagebox.showerror(title='FILE NOT FOUND', detail=msg)
+                return
 
             with open(cls.LOGFILE, encoding='utf-8') as new_text:
                 logtext.delete('1.0', tk.END)
@@ -343,7 +347,8 @@ class Log:
         if not Path.exists(cls.LOGFILE):
             fnf_detail = (f'On {node()}, cannot back up:\n'
                           f'{cls.LOGFILE}\nHas it been moved or renamed?')
-            return messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
+            messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
+            return
 
         try:
             shutil.copyfile(cls.LOGFILE, destination)
@@ -516,6 +521,7 @@ class Log:
 
     @classmethod
     # pylint: disable=unused-argument
+    # noinspection PyArgumentList
     def show_analysis(cls, event=None) -> None:
         """
         Generate a Toplevel window to display cumulative task counts
@@ -566,14 +572,13 @@ class Log:
         :param event: Needed for keybinding implicit event.
         """
 
-        try:
-            with open(cls.LOGFILE, encoding='utf-8') as file:
-                logtext = file.read()
-        except FileNotFoundError:
+        if not Path.exists(cls.ANALYSISFILE):
             info = (f'On {node()}, file is missing:\n{cls.ANALYSISFILE}\n'
                     'Have any analysis results been saved yet?\n'
                     'Was file deleted, moved or renamed?')
-            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return
+
 
         pos_x, pos_y = app_position(15, 15)
         with open(cls.ANALYSISFILE, encoding='utf-8') as file:
@@ -1087,6 +1092,7 @@ class CountModeler:
         time.sleep(70)
 
     # pylint: disable=unused-argument
+    # noinspection PyBroadException
     def quit_gui(self, event=None) -> None:
         """
         Safe and informative exit from the program.
@@ -1106,6 +1112,7 @@ class CountModeler:
             app.update_idletasks()
             app.after(200)
             app.destroy()
+        # pylint: disable=broad-except
         except Exception:
             sys.exit(0)
 
@@ -1355,7 +1362,7 @@ class CountViewer(tk.Frame):
         # Provide user exit info to Terminal and log.
         self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
         self.master.bind_all('<Escape>', self.share.quitgui)
-        self.master.bind_all(f'<Control-q>', self.share.quitgui)
+        self.master.bind_all('<Control-q>', self.share.quitgui)
         # ^^ Note that macOS command-q will quit program without quit_qui msg.
 
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
