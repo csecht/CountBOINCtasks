@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.34'
+__version__ = '0.5.35'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -205,7 +205,7 @@ class Log:
                             filemode="a", format='%(message)s')
 
     @classmethod
-    def save(cls, dest: Path, savetxt: str) -> None:
+    def append(cls, dest: Path, savetxt: str) -> None:
         """Save text to a file.
 
         :param dest: Path object of destination file.
@@ -247,7 +247,7 @@ class Log:
         if okay:
             try:
                 with open(file, 'w') as _f:
-                    _f.write('')
+                    _f.close()
                 tktext.delete('1.0', tk.END)
             except FileNotFoundError:
                 info = (f'On {node()}, could not erase contents of\n'
@@ -299,19 +299,19 @@ class Log:
                         logtext.insert('1.0', new_text.read())
                         logtext.see(tk.END)
                         logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+            # Need buttons here b/c vars are defined only when log file exists.
+            ttk.Button(logwin, text='Update', command=update).pack(padx=4)
+            ttk.Button(
+                logwin, text='Erase',
+                command=(lambda t=logtext, f=cls.LOGFILE, p=logwin: cls.erase(t, f, p))
+                ).pack(padx=4)
+            ttk.Button(
+                logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
         except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
+            info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
                     'Was the settings log option used?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
-
-        ttk.Button(logwin, text='Update', command=update).pack(padx=4)
-        ttk.Button(
-            logwin, text='Erase',
-            command=(lambda t=logtext, f=cls.LOGFILE, p=logwin: cls.erase(t, f, p))
-            ).pack(padx=4)
-        ttk.Button(
-            logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
 
     @classmethod
     def backup_log(cls) -> None:
@@ -347,10 +347,9 @@ class Log:
                     message="Source and destination are the same file")
                 print("Log file backup: Source and destination are the same file.")
         except FileNotFoundError:
-            warn_detail = (f'On {node()}, cannot be back up:\n'
-                           f'{cls.LOGFILE}\n'
-                           'Has it been moved or renamed?')
-            messagebox.showwarning(title='FILE NOT FOUND', detail=warn_detail)
+            fnf_detail = (f'On {node()}, cannot back up:\n'
+                          f'{cls.LOGFILE}\nHas it been moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
 
     @classmethod
     def analyze_data(cls) -> tuple:
@@ -389,9 +388,9 @@ class Log:
             with open(cls.LOGFILE, encoding='utf-8') as file:
                 logtext = file.read()
         except FileNotFoundError:
-            info = (f'On {node()}, missing the file:\n{cls.LOGFILE}\n'
-                    'Was the settings log option used?\n'
-                    'Was file deleted, moved or renamed?')
+            info = (f'On {node()}, missing necessary file:\n{cls.LOGFILE}\n'
+                    'Was the settings "log results" option used?\n'
+                    'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return sumry_analysis, mop_up
 
@@ -537,8 +536,8 @@ class Log:
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
         ttk.Button(
-            analysiswin, text='Save results',
-            command=lambda d=cls.ANALYSISFILE, t=text: cls.save(d, t)
+            analysiswin, text='Save analysis',
+            command=lambda d=cls.ANALYSISFILE, t=text: cls.append(d, t)
         ).pack(padx=4)
 
     @classmethod
@@ -572,17 +571,17 @@ class Log:
                 analytxt.insert(tk.INSERT, file.read())
                 analytxt.see('end')
                 analytxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+                # Need button here b/c vars are defined only when log file exists.
+                ttk.Button(
+                    analylogwin, text='Erase',
+                    command=(
+                        lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t, f, p))
+                             ).pack(padx=4)
         except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{cls.LOGFILE}\n'
+            info = (f'On {node()}, file is missing:\n{cls.ANALYSISFILE}\n'
                     'Have any analysis results been saved yet?\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
-
-        ttk.Button(
-            analylogwin, text='Erase',
-            command=(
-                lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t,f,p))
-            ).pack(padx=4)
 
 
 # ############################ MVC Classes #############################
