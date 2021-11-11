@@ -237,11 +237,13 @@ class Log:
                         tkinter.Text insert.
         :param file: Path object of file from which to erase content.
         """
+        msgdetail = "'Enter/Return' or space bar will also delete file content."
+        if MY_OS == 'dar':
+            msgdetail = "'Enter/Return' will also delete file content."
         okay = messagebox.askokcancel(
             parent=parent,
             title='Confirmation needed',
-            message='Delete file content?',
-            detail="'Enter' or space bar will also delete file content.")
+            message='Delete file content?', detail=msgdetail)
         if okay:
             try:
                 with open(file, 'w') as _f:
