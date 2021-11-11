@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.35'
+__version__ = '0.5.36'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -77,6 +77,7 @@ LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 DAY_STRFTIME = '%A %H:%M'
 LONGSMRY_STRF = '%b %d %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
+
 
 # Use this for an immediate exit from Terminal; bypasses __name__ KeyInterrupt msg.
 # signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -211,14 +212,11 @@ class Log:
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
         """
+
         try:
             with open(dest, 'a', encoding='utf-8') as saved:
                 saved.write(savetxt)
             messagebox.showinfo(message='Results saved to:', detail=dest)
-        except FileNotFoundError:
-            info = (f'On {node()}, this file is missing:\n{dest}\n'
-                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
         except PermissionError:
             info = (f'On {node()}, {dest}\n could not be opened because\n'
                     'of insufficient permissions.')
@@ -226,20 +224,33 @@ class Log:
         except UnicodeError as err:
             messagebox.showerror(title='Wrong file encoding', detail=err)
             print(err)
+        except FileNotFoundError:
+            info = (f'On {node()}, file is missing:\n{dest}\n'
+                    'Have any analysis results been saved yet?\n'
+                    'Was file deleted, moved or renamed?')
+            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
     @classmethod
     def erase(cls, tktext: tk.Text, file: Path, parent=None) -> None:
         """Delete file contents and its displayed window text.
 
-        :param parent: The parent window over which to place messagebox;
-                       usually a Toplevel(). Defaults to app window.
         :param tktext: A tkinter.scrolledtext.ScrolledText or
-                        tkinter.Text insert.
+                       tkinter.Text insert.
         :param file: Path object of file from which to erase content.
+        :param parent: The parent window over which to place messagebox;
+               usually a Toplevel(). Defaults to app window.
         """
+
+        if not Path.exists(file):
+            info = (f'On {node()}, could not erase contents of\n'
+                    f'{file}\nbecause file is missing.\n'
+                    'Was it deleted, moved or renamed?')
+            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
         msgdetail = "'Enter/Return' or space bar will also delete file content."
         if MY_OS == 'dar':
             msgdetail = "'Enter/Return' will also delete file content."
+
         okay = messagebox.askokcancel(
             parent=parent,
             title='Confirmation needed',
@@ -249,11 +260,6 @@ class Log:
                 with open(file, 'w') as _f:
                     _f.close()
                 tktext.delete('1.0', tk.END)
-            except FileNotFoundError:
-                info = (f'On {node()}, could not erase contents of\n'
-                        f'{file}\nbecause file is missing.\n'
-                        'Was it deleted, moved or renamed?')
-                messagebox.showerror(title='FILE NOT FOUND', detail=info)
             except PermissionError:
                 info = (f'On {node()}, could not erase contents of\n'
                         f'{file}\nbecause it could not be opened.')
@@ -268,50 +274,59 @@ class Log:
 
         :param event: Needed for keybinding implicit event.
         """
+
+        if not Path.exists(cls.LOGFILE):
+            info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
+                    'Was the settings log option used?\n'
+                    'Was file deleted, moved or renamed?')
+            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
         os_width = 0
         if MY_OS in 'lin, win':
             os_width = 79
         elif MY_OS == 'dar':
             os_width = 72
 
-        try:
-            with open(cls.LOGFILE, encoding='utf-8') as file:
-                logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-                logwin.title(f'{cls.LOGFILE} on {node()}')
-                if MY_OS in 'lin, dar':
-                    logwin.minsize(800, 220)
-                elif MY_OS == 'win':
-                    logwin.minsize(800, 200)
-                logwin.focus_set()
-                # Use a "dark" background/foreground theme for log text.
-                logtext = ScrolledText(logwin, width=os_width, height=30,
-                                       font='TkFixedFont', fg='grey80', bd=4,
-                                       bg='grey20', relief='groove', padx=12)
-                logtext.insert(tk.INSERT, file.read())
-                logtext.see('end')
+        with open(cls.LOGFILE, encoding='utf-8') as file:
+            logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
+            logwin.title(f'{cls.LOGFILE} on {node()}')
+            if MY_OS in 'lin, dar':
+                logwin.minsize(800, 220)
+            elif MY_OS == 'win':
+                logwin.minsize(800, 200)
+            logwin.focus_set()
+            # Use a "dark" background/foreground theme for log text.
+            logtext = ScrolledText(logwin, width=os_width, height=30,
+                                   font='TkFixedFont', fg='grey80', bd=4,
+                                   bg='grey20', relief='groove', padx=12)
+            logtext.insert(tk.INSERT, file.read())
+            logtext.see('end')
+            logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+        def update():
+            """
+            Replace text in open log window with (new) log file content.
+            """
+
+            if not Path.exists(cls.LOGFILE):
+                info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
+                        'Was the settings log option used?\n'
+                        'Was file deleted, moved or renamed?')
+                return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
+            with open(cls.LOGFILE, encoding='utf-8') as new_text:
+                logtext.delete('1.0', tk.END)
+                logtext.insert('1.0', new_text.read())
+                logtext.see(tk.END)
                 logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-                def update():
-                    """Replace log window text with log file content.
-                    """
-                    with open(cls.LOGFILE, encoding='utf-8') as new_text:
-                        logtext.delete('1.0', tk.END)
-                        logtext.insert('1.0', new_text.read())
-                        logtext.see(tk.END)
-                        logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-            # Need buttons here b/c vars are defined only when log file exists.
-            ttk.Button(logwin, text='Update', command=update).pack(padx=4)
-            ttk.Button(
-                logwin, text='Erase',
-                command=(lambda t=logtext, f=cls.LOGFILE, p=logwin: cls.erase(t, f, p))
-                ).pack(padx=4)
-            ttk.Button(
-                logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
-        except FileNotFoundError:
-            info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
-                    'Was the settings log option used?\n'
-                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+        ttk.Button(logwin, text='Update', command=update).pack(padx=4)
+        ttk.Button(
+            logwin, text='Erase',
+            command=(lambda t=logtext, f=cls.LOGFILE, p=logwin: cls.erase(t, f, p))
+        ).pack(padx=4)
+        ttk.Button(
+            logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
 
     @classmethod
     def backup_log(cls) -> None:
@@ -325,31 +340,30 @@ class Log:
         #  to call it as a command from its menu bar object, its only call.
         destination = cls.BACKUPFILE
 
-        try:
-            Path.is_file(cls.LOGFILE)
-            try:
-                shutil.copyfile(cls.LOGFILE, destination)
-                success_msg = 'Log file has been copied to: '
-                success_detail = str(destination)
-                messagebox.showinfo(title='Backup completed',
-                                    message=success_msg, detail=success_detail)
-            except PermissionError:
-                messagebox.showinfo(title='Log copy error',
-                                    message="Permission denied")
-                print("Log file backup: Permission denied.")
-            except IsADirectoryError:
-                messagebox.showinfo(title='Log copy error',
-                                    message="Backup file name is a directory")
-                print("Log file backup: Destination file is a directory.")
-            except shutil.SameFileError:
-                messagebox.showinfo(
-                    title='Log copy error',
-                    message="Source and destination are the same file")
-                print("Log file backup: Source and destination are the same file.")
-        except FileNotFoundError:
+        if not Path.exists(cls.LOGFILE):
             fnf_detail = (f'On {node()}, cannot back up:\n'
                           f'{cls.LOGFILE}\nHas it been moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
+            return messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
+
+        try:
+            shutil.copyfile(cls.LOGFILE, destination)
+            success_msg = 'Log file has been copied to: '
+            success_detail = str(destination)
+            messagebox.showinfo(title='Backup completed',
+                                message=success_msg, detail=success_detail)
+        except PermissionError:
+            messagebox.showinfo(title='Log copy error',
+                                message="Permission denied")
+            print("Log file backup: Permission denied.")
+        except IsADirectoryError:
+            messagebox.showinfo(title='Log copy error',
+                                message="Backup file name is a directory")
+            print("Log file backup: Destination file is a directory.")
+        except shutil.SameFileError:
+            messagebox.showinfo(
+                title='Log copy error',
+                message="Source and destination are the same file")
+            print("Log file backup: Source and destination are the same file.")
 
     @classmethod
     def analyze_data(cls) -> tuple:
@@ -517,6 +531,7 @@ class Log:
         summary_text, interval_text = cls.analyze_data()
         if not summary_text and not interval_text:
             return
+
         pos_x, pos_y = app_position(15, 15)
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged data')
@@ -551,37 +566,39 @@ class Log:
         :param event: Needed for keybinding implicit event.
         """
 
-        pos_x, pos_y = app_position(15, 15)
-
         try:
-            with open(cls.ANALYSISFILE, encoding='utf-8') as file:
-                analylogwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-                analylogwin.title(f'{cls.ANALYSISFILE} on {node()}')
-                analylogwin.geometry(f'+{pos_x}+{+pos_y}')
-                if MY_OS in 'lin, dar':
-                    analylogwin.minsize(420, 450)
-                elif MY_OS == 'win':
-                    analylogwin.minsize(400, 450)
-                analylogwin.focus_set()
-                # Use a "dark" background/foreground theme.
-                analytxt = ScrolledText(analylogwin, font='TkFixedFont',
-                                        width=46, height=30,
-                                        bg='grey20', fg='grey80',
-                                        relief='groove', bd=4, padx=12)
-                analytxt.insert(tk.INSERT, file.read())
-                analytxt.see('end')
-                analytxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-                # Need button here b/c vars are defined only when log file exists.
-                ttk.Button(
-                    analylogwin, text='Erase',
-                    command=(
-                        lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t, f, p))
-                             ).pack(padx=4)
+            with open(cls.LOGFILE, encoding='utf-8') as file:
+                logtext = file.read()
         except FileNotFoundError:
             info = (f'On {node()}, file is missing:\n{cls.ANALYSISFILE}\n'
                     'Have any analysis results been saved yet?\n'
                     'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
+        pos_x, pos_y = app_position(15, 15)
+        with open(cls.ANALYSISFILE, encoding='utf-8') as file:
+            analylogwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
+            analylogwin.title(f'{cls.ANALYSISFILE} on {node()}')
+            analylogwin.geometry(f'+{pos_x}+{+pos_y}')
+            if MY_OS in 'lin, dar':
+                analylogwin.minsize(420, 450)
+            elif MY_OS == 'win':
+                analylogwin.minsize(400, 450)
+            analylogwin.focus_set()
+            # Use a "dark" background/foreground theme.
+            analytxt = ScrolledText(analylogwin, font='TkFixedFont',
+                                    width=46, height=30,
+                                    bg='grey20', fg='grey80',
+                                    relief='groove', bd=4, padx=12)
+            analytxt.insert(tk.INSERT, file.read())
+            analytxt.see('end')
+            analytxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+            # Need button here b/c vars are defined only when log file exists.
+            ttk.Button(
+                analylogwin, text='Erase',
+                command=(
+                    lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t, f, p))
+            ).pack(padx=4)
 
 
 # ############################ MVC Classes #############################
@@ -1085,8 +1102,12 @@ class CountModeler:
         print(quit_msg)
         if self.share.setting['do_log'].get():
             logging.info(quit_msg)
-        app.destroy()
-        sys.exit(0)
+        try:
+            app.update_idletasks()
+            app.after(200)
+            app.destroy()
+        except Exception:
+            sys.exit(0)
 
 
 # MVC Viewer, the tkinter GUI engine; runs in main thread.
@@ -1115,8 +1136,8 @@ class CountViewer(tk.Frame):
         #   another application has focus.
         #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
-        self.bind_all("<FocusIn>", self.app_got_focus)
-        self.bind_all("<FocusOut>", self.app_lost_focus)
+        self.bind("<FocusIn>", self.app_got_focus)
+        self.bind("<FocusOut>", self.app_lost_focus)
 
         # settings() window widgets:
         self.settings_win = tk.Toplevel()
@@ -1339,17 +1360,12 @@ class CountViewer(tk.Frame):
                               highlightcolor='grey95',
                               highlightbackground='grey75')
 
-        # Provide Terminal exit info.
+        # Provide user exit info to Terminal and log.
         self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
         self.master.bind_all('<Escape>', self.share.quitgui)
+        self.master.bind_all(f'<Control-q>', self.share.quitgui)
+        # ^^ Note that macOS command-q will quit program without quit_qui msg.
 
-        # Set up universal and OS-specific keybindings and menus
-        cmdkey = ''
-        if MY_OS in 'lin, win':
-            cmdkey = 'Control'
-        elif MY_OS == 'dar':
-            cmdkey = 'Command'
-        self.master.bind(f'<{f"{cmdkey}"}-q>', self.share.quitgui)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
         self.master.bind("<Control-l>", Log.view_log)
         self.master.bind("<Control-a>", Log.show_analysis)
@@ -1502,6 +1518,7 @@ class CountViewer(tk.Frame):
                    '"Count now" is allowed once "Confirm" checks settings.')
             messagebox.showinfo(title='Confirm before closing', detail=msg,
                                 parent=self.settings_win)
+
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
         def explain_zero_max():
