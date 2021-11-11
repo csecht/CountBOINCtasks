@@ -228,30 +228,33 @@ class Log:
             print(err)
 
     @classmethod
-    def erase(cls, tktext: tk.Text, logfile: Path) -> None:
-        """Delete log file content and log window text.
+    def erase(cls, tktext: tk.Text, file: Path, parent=None) -> None:
+        """Delete file contents and its displayed window text.
 
+        :param parent: The parent window over which to place messagebox;
+                       usually a Toplevel(). Defaults to app window.
         :param tktext: A tkinter.scrolledtext.ScrolledText or
                         tkinter.Text insert.
-        :param logfile: Path object of the file's content to erase.
+        :param file: Path object of file from which to erase content.
         """
         okay = messagebox.askokcancel(
+            parent=parent,
             title='Confirmation needed',
             message='Delete file content?',
             detail="'Enter' or space bar will also delete file content.")
         if okay:
             try:
-                open(logfile, 'w').close()
-                # pylint: disable=consider-using-with
+                with open(file, 'w') as _f:
+                    _f.write('')
                 tktext.delete('1.0', tk.END)
             except FileNotFoundError:
                 info = (f'On {node()}, could not erase contents of\n'
-                        f'{logfile}\nbecause file is missing.\n'
+                        f'{file}\nbecause file is missing.\n'
                         'Was it deleted, moved or renamed?')
                 messagebox.showerror(title='FILE NOT FOUND', detail=info)
             except PermissionError:
                 info = (f'On {node()}, could not erase contents of\n'
-                        f'{logfile}\nbecause it could not be opened.')
+                        f'{file}\nbecause it could not be opened.')
                 messagebox.showerror(title='FILE PERMISSION ERROR', detail=info)
 
     @classmethod
@@ -303,7 +306,7 @@ class Log:
         ttk.Button(logwin, text='Update', command=update).pack(padx=4)
         ttk.Button(
             logwin, text='Erase',
-            command=(lambda t=logtext, f=cls.LOGFILE: cls.erase(t, f))
+            command=(lambda t=logtext, f=cls.LOGFILE, p=logwin: cls.erase(t, f, p))
             ).pack(padx=4)
         ttk.Button(
             logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
@@ -576,7 +579,7 @@ class Log:
         ttk.Button(
             analylogwin, text='Erase',
             command=(
-                lambda t=analytxt, f=cls.ANALYSISFILE: cls.erase(t, f))
+                lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t,f,p))
             ).pack(padx=4)
 
 
