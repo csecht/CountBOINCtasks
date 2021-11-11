@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.36'
+__version__ = '0.5.37'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1301,21 +1301,13 @@ class CountViewer(tk.Frame):
 
         # Add pull-down menus
         self.master.config(menu=self.menubar)
-        os_accelerator = ''
-        if MY_OS in 'lin, win':
-            os_accelerator = 'Ctrl'
-        elif MY_OS == 'dar':
-            os_accelerator = 'Command'
-        # Note: 'self'.file b/c also used in check_and_set()
         self.file = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=self.file)
         self.file.add_command(label="Backup log file", command=Log.backup_log)
         self.file.add_separator()
         self.file.add_command(label='Quit', command=self.share.quitgui,
-                              # Note: macOS won't display this accelerator text
-                              #   b/c can't override macOS native Command+Q;
-                              #   and don't want Ctrl+Q displayed or used on macOS.
-                              accelerator=f'{os_accelerator}+Q')
+                              accelerator='Ctrl+Q')
+        # ^^ Note: use Ctrl+Q for macOS also to call quit_qui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file", command=Log.view_log,
