@@ -73,7 +73,7 @@ Timed intervals beginning now...
 
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
  
-Running with the `--log` option will save the reports to a log file in the
+Running with the `--log` option will save data to the log file in the
  working folder. This file is appended to or created when the program is
   launched.
 
@@ -104,6 +104,14 @@ commands from within the parent folder:
 </ul>
 
 For a brief description and version number, use the `--about` command line option.
+
+Added features in the GUI version:
+<ul>
+<li>View the log file in a pop-up window.</li>
+<li>Backup the log file.</li>
+<li>Tally, view, and save task counts that have been recorded in the log file.</li>
+<li>Pop-up Help menu.</li>
+</ul>
 
 ![gcount-tasks](gcount-tasks_scrnshot.png)
 

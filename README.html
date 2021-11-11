@@ -32,16 +32,16 @@ default settings, in a Terminal window.
    boinc-client&#39;s boinccmd (or boinccmd.exe) executable. A custom command
     path can also be added to the countCFG.txt configuration file to avoid
     entering the path on the command line.</p>
-<p><code>~/countBOINCtasks-master$ ./count-tasks --help
+<pre><code>~/countBOINCtasks-master$ ./count-tasks --help
 usage: count-tasks [-h] [--about] [--log {yes,no}] [--interval M] [--summary TIMEunit] [--count_lim N]
 
 optional arguments:
-  -h, --help          show this help message and exit
-  --about             Author, copyright, and GNU license
-  --log {yes,no}      Create log file of results or append to existing log (default: yes)
-  --interval M        Specify minutes between task counts (default: 60)
-  --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
-  --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data</code></p>
+    -h, --help          show this help message and exit
+    --about             Author, copyright, and GNU license
+    --log {yes,no}      Create log file of results or append to existing log (default: yes)
+    --interval M        Specify minutes between task counts (default: 60)
+    --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
+    --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data</code></pre>
 Options can be abbreviated, e.g., <code>./count-tasks --l --i 15 --s 1h --c 12</code>
 
 <p>Running the default settings (no optional arguments), will count the
@@ -54,7 +54,7 @@ Options can be abbreviated, e.g., <code>./count-tasks --l --i 15 --s 1h --c 12</
 
 Example report results, using default settings:
 
-<p><code>:~/CountBOINCtasks-master$ ./count-tasks
+<pre><code>:~/CountBOINCtasks-master$ ./count-tasks
 2021-Jul-21 06:14:14; Number of tasks in the most recent BOINC report: 11
                       Task Time: mean 00:19:25, range [00:13:14 - 00:21:05],
                                  stdev 00:02:11, total 03:33:43
@@ -69,11 +69,11 @@ Timed intervals beginning now...
                       Total tasks in queue: 30
 
 1007 counts remaining until exit.
-13m ||||||||||&lt; ~time to next count</code></p>
+13m ||||||||||&lt; ~time to next count</code></pre>
 
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
 
-<p>Running with the <code>--log</code> option will save the reports to a log file in the
+<p>Running with the <code>--log</code> option will save data to the log file in the
  working folder. This file is appended to or created when the program is
     launched.</p>
 
@@ -104,6 +104,15 @@ commands from within the parent folder:
 </ul>
 
 <p>For a brief description and version number, use the <code>--about</code> command line option.</p>
+
+<p>Added features in the GUI version:</p>
+<ul>
+<li>View the log file in a pop-up window.</li>
+<li>Backup the log file.</li>
+<li>Tally, view, and save task counts that have been recorded in the log file.</li>
+<li>Pop-up Help menu.</li>
+</ul>
+
 <p><img src="gcount-tasks_scrnshot.png" alt="gcount-tasks"></p>
 <h3 id="stand-alone-versions-no-python-installation-needed-">Stand-alone versions (no Python installation needed!)</h3>
 <h4 id="gcount_tasks-exe-windows">gcount_tasks.exe - Windows</h4>
