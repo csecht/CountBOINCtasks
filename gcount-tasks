@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.39'
+__version__ = '0.5.40'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -208,6 +208,32 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         'tt_max': 'na'}
 
 
+# pylint: disable=unused-argument
+# noinspection PyBroadException
+def quit_gui(keybind=None) -> None:
+    """
+    Safe and informative exit from the program.
+    Called from multiple widgets via Controller.quitgui().
+
+    :param keybind: Needed for keybinding implicit event.
+    """
+
+    # Note: quit_gui() is a method instead of a function b/c it needs
+    #   to evaluate the status of 'do_log' so the quit msg can be logged.
+    time_now = datetime.now().strftime(LONG_STRFTIME)
+    quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
+    print(quit_msg)
+    if Path.exists(Log.LOGFILE):
+        Log.append(Log.LOGFILE, quit_msg, True)
+    try:
+        app.update_idletasks()
+        app.after(200)
+        app.destroy()
+    # pylint: disable=broad-except
+    except Exception:
+        sys.exit(0)
+
+
 class Log:
     """
     Methods to write and read log files of task count data.
@@ -231,17 +257,20 @@ class Log:
                             filemode="a", format='%(message)s')
 
     @classmethod
-    def append(cls, dest: Path, savetxt: str) -> None:
+    def append(cls, dest: Path, savetxt: str, quitqui=False) -> None:
         """Save text to a file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
+        :param quitqui: Flag for messagebox write confirmation; suppress
+                        confirmation when call is from quit_gui().
         """
 
         try:
             with open(dest, 'a', encoding='utf-8') as saved:
                 saved.write(savetxt)
-            messagebox.showinfo(message='Results saved to:', detail=dest)
+                if not quitqui:
+                    messagebox.showinfo(message='Results saved to:', detail=dest)
         except PermissionError:
             info = (f'On {node()}, {dest}\n could not be opened because\n'
                     'of insufficient permissions.')
@@ -1252,31 +1281,6 @@ class CountModeler:
         #   continuing with notice_it() thread.
         time.sleep(70)
 
-    # pylint: disable=unused-argument
-    # noinspection PyBroadException
-    def quit_gui(self, keybind=None) -> None:
-        """
-        Safe and informative exit from the program.
-        Called from multiple widgets via Controller.quitgui().
-
-        :param keybind: Needed for keybinding implicit event.
-        """
-
-        # Note: quit_gui() is a method instead of a function b/c it needs
-        #   to evaluate the status of 'do_log' so the quit msg can be logged.
-        time_now = datetime.now().strftime(LONG_STRFTIME)
-        quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
-        print(quit_msg)
-        if self.share.setting['do_log'].get():
-            logging.info(quit_msg)
-        try:
-            app.update_idletasks()
-            app.after(200)
-            app.destroy()
-        # pylint: disable=broad-except
-        except Exception:
-            sys.exit(0)
-
 
 # MVC Viewer, the tkinter GUI engine; runs in main thread.
 class CountViewer(tk.Frame):
@@ -1473,7 +1477,7 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label="File", menu=self.file)
         self.file.add_command(label="Backup log file", command=Log.backup_log)
         self.file.add_separator()
-        self.file.add_command(label='Quit', command=self.share.quitgui,
+        self.file.add_command(label='Quit', command=quit_gui,
                               accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call quit_qui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
@@ -1521,9 +1525,9 @@ class CountViewer(tk.Frame):
                               highlightbackground='grey75')
 
         # Provide user exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', self.share.quitgui)
-        self.master.bind_all('<Escape>', self.share.quitgui)
-        self.master.bind_all('<Control-q>', self.share.quitgui)
+        self.master.protocol('WM_DELETE_WINDOW', quit_gui)
+        self.master.bind_all('<Escape>', quit_gui)
+        self.master.bind_all('<Control-q>', quit_gui)
         # ^^ Note that macOS command-q will quit program without quit_qui msg.
 
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
@@ -2056,15 +2060,6 @@ class CountController(tk.Tk):
                             depending on type of data to be logged.
         """
         CountModeler(share=self).log_it(called_from)
-
-    # pylint: disable=unused-argument
-    def quitgui(self, keybind=None) -> None:
-        """
-        Close down program. Called from button, menu bar, and keybinding.
-
-        :param keybind: Needed for implicit keybinding event
-        """
-        CountModeler(share=self).quit_gui()
 
     def info(self) -> None:
         """Is called from Help menu bar
