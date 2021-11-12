@@ -213,7 +213,7 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
 def quit_gui(keybind=None) -> None:
     """
     Safe and informative exit from the program.
-    Called from multiple widgets via Controller.quitgui().
+    Called from multiple widgets or keybinding.
 
     :param keybind: Needed for keybinding implicit event.
     """
@@ -257,19 +257,19 @@ class Log:
                             filemode="a", format='%(message)s')
 
     @classmethod
-    def append(cls, dest: Path, savetxt: str, quitqui=False) -> None:
+    def append(cls, dest: Path, savetxt: str, noshow=False) -> None:
         """Save text to a file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
-        :param quitqui: Flag for messagebox write confirmation; suppress
-                        confirmation when call is from quit_gui().
+        :param noshow: Flag for messagebox write confirmation; suppress
+                        confirmation when call is True.
         """
 
         try:
             with open(dest, 'a', encoding='utf-8') as saved:
                 saved.write(savetxt)
-                if not quitqui:
+                if not noshow:
                     messagebox.showinfo(message='Results saved to:', detail=dest)
         except PermissionError:
             info = (f'On {node()}, {dest}\n could not be opened because\n'
