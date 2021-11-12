@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.40'
+__version__ = '0.5.41'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -67,7 +67,7 @@ if sys.version_info < (3, 6):
           'Current Python version: '
           f'{sys.version_info.major}.{sys.version_info.minor}\n'
           'Python downloads are available from https://docs.python.org/')
-    sys.exit(1)
+    sys.exit(0)
 
 BC = boinc_command.BoincCommand()
 TC = time_convert
@@ -218,8 +218,8 @@ def quit_gui(keybind=None) -> None:
     :param keybind: Needed for keybinding implicit event.
     """
 
-    # Note: quit_gui() is a method instead of a function b/c it needs
-    #   to evaluate the status of 'do_log' so the quit msg can be logged.
+    # Write exit message to an existing log file, even if the settings
+    #  do log option was not selected.
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_msg)
@@ -236,7 +236,7 @@ def quit_gui(keybind=None) -> None:
 
 class Log:
     """
-    Methods to write and read log files of task count data.
+    Methods to write, read, and analyze logged task count data.
     """
 
     # Log files should be in the parent (CountBOINCtasks-master) folder
@@ -802,9 +802,9 @@ class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
     """
-    # Need to have ttimes_used not in __init__ where it will be reset when
-    #   set_interval_data is called. ttimes_smry is OK in __init__, but
-    #   in here as a Class attribute for clarity. Is there a better way?
+    # Need to have these vars as Class attributes so they will not be
+    # reset when interval_data() is called. ttimes_smry would be okay
+    # in __init__, but is here for clarity.
     ttimes_used = set()
     ttimes_smry = set()
 
@@ -827,7 +827,7 @@ class CountModeler:
         self.share.setting['do_log'].set(True)
         self.share.setting['proj_update'].set(False)
 
-    def set_start_data(self):
+    def start_data(self):
         """
         Gather initial task data and times; set data dictionary
         control variables. Log data to file if so optioned.
@@ -841,7 +841,7 @@ class CountModeler:
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
 
         # Begin set of used/old tasks to exclude from new tasks;
-        #   used in set_interval_data() to track tasks across intervals.
+        #   used in interval_data() to track tasks across intervals.
         self.ttimes_used.update(ttimes_start)
 
         # Need to parse data returned from ttimes_stats().
@@ -858,7 +858,7 @@ class CountModeler:
         if self.share.setting['do_log'].get():
             self.share.logit('start')
 
-    def set_task_states(self) -> None:
+    def task_states(self) -> None:
         """
         Query boinc-client for status of tasks queued, running, and
         suspended; set corresponding dictionary tk control variables.
@@ -897,7 +897,7 @@ class CountModeler:
         self.share.note['num_suspended_by_boinc'].set(num_suspended_by_boinc)
         self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
 
-    def set_interval_data(self) -> None:
+    def interval_data(self) -> None:
         """
         Run timer and countdown clock to update and analyze regular and
         summary data for task status and times. Set control variables
@@ -945,7 +945,7 @@ class CountModeler:
             #   "new" tasks.
             # Need to add all prior tasks to the "used" set.
             #  "new" task times are carried over from the prior interval cycle.
-            #  For cycle[0], ttimes_used is starting tasks from set_start_data()
+            #  For cycle[0], ttimes_used is starting tasks from start_data()
             #    and ttimes_new is empty.
             with self.thread_lock:
                 self.ttimes_used.update(ttimes_new)
@@ -974,7 +974,7 @@ class CountModeler:
                 # Track when no new tasks were reported in past interval;
                 #   tic_nnt used in log_it().
                 # Call is needed here to get current num_running value for eval.
-                self.set_task_states()
+                self.task_states()
                 num_running = self.share.note['num_running'].get()
                 if task_count_new == 0:
                     tic_nnt += 1
@@ -1030,7 +1030,7 @@ class CountModeler:
         Notices for BOINC task state information should run on short
         time intervals.
         Is threaded as notice_thread; start in Viewer.start_threads().
-        Calls to: set_task_states() and log_it().
+        Calls to: task_states() and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
             time.sleep(NOTICE_INTERVAL)
@@ -1038,7 +1038,7 @@ class CountModeler:
                 # Need to quit app if boinc-client is no longer running.
                 check_boinc()
 
-                self.set_task_states()
+                self.task_states()
                 num_running = self.share.note['num_running'].get()
                 num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
                 num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
@@ -1122,7 +1122,7 @@ class CountModeler:
         """
         Write to file interval and summary metrics for recently reported
         BOINC tasks. Provide information on aberrant task status.
-        Called from set_interval_data() and notice_it().
+        Called from interval_data() and notice_it().
         Is threaded as log_thread; start in Viewer.start_threads()
 
         :param called_from: Either 'start', 'interval' or 'notice',
@@ -1185,11 +1185,11 @@ class CountModeler:
                 logging.info(report)
 
             # Note: Two timestamps are used: self.share.data['intvl_count_t']
-            #   is defined in set_interval_data() at end of each count cycle,
-            #   self.share.status_time is defined in set_task_states().
+            #   is defined in interval_data() at end of each count cycle,
+            #   self.share.status_time is defined in task_states().
             if called_from == 'notice' and num_running > 0:
                 # A Notice for no new tasks reported, tic_nnt, is issued in
-                #   set_interval_data() instead of here.
+                #   interval_data() instead of here.
                 if num_running == num_tasks_all:
                     report = (f'\n{self.share.status_time};'
                               'BOINC client is about to run out of tasks.')
@@ -1455,7 +1455,7 @@ class CountViewer(tk.Frame):
         self.settings()
         # Starting functions sequence after settings() is called:
         #   check_and_set(), check_and_start(), start_threads(),
-        #   emphasize_start_data(), CountModeler.set_start_data().
+        #   emphasize_start_data(), CountModeler.start_data().
         # Note: none of that sequence matters, however, if BOINC
         #   client is not running, so...
         check_boinc()
@@ -1499,7 +1499,7 @@ class CountViewer(tk.Frame):
         # Set interval & summary focus button attributes with .share. b/c need
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with ttk intvl_b after first interval
-        #   completes; it is re-grid in set_interval_data().
+        #   completes; it is re-grid in interval_data().
         # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
         self.share.starting_b = tk.Button(text='Starting data', width=18,
                                           disabledforeground='grey10',
@@ -1860,13 +1860,13 @@ class CountViewer(tk.Frame):
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.note['notice_txt'].set('STATUS REPORT ONLY')
                 self.emphasize_start_data()
-                self.share.setstartdata()
+                self.share.startdata()
                 self.settings_win.destroy()
             # Begin main interval counting functions...
             else:
                 self.start_threads()
                 self.emphasize_start_data()
-                self.share.setstartdata()
+                self.share.startdata()
                 self.settings_win.destroy()
 
     def start_threads(self) -> None:
@@ -1877,7 +1877,7 @@ class CountViewer(tk.Frame):
         """
         # There are no thread.join(), so use daemon for clean exits.
         intvl_thread = threading.Thread(
-            target=self.share.setintervaldata, daemon=True)
+            target=self.share.intervaldata, daemon=True)
         notice_thread = threading.Thread(
             target=self.share.taskstatenotices, daemon=True)
         log_thread = threading.Thread(
@@ -2031,18 +2031,18 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).default_settings()
 
-    def setstartdata(self) -> None:
+    def startdata(self) -> None:
         """
         Is called from Viewer.startup().
         """
-        CountModeler(share=self).set_start_data()
+        CountModeler(share=self).start_data()
 
-    def setintervaldata(self) -> None:
+    def intervaldata(self) -> None:
         """
         Is called from Viewer.start_threads(), which starts the Modeler
         interval thread.
         """
-        CountModeler(share=self).set_interval_data()
+        CountModeler(share=self).interval_data()
 
     def taskstatenotices(self) -> None:
         """
