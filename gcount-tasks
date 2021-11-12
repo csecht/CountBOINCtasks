@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.38'
+__version__ = '0.5.39'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -98,11 +98,36 @@ def check_boinc():
             detail='BOINC commands cannot be executed.\n'
                    'Is the BOINC client running?\nExiting now...')
         if okay:
+            app.update_idletasks()
+            app.after(100)
             app.destroy()
-            sys.exit(1)
+            sys.exit(0)
         else:
+            app.update_idletasks()
+            app.after(100)
             app.destroy()
-            sys.exit(1)
+            sys.exit(0)
+
+
+def parse_args() -> None:
+    """Allow handling of common execution arguments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--about',
+                        help='Provides description, version, GNU license',
+                        action='store_true',
+                        default=False)
+    args = parser.parse_args()
+    if args.about:
+        print(__doc__)
+        print('Author:    ', __author__)
+        print('Credits:   ', __credits__)
+        print('License:   ', __license__)
+        print('URL:       ', __project_url__)
+        print('Version:   ', __version__)
+        print('Status:    ', __status__)
+        print()
+        sys.exit(0)
 
 
 def app_position(add_x=0, add_y=0) -> tuple:
@@ -269,12 +294,12 @@ class Log:
 
     @classmethod
     # pylint: disable=unused-argument
-    def view_log(cls, event=None) -> None:
+    def view_log(cls, keybind=None) -> None:
         """
         Create a separate window to view the log file as scrolled text.
         Called from View menu bar or keybinding.
 
-        :param event: Needed for keybinding implicit event.
+        :param keybind: Needed for keybinding implicit event.
         """
 
         if not Path.exists(cls.LOGFILE):
@@ -522,14 +547,14 @@ class Log:
     @classmethod
     # pylint: disable=unused-argument
     # noinspection PyArgumentList
-    def show_analysis(cls, event=None) -> None:
+    def show_analysis(cls, keybind=None) -> None:
         """
         Generate a Toplevel window to display cumulative task counts
         that have been logged.
         Provide option to append displayed results to a log file.
         Called from a view_log() button or a keybinding.
 
-        :param event: Needed for keybinding implicit event.
+        :param keybind: Needed for keybinding implicit event.
         """
 
         # NOTE: When the log file is not found by analyze_data(), the
@@ -563,13 +588,13 @@ class Log:
 
     @classmethod
     # pylint: disable=unused-argument
-    def view_analysis_log(cls, event=None) -> None:
+    def view_analysis_log(cls, keybind=None) -> None:
         """
         Create a separate window to view the count analysis file, as
         scrolled text.
         Called from View menu bar or keybinding.
 
-        :param event: Needed for keybinding implicit event.
+        :param keybind: Needed for keybinding implicit event.
         """
 
         if not Path.exists(cls.ANALYSISFILE):
@@ -578,7 +603,6 @@ class Log:
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return
-
 
         pos_x, pos_y = app_position(15, 15)
         with open(cls.ANALYSISFILE, encoding='utf-8') as file:
@@ -604,6 +628,143 @@ class Log:
                 command=(
                     lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t, f, p))
             ).pack(padx=4)
+
+
+# ############ An MVC add-on; independent of data functions ############
+class CountFyi:
+    """
+    Methods to provide user with information and help.
+    """
+
+    def __init__(self, share):
+        self.share = share
+
+    @staticmethod
+    def information() -> None:
+        """
+        Basic information program usage and actions;
+        Toplevel window called from Help menu bar.
+        """
+        pos_x, pos_y = app_position(15, 15)
+        infowin = tk.Toplevel()
+        infowin.geometry(f'+{pos_x}+{+pos_y}')
+        infowin.resizable(False, False)
+        infowin.title('Usage information')
+        information = ("""
+            - Counting begins once settings are confirmed at start.\n
+            - Interval and Summary data buttons switch visual emphasis;
+                    ...those buttons activate once their data post.\n
+            - At start, # tasks reported and time of last count are from
+                    the most recent hourly BOINC report.\n
+            - Number of tasks in queue and Notices update every"""
+                       f' {NOTICE_INTERVAL} seconds.\n'
+                       """
+            - Displayed countdown clock time is approximate.\n
+            - Review counts and Notices history with "View log file".\n
+            - File>'Backup log file' copies log to the current folder.""")
+
+        num_doc_lines = information.count('\n')
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 64
+        elif MY_OS == 'dar':
+            os_width = 56
+        infotxt = tk.Text(infowin, font='TkTextFont',
+                          width=os_width, height=num_doc_lines + 2,
+                          bg='grey20', fg='grey85',
+                          relief='groove', padx=15)
+        infotxt.insert(1.0, information)
+        infotxt.pack()
+
+    def compliment_me(self) -> None:
+        """A silly diversion; called from Help menu bar and keybinding.
+        """
+        compliments = [
+            "Hey there good lookin'!", 'I wish we had met sooner.',
+            'You are the smartest person I know.', 'I like your hair.',
+            'You have such a nice smile.', 'Smart move!',
+            'Blue is your color.', 'Good choice!',
+            "That's very kind of you.", "Stop! You're making me blush.",
+            'I just love what you did.', 'How witty you are!', 'Awesome!',
+            'Your tastes are impeccable.', "You're incredible!",
+            'You are so talented!', "I wish I'd thought of that.",
+            'This is fun!', 'Get back to work.', 'Nice!', 'You saved me.',
+            'You are an inspiration to us all.', "That's so funny!",
+            'Show me how you do that.', "I've always looked up to you.",
+            'You sound great!', 'You smell nice.', 'Great job!',
+            'You are a role model.', 'I wish more people were like you.',
+            'We appreciate what you did.', 'I hear people look up to you.',
+            'You are a really good dancer.', 'What makes you so successful?',
+            'When you speak, people listen.', 'You are a superb person.',
+            'You rock!', 'You nailed it!', 'That was really well done.',
+            'You are amazing!', 'We need more folks like you around here.',
+            'Excuse me, are you a model?', 'What a lovely laugh you have.',
+            "I'm jealous of your ability.", "You're the stuff of legends.",
+            'This would not be possible without you.', 'Way to go! Yay!',
+            'Did you make that? I love it!', 'You are the best!',
+            'I like what you did.', 'Whoa. Have you been working out?',
+            "We can't thank you enough.", 'No, really, you have done enough.',
+            "That's a good look for you.", 'I could not have done it better.',
+            "I can't think of anything to say. Sorry.", 'Congratulations!',
+            "Well, THAT's impressive.", 'I hear that you are the one.',
+            'You excel at everything.', 'Your voice is very soothing.',
+            'Is it true what people say?', 'The word is, you got it!',
+            'The Nobel Committee has been trying to reach you.',
+            'The Academy is asking for your CV.', 'You look great!',
+            'The President seeks your council.', 'Thank you so much!',
+            'The Prime Minister seeks your council.', 'Crunchers rule!',
+            'Crunchers are the best sort of people.'
+        ]
+        praise = random.choice(compliments)
+        self.share.compliment_l.config(text=praise)
+        self.share.notice_l.grid_remove()
+        # Need to re-grid initial master_widgets gridding b/c its grid may
+        #   have been removed by a notice_l call. Original grid coordinates
+        #   are set in master_widgets().
+        self.share.compliment_l.grid()
+
+        def refresh():
+            self.share.compliment_l.grid_remove()
+            # Re-grid notice to return to current Notice text.
+            self.share.notice_l.grid()
+            app.update_idletasks()
+
+        self.share.compliment_l.after(3333, refresh)
+
+    @staticmethod
+    def about() -> None:
+        """
+        Basic information for gcount-tasks;
+        Toplevel window called from Help menu bar.
+        """
+        pos_x, pos_y = app_position(15, 15)
+        aboutwin = tk.Toplevel()
+        aboutwin.geometry(f'+{pos_x}+{+pos_y}')
+        aboutwin.resizable(False, False)
+        aboutwin.title('About count-tasks')
+        colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
+                  'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
+                  'dark olive green', 'grey10', 'grey25', 'DodgerBlue4',
+                  'DarkOrchid4']
+        bkg = random.choice(colour)
+        num_doc_lines = __doc__.count('\n') + 2
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 60
+        elif MY_OS == 'dar':
+            os_width = 54
+        abouttxt = tk.Text(aboutwin, font='TkTextFont',
+                           width=os_width, height=num_doc_lines + 6,
+                           bg=bkg, fg='grey98', relief='groove',
+                           borderwidth=5, padx=25)
+        abouttxt.insert(1.0, f'{__doc__}\n'
+                             f'Author:    {__author__}\n'
+                             f'Credits:   {__credits__}\n'
+                             f'License:   {__license__}\n'
+                             f'URL:       {__project_url__}\n'
+                             f'Version:   {__version__}\n'
+                             f'Status:    {__status__}\n')
+        abouttxt.pack()
 
 
 # ############################ MVC Classes #############################
@@ -1093,12 +1254,12 @@ class CountModeler:
 
     # pylint: disable=unused-argument
     # noinspection PyBroadException
-    def quit_gui(self, event=None) -> None:
+    def quit_gui(self, keybind=None) -> None:
         """
         Safe and informative exit from the program.
         Called from multiple widgets via Controller.quitgui().
 
-        :param event: Needed for keybinding implicit event.
+        :param keybind: Needed for keybinding implicit event.
         """
 
         # Note: quit_gui() is a method instead of a function b/c it needs
@@ -1897,11 +2058,11 @@ class CountController(tk.Tk):
         CountModeler(share=self).log_it(called_from)
 
     # pylint: disable=unused-argument
-    def quitgui(self, event=None) -> None:
+    def quitgui(self, keybind=None) -> None:
         """
         Close down program. Called from button, menu bar, and keybinding.
 
-        :param event: Needed for implicit keybinding event
+        :param keybind: Needed for implicit keybinding event
         """
         CountModeler(share=self).quit_gui()
 
@@ -1911,10 +2072,10 @@ class CountController(tk.Tk):
         CountFyi(share=self).information()
 
     # pylint: disable=unused-argument
-    def complimentme(self, event=None) -> None:
+    def complimentme(self, keybind=None) -> None:
         """Is called from Help menu bar. A silly diversion.
 
-        :param event: Needed for implicit keybinding event
+        :param keybind: Needed for implicit keybinding event
         """
         CountFyi(share=self).compliment_me()
 
@@ -1922,169 +2083,6 @@ class CountController(tk.Tk):
         """Is called from Viewer Help menu bar.
         """
         CountFyi(share=self).about()
-
-
-# ############ An MVC add-on; independent of data functions ###########
-class CountFyi:
-    """
-    Methods to provide user with information and help.
-    """
-
-    def __init__(self, share):
-        self.share = share
-
-    @staticmethod
-    def information() -> None:
-        """
-        Basic information program usage and actions;
-        Toplevel window called from Help menu bar.
-        """
-        pos_x, pos_y = app_position(15, 15)
-        infowin = tk.Toplevel()
-        infowin.geometry(f'+{pos_x}+{+pos_y}')
-        infowin.resizable(False, False)
-        infowin.title('Usage information')
-        information = ("""
-            - Counting begins once settings are confirmed at start.\n
-            - Interval and Summary data buttons switch visual emphasis;
-                    ...those buttons activate once their data post.\n
-            - At start, # tasks reported and time of last count are from
-                    the most recent hourly BOINC report.\n
-            - Number of tasks in queue and Notices update every"""
-                       f' {NOTICE_INTERVAL} seconds.\n'
-                       """
-            - Displayed countdown clock time is approximate.\n
-            - Review counts and Notices history with "View log file".\n
-            - File>'Backup log file' copies log to the current folder.""")
-
-        num_doc_lines = information.count('\n')
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 64
-        elif MY_OS == 'dar':
-            os_width = 56
-        infotxt = tk.Text(infowin, font='TkTextFont',
-                          width=os_width, height=num_doc_lines + 2,
-                          bg='grey20', fg='grey85',
-                          relief='groove', padx=15)
-        infotxt.insert(1.0, information)
-        infotxt.pack()
-
-    def compliment_me(self) -> None:
-        """A silly diversion; called from Help menu bar and keybinding.
-        """
-        compliments = [
-            "Hey there good lookin'!", 'I wish we had met sooner.',
-            'You are the smartest person I know.', 'I like your hair.',
-            'You have such a nice smile.', 'Smart move!',
-            'Blue is your color.', 'Good choice!',
-            "That's very kind of you.", "Stop! You're making me blush.",
-            'I just love what you did.', 'How witty you are!', 'Awesome!',
-            'Your tastes are impeccable.', "You're incredible!",
-            'You are so talented!', "I wish I'd thought of that.",
-            'This is fun!', 'Get back to work.', 'Nice!', 'You saved me.',
-            'You are an inspiration to us all.', "That's so funny!",
-            'Show me how you do that.', "I've always looked up to you.",
-            'You sound great!', 'You smell nice.', 'Great job!',
-            'You are a role model.', 'I wish more people were like you.',
-            'We appreciate what you did.', 'I hear people look up to you.',
-            'You are a really good dancer.', 'What makes you so successful?',
-            'When you speak, people listen.', 'You are a superb person.',
-            'You rock!', 'You nailed it!', 'That was really well done.',
-            'You are amazing!', 'We need more folks like you around here.',
-            'Excuse me, are you a model?', 'What a lovely laugh you have.',
-            "I'm jealous of your ability.", "You're the stuff of legends.",
-            'This would not be possible without you.', 'Way to go! Yay!',
-            'Did you make that? I love it!', 'You are the best!',
-            'I like what you did.', 'Whoa. Have you been working out?',
-            "We can't thank you enough.", 'No, really, you have done enough.',
-            "That's a good look for you.", 'I could not have done it better.',
-            "I can't think of anything to say. Sorry.", 'Congratulations!',
-            "Well, THAT's impressive.", 'I hear that you are the one.',
-            'You excel at everything.', 'Your voice is very soothing.',
-            'Is it true what people say?', 'The word is, you got it!',
-            'The Nobel Committee has been trying to reach you.',
-            'The Academy is asking for your CV.', 'You look great!',
-            'The President seeks your council.', 'Thank you so much!',
-            'The Prime Minister seeks your council.', 'Crunchers rule!',
-            'Crunchers are the best sort of people.'
-        ]
-        praise = random.choice(compliments)
-        self.share.compliment_l.config(text=praise)
-        self.share.notice_l.grid_remove()
-        # Need to re-grid initial master_widgets gridding b/c its grid may
-        #   have been removed by a notice_l call. Original grid coordinates
-        #   are set in master_widgets().
-        self.share.compliment_l.grid()
-
-        def refresh():
-            self.share.compliment_l.grid_remove()
-            # Re-grid notice to return to current Notice text.
-            self.share.notice_l.grid()
-            app.update_idletasks()
-
-        self.share.compliment_l.after(3333, refresh)
-
-    @staticmethod
-    def about() -> None:
-        """
-        Basic information for gcount-tasks;
-        Toplevel window called from Help menu bar.
-        """
-        pos_x, pos_y = app_position(15, 15)
-        aboutwin = tk.Toplevel()
-        aboutwin.geometry(f'+{pos_x}+{+pos_y}')
-        aboutwin.resizable(False, False)
-        aboutwin.title('About count-tasks')
-        colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
-                  'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
-                  'dark olive green', 'grey10', 'grey25', 'DodgerBlue4',
-                  'DarkOrchid4']
-        bkg = random.choice(colour)
-        num_doc_lines = __doc__.count('\n') + 2
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 60
-        elif MY_OS == 'dar':
-            os_width = 54
-        abouttxt = tk.Text(aboutwin, font='TkTextFont',
-                           width=os_width, height=num_doc_lines + 6,
-                           bg=bkg, fg='grey98', relief='groove',
-                           borderwidth=5, padx=25)
-        abouttxt.insert(1.0, f'{__doc__}\n'
-                             f'Author:    {__author__}\n'
-                             f'Credits:   {__credits__}\n'
-                             f'License:   {__license__}\n'
-                             f'URL:       {__project_url__}\n'
-                             f'Version:   {__version__}\n'
-                             f'Status:    {__status__}\n')
-        abouttxt.pack()
-
-
-# pylint: disable=unused-argument
-def parse_args(argv=None) -> None:
-    """
-    Allow handling of common execution arguments.
-
-    :param argv: Optional argument.
-
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--about',
-                        help='Provides description, version, GNU license',
-                        action='store_true',
-                        default=False)
-    args = parser.parse_args()
-    if args.about:
-        print(__doc__)
-        print('Author:    ', __author__)
-        print('Credits:   ', __credits__)
-        print('License:   ', __license__)
-        print('URL:       ', __project_url__)
-        print('Version:   ', __version__)
-        print('Status:    ', __status__)
-        print()
-        sys.exit(0)
 
 
 if __name__ == "__main__":
