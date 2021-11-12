@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.5.41'
+__version__ = '0.6.0'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -287,7 +287,8 @@ class Log:
 
     @classmethod
     def erase(cls, tktext: tk.Text, file: Path, parent=None) -> None:
-        """Delete file contents and its displayed window text.
+        """
+        Delete file contents and its displayed window text.
 
         :param tktext: A tkinter.scrolledtext.ScrolledText or
                        tkinter.Text insert.
@@ -322,69 +323,93 @@ class Log:
                 messagebox.showerror(title='FILE PERMISSION ERROR', detail=info)
 
     @classmethod
+    def update(cls, tktext: tk.Text, file: Path, parent=None) -> None:
+        """
+        Replace text in open log window with (new) log file content.
+
+        :param tktext: A tkinter.scrolledtext.ScrolledText or
+               tkinter.Text insert.
+        :param file: Path object of file from which to erase content.
+        :param parent: The parent window over which to place messagebox;
+               usually a Toplevel(). Defaults to app window.
+        """
+
+        if not Path.exists(file):
+            msg = (f'On {node()}, cannot update file:\n{file}\n'
+                   'Was file deleted, moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=msg)
+            return
+
+        with open(file, encoding='utf-8') as new_text:
+            tktext.delete('1.0', tk.END)
+            tktext.insert('1.0', new_text.read())
+            tktext.see(tk.END)
+            tktext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+    @classmethod
     # pylint: disable=unused-argument
-    def view_log(cls, keybind=None) -> None:
+    def view_log(cls, filepath: Path, keybind=None) -> None:
         """
         Create a separate window to view the log file as scrolled text.
         Called from View menu bar or keybinding.
 
+        :param filepath: A Path object of the file to view.
         :param keybind: Needed for keybinding implicit event.
         """
+        fileinfo = ''
+        text_width = 79
+        minsize_h = 0
+        minsize_w = 0
+        if filepath == cls.LOGFILE:
+            fileinfo = 'Was the settings log option used?'
+            minsize_h = 800
+            minsize_w = 220
+            if MY_OS == 'win':
+                minsize_w = 200
+            if MY_OS == 'dar':
+                text_width = 72
+        if filepath == cls.ANALYSISFILE:
+            fileinfo = 'Have any analysis results been saved yet?'
+            text_width = 46
+            minsize_w = 450
+            if MY_OS == 'win':
+                minsize_h = 400
+            if MY_OS == 'dar':
+                text_width = 72
 
-        if not Path.exists(cls.LOGFILE):
-            info = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
-                    'Was the settings log option used?\n'
+        if not Path.exists(filepath):
+            info = (f'On {node()}, file is missing:\n{filepath}\n'
+                    f'{fileinfo}\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return
 
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 79
-        elif MY_OS == 'dar':
-            os_width = 72
-
-        with open(cls.LOGFILE, encoding='utf-8') as file:
-            logwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-            logwin.title(f'{cls.LOGFILE} on {node()}')
-            if MY_OS in 'lin, dar':
-                logwin.minsize(800, 220)
-            elif MY_OS == 'win':
-                logwin.minsize(800, 200)
+        with open(filepath, encoding='utf-8') as file:
+            logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
+            logwin.title(f'{filepath} on {node()}')
+            logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
             # Use a "dark" background/foreground theme for log text.
-            logtext = ScrolledText(logwin, width=os_width, height=30,
-                                   font='TkFixedFont', fg='grey80', bd=4,
-                                   bg='grey20', relief='groove', padx=12)
+            logtext = ScrolledText(logwin, font='TkFixedFont',
+                                   width=text_width, height=30,
+                                   bg='grey20', fg='grey80',
+                                   relief='groove', bd=4, padx=12)
             logtext.insert(tk.INSERT, file.read())
             logtext.see('end')
             logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        def update():
-            """
-            Replace text in open log window with (new) log file content.
-            """
-
-            if not Path.exists(cls.LOGFILE):
-                msg = (f'On {node()}, log file is missing:\n{cls.LOGFILE}\n'
-                       'Was the settings log option used?\n'
-                       'Was file deleted, moved or renamed?')
-                messagebox.showerror(title='FILE NOT FOUND', detail=msg)
-                return
-
-            with open(cls.LOGFILE, encoding='utf-8') as new_text:
-                logtext.delete('1.0', tk.END)
-                logtext.insert('1.0', new_text.read())
-                logtext.see(tk.END)
-                logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-        ttk.Button(logwin, text='Update', command=update).pack(padx=4)
+        ttk.Button(
+            logwin, text='Update',
+            command=(lambda t=logtext, f=filepath, p=logwin: cls.update(t, f, p))
+                     ).pack(padx=4)
         ttk.Button(
             logwin, text='Erase',
-            command=(lambda t=logtext, f=cls.LOGFILE, p=logwin: cls.erase(t, f, p))
-        ).pack(padx=4)
-        ttk.Button(
-            logwin, text='Analysis', command=cls.show_analysis).pack(padx=4)
+            command=(lambda t=logtext, f=filepath, p=logwin: cls.erase(t, f, p))
+                     ).pack(padx=4)
+
+        if filepath == cls.LOGFILE:
+            ttk.Button(logwin, text='Analysis',
+                       command=cls.show_analysis).pack(padx=4)
 
     @classmethod
     def backup_log(cls) -> None:
@@ -425,7 +450,7 @@ class Log:
             print("Log file backup: Source and destination are the same file.")
 
     @classmethod
-    def analyze_data(cls) -> tuple:
+    def analyze_log(cls) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Calls to show_analysis().
@@ -575,7 +600,6 @@ class Log:
 
     @classmethod
     # pylint: disable=unused-argument
-    # noinspection PyArgumentList
     def show_analysis(cls, keybind=None) -> None:
         """
         Generate a Toplevel window to display cumulative task counts
@@ -586,9 +610,9 @@ class Log:
         :param keybind: Needed for keybinding implicit event.
         """
 
-        # NOTE: When the log file is not found by analyze_data(), the
+        # NOTE: When the log file is not found by analyze_log(), the
         #   returned texts will be empty, so no need to continue.
-        summary_text, interval_text = cls.analyze_data()
+        summary_text, interval_text = cls.analyze_log()
         if not summary_text and not interval_text:
             return
 
@@ -614,49 +638,6 @@ class Log:
             analysiswin, text='Save analysis',
             command=lambda d=cls.ANALYSISFILE, t=text: cls.append(d, t)
         ).pack(padx=4)
-
-    @classmethod
-    # pylint: disable=unused-argument
-    def view_analysis_log(cls, keybind=None) -> None:
-        """
-        Create a separate window to view the count analysis file, as
-        scrolled text.
-        Called from View menu bar or keybinding.
-
-        :param keybind: Needed for keybinding implicit event.
-        """
-
-        if not Path.exists(cls.ANALYSISFILE):
-            info = (f'On {node()}, file is missing:\n{cls.ANALYSISFILE}\n'
-                    'Have any analysis results been saved yet?\n'
-                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
-            return
-
-        pos_x, pos_y = app_position(15, 15)
-        with open(cls.ANALYSISFILE, encoding='utf-8') as file:
-            analylogwin = tk.Toplevel(app, bg='SteelBlue4')  # <- bg = master_bg
-            analylogwin.title(f'{cls.ANALYSISFILE} on {node()}')
-            analylogwin.geometry(f'+{pos_x}+{+pos_y}')
-            if MY_OS in 'lin, dar':
-                analylogwin.minsize(420, 450)
-            elif MY_OS == 'win':
-                analylogwin.minsize(400, 450)
-            analylogwin.focus_set()
-            # Use a "dark" background/foreground theme.
-            analytxt = ScrolledText(analylogwin, font='TkFixedFont',
-                                    width=46, height=30,
-                                    bg='grey20', fg='grey80',
-                                    relief='groove', bd=4, padx=12)
-            analytxt.insert(tk.INSERT, file.read())
-            analytxt.see('end')
-            analytxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-            # Need button here b/c vars are defined only when log file exists.
-            ttk.Button(
-                analylogwin, text='Erase',
-                command=(
-                    lambda t=analytxt, f=cls.ANALYSISFILE, p=analylogwin: cls.erase(t, f, p))
-            ).pack(padx=4)
 
 
 # ############ An MVC add-on; independent of data functions ############
@@ -816,7 +797,8 @@ class CountModeler:
         self.task_count_new = 0
 
     def default_settings(self) -> None:
-        """Set or reset default run parameters in the setting dictionary.
+        """
+        Set or reset default run parameters in the setting dictionary.
         """
         self.share.setting['interval_t'].set('60m')
         self.share.setting['interval_m'].set(60)
@@ -1482,12 +1464,14 @@ class CountViewer(tk.Frame):
         # ^^ Note: use Ctrl+Q for macOS also to call quit_qui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
-        view.add_command(label="Log file", command=Log.view_log,
+        view.add_command(label="Log file",
+                         command=lambda: Log.view_log(Log.LOGFILE),
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
         view.add_command(label="Analysis", command=Log.show_analysis,
                          accelerator="Ctrl+A")
-        view.add_command(label="Saved analyses", command=Log.view_analysis_log)
+        view.add_command(label="Saved analyses",
+                         command=lambda: Log.view_log(Log.ANALYSISFILE))
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
@@ -1495,7 +1479,8 @@ class CountViewer(tk.Frame):
                               accelerator="Ctrl+Shift+C")
         help_menu.add_command(label="About", command=self.share.about)
 
-        self.viewlog_b = ttk.Button(text='View log file', command=Log.view_log)
+        self.viewlog_b = ttk.Button(text='View log file',
+                                    command=lambda: Log.view_log(Log.LOGFILE))
         # Set interval & summary focus button attributes with .share. b/c need
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with ttk intvl_b after first interval
@@ -1531,7 +1516,8 @@ class CountViewer(tk.Frame):
         # ^^ Note that macOS command-q will quit program without quit_qui msg.
 
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", Log.view_log)
+        self.master.bind("<Control-l>", lambda event: Log.view_log(Log.LOGFILE))
+        # self.master.bind("<Control-l>", Log.view_log)
         self.master.bind("<Control-a>", Log.show_analysis)
 
         # Theme controls entire window theme, but only for ttk.Style objects.
