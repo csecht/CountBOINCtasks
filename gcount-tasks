@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -224,7 +224,7 @@ def quit_gui(keybind=None) -> None:
     quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_msg)
     if Path.exists(Log.LOGFILE):
-        Log.append(Log.LOGFILE, quit_msg, True)
+        Log.append(Log.LOGFILE, quit_msg, False)
     try:
         app.update_idletasks()
         app.after(200)
@@ -257,32 +257,35 @@ class Log:
                             filemode="a", format='%(message)s')
 
     @classmethod
-    def append(cls, dest: Path, savetxt: str, noshow=False) -> None:
+    def append(cls, dest: Path, savetxt: str, showmsg=True) -> None:
         """Save text to a file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
-        :param noshow: Flag for messagebox write confirmation; suppress
-                        confirmation when call is True.
+        :param showmsg: Flag for messagebox write confirmation; suppress
+                         confirmation msg when call is False.
         """
 
         try:
             with open(dest, 'a', encoding='utf-8') as saved:
                 saved.write(savetxt)
-                if not noshow:
-                    messagebox.showinfo(message='Results saved to:', detail=dest)
+                if showmsg:
+                    messagebox.showinfo(message='Results saved to:',
+                                        detail=dest)
         except PermissionError:
-            info = (f'On {node()}, {dest}\n could not be opened because\n'
+            perr = (f'On {node()}, {dest}\n could not be opened because\n'
                     'of insufficient permissions.')
-            messagebox.showerror(title='FILE PERMISSION ERROR', detail=info)
+            messagebox.showerror(title='FILE PERMISSION ERROR',
+                                 detail=perr)
         except UnicodeError as err:
-            messagebox.showerror(title='Wrong file encoding', detail=err)
+            messagebox.showerror(title='Wrong file encoding',
+                                 detail=err)
             print(err)
         except FileNotFoundError:
-            info = (f'On {node()}, file is missing:\n{dest}\n'
-                    'Have any analysis results been saved yet?\n'
-                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            fnferr = (f'On {node()}, file is missing:\n{dest}\n'
+                      'Have any analysis results been saved yet?\n'
+                      'Was file deleted, moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=fnferr)
             return
 
     @classmethod
@@ -320,7 +323,8 @@ class Log:
             except PermissionError:
                 info = (f'On {node()}, could not erase contents of\n'
                         f'{file}\nbecause it could not be opened.')
-                messagebox.showerror(title='FILE PERMISSION ERROR', detail=info)
+                messagebox.showerror(title='FILE PERMISSION ERROR',
+                                     detail=info)
 
     @classmethod
     def update(cls, tktext: tk.Text, file: Path, parent=None) -> None:
@@ -358,6 +362,7 @@ class Log:
         """
         fileinfo = ''
         text_width = 79
+        text_height = 46
         minsize_h = 0
         minsize_w = 0
         if filepath == cls.LOGFILE:
@@ -372,10 +377,9 @@ class Log:
             fileinfo = 'Have any analysis results been saved yet?'
             text_width = 46
             minsize_w = 450
+            minsize_h = 420
             if MY_OS == 'win':
                 minsize_h = 400
-            if MY_OS == 'dar':
-                text_width = 72
 
         if not Path.exists(filepath):
             info = (f'On {node()}, file is missing:\n{filepath}\n'
@@ -391,7 +395,7 @@ class Log:
             logwin.focus_set()
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, font='TkFixedFont',
-                                   width=text_width, height=30,
+                                   width=text_width, height=text_height,
                                    bg='grey20', fg='grey80',
                                    relief='groove', bd=4, padx=12)
             logtext.insert(tk.INSERT, file.read())
@@ -1511,14 +1515,13 @@ class CountViewer(tk.Frame):
 
         # Provide user exit info to Terminal and log.
         self.master.protocol('WM_DELETE_WINDOW', quit_gui)
+
         self.master.bind_all('<Escape>', quit_gui)
         self.master.bind_all('<Control-q>', quit_gui)
-        # ^^ Note that macOS command-q will quit program without quit_qui msg.
-
+        # ^^ Note: macOS command-q will quit program without quit_qui msg.
+        self.master.bind_all('<Control-a>', Log.show_analysis)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind("<Control-l>", lambda event: Log.view_log(Log.LOGFILE))
-        # self.master.bind("<Control-l>", Log.view_log)
-        self.master.bind("<Control-a>", Log.show_analysis)
+        self.master.bind('<Control-l>', lambda event: Log.view_log(Log.LOGFILE))
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
