@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.6'
+__version__ = '0.6.7'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -249,6 +249,11 @@ class Logs:
     BACKUPFILE = Path('count-tasks_log(copy).txt').resolve()
     ANALYSISFILE = Path('count-analysis_log.txt').resolve()
 
+    # self, event needed to handle implicit keybind events;
+    #    e.g., view(), show_analysis()
+    def __init__(self, event):
+        self.event = event
+
     @classmethod
     def do_logging(cls) -> None:
         """
@@ -357,14 +362,12 @@ class Logs:
             tktext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
     @classmethod
-    # pylint: disable=unused-argument
-    def view(cls, filepath: Path, keybind=None) -> None:
+    def view(cls, filepath: Path) -> None:
         """
         Create a separate window to view the log file as scrolled text.
         Called from View menu bar or keybinding.
 
         :param filepath: A Path object of the file to view.
-        :param keybind: Needed for keybinding implicit event.
         """
         # Need to set messages and sizes specific to OS and files.
         fnf_query = ''
@@ -618,15 +621,15 @@ class Logs:
         return sumry_analysis, mop_up
 
     @classmethod
-    # pylint: disable=unused-argument
-    def show_analysis(cls, keybind=None) -> None:
+    def show_analysis(cls, *keybind) -> object:
         """
         Generate a Toplevel window to display cumulative task counts
         that have been logged.
         Provide option to append displayed results to a log file.
         Called from a view() button or a keybinding.
 
-        :param keybind: Needed for keybinding implicit event.
+        :param keybind: Empty parameter to pass implicit keybinding event.
+        :return object: Empty object to return the empty args.
         """
 
         # NOTE: When the log file is not found by analyze_log(), the
@@ -657,6 +660,8 @@ class Logs:
             analysiswin, text='Save analysis',
             command=lambda d=cls.ANALYSISFILE, t=text: cls.append(d, t, True, analysiswin)
         ).pack(padx=4)
+
+        return keybind
 
 
 # ############ An MVC add-on; independent of data functions ############
@@ -1966,8 +1971,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    # pylint: disable=unused-argument
-    def app_got_focus(self, event=None) -> None:
+    def app_got_focus(self, *event):
         """Give menu bar headings normal color when app has focus.
 
         :param event: <FocusIn> mouse click.
@@ -1979,9 +1983,9 @@ class CountViewer(tk.Frame):
                                          background='grey75')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
+        return event
 
-    # pylint: disable=unused-argument
-    def app_lost_focus(self, event=None) -> None:
+    def app_lost_focus(self, *event):
         """Give menu bar headings grey-out color when app looses focus.
 
         :param event: <FocusOut> mouse click.
@@ -1992,6 +1996,7 @@ class CountViewer(tk.Frame):
         self.view_button_style.configure('View.TButton', foreground='grey')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
+        return event
 
 
 # ################## MVC Controller; is app mainloop ##################
