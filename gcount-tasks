@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.4'
+__version__ = '0.6.5'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1306,8 +1306,8 @@ class CountViewer(tk.Frame):
         #   another application has focus.
         #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
-        self.bind("<FocusIn>", self.app_got_focus)
-        self.bind("<FocusOut>", self.app_lost_focus)
+        self.master.bind("<FocusIn>", self.app_got_focus)
+        self.master.bind("<FocusOut>", self.app_lost_focus)
 
         # settings() window widgets:
         self.settings_win = tk.Toplevel()
