@@ -459,13 +459,10 @@ class Logs:
             print("Log file backup: Destination file is a directory.")
         except OSError:
             messagebox.showinfo(title='Log copy error',
-                                message="Backup destination is not writeable")
-            print("Log file backup: Destination file is not writeable.")
-        except shutil.SameFileError:
-            messagebox.showinfo(
-                title='Log copy error',
-                message="Source and destination are the same file")
-            print("Log file backup: Source and destination are the same file.")
+                                message='Backup destination is not writeable',
+                                detail='Are source and destination are the same file?')
+            print('Log file backup: Destination file is not writeable. '
+                  'Are source and destination are the same file?')
 
     @classmethod
     def analyze_log(cls) -> tuple:
@@ -1969,7 +1966,7 @@ class CountViewer(tk.Frame):
         self.tt_total_l.configure(foreground=self.deemphasize)
 
     # pylint: disable=unused-argument
-    def app_got_focus(self, event=None) -> None:
+    def app_got_focus(self, event) -> None:
         """Give menu bar headings normal color when app has focus.
 
         :param event: <FocusIn> mouse click.
@@ -1983,7 +1980,7 @@ class CountViewer(tk.Frame):
             self.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
 
     # pylint: disable=unused-argument
-    def app_lost_focus(self, event=None) -> None:
+    def app_lost_focus(self, event) -> None:
         """Give menu bar headings grey-out color when app looses focus.
 
         :param event: <FocusOut> mouse click.
