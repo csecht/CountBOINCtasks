@@ -250,14 +250,14 @@ class Logs:
         Establish logging to file of task data.
         As used here, logging is lazily employed to manage the file of
         task report data, instead of using normal read-write methods.
-        Called in response to settings() log option.
         """
         logging.basicConfig(filename=str(cls.LOGFILE), level=logging.INFO,
                             filemode="a", format='%(message)s')
 
     @classmethod
     def append(cls, dest: Path, savetxt: str, showmsg=True) -> None:
-        """Save text to a file.
+        """
+        Save text to a file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
@@ -425,8 +425,8 @@ class Logs:
     @classmethod
     def backup(cls, source: Path, destination: Path) -> None:
         """
-        Copy the log file to the current folder; overwrites previous
-        back-up file.
+        Copy source file to the destination file; overwrites previous
+        destination file.
 
         :param source: A Path object of the file to backup.
         :param destination: A Path object of backup file.
@@ -466,10 +466,9 @@ class Logs:
     def analyze_log(cls) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
-        Calls to show_analysis().
+        Called from cls.show_analysis().
 
-        :return: text strings to print in a show_analysis()
-                 Toplevel window.
+        :return: text strings to print in show_analysis() Toplevel.
         """
         sumry_dates = []
         summary_intvls = []
