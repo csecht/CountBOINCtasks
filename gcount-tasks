@@ -2077,12 +2077,13 @@ class CountController(tk.Tk):
         CountFyi(share=self).information()
 
     # pylint: disable=unused-argument
-    def complimentme(self, keybind=None) -> None:
+    def complimentme(self, *keybind):
         """Is called from Help menu bar. A silly diversion.
 
         :param keybind: Needed for implicit keybinding event
         """
         CountFyi(share=self).compliment_me()
+        return keybind
 
     def about(self):
         """Is called from Viewer Help menu bar.
