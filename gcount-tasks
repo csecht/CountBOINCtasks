@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -151,8 +151,8 @@ def eval_digit_entry(entry_string, action_type) -> bool:
     Only digits are accepted and displayed in Entry field.
     Used with .register() to configure Entry kw validatecommand.
 
-    :param entry_string: value entered into an Entry() widget.
-    :param action_type: edit action code.
+    :param entry_string: value entered into an Entry() widget (%P).
+    :param action_type: edit action code (%d).
     :return: True, False
     :rtype: bool
     """
@@ -162,9 +162,8 @@ def eval_digit_entry(entry_string, action_type) -> bool:
     # source: https://stackoverflow.com/questions/4140437/
     # %P = value of the entry if the edit is allowed
     # Desired action type 1 is "insert", %d.
-    if action_type == '1':
-        if not entry_string.isdigit():
-            return False
+    if action_type == '1' and not entry_string.isdigit():
+        return False
     return True
 
 
@@ -360,21 +359,24 @@ class Log:
         :param filepath: A Path object of the file to view.
         :param keybind: Needed for keybinding implicit event.
         """
-        fileinfo = ''
+        # Need to set messages and sizes specific to OS and files.
+        fnf_query = ''
         text_width = 79
         text_height = 46
         minsize_h = 0
         minsize_w = 0
-        if filepath == cls.LOGFILE:
-            fileinfo = 'Was the settings log option used?'
+        if filepath in (cls.LOGFILE, cls.BACKUPFILE):
+            fnf_query = 'Was the settings log option used?'
             minsize_h = 800
             minsize_w = 220
             if MY_OS == 'win':
                 minsize_w = 200
             if MY_OS == 'dar':
                 text_width = 72
+        if filepath == cls.BACKUPFILE:
+            fnf_query = 'Was menu File>"Backup log file" used yet?'
         if filepath == cls.ANALYSISFILE:
-            fileinfo = 'Have any analysis results been saved yet?'
+            fnf_query = 'Have any analysis results been saved yet?'
             text_width = 46
             minsize_w = 450
             minsize_h = 420
@@ -383,14 +385,17 @@ class Log:
 
         if not Path.exists(filepath):
             info = (f'On {node()}, file is missing:\n{filepath}\n'
-                    f'{fileinfo}\n'
+                    f'{fnf_query}\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return
 
         with open(filepath, encoding='utf-8') as file:
+            dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
             logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
-            logwin.title(f'{filepath} on {node()}')
+            # logwin.title(f'{filepath.name} on {node()}')
+            logwin.title(f'{dir_file} on {node()}')
+
             logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
             # Use a "dark" background/foreground theme for log text.
@@ -412,6 +417,8 @@ class Log:
                      ).pack(padx=4)
 
         if filepath == cls.LOGFILE:
+            ttk.Button(logwin, text='Backup',
+                       command=cls.backup_log).pack(padx=4)
             ttk.Button(logwin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
 
@@ -832,7 +839,8 @@ class CountModeler:
 
         # Need to parse data returned from ttimes_stats().
         startdict = ttimes_stats(
-            self.share.data['task_count'].get(), ttimes_start)
+            len(ttimes_start), ttimes_start)
+
         self.share.data['tt_mean'].set(startdict['tt_mean'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
         self.share.data['tt_range'].set(
@@ -1472,6 +1480,8 @@ class CountViewer(tk.Frame):
                          command=lambda: Log.view_log(Log.LOGFILE),
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
+        view.add_command(label="Log backup",
+                         command=lambda: Log.view_log(Log.BACKUPFILE))
         view.add_command(label="Analysis", command=Log.show_analysis,
                          accelerator="Ctrl+A")
         view.add_command(label="Saved analyses",
