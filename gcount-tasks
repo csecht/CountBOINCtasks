@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -222,8 +222,8 @@ def quit_gui(keybind=None) -> None:
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_msg)
-    if Path.exists(Log.LOGFILE):
-        Log.append(Log.LOGFILE, quit_msg, False)
+    if Path.exists(Logs.LOGFILE):
+        Logs.append(Logs.LOGFILE, quit_msg, False)
     try:
         app.update_idletasks()
         app.after(200)
@@ -233,7 +233,7 @@ def quit_gui(keybind=None) -> None:
         sys.exit(0)
 
 
-class Log:
+class Logs:
     """
     Methods to write, read, and analyze logged task count data.
     """
@@ -351,7 +351,7 @@ class Log:
 
     @classmethod
     # pylint: disable=unused-argument
-    def view_log(cls, filepath: Path, keybind=None) -> None:
+    def view(cls, filepath: Path, keybind=None) -> None:
         """
         Create a separate window to view the log file as scrolled text.
         Called from View menu bar or keybinding.
@@ -418,30 +418,28 @@ class Log:
 
         if filepath == cls.LOGFILE:
             ttk.Button(logwin, text='Backup',
-                       command=cls.backup_log).pack(padx=4)
+                       command=lambda s=cls.LOGFILE, d=cls.BACKUPFILE: cls.backup(s, d)).pack(padx=4)
             ttk.Button(logwin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
 
     @classmethod
-    def backup_log(cls) -> None:
+    def backup(cls, source: Path, destination: Path) -> None:
         """
         Copy the log file to the current folder; overwrites previous
         back-up file.
-        Called from File menu bar.
-        """
-        # Could make this an outside function with backupfile and logfile as
-        #  arguments, but that would require import of partial from functools
-        #  to call it as a command from its menu bar object, its only call.
-        destination = cls.BACKUPFILE
 
-        if not Path.exists(cls.LOGFILE):
+        :param source: A Path object of the file to backup.
+        :param destination: A Path object of backup file.
+        """
+
+        if not Path.exists(source):
             fnf_detail = (f'On {node()}, cannot back up:\n'
-                          f'{cls.LOGFILE}\nHas it been moved or renamed?')
+                          f'{source}\nHas it been moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
             return
 
         try:
-            shutil.copyfile(cls.LOGFILE, destination)
+            shutil.copyfile(source, destination)
             success_msg = 'Log file has been copied to: '
             success_detail = str(destination)
             messagebox.showinfo(title='Backup completed',
@@ -454,6 +452,10 @@ class Log:
             messagebox.showinfo(title='Log copy error',
                                 message="Backup file name is a directory")
             print("Log file backup: Destination file is a directory.")
+        except OSError:
+            messagebox.showinfo(title='Log copy error',
+                                message="Backup destination is not writeable")
+            print("Log file backup: Destination file is not writeable.")
         except shutil.SameFileError:
             messagebox.showinfo(
                 title='Log copy error',
@@ -616,7 +618,7 @@ class Log:
         Generate a Toplevel window to display cumulative task counts
         that have been logged.
         Provide option to append displayed results to a log file.
-        Called from a view_log() button or a keybinding.
+        Called from a view() button or a keybinding.
 
         :param keybind: Needed for keybinding implicit event.
         """
@@ -838,9 +840,7 @@ class CountModeler:
         self.ttimes_used.update(ttimes_start)
 
         # Need to parse data returned from ttimes_stats().
-        startdict = ttimes_stats(
-            len(ttimes_start), ttimes_start)
-
+        startdict = ttimes_stats(len(ttimes_start), ttimes_start)
         self.share.data['tt_mean'].set(startdict['tt_mean'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
         self.share.data['tt_range'].set(
@@ -1469,7 +1469,9 @@ class CountViewer(tk.Frame):
         self.master.config(menu=self.menubar)
         self.file = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=self.file)
-        self.file.add_command(label="Backup log file", command=Log.backup_log)
+        self.file.add_command(
+            label="Backup log file",
+            command=lambda s=Logs.LOGFILE, d=Logs.BACKUPFILE: Logs.backup(s, d))
         self.file.add_separator()
         self.file.add_command(label='Quit', command=quit_gui,
                               accelerator='Ctrl+Q')
@@ -1477,15 +1479,15 @@ class CountViewer(tk.Frame):
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file",
-                         command=lambda: Log.view_log(Log.LOGFILE),
+                         command=lambda: Logs.view(Logs.LOGFILE),
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
         view.add_command(label="Log backup",
-                         command=lambda: Log.view_log(Log.BACKUPFILE))
-        view.add_command(label="Analysis", command=Log.show_analysis,
+                         command=lambda: Logs.view(Logs.BACKUPFILE))
+        view.add_command(label="Analysis", command=Logs.show_analysis,
                          accelerator="Ctrl+A")
         view.add_command(label="Saved analyses",
-                         command=lambda: Log.view_log(Log.ANALYSISFILE))
+                         command=lambda: Logs.view(Logs.ANALYSISFILE))
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
@@ -1494,7 +1496,7 @@ class CountViewer(tk.Frame):
         help_menu.add_command(label="About", command=self.share.about)
 
         self.viewlog_b = ttk.Button(text='View log file',
-                                    command=lambda: Log.view_log(Log.LOGFILE))
+                                    command=lambda: Logs.view(Logs.LOGFILE))
         # Set interval & summary focus button attributes with .share. b/c need
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with ttk intvl_b after first interval
@@ -1529,9 +1531,9 @@ class CountViewer(tk.Frame):
         self.master.bind_all('<Escape>', quit_gui)
         self.master.bind_all('<Control-q>', quit_gui)
         # ^^ Note: macOS command-q will quit program without quit_qui msg.
-        self.master.bind_all('<Control-a>', Log.show_analysis)
+        self.master.bind_all('<Control-a>', Logs.show_analysis)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
-        self.master.bind('<Control-l>', lambda event: Log.view_log(Log.LOGFILE))
+        self.master.bind('<Control-l>', lambda event: Logs.view(Logs.LOGFILE))
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
@@ -1834,7 +1836,7 @@ class CountViewer(tk.Frame):
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
         if self.share.setting['do_log'].get():
-            Log.do_logging()
+            Logs.do_logging()
         else:
             self.viewlog_b.config(state=tk.DISABLED)
             self.file.entryconfig("Backup log file", state=tk.DISABLED)
