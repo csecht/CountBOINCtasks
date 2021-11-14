@@ -468,12 +468,12 @@ class Logs:
                   'Are source and destination are the same file?')
 
     @classmethod
-    def analyze_log(cls) -> tuple:
+    def analyze_logfile(cls) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Called from cls.show_analysis().
 
-        :return: text strings to print in show_analysis() Toplevel.
+        :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
         summary_intvls = []
@@ -532,10 +532,10 @@ class Logs:
             intvl_counts = list(map(int, intvl_cnts))
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-        # Need these interval vars when there are interval counts following last summary.
-        #    But need only interval data following the last summary count.
+        # Need these interval vars when there are interval counts following last
+        #   summary, but only interval data after the last summary count.
         if capture_sumrys and capture_intvls:
-            # Need the list index of first interval count after the last summary count.
+            # Need the list index of first interval count after the last summary.
             indicies = [
                 i for i, tupl in enumerate(capture_intvls) if sumry_dates[-1] == tupl[0]]
             recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[indicies[0]:])
@@ -618,17 +618,17 @@ class Logs:
     @classmethod
     def show_analysis(cls, *keybind):
         """
-        Generate a Toplevel window to display cumulative task counts
-        that have been logged.
-        Provide option to append displayed results to a log file.
-        Called from a view() button or a keybinding.
+        Generate a Toplevel window to display cumulative logged task
+        counts that have been analyzed by cls.analyze_logfile().
+        Make Button to append displayed results to an analysis log file.
+        Called from a cls.view() button or a master keybinding.
 
-        :param keybind: Empty parameter to pass implicit keybinding event.
+        :param keybind: Empty parameter to pass implicit keybind event.
         """
 
-        # NOTE: When the log file is not found by analyze_log(), the
+        # NOTE: When the log file is not found by analyze_logfile(), the
         #   returned texts will be empty, so no need to continue.
-        summary_text, interval_text = cls.analyze_log()
+        summary_text, interval_text = cls.analyze_logfile()
         if not summary_text and not interval_text:
             return
 
