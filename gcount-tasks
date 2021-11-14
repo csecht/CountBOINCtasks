@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.7'
+__version__ = '0.6.8'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -208,34 +208,29 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
 
 
 # noinspection PyBroadException
-class Quit:
+def quit_gui(*keybind):
     """
-    A single method class to handle both menu and keybinding events.
+    Error-free and informative exit from the program.
+    Called from multiple widgets or keybindings.
+
+    :param keybind: Empty parameter to pass implicit keybinding event.
     """
-    def __init__(self, event):
-        self.event = event
 
-    @staticmethod
-    def quit() -> None:
-        """
-        Error-free and informative exit from the program.
-        Called from multiple widgets or keybindings.
-        """
-
-        # Write exit message to an existing log file, even if the settings
-        #  do log option was not selected.
-        time_now = datetime.now().strftime(LONG_STRFTIME)
-        quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
-        print(quit_msg)
-        if Path.exists(Logs.LOGFILE):
-            Logs.append(Logs.LOGFILE, quit_msg, False)
-        try:
-            app.update_idletasks()
-            app.after(200)
-            app.destroy()
-        # pylint: disable=broad-except
-        except Exception:
-            sys.exit(0)
+    # Write exit message to an existing log file, even if the settings
+    #  do log option was not selected.
+    time_now = datetime.now().strftime(LONG_STRFTIME)
+    quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
+    print(quit_msg)
+    if Path.exists(Logs.LOGFILE):
+        Logs.append(Logs.LOGFILE, quit_msg, False)
+    try:
+        app.update_idletasks()
+        app.after(200)
+        app.destroy()
+    # pylint: disable=broad-except
+    except Exception:
+        sys.exit(0)
+    return keybind
 
 
 class Logs:
@@ -251,8 +246,8 @@ class Logs:
 
     # self, event needed to handle implicit keybind events;
     #    e.g., view(), show_analysis()
-    def __init__(self, event):
-        self.event = event
+    def __init__(self, tkevent):
+        self.tkevent = tkevent
 
     @classmethod
     def do_logging(cls) -> None:
@@ -621,7 +616,7 @@ class Logs:
         return sumry_analysis, mop_up
 
     @classmethod
-    def show_analysis(cls, *keybind) -> object:
+    def show_analysis(cls, *keybind):
         """
         Generate a Toplevel window to display cumulative task counts
         that have been logged.
@@ -629,7 +624,6 @@ class Logs:
         Called from a view() button or a keybinding.
 
         :param keybind: Empty parameter to pass implicit keybinding event.
-        :return object: Empty object to return the empty args.
         """
 
         # NOTE: When the log file is not found by analyze_log(), the
@@ -1484,9 +1478,9 @@ class CountViewer(tk.Frame):
             label="Backup log file",
             command=lambda s=Logs.LOGFILE, d=Logs.BACKUPFILE: Logs.backup(s, d))
         file.add_separator()
-        file.add_command(label='Quit', command=Quit.quit,
+        file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
-        # ^^ Note: use Ctrl+Q for macOS also to call quit_qui; Cmd+Q still works.
+        # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file",
@@ -1537,11 +1531,11 @@ class CountViewer(tk.Frame):
                               highlightbackground='grey75')
 
         # Provide user exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', Quit.quit)
+        self.master.protocol('WM_DELETE_WINDOW', quit_gui)
 
-        self.master.bind_all('<Escape>', Quit.quit)
-        self.master.bind('<Control-q>', Quit.quit)
-        # ^^ Note: macOS command-q will quit program without quit_qui msg.
+        self.master.bind_all('<Escape>', quit_gui)
+        self.master.bind('<Control-q>', quit_gui)
+        # ^^ Note: macOS command-q will quit program without quit_gui msg.
         self.master.bind_all('<Control-a>', Logs.show_analysis)
         self.master.bind('<Shift-Control-C>', self.share.complimentme)
         self.master.bind('<Control-l>', lambda event: Logs.view(Logs.LOGFILE))
@@ -1971,10 +1965,11 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def app_got_focus(self, *event):
-        """Give menu bar headings normal color when app has focus.
+    def app_got_focus(self, *click_event):
+        """
+        Give menu bar headings normal color when app has focus.
 
-        :param event: <FocusIn> mouse click.
+        :param click_event: <FocusIn> mouse click.
         """
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
@@ -1983,12 +1978,13 @@ class CountViewer(tk.Frame):
                                          background='grey75')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
-        return event
+        return click_event
 
-    def app_lost_focus(self, *event):
-        """Give menu bar headings grey-out color when app looses focus.
+    def app_lost_focus(self, *click_event):
+        """
+        Give menu bar headings grey-out color when app looses focus.
 
-        :param event: <FocusOut> mouse click.
+        :param click_event: <FocusOut> mouse click.
         """
         self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
@@ -1996,7 +1992,7 @@ class CountViewer(tk.Frame):
         self.view_button_style.configure('View.TButton', foreground='grey')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
-        return event
+        return click_event
 
 
 # ################## MVC Controller; is app mainloop ##################
@@ -2080,7 +2076,7 @@ class CountController(tk.Tk):
     def complimentme(self, *keybind):
         """Is called from Help menu bar. A silly diversion.
 
-        :param keybind: Needed for implicit keybinding event
+        :param keybind: Empty parameter to pass implicit keybinding event.
         """
         CountFyi(share=self).compliment_me()
         return keybind
