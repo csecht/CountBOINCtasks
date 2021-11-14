@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.8'
+__version__ = '0.6.9'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -512,7 +512,7 @@ class Logs:
         # Need a match to summary lines in log, like this:
         #   2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330
         #   and to regular interval lines, like this:
-        #   2021-Oct-28 09:37:33; Tasks reported in the past 60m: 17
+        #   2021-Oct-28 09:37:33; Tasks reported in the past 1h: 17
         #   The line formats are specified in CountModeler.log_it().
         capture_sumrys = re.findall(
             r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
@@ -818,7 +818,7 @@ class CountModeler:
         """
         Set or reset default run parameters in the setting dictionary.
         """
-        self.share.setting['interval_t'].set('60m')
+        self.share.setting['interval_t'].set('1h')
         self.share.setting['interval_m'].set(60)
         self.share.setting['summary_t'].set('1d')
         self.share.setting['sumry_t_value'].set(1)
@@ -924,7 +924,7 @@ class CountModeler:
             #   in Epoch seconds, b/c each interval sleep cycle will run longer
             #   than the intended interval. Realized interval time should not
             #   drift by more than 1 second during count_max cycles.
-            # Without this time limit, each 60m interval would gain ~4s.
+            # Without this time limit, each 1h interval would gain ~4s.
             interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
@@ -1461,14 +1461,8 @@ class CountViewer(tk.Frame):
 
     def master_widgets(self) -> None:
         """
-        Master data frame, menus, and buttons.
+        Master menus, and buttons.
         """
-        self.dataframe.configure(borderwidth=3, relief='sunken',
-                                 bg=self.data_bg)
-        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
-                            padx=(5, 10), sticky=tk.NSEW)
-        self.dataframe.columnconfigure(1, weight=1)
-        self.dataframe.columnconfigure(2, weight=1)
 
         # Add pull-down menus
         self.master.config(menu=self.menubar)
@@ -1517,8 +1511,8 @@ class CountViewer(tk.Frame):
 
     def master_layout(self) -> None:
         """
-        Master Frame configuration, keybindings, row headers,
-        separators, and grids.
+        Master and dataframe Frames configuration, keybindings,
+        row headers, separators, and grids.
         """
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
@@ -1547,9 +1541,16 @@ class CountViewer(tk.Frame):
         self.master.columnconfigure(1, weight=1)
         self.master.columnconfigure(2, weight=1)
 
+        self.dataframe.configure(borderwidth=3, relief='sunken',
+                                 bg=self.data_bg)
+        self.dataframe.grid(row=2, column=1, rowspan=7, columnspan=2,
+                            padx=(5, 10), sticky=tk.NSEW)
+        self.dataframe.columnconfigure(1, weight=1)
+        self.dataframe.columnconfigure(2, weight=1)
+
         # Fill in headers for data rows.
         row_header = {'Counting since': 2,
-                      'Count interval': 3,
+                      'Count time interval': 3,
                       '# tasks reported': 4,
                       'Task times:  mean': 5,
                       'stdev': 6,
@@ -1707,12 +1708,10 @@ class CountViewer(tk.Frame):
         # Settings widget configurations and grids.
         self.intvl_choice.configure(state='readonly', width=4, height=12,
                                     textvariable=self.share.setting['interval_t'])
-        self.intvl_choice['values'] = ('60m', '30m', '20m', '15m', '10m')
+        self.intvl_choice['values'] = ('1h', '30m', '20m', '15m', '10m')
         self.intvl_choice.bind(
             "<<ComboboxSelected>>", self.share.setting['interval_t'].set(self.intvl_choice.get()))
-        intvl_label1 = ttk.Label(self.settings_win, text='Count interval',
-                                 style='Set.TLabel')
-        intvl_label2 = ttk.Label(self.settings_win, text='minutes',
+        intvl_label1 = ttk.Label(self.settings_win, text='Count time interval',
                                  style='Set.TLabel')
 
         self.sumry_t_value.configure(
@@ -1769,7 +1768,7 @@ class CountViewer(tk.Frame):
         # Grid all window widgets; generally sorted by row.
         self.intvl_choice.grid(row=0, column=1)
         intvl_label1.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
-        intvl_label2.grid(row=0, column=2, padx=5, pady=10, sticky=tk.W)
+        default_button.grid(row=0, column=3, padx=10, pady=(10, 0), sticky=tk.E)
         sumry_label1.grid(row=1, column=0, padx=(10, 5), pady=10, sticky=tk.E)
         self.sumry_t_value.grid(row=1, column=1)
         sumry_label2.grid(row=1, column=2, padx=5, pady=10, sticky=tk.E)
@@ -1781,7 +1780,6 @@ class CountViewer(tk.Frame):
         update_label.grid(row=4, column=0, padx=5, pady=0, sticky=tk.E)
         self.update_choice.grid(row=4, column=1, padx=0, pady=0, sticky=tk.W)
         confirm_button.grid(row=4, column=3, padx=10, pady=(0, 10), sticky=tk.E)
-        default_button.grid(row=5, column=0, padx=10, pady=(0, 10), sticky=tk.W)
         self.countnow_button.grid(
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
         # Need OS-specific gridding for proper alignments:
@@ -1803,8 +1801,12 @@ class CountViewer(tk.Frame):
 
         # Note: self.share.setting['interval_t'] and self.sumry_t_value
         #    are set in settings().
-        interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        if self.share.setting['interval_t'].get() != '1h':
+            interval_m = int(self.share.setting['interval_t'].get()[:-1])
+        else:
+            interval_m = 60
         self.share.setting['interval_m'].set(interval_m)
+
         sumry_value = self.sumry_t_value.get()
         # When sumry_value == 0, it will be caught by interval_m comparison.
         if not sumry_value:
