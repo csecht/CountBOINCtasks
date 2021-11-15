@@ -309,17 +309,17 @@ class Logs:
             info = (f'On {node()}, could not erase contents of\n'
                     f'{file}\nbecause file is missing.\n'
                     'Was it deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            messagebox.showerror(title='FILE NOT FOUND', detail=info,
+                                 parent=parent)
             return
 
         msgdetail = "'Enter/Return' or space bar will also delete file content."
         if MY_OS == 'dar':
             msgdetail = "'Enter/Return' will also delete file content."
 
-        okay = messagebox.askokcancel(
-            parent=parent,
-            title='Confirmation needed',
-            message='Delete file content?', detail=msgdetail)
+        okay = messagebox.askokcancel(title='Confirmation needed',
+                                      message='Delete file content?',
+                                      detail=msgdetail, parent=parent)
         if okay:
             try:
                 with open(file, 'w') as _f:
@@ -329,7 +329,7 @@ class Logs:
                 info = (f'On {node()}, could not erase contents of\n'
                         f'{file}\nbecause it could not be opened.')
                 messagebox.showerror(title='FILE PERMISSION ERROR',
-                                     detail=info)
+                                     detail=info, parent=parent)
 
     @classmethod
     def refresh(cls, tktext: tk.Text, file: Path, parent=None) -> None:
@@ -346,8 +346,8 @@ class Logs:
         if not Path.exists(file):
             msg = (f'On {node()}, cannot update file:\n{file}\n'
                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(parent=parent,
-                                 title='FILE NOT FOUND', detail=msg)
+            messagebox.showerror(title='FILE NOT FOUND', detail=msg,
+                                 parent=parent)
             return
 
         with open(file, encoding='utf-8') as new_text:
@@ -443,7 +443,8 @@ class Logs:
         if not Path.exists(source):
             fnf_detail = (f'On {node()}, cannot back up:\n'
                           f'{source}\nHas it been moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail)
+            messagebox.showerror(title='FILE NOT FOUND', detail=fnf_detail,
+                                 parent=parent)
             return
 
         try:
@@ -458,12 +459,14 @@ class Logs:
             print("Log file backup: Permission denied.")
         except IsADirectoryError:
             messagebox.showinfo(title='Log copy error',
-                                message="Backup file name is a directory")
+                                message="Backup file name is a directory",
+                                parent=parent)
             print("Log file backup: Destination file is a directory.")
         except OSError:
             messagebox.showinfo(title='Log copy error',
                                 message='Backup destination is not writeable',
-                                detail='Are source and destination are the same file?')
+                                detail='Are source and destination are the same file?',
+                                parent=parent)
             print('Log file backup: Destination file is not writeable. '
                   'Are source and destination are the same file?')
 
