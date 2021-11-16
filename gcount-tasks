@@ -29,11 +29,11 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.14'
+__version__ = '0.6.15'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
-__docformat__ = 'reStructuredText'
+__docformat__ = 'Markdown'
 __status__ = 'Development Status :: 2 - Beta'
 
 import argparse
@@ -516,7 +516,7 @@ class Logs:
 
         def str2dt(dt_str):
             """Convert formatted date string to datetime object.
-            Use for comparing task datetimes.
+            Use for comparing task count datetimes.
             """
             dt_obj = datetime.strptime(dt_str, LONG_STRFTIME)
             return dt_obj
@@ -834,10 +834,12 @@ class CountModeler:
         self.share.setting['interval_t'].set('1h')
         self.share.setting['interval_m'].set(60)
         self.share.intvl_choice['values'] = ('1h', '30m', '20m', '15m', '10m')
+        self.share.intvl_choice.select_clear()
         self.share.setting['summary_t'].set('1d')
         self.share.setting['sumry_t_value'].set(1)
         self.share.setting['sumry_t_unit'].set('day')
         self.share.sumry_unit_choice['values'] = ('day', 'hr', 'min')
+        self.share.sumry_unit_choice.select_clear()
         self.share.setting['cycles_max'].set(1008)
         self.share.setting['do_log'].set(True)
         self.share.setting['proj_update'].set(False)
@@ -1328,7 +1330,7 @@ class CountViewer(tk.Frame):
         # settings() window widgets:
         self.settings_win = tk.Toplevel()
         self.share.intvl_choice = ttk.Combobox(self.settings_win)
-        self.sumry_t_value = ttk.Entry(self.settings_win)
+        self.sumry_value_entry = ttk.Entry(self.settings_win)
         self.share.sumry_unit_choice = ttk.Combobox(self.settings_win)
         self.cycles_max_entry = ttk.Entry(self.settings_win)
         self.countnow_button = ttk.Button(self.settings_win)
@@ -1755,11 +1757,11 @@ class CountViewer(tk.Frame):
         sumry_label1 = ttk.Label(
             self.settings_win, text='Summary interval: time value',
             style='Set.TLabel')
-        self.sumry_t_value.configure(
+        self.sumry_value_entry.configure(
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_t_value.register(only_digit_entry), '%P', '%d'))
+                self.sumry_value_entry.register(only_digit_entry), '%P', '%d'))
 
         sumry_label2 = ttk.Label(
             self.settings_win, text='time unit', style='Set.TLabel')
@@ -1808,7 +1810,7 @@ class CountViewer(tk.Frame):
         self.share.intvl_choice.grid(row=0, column=1)
         default_button.grid(row=0, column=3, padx=10, pady=(10, 0), sticky=tk.E)
         sumry_label1.grid(row=1, column=0, padx=(10, 5), pady=10, sticky=tk.E)
-        self.sumry_t_value.grid(row=1, column=1)
+        self.sumry_value_entry.grid(row=1, column=1)
         sumry_label2.grid(row=1, column=2, padx=5, pady=10, sticky=tk.E)
         self.share.sumry_unit_choice.grid(row=1, column=3, padx=5, pady=10, sticky=tk.W)
         cycles_label.grid(row=2, column=0, padx=5, pady=10, sticky=tk.E)
@@ -1845,16 +1847,15 @@ class CountViewer(tk.Frame):
         if self.share.setting['interval_t'].get() != '1h':
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
         else:
+            # Need to convert 1h to minutes for comparisons.
             interval_m = 60
         self.share.setting['interval_m'].set(interval_m)
 
-        sumry_value = self.sumry_t_value.get()
+        sumry_value = int(self.share.setting['sumry_t_value'].get())
         # When sumry_value == 0, it will be caught by interval_m comparison.
         if not sumry_value:
             self.share.setting['sumry_t_value'].set(1)
             sumry_value = 1
-        elif sumry_value != '0':
-            self.share.setting['sumry_t_value'].set(int(sumry_value.lstrip('0')))
 
         # Need to set summary_t here as concat of the two sumry_t element strings,
         #   then convert to minutes to use in comparisons.
@@ -1870,7 +1871,7 @@ class CountViewer(tk.Frame):
             if self.share.setting['sumry_t_unit'].get()  == 'min':
                 self.share.setting['sumry_t_value'].set(2 * interval_m)
             elif self.share.setting['sumry_t_unit'].get()  == 'hr':
-                self.share.setting['sumry_t_value'].set(2 * int(sumry_value))
+                self.share.setting['sumry_t_value'].set(2 * sumry_value)
         elif interval_m < summary_m and summary_m % interval_m == 0:
             self.good_settings = True
 
