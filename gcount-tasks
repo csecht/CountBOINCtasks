@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.15'
+__version__ = '0.6.16'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -481,28 +481,30 @@ class Logs:
         :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
-        summary_intvls = []
-        sumry_num_intvls = 0
+        sumry_intvl_times = []
+        sumry_num_intvl_times = 0
         sumry_counts = []
         sumry_cnt_avg = 0.0
         sumry_cnt_range = ''
 
         intvl_dates = []
-        regular_intvls = []
-        regular_num_intvls = 0
+        regular_intvl_times = []
+        regular_num_intvl_times = 0
         intvl_counts = []
         intvl_cnt_avg = 0.0
         intvl_cnt_range = ''
 
         recent_dates = []
-        recent_intvls = []
-        recent_num_intvls = 0
+        recent_intvl_times = []
+        recent_num_intvl_times = 0
         recent_counts = []
         recent_cnt_avg = 0.0
         recent_cnt_range = ''
 
         sumry_analysis = ''
         mop_up = ''
+
+        trailing_intervals = True
 
         try:
             with open(cls.LOGFILE, encoding='utf-8') as file:
@@ -529,18 +531,18 @@ class Logs:
         capture_sumrys = re.findall(
             r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
         capture_intvls = re.findall(
-            r'^(.*); Tasks reported .* (\d+[hd]): (\d+$)', logtext, re.MULTILINE)
+            r'^(.*); Tasks reported .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
 
         if capture_sumrys:
-            sumry_dates, summary_intvls, sumry_cnts = zip(*capture_sumrys)
-            sumry_num_intvls = len(set(summary_intvls))
+            sumry_dates, sumry_intvl_times, sumry_cnts = zip(*capture_sumrys)
+            sumry_num_intvl_times = len(set(sumry_intvl_times))
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
         # Need these intvl vars when there are no summary data.
         if capture_intvls:
-            intvl_dates, regular_intvls, intvl_cnts = zip(*capture_intvls)
-            regular_num_intvls = len(set(regular_intvls))
+            intvl_dates, regular_intvl_times, intvl_cnts = zip(*capture_intvls)
+            regular_num_intvl_times = len(set(regular_intvl_times))
             intvl_counts = list(map(int, intvl_cnts))
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
@@ -550,12 +552,15 @@ class Logs:
             # Need the list index of first interval count after the last summary.
             index = [
                 i for i, tupl in enumerate(capture_intvls) if
-                str2dt(intvl_dates[-1]) >= str2dt(sumry_dates[-1])]
-            recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[index[0]:])
-            recent_num_intvls = len(set(recent_intvls))
-            recent_counts = list(map(int, recent_cnts))
-            recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
-            recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
+                str2dt(intvl_dates[-1]) > str2dt(sumry_dates[-1])]
+            if index:
+                recent_dates, recent_intvl_times, recent_cnts = zip(*capture_intvls[index[-1]:])
+                recent_num_intvl_times = len(set(recent_intvl_times))
+                recent_counts = list(map(int, recent_cnts))
+                recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
+                recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
+            else:
+                trailing_intervals = False
 
         # Need to tailor report texts for various counting conditions.
         if not capture_sumrys and not capture_intvls:
@@ -566,65 +571,71 @@ class Logs:
                 '   interval count in the log file.\n')
         if not capture_sumrys and capture_intvls:
             sumry_analysis = '\nNo summary counts are logged yet.\n'
-            if regular_num_intvls == 1:
+            if regular_num_intvl_times == 1:
                 mop_up = (
-                    'Analysis of logged task counts from:\n'
+                    'Analysis of task counts logged from:\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
                     f'   {len(intvl_counts)} intervals logged\n'
                     f'   {sum(intvl_counts)} reported tasks\n'
-                    f'   {intvl_cnt_avg} tasks per {regular_intvls[0]} interval\n'
+                    f'   {intvl_cnt_avg} tasks per {regular_intvl_times[0]} interval\n'
                     f'   {intvl_cnt_range} range of task counts\n')
             else:
                 mop_up = (
-                    'Analysis of logged task counts from:\n'
+                    'Analysis of task counts logged from:\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
-                    f'There are {regular_num_intvls} different interval times\n'
-                    f'logged, {set(regular_intvls)},\n'
+                    f'There are {regular_num_intvl_times} different interval times\n'
+                    f'logged, {set(regular_intvl_times)},\n'
                     'so results may be inaccurate.\n\n'
                     f'   {len(intvl_counts)} intervals logged\n'
                     f'   {sum(intvl_counts)} reported tasks\n'
-                    f'   {intvl_cnt_avg} tasks per {regular_num_intvls} interval\n'
+                    f'   {intvl_cnt_avg} tasks per {regular_num_intvl_times} interval\n'
                     f'   {intvl_cnt_range} range of task counts\n')
         if capture_sumrys:
-            if sumry_num_intvls == 1:
+            if sumry_num_intvl_times == 1:
                 sumry_analysis = (
-                    'Summary data in the log file from:\n'
+                    f'{sum(intvl_counts)} total logged tasks in {len(intvl_counts)} intervals.\n\n'
+                    'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
                     f'   {len(sumry_counts)} summaries logged\n'
-                    f'   {sum(sumry_counts)} reported tasks\n'
-                    f'   {sumry_cnt_avg} tasks per {summary_intvls[0]} summary interval\n'
+                    f'   {sum(sumry_counts)} tasks logged in summaries\n'
+                    f'   {sumry_cnt_avg} tasks per {sumry_intvl_times[0]} summary interval\n'
                     f'   {sumry_cnt_range} range of task counts\n')
             else:
                 sumry_analysis = (
-                    'Summary data in the log file from:\n'
+                    f'{sum(intvl_counts)} total logged tasks in {len(intvl_counts)} intervals.\n\n'
+                    'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
-                    f'There are {sumry_num_intvls} different logged Summary\n'
-                    f' interval times, {set(summary_intvls)},\n'
+                    f'There are {sumry_num_intvl_times} different logged Summary\n'
+                    f' interval times, {set(sumry_intvl_times)},\n'
                     'so results may be inaccurate.\n\n'
                     f'   {len(sumry_counts)} summaries logged\n'
                     f'   {sum(sumry_counts)} reported tasks\n'
                     f'   {sumry_cnt_avg} tasks per summary\n'
                     f'   {sumry_cnt_range} range of task counts\n')
+
         if capture_sumrys and capture_intvls:
-            if recent_num_intvls == 1:
-                mop_up = (
-                    '\nSince last Summary, additional counts from:\n'
-                    f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                    f'   {len(recent_counts)} intervals logged\n'
-                    f'   {sum(recent_counts)} reported tasks\n'
-                    f'   {recent_cnt_avg} tasks per {recent_intvls[0]} interval\n'
-                    f'   {recent_cnt_range} range of task counts\n')
+            if trailing_intervals:
+                if recent_num_intvl_times == 1:
+                    mop_up = (
+                        '\nSince last Summary, additional counts from:\n'
+                        f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                        f'   {len(recent_counts)} intervals logged\n'
+                        f'   {sum(recent_counts)} reported tasks\n'
+                        f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} interval\n'
+                        f'   {recent_cnt_range} range of task counts\n')
+                else:
+                    mop_up = (
+                        '\nSince last Summary, additional counts from:\n'
+                        f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                        f'There are {recent_num_intvl_times} different logged\n'
+                        f' interval times, {set(recent_intvl_times)},\n'
+                        'so results may be inaccurate.\n\n'
+                        f'   {len(recent_counts)} intervals logged\n'
+                        f'   {sum(recent_counts)} reported tasks\n'
+                        f'   {recent_cnt_avg} tasks per interval\n'
+                        f'   {recent_cnt_range} range of task counts\n')
             else:
-                mop_up = (
-                    '\nSince last Summary, additional counts from:\n'
-                    f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                    f'There are {recent_num_intvls} different logged\n'
-                    f' interval times, {set(recent_intvls)},\n'
-                    'so results may be inaccurate.\n\n'
-                    f'   {len(recent_counts)} intervals logged\n'
-                    f'   {sum(recent_counts)} reported tasks\n'
-                    f'   {recent_cnt_avg} tasks per interval\n'
-                    f'   {recent_cnt_range} range of task counts\n')
+                mop_up = '\nNo counts logged after last Summary.'
 
         return sumry_analysis, mop_up
 
