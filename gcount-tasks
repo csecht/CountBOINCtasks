@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.12'
+__version__ = '0.6.13'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -829,7 +829,7 @@ class CountModeler:
         self.share.setting['summary_t'].set('1d')
         self.share.setting['sumry_t_value'].set(1)
         self.share.setting['sumry_t_unit'].set('day')
-        self.share.sumry_t_unit['values'] = ('day', 'hr', 'min')
+        self.share.sumry_unit_choice['values'] = ('day', 'hr', 'min')
         self.share.setting['cycles_max'].set(1008)
         self.share.setting['do_log'].set(True)
         self.share.setting['proj_update'].set(False)
@@ -1163,7 +1163,7 @@ class CountModeler:
 
             if called_from == 'start' and cycles_max > 0:
                 report = (
-                    f'\n>>> START SETTINGS, GUI TASK COUNTER v.{__version__} <<<\n'
+                    f'\n>>> START GUI TASK COUNTER v.{__version__}, SETTINGS: <<<\n'
                     f'{self.share.long_time_start};'
                     ' Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
@@ -1321,7 +1321,7 @@ class CountViewer(tk.Frame):
         self.settings_win = tk.Toplevel()
         self.share.intvl_choice = ttk.Combobox(self.settings_win)
         self.sumry_t_value = ttk.Entry(self.settings_win)
-        self.share.sumry_t_unit = ttk.Combobox(self.settings_win)
+        self.share.sumry_unit_choice = ttk.Combobox(self.settings_win)
         self.cycles_max_entry = ttk.Entry(self.settings_win)
         self.countnow_button = ttk.Button(self.settings_win)
         self.log_choice = tk.Checkbutton(self.settings_win)
@@ -1719,11 +1719,11 @@ class CountViewer(tk.Frame):
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
         def update_intvl(*event):
-            self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_t_unit.get()]
+            self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_unit_choice.get()]
             return event
 
         def update_sumry_unit(*event):
-            self.share.sumry_t_unit['values'] = interval_t[self.share.intvl_choice.get()]
+            self.share.sumry_unit_choice['values'] = interval_t[self.share.intvl_choice.get()]
             return event
 
         # Settings widget construction, configurations, and grids.
@@ -1759,12 +1759,12 @@ class CountViewer(tk.Frame):
                       'hr': ('30m', '20m', '15m', '10m'),
                       'min': ('20m', '15m', '10m')
                       }
-        self.share.sumry_t_unit.configure(
+        self.share.sumry_unit_choice.configure(
             state='readonly', width=4,
             textvariable=self.share.setting['sumry_t_unit'],
             values=tuple(sumry_unit.keys()))
-        self.share.sumry_t_unit.bind("<<ComboboxSelected>>", update_intvl)
-        self.share.setting['sumry_t_unit'].set(self.share.sumry_t_unit.get())
+        self.share.sumry_unit_choice.bind("<<ComboboxSelected>>", update_intvl)
+        self.share.setting['sumry_t_unit'].set(self.share.sumry_unit_choice.get())
 
         # Specify number limit of counting cycles to run.
         cycles_query_btn = ttk.Button(self.settings_win, text='?', width=0,
@@ -1802,7 +1802,7 @@ class CountViewer(tk.Frame):
         sumry_label1.grid(row=1, column=0, padx=(10, 5), pady=10, sticky=tk.E)
         self.sumry_t_value.grid(row=1, column=1)
         sumry_label2.grid(row=1, column=2, padx=5, pady=10, sticky=tk.E)
-        self.share.sumry_t_unit.grid(row=1, column=3, padx=5, pady=10, sticky=tk.W)
+        self.share.sumry_unit_choice.grid(row=1, column=3, padx=5, pady=10, sticky=tk.W)
         cycles_label.grid(row=2, column=0, padx=5, pady=10, sticky=tk.E)
         self.cycles_max_entry.grid(row=2, column=1)
         log_label.grid(row=3, column=0, padx=5, pady=5, sticky=tk.E)
@@ -1850,7 +1850,7 @@ class CountViewer(tk.Frame):
 
         # Need to set summary_t here as concat of the two sumry_t element strings,
         #   then convert to minutes to use in comparisons.
-        summary_t = f"{sumry_value}{self.share.sumry_t_unit.get()[:1]}"
+        summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
         summary_m = TC.string_to_m(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
@@ -2132,7 +2132,7 @@ if __name__ == "__main__":
         app.title(f'Count BOINC tasks on {node()}')
         # Note: need to use sys.argv for Windows py2exe setup.py compiling.
         # print(f'{Path(sys.argv[0]).name} now running...')
-        print(f'{Path(__file__)} now running...')
+        print(f'{Path(__file__).name} now running...')
 
         app.mainloop()
     except KeyboardInterrupt:
