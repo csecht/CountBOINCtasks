@@ -45,7 +45,7 @@ setup(
     data_files=DATA_FILES,
     name='GcountTasks',
     author='C.S. Echt',
-    description='A utility to mot monitor BOINC task status and metrics',
+    description='A utility to monitor BOINC task status and metrics',
     license='GNU General Public License',
     keywords="BOINC 'BOINC Manager'",
     url='https://github.com/csecht/CountBOINCtasks',

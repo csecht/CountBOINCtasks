@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.11'
+__version__ = '0.6.12'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -132,8 +132,8 @@ def parse_args() -> None:
 
 def app_position(add_x=0, add_y=0) -> tuple:
     """
-    Get position of the app (MASTER) window.
-    Use to set position of a Toplevel child with respect to app.
+    Use to set position of a Toplevel child with respect to the
+    app (Master) window.
 
     :param add_x: optional pixels added to app's x coordinate.
     :param add_y: optional pixels added to app's y coordinate.
@@ -146,7 +146,7 @@ def app_position(add_x=0, add_y=0) -> tuple:
     return pos_x, pos_y
 
 
-def eval_digit_entry(entry_string, action_type) -> bool:
+def only_digit_entry(entry_string, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
     Used with .register() to configure Entry kw validatecommand.
@@ -281,16 +281,17 @@ class Logs:
             perr = (f'On {node()}, {dest}\n could not be opened because\n'
                     'of insufficient permissions.')
             messagebox.showerror(title='FILE PERMISSION ERROR',
-                                 detail=perr)
+                                 detail=perr, parent=parent)
         except UnicodeError as err:
             messagebox.showerror(title='Wrong file encoding',
-                                 detail=err)
+                                 detail=err, parent=parent)
             print(err)
         except FileNotFoundError:
             fnferr = (f'On {node()}, file is missing:\n{dest}\n'
                       'Have any analysis results been saved yet?\n'
                       'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=fnferr)
+            messagebox.showerror(title='FILE NOT FOUND',
+                                 detail=fnferr, parent=parent)
             return
 
     @classmethod
@@ -309,8 +310,8 @@ class Logs:
             info = (f'On {node()}, could not erase contents of\n'
                     f'{file}\nbecause file is missing.\n'
                     'Was it deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info,
-                                 parent=parent)
+            messagebox.showerror(title='FILE NOT FOUND',
+                                 detail=info, parent=parent)
             return
 
         msgdetail = "'Enter/Return' or space bar will also delete file content."
@@ -346,8 +347,8 @@ class Logs:
         if not Path.exists(file):
             msg = (f'On {node()}, cannot update file:\n{file}\n'
                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=msg,
-                                 parent=parent)
+            messagebox.showerror(title='FILE NOT FOUND',
+                                 detail=msg, parent=parent)
             return
 
         with open(file, encoding='utf-8') as new_text:
@@ -397,10 +398,10 @@ class Logs:
 
         with open(filepath, encoding='utf-8') as file:
             logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
-            logwin.title(f'{filepath.name} on {node()}')
+            # logwin.title(f'{filepath.name} on {node()}')
             # Need to use this ^^ for py2exe, b/c below generates run-time error:
-            # dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
-            # logwin.title(f'{dir_file} on {node()}')
+            dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
+            logwin.title(f'{dir_file} on {node()}')
 
             logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
@@ -537,7 +538,7 @@ class Logs:
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
         # Need these interval vars when there are interval counts following last
-        #   summary, but only interval data after the last summary count.
+        #   summary; use only interval data after the last summary count.
         if capture_sumrys and capture_intvls:
             # Need the list index of first interval count after the last summary.
             indicies = [
@@ -657,12 +658,12 @@ class Logs:
         ttk.Button(
             analysiswin, text='Save analysis',
             command=lambda d=cls.ANALYSISFILE, t=text: cls.append(d, t, True, analysiswin)
-        ).pack(padx=4)
+            ).pack(padx=4)
 
         return keybind
 
 
-# ############ An MVC add-on; independent of data functions ############
+# ############ A MVC add-on; independent of data functions #############
 class CountFyi:
     """
     Methods to provide user with information and help.
@@ -674,7 +675,7 @@ class CountFyi:
     @staticmethod
     def information() -> None:
         """
-        Basic information program usage and actions;
+        Basic information, usage, and actions.
         Toplevel window called from Help menu bar.
         """
         pos_x, pos_y = app_position(15, 15)
@@ -683,7 +684,7 @@ class CountFyi:
         infowin.resizable(False, False)
         infowin.title('Usage information')
         information = ("""
-            - Counting begins once settings are confirmed at start.\n
+            - Counting begins once "Count now" is clicked in settings window.\n
             - Interval and Summary data buttons switch visual emphasis;
                     ...those buttons activate once their data post.\n
             - At start, # tasks reported and time of last count are from
@@ -766,7 +767,7 @@ class CountFyi:
     @staticmethod
     def about() -> None:
         """
-        Basic information for gcount-tasks;
+        Basic information for gcount-tasks.
         Toplevel window called from Help menu bar.
         """
         pos_x, pos_y = app_position(15, 15)
@@ -1662,7 +1663,7 @@ class CountViewer(tk.Frame):
         summary interval times, counting limit, and log file option.
         """
         # Toplevel window basics
-        self.settings_win.title('Set and confirm run settings')
+        self.settings_win.title('Set run settings')
         # Need to position over app window, which is at '+96+134'.
         self.settings_win.geometry('+136+174')
         self.settings_win.resizable(False, False)
@@ -1694,9 +1695,8 @@ class CountViewer(tk.Frame):
         # But if close on master X, or Escape, then get this error:
         #   _tkinter.TclError: can't invoke "grab" command: application has been destroyed
         def no_exit_on_x():
-            msg = ('Please close window with "Count now" button.\n'
-                   '"Count now" works once "Confirm" checks all settings.')
-            messagebox.showinfo(title='Confirm before closing', detail=msg,
+            msg = 'Please close window with "Count now" button.'
+            messagebox.showinfo(title='Invalid exit', detail=msg,
                                 parent=self.settings_win)
 
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
@@ -1751,7 +1751,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_t_value.register(eval_digit_entry), '%P', '%d'))
+                self.sumry_t_value.register(only_digit_entry), '%P', '%d'))
 
         sumry_label2 = ttk.Label(
             self.settings_win, text='time unit', style='Set.TLabel')
@@ -1775,7 +1775,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
-                self.cycles_max_entry.register(eval_digit_entry), '%P', '%d'))
+                self.cycles_max_entry.register(only_digit_entry), '%P', '%d'))
 
         # Need user options to log results to file and to use auto-updates.
         log_label = ttk.Label(self.settings_win, text='Log results to file',
@@ -1790,16 +1790,10 @@ class CountViewer(tk.Frame):
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
 
-        confirm_button = ttk.Button(self.settings_win, text='Confirm',
-                                    command=self.check_and_set)
         default_button = ttk.Button(self.settings_win, text='Set defaults',
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
                                        command=self.check_and_start)
-        # Need to disable button to force user to first "Confirm" settings,
-        #    even when using default settings: it is a 2-click closing.
-        #    'Count now' button is enabled (tk.NORMAL) in check_and_set().
-        self.countnow_button.config(state=tk.DISABLED)
 
         # Grid all window widgets; generally sorted by row.
         intvl_label.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
@@ -1815,7 +1809,6 @@ class CountViewer(tk.Frame):
         self.log_choice.grid(row=3, column=1, padx=0, pady=5, sticky=tk.W)
         update_label.grid(row=4, column=0, padx=5, pady=0, sticky=tk.E)
         self.update_choice.grid(row=4, column=1, padx=0, pady=0, sticky=tk.W)
-        confirm_button.grid(row=4, column=3, padx=10, pady=(0, 10), sticky=tk.E)
         self.countnow_button.grid(
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
 
@@ -1831,12 +1824,11 @@ class CountViewer(tk.Frame):
 
     def check_and_set(self):
         """
-        Confirm that summary time is valid for interval time,
-        set all settings to valid control variable dict values,
-        and set up logging data if optioned.
-        Called from confirm_button in settings().
+        Confirm validity of summary and interval times, set all
+        to valid control variable dictionary values, and set up logging
+        of  data, if optioned.
+        Called from check_and_start().
         """
-        self.countnow_button.config(state=tk.DISABLED)
 
         # Note: self.share.setting['interval_t'] and self.sumry_t_value
         #    are set in settings() or in Modeler.default_settings().
@@ -1866,7 +1858,6 @@ class CountViewer(tk.Frame):
             info = "Summary time must be greater than, and a multiple of, interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
-            self.countnow_button.config(state=tk.DISABLED)
             # Need to offer user valid alternatives to bad times entered.
             if self.share.setting['sumry_t_unit'].get()  == 'min':
                 self.share.setting['sumry_t_value'].set(2 * interval_m)
@@ -1874,7 +1865,6 @@ class CountViewer(tk.Frame):
                 self.share.setting['sumry_t_value'].set(2 * int(sumry_value))
         elif interval_m < summary_m and summary_m % interval_m == 0:
             self.good_settings = True
-            self.countnow_button.config(state=tk.NORMAL)
 
         # Need to remove leading zeros, but allow a zero entry.
         #   Replace empty Entry with default values.
@@ -2141,7 +2131,9 @@ if __name__ == "__main__":
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
         # Note: need to use sys.argv for Windows py2exe setup.py compiling.
-        print(f'{Path(sys.argv[0]).name} now running...')
+        # print(f'{Path(sys.argv[0]).name} now running...')
+        print(f'{Path(__file__)} now running...')
+
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = f'\n   *** ...interrupted by user at {datetime.now()} ***\n'
