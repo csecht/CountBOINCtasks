@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.6.13'
+__version__ = '0.6.14'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -514,6 +514,13 @@ class Logs:
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return sumry_analysis, mop_up
 
+        def str2dt(dt_str):
+            """Convert formatted date string to datetime object.
+            Use for comparing task datetimes.
+            """
+            dt_obj = datetime.strptime(dt_str, LONG_STRFTIME)
+            return dt_obj
+
         # Need a match to summary lines in log, like this:
         #   2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330
         #   and to regular interval lines, like this:
@@ -522,7 +529,7 @@ class Logs:
         capture_sumrys = re.findall(
             r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
         capture_intvls = re.findall(
-            r'^(.*); Tasks reported .* (\d+m): (\d+$)', logtext, re.MULTILINE)
+            r'^(.*); Tasks reported .* (\d+[hd]): (\d+$)', logtext, re.MULTILINE)
 
         if capture_sumrys:
             sumry_dates, summary_intvls, sumry_cnts = zip(*capture_sumrys)
@@ -541,9 +548,10 @@ class Logs:
         #   summary; use only interval data after the last summary count.
         if capture_sumrys and capture_intvls:
             # Need the list index of first interval count after the last summary.
-            indicies = [
-                i for i, tupl in enumerate(capture_intvls) if sumry_dates[-1] == tupl[0]]
-            recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[indicies[0]:])
+            index = [
+                i for i, tupl in enumerate(capture_intvls) if
+                str2dt(intvl_dates[-1]) >= str2dt(sumry_dates[-1])]
+            recent_dates, recent_intvls, recent_cnts = zip(*capture_intvls[index[0]:])
             recent_num_intvls = len(set(recent_intvls))
             recent_counts = list(map(int, recent_cnts))
             recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
