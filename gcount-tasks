@@ -444,8 +444,8 @@ class Logs:
             return
 
         # Need a timestamp for each backup file created.
-        ts = datetime.now().strftime("%d%m%Y_%H%M")
-        backupname = f'{source.stem}({ts}){source.suffix}'
+        _ts = datetime.now().strftime("%d%m%Y_%H%M")
+        backupname = f'{source.stem}({_ts}){source.suffix}'
         destination = Path(backupname)
 
         try:
@@ -499,11 +499,10 @@ class Logs:
         recent_counts = []
         recent_cnt_avg = 0.0
         recent_cnt_range = ''
+        recent_intervals = True
 
         sumry_analysis = ''
         mop_up = ''
-
-        trailing_intervals = True
 
         try:
             with open(cls.LOGFILE, encoding='utf-8') as file:
@@ -527,8 +526,9 @@ class Logs:
             Calculate sum of running hours; includes time when no
             tasks were counted and no intervals completed.
 
-            :param logcontent: the read log file, as string.
-            :return: sum of hours that logging occurred, as string.
+            :param logcontent: the read log file string.
+            :return: total hours elapsed while logging active, as string.
+                     Returns 'n/a' if negative time calculated.
             """
             uptime_hours = []
             start_flag = False
@@ -597,11 +597,11 @@ class Logs:
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
         # Need these recent vars when there are interval counts following last
         #   summary; grab only interval data after the last summary count.
-        #   So define the list index of first interval count after the last summary.
+        #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, index list will be empty.
         if capture_sumrys and capture_intvls:
             index = [
-                i for i, intvl_data in enumerate(capture_intvls) if intvl_data[0] == sumry_dates[-1]]
+                i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
             if index:
                 index_trailing = index[0] + 1
                 recent_dates, recent_intvl_times, recent_cnts = zip(*capture_intvls[index_trailing:])
@@ -610,7 +610,7 @@ class Logs:
                 recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
                 recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
             else:
-                trailing_intervals = False
+                recent_intervals = False
 
         # Need to tailor report texts for various counting conditions.
         if not capture_sumrys and not capture_intvls:
@@ -668,7 +668,7 @@ class Logs:
                     f'   {sumry_cnt_range} range of task counts\n')
 
         if capture_sumrys and capture_intvls:
-            if trailing_intervals:
+            if recent_intervals:
                 if num_recent_times == 1:
                     mop_up = (
                         '\nSince last Summary, additional counts from:\n'
@@ -708,7 +708,7 @@ class Logs:
         #   returned texts will be empty, so no need to continue.
         summary_text, interval_text = cls.analyze_logfile()
         if not summary_text and not interval_text:
-            return
+            return keybind
 
         pos_x, pos_y = app_position(15, 15)
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
@@ -768,7 +768,8 @@ class CountFyi:
             - Displayed countdown clock time is approximate.\n
             - Review counts and Notices history with "View log file".\n
             - File>'Backup log file' copies log to the current folder.\n
-            - Logged analysis hours "n/a" means non-linear start-quit times.
+            - Logged analysis hours "n/a" means non-linear start-quit times.\n
+                    Quick fix: backup log, delete log file, restart program.
             """)
 
         num_doc_lines = information.count('\n')
