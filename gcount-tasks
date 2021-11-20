@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -201,15 +201,40 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         'tt_max': 'na'}
 
 
-def str2dt(dt_str: str, strftime: str) -> datetime:
+def str2dt(dt_str: str, str_format: str) -> datetime:
     """Convert formatted date string to datetime object.
     Use for comparing datetimes in text files.
 
     :param dt_str: date and time formatted string.
-    :param strftime: datetime strftime() string; ex '%Y-%b-%d %H:%M:%S'.
+    :param str_format: datetime.strftime() string; ex '%Y-%b-%d %H:%M:%S'.
     """
-    dt_obj = datetime.strptime(dt_str, strftime)
+    dt_obj = datetime.strptime(dt_str, str_format)
     return dt_obj
+
+
+def weighted_mean_time(distribution: list, weights: list) -> str:
+    """
+    Calculate weighted mean time from list of average times formatted
+    as 00:00:00.
+
+    :param distribution: list of avg times in clock time string format.
+    :param weights: list of corresponding sample numbers, as integers,
+                    for each avg time in distribution list.
+    :return: weighted mean time, formatted as clock time string.
+    """
+    # algorithm sources:
+    # https://towardsdatascience.com/3-ways-to-compute-a-weighted-average-in-python-4e066de7a719
+    # https://stackoverflow.com/questions/10663720/how-to-convert-a-time-string-to-seconds
+    # https://stackoverflow.com/questions/18470627/how-do-i-remove-the-microseconds-from-a-timedelta-object
+    # Need to convert distribution clock time strings to seconds.
+    dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_t.split(":")))
+                for clk_t in distribution]
+    numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
+    denominator = sum(weights)
+    # Need to determine the weighted mean,
+    #   convert the timedelta object to a clock time string for display, and
+    #   remove microseconds from the clock time string.
+    return str(timedelta(seconds=(numerator / denominator))).split(".")[0]
 
 
 # noinspection PyBroadException
@@ -344,7 +369,7 @@ class Logs:
 
         :param tktext: A tkinter.scrolledtext.ScrolledText or
                tkinter.Text insert.
-        :param file: Path object of file from which to erase content.
+        :param file: Path object of file from which to replace content.
         :param parent: The parent window over which to place messagebox;
                usually a Toplevel(). Defaults to app window.
         """
@@ -423,10 +448,6 @@ class Logs:
             logwin, text='Update',
             command=(lambda t=logtext, f=filepath, p=logwin: cls.refresh(t, f, p))
                      ).pack(padx=4)
-        # ttk.Button(
-        #     logwin, text='Erase',
-        #     command=(lambda t=logtext, f=filepath, p=logwin: cls.erase(t, f, p))
-        #              ).pack(padx=4)
 
         if filepath == cls.LOGFILE:
             ttk.Button(
@@ -564,6 +585,7 @@ class Logs:
         sumry_counts = []
         sumry_cnt_avg = 0.0
         sumry_cnt_range = ''
+        sumry_t_wtavg = ''
 
         intvl_dates = []
         intvl_times = []
@@ -594,9 +616,11 @@ class Logs:
             return summary_text, interval_text
 
         all_sumrys = findall(
-            r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, MULTILINE)
+            r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
+        all_sumry_meant = findall(
+            r'SUMMARY: .+\n.+ mean (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
         all_intvls = findall(
-            r'^(.*); Tasks reported .* (\d+[mhd]): (\d+$)', logtext, MULTILINE)
+            r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
 
         if all_sumrys:
             sumry_dates, sumry_intvl_times, sumry_cnts = zip(*all_sumrys)
@@ -604,6 +628,8 @@ class Logs:
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
+            sumry_t_wtavg = weighted_mean_time(all_sumry_meant, sumry_counts)
+
         # Need these intvl vars when there are no summary data.
         if all_intvls:
             intvl_dates, intvl_times, intvl_cnts = zip(*all_intvls)
@@ -668,7 +694,8 @@ class Logs:
                     f'   {len(sumry_counts)} summaries logged\n'
                     f'   {sum(sumry_counts)} tasks logged in summaries\n'
                     f'   {sumry_cnt_avg} tasks per {sumry_intvl_times[0]} summary interval\n'
-                    f'   {sumry_cnt_range} range of task counts\n')
+                    f'   {sumry_cnt_range} range of task counts\n'
+                    f'   {sumry_t_wtavg} weighted mean task time\n')
             else:
                 summary_text = (
                     f'{cls.uptime(logtext)} hours counting tasks\n'
@@ -681,7 +708,8 @@ class Logs:
                     f'   {len(sumry_counts)} summaries logged\n'
                     f'   {sum(sumry_counts)} tasks reported\n'
                     f'   {sumry_cnt_avg} tasks per summary\n'
-                    f'   {sumry_cnt_range} range of task counts\n')
+                    f'   {sumry_cnt_range} range of task counts\n'
+                    f'   {sumry_t_wtavg} weighted mean task time\n')
 
         if all_sumrys and all_intvls:
             # Summary text has been defined, so now do interval text.
@@ -706,7 +734,7 @@ class Logs:
                         f'   {recent_cnt_avg} tasks per count interval\n'
                         f'   {recent_cnt_range} range of task counts\n')
             else:
-                interval_text = '\nNo counts logged after last Summary.'
+                interval_text = '\nNo counts logged after last Summary.\n'
 
         return summary_text, interval_text
 
@@ -2226,7 +2254,7 @@ if __name__ == "__main__":
 
         app.mainloop()
     except KeyboardInterrupt:
-        exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};' 
+        exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
                     f' *** keyboard interrupt by user ***\n')
         print(exit_msg)
         logging.info(msg=exit_msg)
