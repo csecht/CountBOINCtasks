@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -40,7 +40,6 @@ import argparse
 import logging
 import random
 import re
-import shutil
 import statistics as stats
 import sys
 import threading
@@ -48,6 +47,8 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from platform import node
+from shutil import copy2
+
 
 from COUNTmodules import boinc_command, time_convert
 
@@ -201,6 +202,17 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         'tt_sd': 'na',
         'tt_min': 'na',
         'tt_max': 'na'}
+
+
+def str2dt(dt_str: str, strftime: str) -> datetime:
+    """Convert formatted date string to datetime object.
+    Use for comparing datetimes in text files.
+
+    :param dt_str: date and time formatted string.
+    :param strftime: datetime strftime() string; ex '%Y-%b-%d %H:%M:%S'.
+    """
+    dt_obj = datetime.strptime(dt_str, strftime)
+    return dt_obj
 
 
 # noinspection PyBroadException
@@ -449,7 +461,7 @@ class Logs:
         destination = Path(backupname)
 
         try:
-            shutil.copyfile(source, destination)
+            copy2(source, destination)
             success_msg = 'Log file has been copied to: '
             success_detail = str(destination)
             messagebox.showinfo(title='Backup completed', parent=parent,
@@ -458,18 +470,83 @@ class Logs:
             messagebox.showinfo(title='Log copy error',
                                 message="Permission denied")
             print("Log file backup: Permission denied.")
-        except IsADirectoryError:
-            messagebox.showinfo(title='Log copy error',
-                                message="Backup file name is a directory",
-                                parent=parent)
-            print("Log file backup: Destination file is a directory.")
-        except OSError:
-            messagebox.showinfo(title='Log copy error',
-                                message='Backup destination is not writeable',
-                                detail='Are source and destination are the same file?',
-                                parent=parent)
-            print('Log file backup: Destination file is not writeable. '
-                  'Are source and destination are the same file?')
+
+    @classmethod
+    def uptime(cls, logcontent: str) -> str:
+        """
+        Calculate sum of hours spent counting tasks. Does not include
+        time segments with no reported tasks counts.
+
+        :param logcontent: the read log file string.
+        :return: total hours elapsed while logging active, as string.
+                 Returns 'n/a' if negative time calculated.
+        """
+        start2intvl = []
+        start2quit = []
+        start2interrupt = []
+        has_interval = False
+
+        # *_time vars are datetime.timedelta objects;
+        #    initialized with formatted Epoch origin time.
+        start_time = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        interval_time = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        final_interval_hr = 0.0
+
+        def calc_uptime_hr(starttime: datetime, endtime: datetime) -> float:
+            """Convert datetime start and end difference to hours.
+            """
+            # Cannot calculate running time from the log file when have
+            #   negative time diff between start and end times.
+            if (endtime - starttime) / timedelta(hours=1) < 0:
+                return -1.0
+            return (endtime - starttime) / timedelta(hours=1)
+
+        # Need to calc and sum uptime only for start-stop segments that have
+        #   counted tasks for one or more intervals. LONG_STRFTIME is the
+        #   time format used in the log file.
+        for line in logcontent.split('\n'):
+            if re.search('most recent BOINC report', line):
+                starttime_match = re.search(
+                    r'^(.+); .+ most recent BOINC report', line).group(1)
+                start_time = str2dt(starttime_match, LONG_STRFTIME)
+                has_interval = False
+            if re.search('Tasks reported', line):
+                intvltime_match = re.search(
+                    r'^(.+); Tasks reported', line).group(1)
+                interval_time = str2dt(intvltime_match, LONG_STRFTIME)
+                # Note: start2intvl list is used only to eval presence of a
+                #   negative timedelta interval somewhere in the log file.
+                start2intvl.append(calc_uptime_hr(start_time, interval_time))
+                has_interval = True
+            # if re.search('NO TASKS RUNNING', line):
+            #     intvltime_match = re.search(
+            #         r'^(.+); .+ NO TASKS RUNNING', line).group(1)
+            #     interval_time = str2dt(intvltime_match, LONG_STRFTIME)
+            #     start2intvl.append(calc_uptime_hr(start_time, interval_time))
+            #     has_interval = True
+            if re.search('quit', line):
+                quittime_match = re.search(
+                    r'^(.+); .+ quit', line).group(1)
+                quit_time = str2dt(quittime_match, LONG_STRFTIME)
+                if has_interval:
+                    start2quit.append(calc_uptime_hr(start_time, quit_time))
+            if re.search('interrupt', line):
+                interrupttime_match = re.search(
+                    r'^(.+); .+ interrupt', line).group(1)
+                interrupt_time = str2dt(interrupttime_match, LONG_STRFTIME)
+                if has_interval:
+                    start2interrupt.append(calc_uptime_hr(start_time, interrupt_time))
+
+        if -1.0 in start2quit + start2interrupt + start2intvl:
+            return 'n/a'
+
+        # The log text has been read, so now need to get uptime of the
+        #   final start_time -> final interval_time segment.
+        if has_interval:
+            final_interval_hr = calc_uptime_hr(start_time, interval_time)
+
+        return str(round(
+            sum(start2quit) + sum(start2interrupt) + final_interval_hr, 1))
 
     @classmethod
     def analyze_logfile(cls) -> tuple:
@@ -501,8 +578,8 @@ class Logs:
         recent_cnt_range = ''
         recent_intervals = True
 
-        sumry_analysis = ''
-        mop_up = ''
+        summary_text = ''
+        interval_text = ''
 
         try:
             with open(cls.LOGFILE, encoding='utf-8') as file:
@@ -512,85 +589,22 @@ class Logs:
                     'Was the settings "log results" option used?\n'
                     'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
-            return sumry_analysis, mop_up
+            return summary_text, interval_text
 
-        def str2dt(dt_str):
-            """Convert formatted date string to datetime object.
-            Use for comparing task count datetimes.
-            """
-            dt_obj = datetime.strptime(dt_str, LONG_STRFTIME)
-            return dt_obj
-
-        def uptime(logcontent: str) -> str:
-            """
-            Calculate sum of running hours; includes time when no
-            tasks were counted and no intervals completed.
-
-            :param logcontent: the read log file string.
-            :return: total hours elapsed while logging active, as string.
-                     Returns 'n/a' if negative time calculated.
-            """
-            uptime_hours = []
-            start_flag = False
-            quit_flag = False
-            interrupt_flag = False
-            start_time = None
-            quit_time = None
-            interrupt_time = None
-            for line in logcontent.split('\n'):
-                if re.search(r'^(.*); .* recent BOINC report: .*$', line):
-                    startmatch = re.search(
-                        r'^(.*); .* recent BOINC report: .*$', line).group(1)
-                    start_time = str2dt(startmatch)
-                    start_flag = True
-                if re.search(r'^(.*); .* quit .*$', line):
-                    quitmatch = re.search(
-                        r'^(.*); .* quit .*$', line).group(1)
-                    quit_time = str2dt(quitmatch)
-                    quit_flag = True
-                if re.search('^(.*); .* interrupt.*$', line):
-                    interruptmatch = re.search(
-                        '^(.*); .* interrupt.*$', line).group(1)
-                    interrupt_time = str2dt(interruptmatch)
-                    interrupt_flag = True
-
-                if start_flag and quit_flag:
-                    time_diff = quit_time - start_time
-                    if time_diff / timedelta(hours=1) < 0:
-                        # Cannot calculate running time from the log file when
-                        #   negative time diff between start and quit times.
-                        return "n/a"
-                    uptime_hours.append(time_diff / timedelta(hours=1))
-                    start_flag = False
-                    quit_flag = False
-                elif start_flag and interrupt_flag:
-                    time_diff = interrupt_time - start_time
-                    if time_diff / timedelta(hours=1) < 0:
-                        return "n/a"
-                    uptime_hours.append(time_diff / timedelta(hours=1))
-                    start_flag = False
-                    interrupt_flag = False
-            return str(round(sum(uptime_hours), 1))
-
-        # Need a match to summary lines in log, like this:
-        #   2021-Oct-28 08:37:34; >>> SUMMARY: Count for the past 1d: 330
-        #   and to regular interval lines, like this:
-        #   2021-Oct-28 09:37:33; Tasks reported in the past 1h: 17
-        #   The line formats are specified in CountModeler.log_it().
-        capture_sumrys = re.findall(
+        all_sumrys = re.findall(
             r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
-        capture_intvls = re.findall(
+        all_intvls = re.findall(
             r'^(.*); Tasks reported .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
 
-        if capture_sumrys:
-            sumry_dates, sumry_intvl_times, sumry_cnts = zip(*capture_sumrys)
+        if all_sumrys:
+            sumry_dates, sumry_intvl_times, sumry_cnts = zip(*all_sumrys)
             num_sumry_times = len(set(sumry_intvl_times))
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
         # Need these intvl vars when there are no summary data.
-        if capture_intvls:
-            intvl_dates, intvl_times, intvl_cnts = zip(*capture_intvls)
+        if all_intvls:
+            intvl_dates, intvl_times, intvl_cnts = zip(*all_intvls)
             num_intvl_times = len(set(intvl_times))
             intvl_counts = list(map(int, intvl_cnts))
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
@@ -599,12 +613,12 @@ class Logs:
         #   summary; grab only interval data after the last summary count.
         #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, index list will be empty.
-        if capture_sumrys and capture_intvls:
+        if all_sumrys and all_intvls:
             index = [
                 i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
             if index:
-                index_trailing = index[0] + 1
-                recent_dates, recent_intvl_times, recent_cnts = zip(*capture_intvls[index_trailing:])
+                index_recent = index[0] + 1
+                recent_dates, recent_intvl_times, recent_cnts = zip(*all_intvls[index_recent:])
                 num_recent_times = len(set(recent_intvl_times))
                 recent_counts = list(map(int, recent_cnts))
                 recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
@@ -613,27 +627,27 @@ class Logs:
                 recent_intervals = False
 
         # Need to tailor report texts for various counting conditions.
-        if not capture_sumrys and not capture_intvls:
-            sumry_analysis = (
+        if not all_sumrys and not all_intvls:
+            interval_text = (
                 f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
                 '   There are not enough data to analyze.\n'
                 '   Need at least one summary or one\n'
                 '   interval count in the log file.\n')
-        if not capture_sumrys and capture_intvls:
-            sumry_analysis = '\nNo summary counts are logged yet.\n'
+        if not all_sumrys and all_intvls:
+            summary_text = '\nNo summary counts are logged yet.\n'
             if num_intvl_times == 1:
-                mop_up = (
+                interval_text = (
                     'Analysis of task counts logged from:\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
-                    f'{uptime(logtext)} hours elapsed while logging\n'
+                    f'   {cls.uptime(logtext)} hours counting tasks\n'
                     f'   {len(intvl_counts)} intervals logged\n'
                     f'   {sum(intvl_counts)} tasks reported\n'
                     f'   {intvl_cnt_avg} tasks per {intvl_times[0]} interval\n'
                     f'   {intvl_cnt_range} range of task counts\n')
             else:
-                mop_up = (
+                interval_text = (
                     'Analysis of task counts logged from:\n'
-                    f'{uptime(logtext)} hours elapsed while logging\n'
+                    f'{cls.uptime(logtext)} hours counting tasks\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
                     f'There are {num_intvl_times} different interval times\n'
                     f'logged, {set(intvl_times)},\n'
@@ -642,10 +656,10 @@ class Logs:
                     f'   {sum(intvl_counts)} tasks reported\n'
                     f'   {intvl_cnt_avg} tasks per {num_intvl_times} interval\n'
                     f'   {intvl_cnt_range} range of task counts\n')
-        if capture_sumrys:
+        if all_sumrys:
             if num_sumry_times == 1:
-                sumry_analysis = (
-                    f'{uptime(logtext)} hours elapsed while logging\n'
+                summary_text = (
+                    f'{cls.uptime(logtext)} hours counting tasks\n'
                     f'{sum(intvl_counts)} total logged tasks in {len(intvl_counts)} intervals.\n\n'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
@@ -654,8 +668,8 @@ class Logs:
                     f'   {sumry_cnt_avg} tasks per {sumry_intvl_times[0]} summary interval\n'
                     f'   {sumry_cnt_range} range of task counts\n')
             else:
-                sumry_analysis = (
-                    f'{uptime(logtext)} hours elapsed while logging\n'
+                summary_text = (
+                    f'{cls.uptime(logtext)} hours counting tasks\n'
                     f'{sum(intvl_counts)} total logged tasks in {len(intvl_counts)} intervals.\n\n'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
@@ -667,10 +681,11 @@ class Logs:
                     f'   {sumry_cnt_avg} tasks per summary\n'
                     f'   {sumry_cnt_range} range of task counts\n')
 
-        if capture_sumrys and capture_intvls:
+        if all_sumrys and all_intvls:
+            # Summary text has been defined, so now do interval text.
             if recent_intervals:
                 if num_recent_times == 1:
-                    mop_up = (
+                    interval_text = (
                         '\nSince last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'   {len(recent_counts)} intervals logged\n'
@@ -678,7 +693,7 @@ class Logs:
                         f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} interval\n'
                         f'   {recent_cnt_range} range of task counts\n')
                 else:
-                    mop_up = (
+                    interval_text = (
                         '\nSince last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'There are {num_recent_times} different logged\n'
@@ -689,9 +704,9 @@ class Logs:
                         f'   {recent_cnt_avg} tasks per interval\n'
                         f'   {recent_cnt_range} range of task counts\n')
             else:
-                mop_up = '\nNo counts logged after last Summary.'
+                interval_text = '\nNo counts logged after last Summary.'
 
-        return sumry_analysis, mop_up
+        return summary_text, interval_text
 
     @classmethod
     def show_analysis(cls, *keybind):
@@ -718,7 +733,7 @@ class Logs:
         analysiswin.focus_set()
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
-        sep = f'{"─" * 46}\n\n'
+        sep = f'\n{"─" * 46}\n'
         text = summary_text + interval_text + sep
         num_lines = text.count('\n')
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
@@ -2213,6 +2228,7 @@ if __name__ == "__main__":
 
         app.mainloop()
     except KeyboardInterrupt:
-        exit_msg = f'\n{datetime.now().strftime(LONG_STRFTIME)}; *** keyboard interrupt by user ***\n'
+        exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};' 
+                    f' *** keyboard interrupt by user ***\n')
         print(exit_msg)
         logging.info(msg=exit_msg)
