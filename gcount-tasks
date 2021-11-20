@@ -38,8 +38,6 @@ __status__ = 'Development Status :: 2 - Beta'
 
 import argparse
 import logging
-import random
-import re
 import statistics as stats
 import sys
 import threading
@@ -47,8 +45,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from platform import node
-from shutil import copy2
-
+from re import search, findall, MULTILINE
 
 from COUNTmodules import boinc_command, time_convert
 
@@ -461,6 +458,7 @@ class Logs:
         destination = Path(backupname)
 
         try:
+            from shutil import copy2
             copy2(source, destination)
             success_msg = 'Log file has been copied to: '
             success_detail = str(destination)
@@ -488,8 +486,8 @@ class Logs:
 
         # *_time vars are datetime.timedelta objects;
         #    initialized with formatted Epoch origin time.
-        start_time = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        interval_time = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        start_dtime = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        interval_dtime = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
         final_interval_hr = 0.0
 
         def calc_uptime_hr(starttime: datetime, endtime: datetime) -> float:
@@ -505,45 +503,49 @@ class Logs:
         #   counted tasks for one or more intervals. LONG_STRFTIME is the
         #   time format used in the log file.
         for line in logcontent.split('\n'):
-            if re.search('most recent BOINC report', line):
-                starttime_match = re.search(
+            if search('most recent BOINC report', line):
+                starttime_match = search(
                     r'^(.+); .+ most recent BOINC report', line).group(1)
-                start_time = str2dt(starttime_match, LONG_STRFTIME)
+                start_dtime = str2dt(starttime_match, LONG_STRFTIME)
                 has_interval = False
-            if re.search('Tasks reported', line):
-                intvltime_match = re.search(
+
+            if search('Tasks reported', line):
+                intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
                 interval_time = str2dt(intvltime_match, LONG_STRFTIME)
                 # Note: start2intvl list is used only to eval presence of a
                 #   negative timedelta interval somewhere in the log file.
-                start2intvl.append(calc_uptime_hr(start_time, interval_time))
+                start2intvl.append(calc_uptime_hr(start_dtime, interval_time))
                 has_interval = True
-            # if re.search('NO TASKS RUNNING', line):
-            #     intvltime_match = re.search(
+
+            # if search('NO TASKS RUNNING', line):
+            #     intvltime_match = search(
             #         r'^(.+); .+ NO TASKS RUNNING', line).group(1)
             #     interval_time = str2dt(intvltime_match, LONG_STRFTIME)
             #     start2intvl.append(calc_uptime_hr(start_time, interval_time))
             #     has_interval = True
-            if re.search('quit', line):
-                quittime_match = re.search(
+
+            if search('quit', line):
+                quittime_match = search(
                     r'^(.+); .+ quit', line).group(1)
                 quit_time = str2dt(quittime_match, LONG_STRFTIME)
                 if has_interval:
-                    start2quit.append(calc_uptime_hr(start_time, quit_time))
-            if re.search('interrupt', line):
-                interrupttime_match = re.search(
+                    start2quit.append(calc_uptime_hr(start_dtime, quit_time))
+
+            if search('interrupt', line):
+                interrupttime_match = search(
                     r'^(.+); .+ interrupt', line).group(1)
                 interrupt_time = str2dt(interrupttime_match, LONG_STRFTIME)
                 if has_interval:
-                    start2interrupt.append(calc_uptime_hr(start_time, interrupt_time))
+                    start2interrupt.append(calc_uptime_hr(start_dtime, interrupt_time))
 
         if -1.0 in start2quit + start2interrupt + start2intvl:
             return 'n/a'
 
         # The log text has been read, so now need to get uptime of the
-        #   final start_time -> final interval_time segment.
+        #   final start_dtime -> final interval_dtime segment.
         if has_interval:
-            final_interval_hr = calc_uptime_hr(start_time, interval_time)
+            final_interval_hr = calc_uptime_hr(start_dtime, interval_dtime)
 
         return str(round(
             sum(start2quit) + sum(start2interrupt) + final_interval_hr, 1))
@@ -591,10 +593,10 @@ class Logs:
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return summary_text, interval_text
 
-        all_sumrys = re.findall(
-            r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
-        all_intvls = re.findall(
-            r'^(.*); Tasks reported .* (\d+[mhd]): (\d+$)', logtext, re.MULTILINE)
+        all_sumrys = findall(
+            r'^(.*); >>> SUMMARY: .* (\d+[mhd]): (\d+$)', logtext, MULTILINE)
+        all_intvls = findall(
+            r'^(.*); Tasks reported .* (\d+[mhd]): (\d+$)', logtext, MULTILINE)
 
         if all_sumrys:
             sumry_dates, sumry_intvl_times, sumry_cnts = zip(*all_sumrys)
@@ -642,7 +644,7 @@ class Logs:
                     f'   {cls.uptime(logtext)} hours counting tasks\n'
                     f'   {len(intvl_counts)} intervals logged\n'
                     f'   {sum(intvl_counts)} tasks reported\n'
-                    f'   {intvl_cnt_avg} tasks per {intvl_times[0]} interval\n'
+                    f'   {intvl_cnt_avg} tasks per {intvl_times[0]} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n')
             else:
                 interval_text = (
@@ -654,7 +656,7 @@ class Logs:
                     'so results may be inaccurate.\n\n'
                     f'   {len(intvl_counts)} intervals logged\n'
                     f'   {sum(intvl_counts)} tasks reported\n'
-                    f'   {intvl_cnt_avg} tasks per {num_intvl_times} interval\n'
+                    f'   {intvl_cnt_avg} tasks per {num_intvl_times} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n')
         if all_sumrys:
             if num_sumry_times == 1:
@@ -690,7 +692,7 @@ class Logs:
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'   {len(recent_counts)} intervals logged\n'
                         f'   {sum(recent_counts)} tasks reported\n'
-                        f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} interval\n'
+                        f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} count interval\n'
                         f'   {recent_cnt_range} range of task counts\n')
                 else:
                     interval_text = (
@@ -701,7 +703,7 @@ class Logs:
                         'so results may be inaccurate.\n\n'
                         f'   {len(recent_counts)} intervals logged\n'
                         f'   {sum(recent_counts)} tasks reported\n'
-                        f'   {recent_cnt_avg} tasks per interval\n'
+                        f'   {recent_cnt_avg} tasks per count interval\n'
                         f'   {recent_cnt_range} range of task counts\n')
             else:
                 interval_text = '\nNo counts logged after last Summary.'
@@ -803,6 +805,7 @@ class CountFyi:
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
         """
+        import random
         compliments = [
             "Hey there good lookin'!", 'I wish we had met sooner.',
             'You are the smartest person I know.', 'I like your hair.',
@@ -866,11 +869,6 @@ class CountFyi:
         aboutwin.geometry(f'+{pos_x}+{+pos_y}')
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
-        colour = ['SkyBlue4', 'DarkSeaGreen4', 'DarkGoldenrod4', 'DarkOrange4',
-                  'grey40', 'blue4', 'navy', 'DeepSkyBlue4', 'dark slate grey',
-                  'dark olive green', 'grey10', 'grey25', 'DodgerBlue4',
-                  'DarkOrchid4']
-        bkg = random.choice(colour)
         num_doc_lines = __doc__.count('\n') + 2
         os_width = 0
         if MY_OS in 'lin, win':
@@ -879,8 +877,8 @@ class CountFyi:
             os_width = 54
         abouttxt = tk.Text(aboutwin, font='TkTextFont',
                            width=os_width, height=num_doc_lines + 6,
-                           bg=bkg, fg='grey98', relief='groove',
-                           borderwidth=5, padx=25)
+                           bg='grey20', fg='grey85',
+                           relief='groove', borderwidth=5, padx=25)
         abouttxt.insert(1.0, f'{__doc__}\n'
                              f'Author:    {__author__}\n'
                              f'Credits:   {__credits__}\n'
