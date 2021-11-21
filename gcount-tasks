@@ -587,7 +587,6 @@ class Logs:
         sumry_counts = []
         sumry_cnt_avg = 0.0
         sumry_cnt_range = ''
-        # sumry_t_wtavg = ''
 
         intvl_dates = []
         intvl_times = []
@@ -620,8 +619,6 @@ class Logs:
 
         all_sumrys = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        # all_sumry_meant = findall(
-        #     r'SUMMARY: .+\n.+ mean (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
         all_intvls = findall(
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         all_intvl_meant = findall(
@@ -633,7 +630,6 @@ class Logs:
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
-            # sumry_t_wtavg = weighted_mean_time(all_sumry_meant, sumry_counts)
 
         if all_intvls:
             intvl_dates, intvl_times, intvl_cnts = zip(*all_intvls)
@@ -761,7 +757,7 @@ class Logs:
         """
         Generate a Toplevel window to display cumulative logged task
         counts that have been analyzed by cls.analyze_logfile().
-        Make Button to append displayed results to an analysis log file.
+        Button appends displayed results to an analysis log file.
         Called from a cls.view() button or a master keybinding.
 
         :param keybind: Empty parameter to pass implicit keybind event.
