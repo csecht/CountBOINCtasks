@@ -214,25 +214,27 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
 
 def weighted_mean_time(distribution: list, weights: list) -> str:
     """
-    Calculate weighted mean time from list of average times formatted
-    as 00:00:00.
+    Calculate weighted mean time from list of average times.
 
-    :param distribution: list of avg times in clock time string format.
+    :param distribution: list of avg times, as string, format 00:00:00.
     :param weights: list of corresponding sample numbers, as integers,
-                    for each avg time in distribution list.
-    :return: weighted mean time, formatted as clock time string.
+                    for each time element in distribution list.
+    :return: weighted mean time, as clock time string, format 00:00:00.
     """
     # algorithm sources:
-    # https://towardsdatascience.com/3-ways-to-compute-a-weighted-average-in-python-4e066de7a719
-    # https://stackoverflow.com/questions/10663720/how-to-convert-a-time-string-to-seconds
-    # https://stackoverflow.com/questions/18470627/how-do-i-remove-the-microseconds-from-a-timedelta-object
+    # https://towardsdatascience.com/
+    #   3-ways-to-compute-a-weighted-average-in-python-4e066de7a719
+    # https://stackoverflow.com/questions/10663720/
+    #   how-to-convert-a-time-string-to-seconds
+    # https://stackoverflow.com/questions/18470627/
+    #   how-do-i-remove-the-microseconds-from-a-timedelta-object
     # Need to convert distribution clock time strings to seconds.
-    dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_t.split(":")))
-                for clk_t in distribution]
+    dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
+                for clk_fmt in distribution]
     numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
     denominator = sum(weights)
-    # Need to determine the weighted mean,
-    #   convert the timedelta object to a clock time string for display, and
+    # Need to determine the weighted mean in seconds,
+    #   convert the timedelta clock time object to a string for display, and
     #   remove microseconds from the clock time string.
     return str(timedelta(seconds=(numerator / denominator))).split(".")[0]
 
@@ -585,7 +587,7 @@ class Logs:
         sumry_counts = []
         sumry_cnt_avg = 0.0
         sumry_cnt_range = ''
-        sumry_t_wtavg = ''
+        # sumry_t_wtavg = ''
 
         intvl_dates = []
         intvl_times = []
@@ -2266,7 +2268,6 @@ if __name__ == "__main__":
         # Note: need to use sys.argv for Windows py2exe setup.py compiling.
         # print(f'{Path(sys.argv[0]).name} now running...')
         print(f'{Path(__file__).name} now running...')
-
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
