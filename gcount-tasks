@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.4'
+__version__ = '0.7.5'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -618,8 +618,8 @@ class Logs:
 
         all_sumrys = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        all_sumry_meant = findall(
-            r'SUMMARY: .+\n.+ mean (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
+        # all_sumry_meant = findall(
+        #     r'SUMMARY: .+\n.+ mean (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
         all_intvls = findall(
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         all_intvl_meant = findall(
@@ -631,9 +631,8 @@ class Logs:
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
-            sumry_t_wtavg = weighted_mean_time(all_sumry_meant, sumry_counts)
+            # sumry_t_wtavg = weighted_mean_time(all_sumry_meant, sumry_counts)
 
-        # Need these intvl vars when there are no summary data.
         if all_intvls:
             intvl_dates, intvl_times, intvl_cnts = zip(*all_intvls)
             num_intvl_times = len(set(intvl_times))
@@ -673,73 +672,82 @@ class Logs:
                     'Analysis of task counts logged from:\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
                     f'   {cls.uptime(logtext)} hours counting tasks\n'
-                    f'   {len(intvl_counts)} intervals logged\n'
-                    f'   {sum(intvl_counts)} tasks reported\n'
+                    f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
                     f'   {intvl_cnt_avg} tasks per {intvl_times[0]} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n'
-                    f'   {intvl_t_wtavg} weighted mean task time\n')
+                    f'   {intvl_t_wtavg} weighted mean task time\n'
+                )
             else:
                 interval_text = (
                     'Analysis of task counts logged from:\n'
-                    f'{cls.uptime(logtext)} hours counting tasks\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
-                    f'There are {num_intvl_times} different interval times\n'
-                    f'logged, {set(intvl_times)},\n'
-                    'so results may be inaccurate.\n\n'
-                    f'   {len(intvl_counts)} intervals logged\n'
-                    f'   {sum(intvl_counts)} tasks reported\n'
+                    f'   {cls.uptime(logtext)} hours counting tasks\n'
+                    f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
                     f'   {intvl_cnt_avg} tasks per {num_intvl_times} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n'
-                    f'   {intvl_t_wtavg} weighted mean task time\n')
+                    f'There are {num_intvl_times} different interval times\n'
+                    f'logged, {set(intvl_times)},\n'
+                    'so interpret results with caution.\n'
+                )
         if all_sumrys:
             if num_sumry_times == 1:
                 summary_text = (
-                    f'{cls.uptime(logtext)} hours counting tasks\n'
-                    f'{sum(intvl_counts)} total logged tasks in {len(intvl_counts)} intervals.\n\n'
+                    'Analysis of task counts logged from:\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    f'   {cls.uptime(logtext)} hours counting tasks\n'
+                    f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
                     f'   {len(sumry_counts)} summaries logged\n'
                     f'   {sum(sumry_counts)} tasks logged in summaries\n'
                     f'   {sumry_cnt_avg} tasks per {sumry_intvl_times[0]} summary interval\n'
-                    f'   {sumry_cnt_range} range of task counts\n'
-                    f'   {sumry_t_wtavg} weighted mean task time\n')
+                    f'   {sumry_cnt_range} range of task counts\n\n'
+                )
             else:
                 summary_text = (
-                    f'{cls.uptime(logtext)} hours counting tasks\n'
-                    f'{sum(intvl_counts)} total logged tasks in {len(intvl_counts)} intervals.\n\n'
+                    'Analysis of task counts logged from:\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    f'   {cls.uptime(logtext)} hours counting tasks\n'
+                    f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
-                    f'There are {num_sumry_times} different logged Summary\n'
-                    f' interval times, {set(sumry_intvl_times)},\n'
-                    'so results may be inaccurate.\n\n'
                     f'   {len(sumry_counts)} summaries logged\n'
                     f'   {sum(sumry_counts)} tasks reported\n'
                     f'   {sumry_cnt_avg} tasks per summary\n'
                     f'   {sumry_cnt_range} range of task counts\n'
-                    f'   {sumry_t_wtavg} weighted mean task time\n')
+                    f'There are {num_sumry_times} different Summary\n'
+                    f' interval times, {set(sumry_intvl_times)},\n'
+                    'so interpret results with caution.\n\n'
+                )
 
         if all_sumrys and all_intvls:
             # Summary text has been defined, so now do interval text.
             if recent_intervals:
                 if num_recent_times == 1:
                     interval_text = (
-                        '\nSince last Summary, additional counts from:\n'
+                        'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'   {len(recent_counts)} intervals logged\n'
                         f'   {sum(recent_counts)} tasks reported\n'
                         f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} count interval\n'
-                        f'   {recent_cnt_range} range of task counts\n')
+                        f'   {recent_cnt_range} range of task counts\n'
+                    )
                 else:
                     interval_text = (
-                        '\nSince last Summary, additional counts from:\n'
+                        'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                        f'There are {num_recent_times} different logged\n'
-                        f' interval times, {set(recent_intvl_times)},\n'
-                        'so results may be inaccurate.\n\n'
                         f'   {len(recent_counts)} intervals logged\n'
                         f'   {sum(recent_counts)} tasks reported\n'
                         f'   {recent_cnt_avg} tasks per count interval\n'
-                        f'   {recent_cnt_range} range of task counts\n')
+                        f'   {recent_cnt_range} range of task counts\n'
+                        f'There are {num_recent_times} different logged\n'
+                        f' interval times, {set(recent_intvl_times)},\n'
+                        'so interpret results with caution.\n\n'
+                    )
             else:
                 interval_text = '\nNo counts logged after last Summary.\n'
 
