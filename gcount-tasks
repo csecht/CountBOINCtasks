@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.5'
+__version__ = '0.7.6'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -643,22 +643,23 @@ class Logs:
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
             intvl_t_wtavg = weighted_mean_time(all_intvl_meant, intvl_counts)
 
-        # Need these recent vars when there are interval counts following last
-        #   summary; grab only interval data after the last summary count.
+        # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
-        #   If there are no intervals after last summary, index list will be empty.
+        #   If there are no intervals after last summary, then flag and move on.
         if all_sumrys and all_intvls:
-            index = [
-                i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
-            if index:
-                index_recent = index[0] + 1
+            # When there are no intervals after last summary,
+            #   the last intvl date is last summary date.
+            if intvl_dates[-1] == sumry_dates[-1]:
+                recent_intervals = False
+            else:
+                index = [
+                    i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
+                index_recent = index[0] + 1  # <- The interval after the last summary.
                 recent_dates, recent_intvl_times, recent_cnts = zip(*all_intvls[index_recent:])
                 num_recent_times = len(set(recent_intvl_times))
                 recent_counts = list(map(int, recent_cnts))
                 recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
                 recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
-            else:
-                recent_intervals = False
 
         # Need to tailor report texts for various counting conditions.
         if not all_sumrys and not all_intvls:
