@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.3'
+__version__ = '0.7.4'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -728,8 +728,7 @@ class Logs:
                         f'   {len(recent_counts)} intervals logged\n'
                         f'   {sum(recent_counts)} tasks reported\n'
                         f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} count interval\n'
-                        f'   {recent_cnt_range} range of task counts\n'
-                        f'   {intvl_t_wtavg} weighted mean task time\n')
+                        f'   {recent_cnt_range} range of task counts\n')
                 else:
                     interval_text = (
                         '\nSince last Summary, additional counts from:\n'
@@ -740,8 +739,7 @@ class Logs:
                         f'   {len(recent_counts)} intervals logged\n'
                         f'   {sum(recent_counts)} tasks reported\n'
                         f'   {recent_cnt_avg} tasks per count interval\n'
-                        f'   {recent_cnt_range} range of task counts\n'
-                        f'   {intvl_t_wtavg} weighted mean task time\n')
+                        f'   {recent_cnt_range} range of task counts\n')
             else:
                 interval_text = '\nNo counts logged after last Summary.\n'
 
