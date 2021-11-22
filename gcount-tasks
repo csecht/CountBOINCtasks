@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.11'
+__version__ = '0.7.12'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -596,7 +596,7 @@ class Logs:
         intvl_counts = []
         intvl_cnt_avg = 0.0
         intvl_cnt_range = ''
-        intvl_t_wtavg = ""
+        intvl_t_wtavg = ''
 
         recent_dates = []
         recent_intvl_times = []
@@ -624,7 +624,7 @@ class Logs:
         all_intvls = findall(
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         all_intvl_meant = findall(
-            r'Tasks reported .+\n.+ mean (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
+            r'Tasks reported .+\n.+ avg (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
 
         if all_sumrys:
             sumry_dates, sumry_intvl_times, sumry_cnts = zip(*all_sumrys)
@@ -677,7 +677,6 @@ class Logs:
                     f'   {intvl_t_wtavg} weighted mean task time\n\n'
                     f'   {intvl_cnt_avg} tasks per {intvl_times[0]} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n'
-                    f'   {intvl_t_wtavg} weighted mean task time\n'
                 )
             else:
                 interval_text = (
