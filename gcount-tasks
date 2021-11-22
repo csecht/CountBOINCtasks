@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.7'
+__version__ = '0.7.8'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -169,33 +169,33 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
     :param numtasks: The number of elements in tasktimes.
     :param tasktimes: A list, tuple, or set of times, in seconds as
                       integers or floats.
-    :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max;
+    :return: Dict keys: tt_total, tt_avg, tt_sd, tt_min, tt_max;
              Dict values as: 00:00:00.
     :rtype: dict
     """
     total = TC.sec_to_format(int(sum(tasktimes)), 'std')
     if numtasks > 1:
-        mean = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
+        avg = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
         stdev = TC.sec_to_format(int(stats.stdev(tasktimes)), 'std')
         low = TC.sec_to_format(int(min(tasktimes)), 'std')
         high = TC.sec_to_format(int(max(tasktimes)), 'std')
         return {
             'tt_total': total,
-            'tt_mean': mean,
+            'tt_avg': avg,
             'tt_sd': stdev,
             'tt_min': low,
             'tt_max': high}
     if numtasks == 1:
         return {
             'tt_total': total,
-            'tt_mean': total,
+            'tt_avg': total,
             'tt_sd': 'na',
             'tt_min': 'na',
             'tt_max': 'na'}
     # numtasks is 0...
     return {
         'tt_total': '00:00:00',
-        'tt_mean': '00:00:00',
+        'tt_avg': '00:00:00',
         'tt_sd': 'na',
         'tt_min': 'na',
         'tt_max': 'na'}
@@ -991,7 +991,7 @@ class CountModeler:
 
         # Need to parse data returned from ttimes_stats().
         startdict = ttimes_stats(len(ttimes_start), ttimes_start)
-        self.share.data['tt_mean'].set(startdict['tt_mean'])
+        self.share.data['tt_avg'].set(startdict['tt_avg'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
         self.share.data['tt_range'].set(
             f"{startdict['tt_min']} -- {startdict['tt_max']}")
@@ -1050,6 +1050,7 @@ class CountModeler:
         Calls to: ttimes_stats(), get_minutes() log_it().
         """
         ttimes_new = set()
+        ttimes_smry = set()
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
         reference_time = time.time()
@@ -1098,15 +1099,15 @@ class CountModeler:
                 self.ttimes_used.update(ttimes_new)
                 ttimes_reported = set(BC.get_reported('elapsed time'))
 
-                # Need to reset prior ttimes_new, then repopulate it with only newly
-                #   reported tasks.
+                # Need to reset prior ttimes_new, then repopulate it with only
+                #   newly reported tasks.
                 ttimes_new.clear()
                 ttimes_new = ttimes_reported - self.ttimes_used
 
                 task_count_new = len(ttimes_new)
                 self.share.data['task_count'].set(task_count_new)
                 # Add new tasks to summary set for later analysis.
-                self.ttimes_smry.update(ttimes_new)
+                ttimes_smry.update(ttimes_new)
 
                 cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
                 self.share.data['cycles_remain'].set(cycles_remain)
@@ -1120,7 +1121,7 @@ class CountModeler:
 
                 # Track when no new tasks were reported in past interval;
                 #   tic_nnt used in log_it().
-                # Call is needed here to get current num_running value for eval.
+                # Need to update num_running value from task_states().
                 self.task_states()
                 num_running = self.share.note['num_running'].get()
                 if task_count_new == 0:
@@ -1131,16 +1132,17 @@ class CountModeler:
 
                 # Need to parse data returned from ttimes_stats().
                 intervaldict = ttimes_stats(task_count_new, ttimes_new)
-                self.share.data['tt_mean'].set(intervaldict['tt_mean'])
+                self.share.data['tt_avg'].set(intervaldict['tt_avg'])
                 self.share.data['tt_sd'].set(intervaldict['tt_sd'])
                 self.share.data['tt_range'].set(
                     f"{intervaldict['tt_min']} -- {intervaldict['tt_max']}")
                 self.share.data['tt_total'].set(intervaldict['tt_total'])
 
                 # Need to gather interval times and counts for ea. interval in
-                #  a summary segment to calc weighted mean times.
+                #   a summary segment to calc weighted mean times. This sumry
+                #   list has a different function than the ttimes_smry set.
                 sumry_intvl_counts.append(task_count_new)
-                sumry_intvl_ttmeans.append(self.share.data['tt_mean'].get())
+                sumry_intvl_ttmeans.append(self.share.data['tt_avg'].get())
 
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
@@ -1160,9 +1162,9 @@ class CountModeler:
 
                     # Set time and stats of summary count.
                     self.share.data['time_prev_sumry'].set(summary_time)
-                    self.share.data['task_count_sumry'].set(len(self.ttimes_smry))
+                    self.share.data['task_count_sumry'].set(len(ttimes_smry))
                     summarydict = ttimes_stats(
-                        len(self.ttimes_smry), self.ttimes_smry)
+                        len(ttimes_smry), ttimes_smry)
                     self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
                     self.share.data['tt_range_sumry'].set(
                         f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
@@ -1170,13 +1172,12 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    print('sumry_intvl_ttmeans:', sumry_intvl_ttmeans, '\nsumry_intvl_counts:', sumry_intvl_counts)
                     tt_wtmean = weighted_mean_time(
                         sumry_intvl_ttmeans, sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
                     # Need to reset data set for the next summary interval.
-                    self.ttimes_smry.clear()
+                    ttimes_smry.clear()
                     sumry_intvl_counts.clear()
                     sumry_intvl_ttmeans.clear()
 
@@ -1305,7 +1306,7 @@ class CountModeler:
                 self.task_count_start = self.share.data['task_count'].get()
             elif called_from == 'interval':
                 self.task_count_new = self.share.data['task_count'].get()
-            tt_mean = self.share.data['tt_mean'].get()
+            tt_avg = self.share.data['tt_avg'].get()
             tt_sd = self.share.data['tt_sd'].get()
             tt_range = self.share.data['tt_range'].get()
             tt_total = self.share.data['tt_total'].get()
@@ -1321,7 +1322,7 @@ class CountModeler:
                     f'{self.share.long_time_start};'
                     ' Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
-                    f'{indent}Task Time: mean {tt_mean},\n'
+                    f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
                     f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
                     f'{indent}Total tasks in queue: {num_tasks_all}\n'
@@ -1338,7 +1339,7 @@ class CountModeler:
                     f'\n{self.share.long_time_start}; STATUS REPORT\n'
                     f'{indent}Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
-                    f'{indent}Task Time: mean {tt_mean},\n'
+                    f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
                     f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
                     f'{indent}Total tasks in queue: {num_tasks_all}\n')
@@ -1394,7 +1395,7 @@ class CountModeler:
                 report = (
                     f'\n{intvl_count_t}; Tasks reported in the past {interval_t}:'
                     f' {self.task_count_new}\n'
-                    f'{indent}Task Time: mean {tt_mean},\n'
+                    f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
                     f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
                     f'{indent}Total tasks in queue: {num_tasks_all}\n'
@@ -1500,7 +1501,7 @@ class CountViewer(tk.Frame):
         self.share.data = {
             # Start and Interval data
             'task_count': tk.IntVar(),
-            'tt_mean': tk.StringVar(),
+            'tt_avg': tk.StringVar(),
             'tt_sd': tk.StringVar(),
             'tt_range': tk.StringVar(),
             'tt_total': tk.StringVar(),
@@ -1554,9 +1555,9 @@ class CountViewer(tk.Frame):
         self.task_count_l = tk.Label(
             self.dataframe, width=3, bg=self.data_bg,
             textvariable=self.share.data['task_count'])
-        self.tt_mean_l = tk.Label(
+        self.tt_avg_l = tk.Label(
             self.dataframe, width=3, bg=self.data_bg,
-            textvariable=self.share.data['tt_mean'])
+            textvariable=self.share.data['tt_avg'])
         self.tt_sd_l = tk.Label(
             self.dataframe, width=3, bg=self.data_bg,
             textvariable=self.share.data['tt_sd'])
@@ -1713,7 +1714,7 @@ class CountViewer(tk.Frame):
         row_header = {'Counting since': 2,
                       'Count time interval': 3,
                       '# tasks reported': 4,
-                      'Task times:  mean': 5,
+                      'Task times:  avg': 5,
                       'stdev': 6,
                       'range': 7,
                       'total': 8,
@@ -1760,7 +1761,7 @@ class CountViewer(tk.Frame):
             row=4, column=1, padx=10, sticky=tk.EW)
         self.task_count_sumry_l.grid(
             row=4, column=2, padx=(0, 16), sticky=tk.EW)
-        self.tt_mean_l.grid(
+        self.tt_avg_l.grid(
             row=5, column=1, padx=10, sticky=tk.EW)
         self.ttmean_sumry_l.grid(
             row=5, column=2, padx=(0, 16), sticky=tk.EW)
@@ -2098,7 +2099,7 @@ class CountViewer(tk.Frame):
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.share.highlight)
 
-        self.tt_mean_l.configure(foreground=self.share.highlight)
+        self.tt_avg_l.configure(foreground=self.share.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
@@ -2120,7 +2121,7 @@ class CountViewer(tk.Frame):
 
         # Interval data, column1
         self.task_count_l.configure(foreground=self.share.highlight)
-        self.tt_mean_l.configure(foreground=self.share.highlight)
+        self.tt_avg_l.configure(foreground=self.share.highlight)
         self.tt_sd_l.configure(foreground=self.emphasize)
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
@@ -2151,7 +2152,7 @@ class CountViewer(tk.Frame):
         # Interval data, column1, deemphasize font color
         self.task_count_l.configure(foreground=self.deemphasize)
         self.task_count_l.configure(foreground=self.deemphasize)
-        self.tt_mean_l.configure(foreground=self.deemphasize)
+        self.tt_avg_l.configure(foreground=self.deemphasize)
         self.tt_sd_l.configure(foreground=self.deemphasize)
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
