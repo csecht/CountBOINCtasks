@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.6'
+__version__ = '0.7.7'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -212,13 +212,14 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
     return dt_obj
 
 
-def weighted_mean_time(distribution: list, weights: list) -> str:
+def weighted_mean_time(distribution: iter, weights: iter) -> str:
     """
     Calculate weighted mean time from list of average times.
 
-    :param distribution: list of avg times, as string, format 00:00:00.
-    :param weights: list of corresponding sample numbers, as integers,
-                    for each time element in distribution list.
+    :param distribution: iterable of avg times, as string fmt 00:00:00
+                         or as seconds (floats or integers).
+    :param weights: iterable of corresponding sample numbers, as
+                    integers, for each element in distribution list.
     :return: weighted mean time, as clock time string, format 00:00:00.
     """
     # algorithm sources:
@@ -228,9 +229,13 @@ def weighted_mean_time(distribution: list, weights: list) -> str:
     #   how-to-convert-a-time-string-to-seconds
     # https://stackoverflow.com/questions/18470627/
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
-    # Need to convert distribution clock time strings to seconds.
-    dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
-                for clk_fmt in distribution]
+    # Need to convert distribution clock time strings to seconds, but
+    #    not if distribution times are float or integer seconds.
+    if all(isinstance(t, str) for t in distribution):
+        dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
+                    for clk_fmt in distribution]
+    else:
+        dist_sec = list(distribution)
     numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
     denominator = sum(weights)
     # Need to determine the weighted mean in seconds,
@@ -1049,6 +1054,9 @@ class CountModeler:
         interval_m = self.share.setting['interval_m'].get()
         reference_time = time.time()
         tic_nnt = 0
+        sumry_intvl_counts = []
+        sumry_intvl_ttmeans = []
+
         for cycle in range(cycles_max):
             if cycle == 1 or cycles_max == 1:
                 # Need to change button name and function from Start to Interval
@@ -1129,6 +1137,11 @@ class CountModeler:
                     f"{intervaldict['tt_min']} -- {intervaldict['tt_max']}")
                 self.share.data['tt_total'].set(intervaldict['tt_total'])
 
+                # Need to gather interval times and counts for ea. interval in
+                #  a summary segment to calc weighted mean times.
+                sumry_intvl_counts.append(task_count_new)
+                sumry_intvl_ttmeans.append(self.share.data['tt_mean'].get())
+
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
                 summary_m = TC.string_to_m(self.share.setting['summary_t'].get())
@@ -1145,19 +1158,27 @@ class CountModeler:
                     #  statement for 1st summary, but, oh well, here we go again...
                     self.share.sumry_b.config(state=tk.NORMAL)
 
-                    # Display time and stats of summary count.
+                    # Set time and stats of summary count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     self.share.data['task_count_sumry'].set(len(self.ttimes_smry))
                     summarydict = ttimes_stats(
                         len(self.ttimes_smry), self.ttimes_smry)
-                    self.share.data['tt_mean_sumry'].set(summarydict['tt_mean'])
                     self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
                     self.share.data['tt_range_sumry'].set(
                         f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
                     self.share.data['tt_total_sumry'].set(summarydict['tt_total'])
 
+                    # Need the weighted mean summary task time, not the average
+                    #   (arithmetic mean) value.
+                    print('sumry_intvl_ttmeans:', sumry_intvl_ttmeans, '\nsumry_intvl_counts:', sumry_intvl_counts)
+                    tt_wtmean = weighted_mean_time(
+                        sumry_intvl_ttmeans, sumry_intvl_counts)
+                    self.share.data['tt_mean_sumry'].set(tt_wtmean)
+
                     # Need to reset data set for the next summary interval.
                     self.ttimes_smry.clear()
+                    sumry_intvl_counts.clear()
+                    sumry_intvl_ttmeans.clear()
 
             # Call to log_it() needs to be outside of the thread lock.
             app.update_idletasks()
@@ -1837,7 +1858,7 @@ class CountViewer(tk.Frame):
         def explain_intvl():
             explain = ('If the pull-down values you want do not appear, then'
                        ' either select a different interval time, a different'
-                       ' summary time unit, or click "Set defaults".')
+                       ' summary time unit, or click "Use defaults".')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
         def explain_zero_max():
@@ -1923,7 +1944,7 @@ class CountViewer(tk.Frame):
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
 
-        default_button = ttk.Button(self.settings_win, text='Set defaults',
+        default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
                                        command=self.check_and_start)
