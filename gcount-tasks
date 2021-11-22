@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.9'
+__version__ = '0.7.10'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -230,10 +230,12 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     #   how-to-convert-a-time-string-to-seconds
     # https://stackoverflow.com/questions/18470627/
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
-    # Need to convert distribution clock time strings to seconds, but
-    #    not if distribution times are float or integer seconds.
+
     if len(distribution) != len(weights):
         return 'CBD'
+
+    # Need to convert distribution clock time strings to seconds, but
+    #    not if distribution times are float or integer seconds.
     if all(isinstance(t, str) for t in distribution):
         dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
                     for clk_fmt in distribution]
@@ -242,8 +244,8 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
     denominator = sum(weights)
     # Need to determine the weighted mean in seconds,
-    #   convert the timedelta clock time object to a string for display, and
-    #   remove microseconds from the clock time string.
+    #   convert the timedelta clock fmt object to a string for display, and
+    #   remove microseconds from the clock fmt string.
     return str(timedelta(seconds=(numerator / denominator))).split(".")[0]
 
 
@@ -281,7 +283,7 @@ class Logs:
     # Log files should be in the parent (CountBOINCtasks-master) folder
     #   but need .resolve() to handle symlinks.
     LOGFILE = Path('count-tasks_log.txt').resolve()
-    BACKUPFILE = Path('count-tasks_log(copy).txt').resolve()
+    # BACKUPFILE = Path('count-tasks_log(copy).txt').resolve()
     ANALYSISFILE = Path('count-analysis_log.txt').resolve()
 
     # self, event needed to handle implicit keybind events;
@@ -411,7 +413,7 @@ class Logs:
         text_height = 46
         minsize_h = 0
         minsize_w = 0
-        if filepath in (cls.LOGFILE, cls.BACKUPFILE):
+        if filepath == cls.LOGFILE:
             fnf_query = 'Was the settings log option used?'
             minsize_h = 800
             minsize_w = 220
@@ -419,8 +421,8 @@ class Logs:
                 minsize_w = 200
             if MY_OS == 'dar':
                 text_width = 72
-        if filepath == cls.BACKUPFILE:
-            fnf_query = 'Was menu File>"Backup log file" used yet?'
+        # if filepath == cls.BACKUPFILE:
+        #     fnf_query = 'Was menu File>"Backup log file" used yet?'
         if filepath == cls.ANALYSISFILE:
             fnf_query = 'Have any analysis results been saved yet?'
             text_width = 46
@@ -828,7 +830,7 @@ class CountFyi:
             - Displayed countdown clock time is approximate.\n
             - Review counts and Notices history with "View log file".\n
             - File>'Backup log file' copies log to the current folder.\n
-            - Logged analysis hours "n/a" means non-linear start-quit times.\n
+            - Logged analysis hours "CBD" means non-linear start-quit times.\n
                     Quick fix: backup log, delete log file, restart program.
             """)
 
@@ -1627,7 +1629,7 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label="File", menu=file)
         file.add_command(
             label="Backup log file",
-            command=lambda s=Logs.LOGFILE, d=Logs.BACKUPFILE: Logs.backup(s, d))
+            command=lambda s=Logs.LOGFILE: Logs.backup(s))
         file.add_separator()
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
@@ -1638,8 +1640,8 @@ class CountViewer(tk.Frame):
                          command=lambda: Logs.view(Logs.LOGFILE),
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
-        view.add_command(label="Log backup",
-                         command=lambda: Logs.view(Logs.BACKUPFILE))
+        # view.add_command(label="Log backup",
+        #                  command=lambda: Logs.view(Logs.BACKUPFILE))
         view.add_command(label="Analysis", command=Logs.show_analysis,
                          accelerator="Ctrl+A")
         view.add_command(label="Saved analyses",
