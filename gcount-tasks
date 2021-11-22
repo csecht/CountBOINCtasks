@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.8'
+__version__ = '0.7.9'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -216,11 +216,12 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     """
     Calculate weighted mean time from list of average times.
 
-    :param distribution: iterable of avg times, as string fmt 00:00:00
+    :param distribution: list or tuple of avg times, as string, 00:00:00
                          or as seconds (floats or integers).
-    :param weights: iterable of corresponding sample numbers, as
-                    integers, for each element in distribution list.
-    :return: weighted mean time, as clock time string, format 00:00:00.
+    :param weights: list or tuple of corresponding sample numbers
+                    (integers) for each element in distribution.
+    :return: weighted mean time, in string format 00:00:00.
+             'CBD', cannot be determined, if invalid parameters.
     """
     # algorithm sources:
     # https://towardsdatascience.com/
@@ -231,6 +232,8 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
     # Need to convert distribution clock time strings to seconds, but
     #    not if distribution times are float or integer seconds.
+    if len(distribution) != len(weights):
+        return 'CBD'
     if all(isinstance(t, str) for t in distribution):
         dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
                     for clk_fmt in distribution]
@@ -505,7 +508,7 @@ class Logs:
 
         :param logcontent: the read log file string.
         :return: total hours elapsed while logging active, as string.
-                 Returns 'n/a' if negative time calculated.
+                 Returns 'CBD' if negative time calculated.
         """
         start2intvl = []
         start2quit = []
@@ -514,66 +517,59 @@ class Logs:
 
         # *_time vars are datetime.timedelta objects;
         #    initialized with formatted Epoch origin time.
-        start_dtime = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        interval_dtime = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        start_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        interval_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
         final_interval_hr = 0.0
 
-        def calc_uptime_hr(starttime: datetime, endtime: datetime) -> float:
+        def calc_uptime_hr(start_datetime, end_datetime) -> float:
             """Convert datetime start and end difference to hours.
             """
             # Cannot calculate running time from the log file when have
             #   negative time diff between start and end times.
-            if (endtime - starttime) / timedelta(hours=1) < 0:
+            if (end_datetime - start_datetime) / timedelta(hours=1) < 0:
                 return -1.0
-            return (endtime - starttime) / timedelta(hours=1)
+            return (end_datetime - start_datetime) / timedelta(hours=1)
 
         # Need to calc and sum uptime only for start-stop segments that have
         #   counted tasks for one or more intervals. LONG_STRFTIME is the
         #   time format used in the log file.
         for line in logcontent.split('\n'):
-            if search('most recent BOINC report', line):
+            if 'most recent BOINC report' in line:
                 starttime_match = search(
                     r'^(.+); .+ most recent BOINC report', line).group(1)
-                start_dtime = str2dt(starttime_match, LONG_STRFTIME)
+                start_dt = str2dt(starttime_match, LONG_STRFTIME)
                 has_interval = False
 
-            if search('Tasks reported', line):
+            if 'Tasks reported' in line:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
                 interval_time = str2dt(intvltime_match, LONG_STRFTIME)
                 # Note: start2intvl list is used only to eval presence of a
                 #   negative timedelta interval somewhere in the log file.
-                start2intvl.append(calc_uptime_hr(start_dtime, interval_time))
+                start2intvl.append(calc_uptime_hr(start_dt, interval_time))
                 has_interval = True
 
-            # if search('NO TASKS RUNNING', line):
-            #     intvltime_match = search(
-            #         r'^(.+); .+ NO TASKS RUNNING', line).group(1)
-            #     interval_time = str2dt(intvltime_match, LONG_STRFTIME)
-            #     start2intvl.append(calc_uptime_hr(start_time, interval_time))
-            #     has_interval = True
-
-            if search('quit', line):
+            if 'quit' in line:
                 quittime_match = search(
                     r'^(.+); .+ quit', line).group(1)
                 quit_time = str2dt(quittime_match, LONG_STRFTIME)
                 if has_interval:
-                    start2quit.append(calc_uptime_hr(start_dtime, quit_time))
+                    start2quit.append(calc_uptime_hr(start_dt, quit_time))
 
-            if search('interrupt', line):
+            if 'interrupt' in line:
                 interrupttime_match = search(
                     r'^(.+); .+ interrupt', line).group(1)
                 interrupt_time = str2dt(interrupttime_match, LONG_STRFTIME)
                 if has_interval:
-                    start2interrupt.append(calc_uptime_hr(start_dtime, interrupt_time))
+                    start2interrupt.append(calc_uptime_hr(start_dt, interrupt_time))
 
         if -1.0 in start2quit + start2interrupt + start2intvl:
-            return 'n/a'
+            return 'CBD'
 
         # The log text has been read, so now need to get uptime of the
-        #   final start_dtime -> final interval_dtime segment.
+        #   final start_dt -> final interval_dt segment.
         if has_interval:
-            final_interval_hr = calc_uptime_hr(start_dtime, interval_dtime)
+            final_interval_hr = calc_uptime_hr(start_dt, interval_dt)
 
         return str(round(
             sum(start2quit) + sum(start2interrupt) + final_interval_hr, 1))
@@ -753,7 +749,7 @@ class Logs:
                         'so interpret results with caution.\n\n'
                     )
             else:
-                interval_text = '\nNo counts logged after last Summary.\n'
+                interval_text = 'No counts logged after last Summary.\n'
 
         return summary_text, interval_text
 
@@ -1232,7 +1228,7 @@ class CountModeler:
                             f'for the prior {tic_nnt} counting interval(s).')
                     else:
                         # Everything is fine, remove any prior notice.
-                        # Use a de-emhasized color for this non-notice status text.
+                        # Use a de-emphasized color for this non-notice status text.
                         self.share.notice_l.config(fg=self.share.row_fg)
                         self.share.note['notice_txt'].set(
                             f'All is well (updates every {NOTICE_INTERVAL} seconds)')
@@ -1337,7 +1333,7 @@ class CountModeler:
             elif called_from == 'start' and cycles_max == 0:
                 report = (
                     f'\n{self.share.long_time_start}; STATUS REPORT\n'
-                    f'{indent}Number of tasks in the most recent BOINC report:'
+                    f'{indent}Number of tasks recently reported by BOINC:'
                     f' {self.task_count_start}\n'
                     f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
@@ -1424,7 +1420,6 @@ class CountModeler:
         Called from notice_it() when update project setting is True.
         """
         # I'm not sure how to handle multiple concurrent Projects.
-        # If they are all stalled, then updating the first works?
         # B/c of how BC.project_action is structured, here I use the
         #  url to get the Project name ID which is used to get the
         #  url needed for the project cmd.  Silly, but uses existing
@@ -1623,7 +1618,7 @@ class CountViewer(tk.Frame):
 
     def master_widgets(self) -> None:
         """
-        Master menus, and buttons.
+        Master menus and buttons.
         """
 
         # Add pull-down menus
@@ -1673,8 +1668,8 @@ class CountViewer(tk.Frame):
 
     def master_layout(self) -> None:
         """
-        Master and dataframe Frames configuration, keybindings,
-        row headers, separators, and grids.
+        Master and dataframe configuration, keybindings, row headers,
+        separators, and grids.
         """
         # Background color of container Frame is configured in __init__
         # OS-specific window size ranges set in Controller __init__
@@ -1803,8 +1798,8 @@ class CountViewer(tk.Frame):
         self.share.compliment_l.grid(
             row=14, column=1, columnspan=2, padx=5, sticky=tk.W)
 
-        # These control variables have default or initial start values,
-        #   so make values invisible in pre-settings dataframe by matching
+        # Some control variables have default or initial start values,
+        #   so make labels invisible in pre-settings dataframe by matching
         #   them to the background color.
         self.interval_t_l.config(foreground=self.data_bg)
         self.summary_t_l.config(foreground=self.data_bg)
@@ -1981,7 +1976,7 @@ class CountViewer(tk.Frame):
         """
         Confirm validity of summary and interval times, set all
         to valid control variable dictionary values, and set up logging
-        of  data, if optioned.
+        of data, if optioned.
         Called from check_and_start().
         """
 
@@ -2126,7 +2121,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.emphasize)
         self.tt_total_l.configure(foreground=self.emphasize)
 
-        # Summary data, column2, deemphasize font color
+        # Summary data, column2, de-emphasize font color
         self.task_count_sumry_l.configure(foreground=self.deemphasize)
         self.ttmean_sumry_l.configure(foreground=self.deemphasize)
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
@@ -2149,7 +2144,7 @@ class CountViewer(tk.Frame):
                                        foreground=self.emphasize)
         self.ttsum_sumry_l.configure(foreground=self.emphasize)
 
-        # Interval data, column1, deemphasize font color
+        # Interval data, column1, de-emphasize font color
         self.task_count_l.configure(foreground=self.deemphasize)
         self.task_count_l.configure(foreground=self.deemphasize)
         self.tt_avg_l.configure(foreground=self.deemphasize)
