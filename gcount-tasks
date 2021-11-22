@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.10'
+__version__ = '0.7.11'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -280,11 +280,10 @@ class Logs:
     Methods to write, read, and analyze logged task count data.
     """
 
-    # Log files should be in the parent (CountBOINCtasks-master) folder
-    #   but need .resolve() to handle symlinks.
-    LOGFILE = Path('count-tasks_log.txt').resolve()
-    # BACKUPFILE = Path('count-tasks_log(copy).txt').resolve()
-    ANALYSISFILE = Path('count-analysis_log.txt').resolve()
+    # Log files should be in the parent (CountBOINCtasks-master) folder.
+    #   Use resolve() to force absolute path and handle symlinks.
+    LOGFILE = Path('gcount-tasks_log.txt').resolve()
+    ANALYSISFILE = Path('gcount-tasks_analysis.txt').resolve()
 
     # self, event needed to handle implicit keybind events;
     #    e.g., view(), show_analysis()
@@ -304,12 +303,12 @@ class Logs:
     @classmethod
     def append(cls, dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
         """
-        Save text to a file.
+        Add text to end of a file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
         :param showmsg: Flag for messagebox write confirmation; suppress
-                         confirmation msg when call is False.
+                        confirmation msg when call is False.
         :param parent: Toplevel object over which messagebox appears.
         """
 
@@ -375,7 +374,7 @@ class Logs:
                                      detail=info, parent=parent)
 
     @classmethod
-    def refresh(cls, tktext: tk.Text, file: Path, parent=None) -> None:
+    def update(cls, tktext: tk.Text, file: Path, parent=None) -> None:
         """
         Replace text in open log window with (new) log file content.
 
@@ -440,6 +439,7 @@ class Logs:
 
         with open(filepath, encoding='utf-8') as file:
             logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
+            # Need to show dir name and file name in the Toplevel title.
             # logwin.title(f'{filepath.name} on {node()}')
             # Need to use this ^^ for py2exe, b/c below generates run-time error:
             dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
@@ -458,14 +458,13 @@ class Logs:
 
         ttk.Button(
             logwin, text='Update',
-            command=(lambda t=logtext, f=filepath, p=logwin: cls.refresh(t, f, p))
+            command=(lambda t=logtext, f=filepath, p=logwin: cls.update(t, f, p))
                      ).pack(padx=4)
 
         if filepath == cls.LOGFILE:
-            ttk.Button(
-                logwin, text='Backup',
-                command=lambda s=filepath, p=logwin: cls.backup(s, p)
-                ).pack(padx=4)
+            ttk.Button(logwin, text='Backup',
+                       command=lambda s=filepath, p=logwin: cls.backup(s, p)
+                       ).pack(padx=4)
             ttk.Button(logwin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
 
@@ -488,7 +487,7 @@ class Logs:
         # Need a timestamp for each backup file created.
         _ts = datetime.now().strftime("%d%m%Y_%H%M")
         backupname = f'{source.stem}({_ts}){source.suffix}'
-        destination = Path(backupname)
+        destination = Path(backupname).resolve()
 
         try:
             from shutil import copy2
@@ -1629,7 +1628,7 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label="File", menu=file)
         file.add_command(
             label="Backup log file",
-            command=lambda s=Logs.LOGFILE: Logs.backup(s))
+            command=lambda: Logs.backup(Logs.LOGFILE))
         file.add_separator()
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
@@ -2281,9 +2280,7 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
-        # Note: need to use sys.argv for Windows py2exe setup.py compiling.
-        # print(f'{Path(sys.argv[0]).name} now running...')
-        print(f'{Path(__file__).name} now running...')
+        print(f'{Path(sys.argv[0]).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
