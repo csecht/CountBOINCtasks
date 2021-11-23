@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.14'
+__version__ = '0.7.15'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -47,7 +47,10 @@ from pathlib import Path
 from platform import node
 from re import search, findall, MULTILINE
 
+# pylint: disable=import-error
 from COUNTmodules import boinc_command, time_convert
+BC = boinc_command.BoincCommand()
+TC = time_convert
 
 try:
     import tkinter as tk
@@ -67,8 +70,6 @@ if sys.version_info < (3, 6):
           'Python downloads are available from https://docs.python.org/')
     sys.exit(0)
 
-BC = boinc_command.BoincCommand()
-TC = time_convert
 MY_OS = sys.platform[:3]
 SHORT_STRFTIME = '%Y %b %d %H:%M'
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
@@ -232,7 +233,7 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
 
     if len(distribution) != len(weights):
-        return 'CBD'
+        return 'cannot determine'
 
     # Need to convert distribution clock time strings to seconds, but
     #    not if distribution times are float or integer seconds.
@@ -246,7 +247,7 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     # Need to determine the weighted mean in seconds,
     #   convert the timedelta clock fmt object to a string for display, and
     #   remove microseconds from the clock fmt string.
-    return str(timedelta(seconds=(numerator / denominator))).split(".")[0]
+    return str(timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
 
 
 # noinspection PyBroadException
@@ -280,8 +281,8 @@ class Logs:
     Methods to write, read, and analyze logged task count data.
     """
 
-    # Log files should be in the parent (CountBOINCtasks-master) folder.
-    #   Use resolve() to force absolute path and handle symlinks.
+    # Use .resolve() to force absolute path and handle symlinks.
+    # Use .cwd() to avoid relative paths with pyinstaller distributables.
     LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
     ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
 
@@ -509,7 +510,7 @@ class Logs:
 
         :param logcontent: the read log file string.
         :return: total hours elapsed while logging active, as string.
-                 Returns 'CBD' if negative time calculated.
+                 Returns 'cannot determine' if negative time calculated.
         """
         start2intvl = []
         start2quit = []
@@ -565,7 +566,7 @@ class Logs:
                     start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
 
         if -1.0 in start2quit + start2interrupt + start2intvl:
-            return 'CBD'
+            return 'cannot determine'
 
         # The log text has been read, so now need to get uptime of the
         #   final start_dt -> final interval_dt segment.
@@ -827,9 +828,9 @@ class CountFyi:
                        """
             - Displayed countdown clock time is approximate.\n
             - Review counts and Notices history with "View log file".\n
-            - File>'Backup log file' copies log to the current folder.\n
-            - Logged analysis hours "CBD" means non-linear start-quit times.\n
-                    Quick fix: backup log, delete log file, restart program.
+            - File>'Backup log file' copies log to the working folder.\n
+            - Analysis of logged hours is "cannot determine"\n
+                    Quick fix: backup then delete log file, restart program.
             """)
 
         num_doc_lines = information.count('\n')
