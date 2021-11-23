@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.15'
+__version__ = '0.7.16'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -54,7 +54,7 @@ TC = time_convert
 
 try:
     import tkinter as tk
-    from tkinter import messagebox, ttk
+    from tkinter import messagebox, ttk, filedialog
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
     print('gcount-tasks requires tkinter, which is included with \n'
@@ -265,7 +265,7 @@ def quit_gui(*keybind):
     quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_msg)
     if Path.exists(Logs.LOGFILE):
-        Logs.append(Logs.LOGFILE, quit_msg, False)
+        Logs.save_to(Logs.LOGFILE, quit_msg, False)
     try:
         app.update_idletasks()
         app.after(200)
@@ -302,14 +302,14 @@ class Logs:
                             filemode="a", format='%(message)s')
 
     @classmethod
-    def append(cls, dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
+    def save_to(cls, dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
         """
-        Add text to end of a file.
+        Appends text to the destination file.
 
         :param dest: Path object of destination file.
         :param savetxt: Text to be written to dest.
         :param showmsg: Flag for messagebox write confirmation; suppress
-                        confirmation msg when call is False.
+                        confirmation msg when call option is False.
         :param parent: Toplevel object over which messagebox appears.
         """
 
@@ -485,22 +485,26 @@ class Logs:
                                  parent=parent)
             return
 
-        # Need a timestamp for each backup file created.
+        # Offer to use a timestamp for each backup file saved.
         _ts = datetime.now().strftime("%d%m%Y_%H%M")
         backupname = f'{source.stem}({_ts}){source.suffix}'
-        destination = Path(Path.cwd(), backupname).resolve()
-
+        backupfile = tk.filedialog.asksaveasfilename(initialfile=backupname)
+        # Need to avoid raising a TypeError when "Cancel" is selected from
+        # filedialog and returns a null Tuple as the file path string.
+        if not backupfile:
+            return
+        destination = Path(backupfile).resolve()
         try:
             from shutil import copy2
             copy2(source, destination)
-            success_msg = 'Log file has been copied to: '
-            success_detail = str(destination)
             messagebox.showinfo(title='Backup completed', parent=parent,
-                                message=success_msg, detail=success_detail)
+                                message='Log file has been copied to: ',
+                                detail=str(destination))
         except PermissionError:
             messagebox.showinfo(title='Log copy error',
-                                message="Permission denied")
-            print("Log file backup: Permission denied.")
+                                message="Permission denied",
+                                detail=f'Cannot open {source}')
+            print(f'Log file backup: Permission to open {source} denied.')
 
     @classmethod
     def uptime(cls, logcontent: str) -> str:
@@ -791,7 +795,7 @@ class Logs:
 
         ttk.Button(
             analysiswin, text='Save analysis',
-            command=lambda d=cls.ANALYSISFILE, t=text: cls.append(d, t, True, analysiswin)
+            command=lambda d=cls.ANALYSISFILE, t=text: cls.save_to(d, t, True, analysiswin)
             ).pack(padx=4)
 
         return keybind
