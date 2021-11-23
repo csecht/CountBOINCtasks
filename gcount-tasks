@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.13'
+__version__ = '0.7.14'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -282,8 +282,8 @@ class Logs:
 
     # Log files should be in the parent (CountBOINCtasks-master) folder.
     #   Use resolve() to force absolute path and handle symlinks.
-    LOGFILE = Path('gcount-tasks_log.txt').resolve()
-    ANALYSISFILE = Path('gcount-tasks_analysis.txt').resolve()
+    LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
+    ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
 
     # self, event needed to handle implicit keybind events;
     #    e.g., view(), show_analysis()
@@ -420,8 +420,6 @@ class Logs:
                 minsize_w = 200
             if MY_OS == 'dar':
                 text_width = 72
-        # if filepath == cls.BACKUPFILE:
-        #     fnf_query = 'Was menu File>"Backup log file" used yet?'
         if filepath == cls.ANALYSISFILE:
             fnf_query = 'Have any analysis results been saved yet?'
             text_width = 46
@@ -439,11 +437,13 @@ class Logs:
 
         with open(filepath, encoding='utf-8') as file:
             logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
-            # Need to show dir name and file name in the Toplevel title.
-            # logwin.title(f'{filepath.name} on {node()}')
-            # Need to use this ^^ for py2exe, b/c below generates run-time error:
-            dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
-            logwin.title(f'{dir_file} on {node()}')
+            # Need to show working dir and file name in the Toplevel title.
+            if MY_OS == 'win':
+                dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
+                logwin.title(f'{dir_file} on {node()}')
+            else:
+                dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
+                logwin.title(f'{dir_file} on {node()}')
 
             logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
@@ -487,7 +487,7 @@ class Logs:
         # Need a timestamp for each backup file created.
         _ts = datetime.now().strftime("%d%m%Y_%H%M")
         backupname = f'{source.stem}({_ts}){source.suffix}'
-        destination = Path(backupname).resolve()
+        destination = Path(Path.cwd(), backupname).resolve()
 
         try:
             from shutil import copy2
@@ -1638,8 +1638,6 @@ class CountViewer(tk.Frame):
                          command=lambda: Logs.view(Logs.LOGFILE),
                          # MacOS: can't display "Cmd+L" b/c won't override native cmd.
                          accelerator="Ctrl+L")
-        # view.add_command(label="Log backup",
-        #                  command=lambda: Logs.view(Logs.BACKUPFILE))
         view.add_command(label="Analysis", command=Logs.show_analysis,
                          accelerator="Ctrl+A")
         view.add_command(label="Saved analyses",
