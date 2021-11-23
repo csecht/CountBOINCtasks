@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.12'
+__version__ = '0.7.13'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -527,6 +527,7 @@ class Logs:
             """
             # Cannot calculate running time from the log file when have
             #   negative time diff between start and end times.
+            print('start:', start_datetime, ', end:', end_datetime)
             if (end_datetime - start_datetime) / timedelta(hours=1) < 0:
                 return -1.0
             return (end_datetime - start_datetime) / timedelta(hours=1)
@@ -544,25 +545,25 @@ class Logs:
             if 'Tasks reported' in line:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
-                interval_time = str2dt(intvltime_match, LONG_STRFTIME)
+                interval_dt = str2dt(intvltime_match, LONG_STRFTIME)
                 # Note: start2intvl list is used only to eval presence of a
                 #   negative timedelta interval somewhere in the log file.
-                start2intvl.append(calc_uptime_hr(start_dt, interval_time))
+                start2intvl.append(calc_uptime_hr(start_dt, interval_dt))
                 has_interval = True
 
             if 'quit' in line:
                 quittime_match = search(
                     r'^(.+); .+ quit', line).group(1)
-                quit_time = str2dt(quittime_match, LONG_STRFTIME)
+                quit_dt = str2dt(quittime_match, LONG_STRFTIME)
                 if has_interval:
-                    start2quit.append(calc_uptime_hr(start_dt, quit_time))
+                    start2quit.append(calc_uptime_hr(start_dt, quit_dt))
 
             if 'interrupt' in line:
                 interrupttime_match = search(
                     r'^(.+); .+ interrupt', line).group(1)
-                interrupt_time = str2dt(interrupttime_match, LONG_STRFTIME)
+                interrupt_dt = str2dt(interrupttime_match, LONG_STRFTIME)
                 if has_interval:
-                    start2interrupt.append(calc_uptime_hr(start_dt, interrupt_time))
+                    start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
 
         if -1.0 in start2quit + start2interrupt + start2intvl:
             return 'CBD'
