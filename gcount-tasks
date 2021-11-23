@@ -527,7 +527,6 @@ class Logs:
             """
             # Cannot calculate running time from the log file when have
             #   negative time diff between start and end times.
-            print('start:', start_datetime, ', end:', end_datetime)
             if (end_datetime - start_datetime) / timedelta(hours=1) < 0:
                 return -1.0
             return (end_datetime - start_datetime) / timedelta(hours=1)
