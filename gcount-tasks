@@ -488,7 +488,10 @@ class Logs:
         # Offer to use a timestamp for each backup file saved.
         _ts = datetime.now().strftime("%d%m%Y_%H%M")
         backupname = f'{source.stem}({_ts}){source.suffix}'
-        backupfile = tk.filedialog.asksaveasfilename(initialfile=backupname)
+        backupfile = tk.filedialog.asksaveasfilename(
+            initialfile=backupname, parent=parent,
+            filetypes=[('TEXT', '*.txt'), ],
+            title=f'Backup {source.name} as')
         # Need to avoid raising a TypeError when "Cancel" is selected from
         # filedialog and returns a null Tuple as the file path string.
         if not backupfile:
