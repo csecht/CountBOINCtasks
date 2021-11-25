@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.18'
+__version__ = '0.7.19'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -45,7 +45,9 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from platform import node
+from random import choice
 from re import search, findall, MULTILINE
+from shutil import copy2
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_command, time_convert
@@ -244,9 +246,8 @@ def interval_stats(distribution: iter, stat=None, weights=None) -> str:
     if weights:
         if not all(isinstance(w, int) for w in weights):
             return 'cannot determine'
-        else:
-            if len(distribution) != len(weights):
-                return 'cannot determine'
+        if len(distribution) != len(weights):
+            return 'cannot determine'
 
     # Need to convert distribution clock time strings to integer seconds, but
     #    not if distribution times are float or integer seconds.
@@ -271,6 +272,8 @@ def interval_stats(distribution: iter, stat=None, weights=None) -> str:
     if stat == 'stdev':
         return str(
             timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
+
+    return 'unexpected condition'
 
 
 # noinspection PyBroadException
@@ -517,7 +520,7 @@ class Logs:
         # Offer to use a timestamp for each backup file saved.
         _ts = datetime.now().strftime("%d%m%Y_%H%M")
         backupname = f'{source.stem}({_ts}){source.suffix}'
-        backupfile = tk.filedialog.asksaveasfilename(
+        backupfile = filedialog.asksaveasfilename(
             initialfile=backupname, parent=parent,
             filetypes=[('TEXT', '*.txt'), ],
             title=f'Backup {source.name} as')
@@ -527,7 +530,6 @@ class Logs:
             return
         destination = Path(backupfile).resolve()
         try:
-            from shutil import copy2
             copy2(source, destination)
             messagebox.showinfo(title='Backup completed', parent=parent,
                                 message='Log file has been copied to: ',
@@ -696,8 +698,6 @@ class Logs:
                 recent_dates, recent_intvl_vals, recent_cnts = zip(*all_intvls[index_recent:])
                 num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
-                recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
-                recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
 
         # Need to tailor report texts for various counting conditions.
         if not all_sumrys and not all_intvls:
@@ -891,7 +891,6 @@ class CountFyi:
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
         """
-        import random
         compliments = [
             "Hey there good lookin'!", 'I wish we had met sooner.',
             'You are the smartest person I know.', 'I like your hair.',
@@ -928,7 +927,7 @@ class CountFyi:
             'The Prime Minister seeks your council.', 'Crunchers rule!',
             'Crunchers are the best sort of people.'
         ]
-        praise = random.choice(compliments)
+        praise = choice(compliments)
         self.share.compliment_l.config(text=praise)
         self.share.notice_l.grid_remove()
         # Need to re-grid initial master_widgets gridding b/c its grid may
