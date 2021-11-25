@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>README count-tasks and gcount-tasks</title>
 </head>
-<body>
 <h1 id="countboinctasks">countBOINCtasks</h1>
 <h2 id="count-tasks">count-tasks</h2>
 <p>A utility for monitoring task data reported by the boinc-client.
@@ -16,8 +15,7 @@ It may be useful for comparing task productivity between different computers or 
 <h3 id="usage-">Usage:</h3>
 <p>Download the .zip package from the Code download button and extract to your
  favorite folder. From within the resulting countBOINCtasks-master folder
- , open a Terminal or Command Prompt window and call up the utility&#39;s help menu.
-    The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.</p>
+ , open a Terminal or Command Prompt window and call up the utility&#39;s help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.</p>
 <ul>
 <li>Linux or Mac OS: <code>./count-tasks --help</code>  or <code>python3 count-tasks</code></li>
 <li>Windows: <code>python count-tasks</code> --help</li>
@@ -26,35 +24,35 @@ Depending on your Python path settings in Windows, double-clicking on
 the count-tasks file icon may automatically launch the program, with its
 default settings, in a Terminal window.
 
-<p>Default settings assume a default location of the BOINC folder from the
+Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
   then there will be a command line option to enter that custom path to run
    boinc-client&#39;s boinccmd (or boinccmd.exe) executable. A custom command
     path can also be added to the countCFG.txt configuration file to avoid
-    entering the path on the command line.</p>
+     entering the path on the command line.
 <pre><code>~/countBOINCtasks-master$ ./count-tasks --help
 usage: count-tasks [-h] [--about] [--log {yes,no}] [--interval M] [--summary TIMEunit] [--count_lim N]
 
 optional arguments:
-    -h, --help          show this help message and exit
-    --about             Author, copyright, and GNU license
-    --log {yes,no}      Create log file of results or append to existing log (default: yes)
-    --interval M        Specify minutes between task counts (default: 60)
-    --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
+  -h, --help          show this help message and exit
+  --about             Author, copyright, and GNU license
+  --log {yes,no}      Create log file of results or append to existing log (default: yes)
+  --interval M        Specify minutes between task counts (default: 60)
+  --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
     --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data</code></pre>
 Options can be abbreviated, e.g., <code>./count-tasks --l --i 15 --s 1h --c 12</code>
 
-<p>Running the default settings (no optional arguments), will count the
+Running the default settings (no optional arguments), will count the
  number of tasks reported to the BOINC Project server on a repeating
   interval of 1 hour, with summaries provided every 24 hr. Basic statistics
    for task times are also provided for each count interval. The initial
     data report provided immediately upon program launch is for the most recent
      tasks reported by boinc-client during the past hour. Repeating
-    counts intervals begin after the initial report (see TIP, below).</p>
+      counts intervals begin after the initial report (see TIP, below).
 
 Example report results, using default settings:
 
-<pre><code>:~/CountBOINCtasks-master$ ./count-tasks
+<pre><code>~/CountBOINCtasks-master$ ./count-tasks
 2021-Jul-21 06:14:14; Number of tasks in the most recent BOINC report: 11
                       Task Time: mean 00:19:25, range [00:13:14 - 00:21:05],
                                  stdev 00:02:11, total 03:33:43
@@ -69,33 +67,34 @@ Timed intervals beginning now...
                       Total tasks in queue: 30
 
 1007 counts remaining until exit.
-13m ||||||||||&lt; ~time to next count</code></pre>
+    13m ||||||||||&lt; ~time to next count</code></pre>
 
 A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
 
-<p>Running with the <code>--log</code> option will save data to the log file in the
+Running with the <code>--log</code> option will save data to the log file in the
  working folder. This file is appended to or created when the program is
-    launched.</p>
+  launched.
 
-<p>You can let <code>count-tasks</code> run in an open terminal window with negligible
+You can let <code>count-tasks</code> run in an open terminal window with negligible
  impact on system resources. Stop it with <em>Ctrl-C</em> or let it stop
   automatically.  With default settings, it will stop after 6 weeks (1008
    1hr count cycles). A different count cycle limit can be set with the
-    <code>--count_lim</code> option.</p>
+    <code>--count_lim</code> option.
 
-<p>NOTE: Summary counts may be less than the sum of individual counts because
+NOTE: Summary counts may be less than the sum of individual counts because
  of persistence of reported tasks between count intervals. This can be
   expected when the <code>--interval</code>option is set to less than the default 60
    (minutes). The boinc-client command that provides reported task data
    , <code>boinccmd  --get_old_tasks</code>, retrieves tasks reported for the past hour
    , independent of the utility&#39;s count interval. To avoid missing any
     reported tasks, the <code>--interval</code> option has a 60 minutes maximum count
-    interval.</p>
+     interval.
 
-<p>TIP: To get only the most recent task count and time metrics without
-    running count intervals, run:  <code>count-tasks --c 0</code></p>
+TIP: To get only the most recent task count and time metrics without
+ running count intervals, run:  <code>count-tasks --c 0</code>
 
-### The GUI version: gcount-tasks
+<h2 id="gcount-tasks">gcount-tasks</h2>
+The GUI version of count-tasks.
 Download and run as described under Usage, but launch the program with these Terminal
 commands from within the parent folder:
 <ul>
@@ -104,41 +103,41 @@ commands from within the parent folder:
 </ul>
 
 <p>For a brief description and version number, use the <code>--about</code> command line option.</p>
-
 <p>Added features in the GUI version:</p>
 <ul>
 <li>View the log file in a pop-up window.</li>
 <li>Backup the log file.</li>
-<li>Tally, view, and save task counts that have been recorded in the log file.</li>
-<li>Pop-up Help menu.</li>
+<li>View analysis of cumulative log data in a pop-up window; save results to file.</li>
+<li>Pop-up Help menus.</li>
 </ul>
 
 <p><img src="gcount-tasks_scrnshot.png" alt="gcount-tasks"></p>
 <h3 id="stand-alone-versions-no-python-installation-needed-">Stand-alone versions (no Python installation needed!)</h3>
 <h4 id="gcount_tasks-exe-windows">gcount_tasks.exe - Windows</h4>
-<p>A <strong>Windows</strong> standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the <code>CountBOINCtasks-master/Standalone_distributables</code> folder is <code>GcountTasks_win.zip</code>, which is an archived folder of files necessary for running the Windows executable. Alternatively, this distributable archive can be downloaded directly from  <a href="https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_win.zip">https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_win.zip</a>. Select &#39;Extract All&#39; for the downloaded ZIP file. Within the extracted GcountTasks folder is the executable, <code>gcount-tasks.exe</code> (the .exe extension may not show, depending on your system view settings). Double-click <code>gcount-tasks.exe</code> to launch. You will likely first need to permit Windows to open it: from the pop-up warning, click on &quot;more info&quot;, then follow the prompts to open the program. The <code>GcountTasks</code> folder can be placed anywhere; you may want to create a shortcut of <code>gcount-tasks.exe</code> and place it in a convenient location. The <code>GcountTasks_win</code> distributable was created with <code>py2exe</code> from <a href="https://pypi.org/project/py2exe/">https://pypi.org/project/py2exe/</a>   </p>
-<p>Instructions for how to create your own stand-alone from the gcount-tasks script are in Standalone_distributables/setup_README.txt.</p>
+<p>A <strong>Windows</strong> standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the <code>CountBOINCtasks-master/Standalone_distributables</code> folder is <code>gcount-tasks_win.zip</code>. Alternatively, this compressed file can be downloaded directly from  <a href="https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/gcount-tasks_win.zip">https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/gcount-tasks_win.zip</a>. Select &#39;Extract All&#39; for the downloaded ZIP file. After extraction, the .exe extension may not show, depending on your system view settings. Double-click <code>gcount-tasks.exe</code> to launch. Because this project is in the beta phase, along with the program GUI, a Command Prompt window will appear to display possible Python error messages. Closing the Command Prompt window will also close the GUI.</p>
+<p>You will likely first need to permit Windows to run the .exe file: from the pop-up warning, click on &quot;more info&quot;, then follow the prompts to open the program. </p>
+<p>The <code>gcount-tasks</code> executable was created with <code>pyinstaller</code> available from <a href="https://pypi.org/project/pyinstaller/">https://pypi.org/project/pyinstaller/</a></p>
 <h4 id="gcounttasks-app-macos">GcountTasks.app - MacOS</h4>
-<p>A <strong>MacOS</strong> standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is <code>GcountTasks_mac.app.zip</code>. Unzip that (just double click and follow the prompts) to install the <code>GcountTasks.app</code> program, which you can place where you like. Alternatively, the distributable app can be downloaded directly from <a href="https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.app.zip">https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.app.zip</a>. <code>GcountTasks.app</code> was created with <code>py2app</code> from <a href="https://pypi.org/project/py2app/">https://pypi.org/project/py2app/</a></p>
+<p>A <strong>MacOS</strong> standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is <code>GcountTasks_mac.app.zip</code>. Unzip that (just double click and follow the prompts) to install the <code>GcountTasks.app</code> program, which you can place where you like. Alternatively, the distributable app can be downloaded directly from <a href="https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.app.zip">https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.app.zip</a>.</p>
 <p>The first time you try to open the app, however, you will get a message saying it can&#39;t be opened. Click &quot;Cancel&quot;, go into System Preferences &gt; Security &amp; Privacy, click the &quot;Open anyway&quot; button, then &quot;Open&quot;. It does not open initially because it was not downloaded from the Apple Store or from a recognized Apple developer. </p>
 <p>The process of opening apps from unrecognized Apple developers can be somewhat streamlined by re-establishing (as of MacOS Sierra) the &quot;Allow apps downloaded from: Anywhere&quot; option in Security &amp; Preferences. Do this with the following command line in the Terminal: <code>sudo spctl --master-disable</code>. Using the Finder &#39;Open&#39; command directly on the unzipped app in its folder, can also somewhat reduce the hassle of navigating through System Preferences; once that is done, then any alias to the app should work smoothly. With any of these &quot;fixes&quot;, you will, initially and appropriately, be prompted by the MacOS Gatekeeper to open the app. </p>
+<p><code>GcountTasks.app</code> was created with <code>py2app</code> from <a href="https://pypi.org/project/py2app/">https://pypi.org/project/py2app/</a> .
+Instructions for how to create your own stand-alone app from the gcount-tasks script using <code>py2app</code> are in Standalone_distributables/setup_README.txt.</p>
 <h3 id="development-plans">Development Plans</h3>
 <ul>
 <li>Wait for user feedback...</li>
 </ul>
 <h3 id="known-issues">Known Issues</h3>
 <ul>
-<li><p>Versions 0.4.10 - 0.4.12 were prone to freezes.</p>
+<li><p>Versions 0.4.10 - 0.4.12 were prone to freezes. </p>
 </li>
 <li><p>BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different
 boinccmd path from the default path used by count-tasks. I&#39;ve yet to
 figure out the new path. (Any help would be appreciated.) As a work-around,
 if you archived a prior BOINC package, you can copy the boinccmd
 executable file into the default location:
-Users/you-the-user/Application Support/BOINC/ , or follow the prompts from the
+Users/youtheuser/Application Support/BOINC/ , or follow the prompts from the
 count-tasks Terminal command to enter a custom path to the boinccmd program.</p>
 </li>
 </ul>
-
-</body>
 </html>
