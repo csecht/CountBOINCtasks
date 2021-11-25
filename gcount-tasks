@@ -642,8 +642,6 @@ class Logs:
         recent_intvl_vals = []
         num_recent_intvl_vals = 0
         recent_counts = []
-        # recent_cnt_avg = 0.0
-        # recent_cnt_range = ''
         recent_intervals = True
 
         summary_text = ''
@@ -681,7 +679,6 @@ class Logs:
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
             intvl_t_wtavg = interval_stats(all_intvl_avgt, 'wtmean', intvl_counts)
             intvl_t_range = interval_stats(all_intvl_avgt, 'range')
-            # intvl_t_stdev = interval_stats(all_intvl_avgt, 'stdev')
 
         # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -745,7 +742,6 @@ class Logs:
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n'
                     f'   {len(sumry_counts)} summaries logged\n'
-                    # f'   {sum(sumry_counts)} tasks logged in summaries\n'
                     f'   {sumry_cnt_avg} tasks per {sumry_intvl_vals[0]} summary interval\n'
                     f'   {sumry_cnt_range} range of task counts\n\n'
                 )
@@ -760,7 +756,6 @@ class Logs:
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
                     f'   {len(sumry_counts)} summaries logged\n'
-                    # f'   {sum(sumry_counts)} tasks reported\n'
                     f'   {sumry_cnt_avg} tasks per summary\n'
                     f'   {sumry_cnt_range} range of task counts\n'
                     f'There are {num_sumry_intvl_vals} different Summary interval times,\n'
@@ -777,16 +772,12 @@ class Logs:
                         f'{recent_dates[0]} to {recent_dates[-1]}\n'
                         f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals '
                         f'of {recent_intvl_vals[0]}\n'
-                        # f'   {sum(recent_counts)} tasks reported\n'
-                        # f'   {recent_cnt_avg} tasks per {recent_intvl_vals[0]} count interval\n'
-                        # f'   {recent_cnt_range} range of task counts\n'
                     )
                 else:
                     interval_text = (
                         'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals\n'
-                        # f'   {recent_cnt_range} range of task counts\n'
                         f'There are {num_recent_intvl_vals} different interval times,\n'
                         f'   {set(recent_intvl_vals)},\n'
                         '   so interpret results with caution.\n'
