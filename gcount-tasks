@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.16'
+__version__ = '0.7.17'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -38,7 +38,7 @@ __status__ = 'Development Status :: 2 - Beta'
 
 import argparse
 import logging
-import statistics as stats
+import statistics
 import sys
 import threading
 import time
@@ -162,22 +162,22 @@ def only_digit_entry(entry_string, action_type) -> bool:
     return True
 
 
-def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
+def ttimes_stats(tasktimes: iter) -> dict:
     """
-    Sum and run statistics of BOINC task times.
+    Sum and run statistics of BOINC task times for reporting in
+    master Frame and log file.
     Called from Modeler. Calls to time_convert.sec_to_format().
 
-    :param numtasks: The number of elements in tasktimes.
     :param tasktimes: A list, tuple, or set of times, in seconds as
                       integers or floats.
     :return: Dict keys: tt_total, tt_avg, tt_sd, tt_min, tt_max;
              Dict values as: 00:00:00.
-    :rtype: dict
     """
+    numtasks = len(tasktimes)
     total = TC.sec_to_format(int(sum(tasktimes)), 'std')
     if numtasks > 1:
-        avg = TC.sec_to_format(int(stats.mean(tasktimes)), 'std')
-        stdev = TC.sec_to_format(int(stats.stdev(tasktimes)), 'std')
+        avg = TC.sec_to_format(int(statistics.mean(tasktimes)), 'std')
+        stdev = TC.sec_to_format(int(statistics.stdev(tasktimes)), 'std')
         low = TC.sec_to_format(int(min(tasktimes)), 'std')
         high = TC.sec_to_format(int(max(tasktimes)), 'std')
         return {
@@ -190,39 +190,46 @@ def ttimes_stats(numtasks: int, tasktimes: iter) -> dict:
         return {
             'tt_total': total,
             'tt_avg': total,
-            'tt_sd': 'na',
-            'tt_min': 'na',
-            'tt_max': 'na'}
+            'tt_sd': 'n/a',
+            'tt_min': 'n/a',
+            'tt_max': 'n/a'}
     # numtasks is 0...
     return {
         'tt_total': '00:00:00',
         'tt_avg': '00:00:00',
-        'tt_sd': 'na',
-        'tt_min': 'na',
-        'tt_max': 'na'}
+        'tt_sd': 'n/a',
+        'tt_min': 'n/a',
+        'tt_max': 'n/a'}
 
 
 def str2dt(dt_str: str, str_format: str) -> datetime:
-    """Convert formatted date string to datetime object.
+    """
+    Convert formatted date string to datetime object.
     Use for comparing datetimes in text files.
 
-    :param dt_str: date and time formatted string.
-    :param str_format: datetime.strftime() string; ex '%Y-%b-%d %H:%M:%S'.
+    :param dt_str: date and time string;
+                   ex '1970-Jan-01 00:00:00'
+    :param str_format: datetime.strftime() string;
+                       ex '%Y-%b-%d %H:%M:%S'.
     """
     dt_obj = datetime.strptime(dt_str, str_format)
     return dt_obj
 
 
-def weighted_mean_time(distribution: iter, weights: iter) -> str:
+def interval_stats(distribution: iter, stat=None, weights=None) -> str:
     """
-    Calculate weighted mean time from list of average times.
+    Calculate statistics for task times from logged interval data.
 
-    :param distribution: list or tuple of avg times, as string, 00:00:00
-                         or as seconds (floats or integers).
-    :param weights: list or tuple of corresponding sample numbers
+    :param distribution: List or tuple of avg times, as string format
+                          00:00:00, or as seconds (floats or integers).
+    :param stat: The statistic to run.
+                 'wtmean' requires distribution and weights parameters.
+                 'range' and 'stdev' require only distribution parameter.
+    :param weights: List or tuple of corresponding sample numbers
                     (integers) for each element in distribution.
-    :return: weighted mean time, in string format 00:00:00.
-             'CBD', cannot be determined, if invalid parameters.
+    :return: The distribution weighted mean OR range OR standard
+             deviation, each as string format 00:00:00,
+             OR 'cannot determine' if invalid stat='wtmean' parameters.
     """
     # algorithm sources:
     # https://towardsdatascience.com/
@@ -232,22 +239,38 @@ def weighted_mean_time(distribution: iter, weights: iter) -> str:
     # https://stackoverflow.com/questions/18470627/
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
 
-    if len(distribution) != len(weights):
-        return 'cannot determine'
+    if not stat:
+        return 'missing stat param'
+    if weights:
+        if not all(isinstance(w, int) for w in weights):
+            return 'cannot determine'
+        else:
+            if len(distribution) != len(weights):
+                return 'cannot determine'
 
-    # Need to convert distribution clock time strings to seconds, but
+    # Need to convert distribution clock time strings to integer seconds, but
     #    not if distribution times are float or integer seconds.
     if all(isinstance(t, str) for t in distribution):
-        dist_sec = [sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
-                    for clk_fmt in distribution]
+        dist_sec = [
+            sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
+            for clk_fmt in distribution]
     else:
         dist_sec = list(distribution)
-    numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
-    denominator = sum(weights)
-    # Need to determine the weighted mean in seconds,
-    #   convert the timedelta clock fmt object to a string for display, and
-    #   remove microseconds from the clock fmt string.
-    return str(timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
+
+    #   Need to convert the timedelta clock fmt object to a string for display,
+    #   and remove microseconds from the clock fmt string.
+    if stat == 'range':
+        shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
+        longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
+        return f'[{shortest} -- {longest}]'
+    if stat == 'wtmean':
+        numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
+        denominator = sum(weights)
+        return str(
+            timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
+    if stat == 'stdev':
+        return str(
+            timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
 
 
 # noinspection PyBroadException
@@ -278,7 +301,7 @@ def quit_gui(*keybind):
 
 class Logs:
     """
-    Methods to write, read, and analyze logged task count data.
+    Methods to write, read, backup, and analyze logged task data.
     """
 
     # Use .resolve() to force absolute path and handle symlinks.
@@ -337,15 +360,14 @@ class Logs:
             return
 
     @classmethod
-    def erase(cls, tktext: tk.Text, file: Path, parent=None) -> None:
+    def erase(cls, file: Path, tktext: tk.Text, parent=None) -> None:
         """
         Delete file contents and its displayed window text.
 
-        :param tktext: A tkinter.scrolledtext.ScrolledText or
-                       tkinter.Text insert.
         :param file: Path object of file from which to erase content.
-        :param parent: The parent window over which to place messagebox;
-               usually a Toplevel object. Defaults to app window.
+        :param tktext: A tkinter.ScrolledText or tkinter.Text insert.
+        :param parent: The parent window over which to place messagebox,
+               usually the tktext Toplevel. Defaults to app window.
         """
 
         if not Path.exists(file):
@@ -524,8 +546,8 @@ class Logs:
         start2interrupt = []
         has_interval = False
 
-        # *_time vars are datetime.timedelta objects;
-        #    initialized with formatted Epoch origin time.
+        # *_dt vars are datetime.timedelta objects, so initialize with
+        #    formatted Epoch origin time.
         start_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
         interval_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
         final_interval_hr = 0.0
@@ -592,26 +614,27 @@ class Logs:
         :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
-        sumry_intvl_times = []
-        num_sumry_times = 0
+        sumry_intvl_vals = []
+        num_sumry_intvl_vals = 0
         sumry_counts = []
         sumry_cnt_avg = 0.0
         sumry_cnt_range = ''
 
         intvl_dates = []
-        intvl_times = []
-        num_intvl_times = 0
+        intvl_vals = []
+        num_intvl_vals = 0
         intvl_counts = []
         intvl_cnt_avg = 0.0
         intvl_cnt_range = ''
         intvl_t_wtavg = ''
+        intvl_t_range = ''
 
         recent_dates = []
-        recent_intvl_times = []
-        num_recent_times = 0
+        recent_intvl_vals = []
+        num_recent_intvl_vals = 0
         recent_counts = []
-        recent_cnt_avg = 0.0
-        recent_cnt_range = ''
+        # recent_cnt_avg = 0.0
+        # recent_cnt_range = ''
         recent_intervals = True
 
         summary_text = ''
@@ -631,23 +654,25 @@ class Logs:
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         all_intvls = findall(
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        all_intvl_meant = findall(
+        all_intvl_avgt = findall(
             r'Tasks reported .+\n.+ avg (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
 
         if all_sumrys:
-            sumry_dates, sumry_intvl_times, sumry_cnts = zip(*all_sumrys)
-            num_sumry_times = len(set(sumry_intvl_times))
+            sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*all_sumrys)
+            num_sumry_intvl_vals = len(set(sumry_intvl_vals))
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
 
         if all_intvls:
-            intvl_dates, intvl_times, intvl_cnts = zip(*all_intvls)
-            num_intvl_times = len(set(intvl_times))
+            intvl_dates, intvl_vals, intvl_cnts = zip(*all_intvls)
+            num_intvl_vals = len(set(intvl_vals))
             intvl_counts = list(map(int, intvl_cnts))
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtavg = weighted_mean_time(all_intvl_meant, intvl_counts)
+            intvl_t_wtavg = interval_stats(all_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_range = interval_stats(all_intvl_avgt, 'range')
+            # intvl_t_stdev = interval_stats(all_intvl_avgt, 'stdev')
 
         # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -661,8 +686,8 @@ class Logs:
                 index = [
                     i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
                 index_recent = index[0] + 1  # <- The interval after the last summary.
-                recent_dates, recent_intvl_times, recent_cnts = zip(*all_intvls[index_recent:])
-                num_recent_times = len(set(recent_intvl_times))
+                recent_dates, recent_intvl_vals, recent_cnts = zip(*all_intvls[index_recent:])
+                num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
                 recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
                 recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
@@ -676,85 +701,88 @@ class Logs:
                 '   interval count in the log file.\n')
         if not all_sumrys and all_intvls:
             summary_text = '\nNo summary counts are logged yet.\n'
-            if num_intvl_times == 1:
+            if num_intvl_vals == 1:
                 interval_text = (
-                    'Analysis of task counts logged from:\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    'Analysis of reported tasks logged from\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext)} hours counting tasks\n'
                     f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
-                    f'   {intvl_cnt_avg} tasks per {intvl_times[0]} count interval\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n'
+                    f'   {intvl_t_range} range of task times\n\n'
+                    f'   {intvl_cnt_avg} tasks per {intvl_vals[0]} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n'
                 )
             else:
                 interval_text = (
-                    'Analysis of task counts logged from:\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    'Analysis of reported tasks logged from\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext)} hours counting tasks\n'
                     f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg} weighted mean task time\n\n'
-                    f'   {intvl_cnt_avg} tasks per {num_intvl_times} count interval\n'
-                    f'   {intvl_cnt_range} range of task counts\n'
-                    f'There are {num_intvl_times} different interval times\n'
-                    f'logged, {set(intvl_times)},\n'
+                    f'   {intvl_cnt_avg} tasks per {num_intvl_vals} count interval\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n'
+                    f'   {intvl_t_range} range of task times\n'
+                    f'There are {num_intvl_vals} different interval times\n'
+                    f'logged, {set(intvl_vals)},\n'
                     'so interpret results with caution.\n'
                 )
         if all_sumrys:
-            if num_sumry_times == 1:
+            if num_sumry_intvl_vals == 1:
                 summary_text = (
-                    'Analysis of task counts logged from:\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    'Analysis of reported tasks logged from\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext)} hours counting tasks\n'
                     f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n'
+                    f'   {intvl_t_range} range of task times\n\n'
                     'Summary data logged from:\n'
-                    f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
+                    f'{sumry_dates[0]} to {sumry_dates[-1]}\n'
                     f'   {len(sumry_counts)} summaries logged\n'
-                    f'   {sum(sumry_counts)} tasks logged in summaries\n'
-                    f'   {sumry_cnt_avg} tasks per {sumry_intvl_times[0]} summary interval\n'
+                    # f'   {sum(sumry_counts)} tasks logged in summaries\n'
+                    f'   {sumry_cnt_avg} tasks per {sumry_intvl_vals[0]} summary interval\n'
                     f'   {sumry_cnt_range} range of task counts\n\n'
                 )
             else:
                 summary_text = (
-                    'Analysis of task counts logged from:\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n\n'
+                    'Analysis of reported tasks logged from\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext)} hours counting tasks\n'
                     f'   {sum(intvl_counts)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg} weighted mean task time\n\n'
+                    f'   {intvl_t_wtavg} weighted mean task time\n'
+                    f'   {intvl_t_range} range of task times\n\n'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
                     f'   {len(sumry_counts)} summaries logged\n'
-                    f'   {sum(sumry_counts)} tasks reported\n'
+                    # f'   {sum(sumry_counts)} tasks reported\n'
                     f'   {sumry_cnt_avg} tasks per summary\n'
                     f'   {sumry_cnt_range} range of task counts\n'
-                    f'There are {num_sumry_times} different Summary\n'
-                    f' interval times, {set(sumry_intvl_times)},\n'
-                    'so interpret results with caution.\n\n'
+                    f'There are {num_sumry_intvl_vals} different Summary interval times,\n'
+                    f'   {set(sumry_intvl_vals)},\n'
+                    '   so interpret results with caution.\n'
                 )
 
         if all_sumrys and all_intvls:
             # Summary text has been defined, so now do interval text.
             if recent_intervals:
-                if num_recent_times == 1:
+                if num_recent_intvl_vals == 1:
                     interval_text = (
                         'Since last Summary, additional counts from:\n'
-                        f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                        f'   {len(recent_counts)} intervals logged\n'
-                        f'   {sum(recent_counts)} tasks reported\n'
-                        f'   {recent_cnt_avg} tasks per {recent_intvl_times[0]} count interval\n'
-                        f'   {recent_cnt_range} range of task counts\n'
+                        f'{recent_dates[0]} to {recent_dates[-1]}\n'
+                        f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals '
+                        f'of {recent_intvl_vals[0]}\n'
+                        # f'   {sum(recent_counts)} tasks reported\n'
+                        # f'   {recent_cnt_avg} tasks per {recent_intvl_vals[0]} count interval\n'
+                        # f'   {recent_cnt_range} range of task counts\n'
                     )
                 else:
                     interval_text = (
                         'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                        f'   {len(recent_counts)} intervals logged\n'
-                        f'   {sum(recent_counts)} tasks reported\n'
-                        f'   {recent_cnt_avg} tasks per count interval\n'
-                        f'   {recent_cnt_range} range of task counts\n'
-                        f'There are {num_recent_times} different logged\n'
-                        f' interval times, {set(recent_intvl_times)},\n'
-                        'so interpret results with caution.\n\n'
+                        f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals\n'
+                        # f'   {recent_cnt_range} range of task counts\n'
+                        f'There are {num_recent_intvl_vals} different interval times,\n'
+                        f'   {set(recent_intvl_vals)},\n'
+                        '   so interpret results with caution.\n'
                     )
             else:
                 interval_text = 'No counts logged after last Summary.\n'
@@ -765,9 +793,9 @@ class Logs:
     def show_analysis(cls, *keybind):
         """
         Generate a Toplevel window to display cumulative logged task
-        counts that have been analyzed by cls.analyze_logfile().
+        data that have been analyzed by cls.analyze_logfile().
         Button appends displayed results to an analysis log file.
-        Called from a cls.view() button or a master keybinding.
+        Called from a Log.view() button or a master keybinding.
 
         :param keybind: Empty parameter to pass implicit keybind event.
         """
@@ -799,6 +827,10 @@ class Logs:
         ttk.Button(
             analysiswin, text='Save analysis',
             command=lambda d=cls.ANALYSISFILE, t=text: cls.save_to(d, t, True, analysiswin)
+            ).pack(padx=4)
+        ttk.Button(
+            analysiswin, text='Erase',
+            command=lambda f=cls.ANALYSISFILE, t=analysistxt: cls.erase(f, t, analysiswin)
             ).pack(padx=4)
 
         return keybind
@@ -994,7 +1026,7 @@ class CountModeler:
         self.ttimes_used.update(ttimes_start)
 
         # Need to parse data returned from ttimes_stats().
-        startdict = ttimes_stats(len(ttimes_start), ttimes_start)
+        startdict = ttimes_stats(ttimes_start)
         self.share.data['tt_avg'].set(startdict['tt_avg'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
         self.share.data['tt_range'].set(
@@ -1135,7 +1167,9 @@ class CountModeler:
                 self.share.note['tic_nnt'].set(tic_nnt)
 
                 # Need to parse data returned from ttimes_stats().
-                intervaldict = ttimes_stats(task_count_new, ttimes_new)
+                # intervaldict = ttimes_stats(task_count_new, ttimes_new)
+                intervaldict = ttimes_stats(ttimes_new)
+
                 self.share.data['tt_avg'].set(intervaldict['tt_avg'])
                 self.share.data['tt_sd'].set(intervaldict['tt_sd'])
                 self.share.data['tt_range'].set(
@@ -1167,8 +1201,7 @@ class CountModeler:
                     # Set time and stats of summary count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     self.share.data['task_count_sumry'].set(len(ttimes_smry))
-                    summarydict = ttimes_stats(
-                        len(ttimes_smry), ttimes_smry)
+                    summarydict = ttimes_stats(ttimes_smry)
                     self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
                     self.share.data['tt_range_sumry'].set(
                         f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
@@ -1176,8 +1209,8 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    tt_wtmean = weighted_mean_time(
-                        sumry_intvl_ttmeans, sumry_intvl_counts)
+                    tt_wtmean = interval_stats(
+                        sumry_intvl_ttmeans, 'wtmean', sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
                     # Need to reset data set for the next summary interval.
@@ -1272,11 +1305,11 @@ class CountModeler:
                     if prior_note:
                         self.share.note['notice_txt'].set(
                             f'{prior_note}\n'
-                            f'*** {cycles_max} count intervals have been run. ***\n')
+                            f'*** All {cycles_max} count intervals have been run. ***\n')
                     else:
                         self.share.note['notice_txt'].set(
                             f'*** All {cycles_max} count intervals have been run. ***\n')
-                    print(f'\n*** {cycles_max} counting cycles have ended. ***\n')
+                    print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n')
 
             app.update_idletasks()
             # Call to log_it() here needs to be outside of the thread lock.
@@ -1727,7 +1760,9 @@ class CountViewer(tk.Frame):
         for header, rownum in row_header.items():
             tk.Label(self.master, text=f'{header}',
                      bg=self.master_bg, fg=self.share.row_fg
-                     ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.E)
+                     ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.NE)
+            # ^^ Grid to N (NE) to prevent Notices label from shifting down
+            #    when more than one row of notice_it text appears.
         # Need to accommodate instances of two headers in same row.
         tk.Label(self.master, text='Summary time:',
                  bg=self.master_bg, fg=self.share.row_fg
@@ -1795,8 +1830,6 @@ class CountViewer(tk.Frame):
         elif MY_OS == 'win':
             self.cycles_remain_l.grid(
                 row=12, column=2, padx=(110, 0), sticky=tk.W)
-        # Need rowspan=2 for proper vertical alignment and to avoid gap artifact in
-        #   frame border from row 14 exceeding vertical geometry when notices >1 row.
         #   Need pady for alignment with the row header.
         self.share.notice_l.grid(
             row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0),
@@ -2210,8 +2243,8 @@ class CountController(tk.Tk):
         #    but not get minimized enough to exclude notices row.
         # Need OS-specific master window sizes b/c of different default font widths.
         if MY_OS == 'lin':
-            self.minsize(580, 360)
-            self.maxsize(780, 390)
+            self.minsize(580, 370)
+            self.maxsize(780, 400)
         elif MY_OS == 'win':
             self.minsize(532, 380)
             self.maxsize(720, 400)
