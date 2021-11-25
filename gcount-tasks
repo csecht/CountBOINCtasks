@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.7.17'
+__version__ = '0.7.18'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -378,10 +378,12 @@ class Logs:
                                  detail=info, parent=parent)
             return
 
-        msgdetail = "'Enter/Return' or space bar will also delete file content."
         if MY_OS == 'dar':
-            msgdetail = "'Enter/Return' will also delete file content."
-
+            msgdetail = (f"'Enter/Return' will also delete "
+                         f"content of file {file}.")
+        else:
+            msgdetail = (f"'Enter/Return' or space bar will also delete "
+                         f"content of file {file}.")
         okay = messagebox.askokcancel(title='Confirmation needed',
                                       message='Delete file content?',
                                       detail=msgdetail, parent=parent)
@@ -490,6 +492,11 @@ class Logs:
                        ).pack(padx=4)
             ttk.Button(logwin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
+        if filepath == cls.ANALYSISFILE:
+            ttk.Button(
+                logwin, text='Erase',
+                command=lambda f=cls.ANALYSISFILE, t=logtext: cls.erase(f, t, logtext)
+            ).pack(padx=4)
 
     @classmethod
     def backup(cls, source: Path, parent=None) -> None:
@@ -827,10 +834,6 @@ class Logs:
         ttk.Button(
             analysiswin, text='Save analysis',
             command=lambda d=cls.ANALYSISFILE, t=text: cls.save_to(d, t, True, analysiswin)
-            ).pack(padx=4)
-        ttk.Button(
-            analysiswin, text='Erase',
-            command=lambda f=cls.ANALYSISFILE, t=analysistxt: cls.erase(f, t, analysiswin)
             ).pack(padx=4)
 
         return keybind
