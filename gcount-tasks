@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2174,6 +2174,8 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
+        img = tk.PhotoImage(file='images/count_icon.png')
+        app.wm_iconphoto(True, img)
         print(f'{Path(sys.argv[0]).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
