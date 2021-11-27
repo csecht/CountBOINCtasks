@@ -1,5 +1,6 @@
-# countBOINCtasks
+# Project: countBOINCtasks
 
+![count_logo](images/count_logo_sm.png)
 ## count-tasks
 
 A utility for monitoring task data reported by the boinc-client. 
@@ -113,7 +114,7 @@ Added features in the GUI version:
 <li>Pop-up Help menu.</li>
 </ul>
 
-![gcount-tasks](gcount-tasks_scrnshot.png)
+![gcount-tasks](images/gcount-tasks_scrnshot.png)
 
 ### Stand-alone versions (no Python installation needed!)
 #### gcount_tasks.exe - Windows
