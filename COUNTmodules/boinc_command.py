@@ -30,7 +30,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __program_name__ = 'count_now-tasks.py'
-__version__ = '0.4.29'
+__version__ = '0.4.3'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
@@ -277,7 +277,6 @@ class BoincCommand:
         print(f'Unrecognized data tag: {tag}')
         return data
 
-
     def get_runningtasks(self, tag: str, app_type: str,
                          cmd=' --get_simple_gui_info') -> list:
         """
@@ -345,6 +344,22 @@ class BoincCommand:
         msg = (f"Unrecognized action: {action}. Expecting one of these: "
                f"{self.projectcmd}")
         return msg
+
+    def no_new_tasks(self, cmd=' --get_project_status') -> bool:
+        """
+        Get data from current boinc-client tasks.
+
+        :param cmd: The boinccmd command to get Project information.
+        :return: True or False indicating status of no new work setting.
+        """
+
+        output = self.run_boinc(self.boincpath + cmd)
+
+        tag_str = f'{" " * 3}don\'t request more work: '
+        nnw = [line.replace(tag_str, '') for line in output if tag_str in line]
+        if 'yes' in nnw:
+            return True
+        return False
 
 
 def about() -> None:

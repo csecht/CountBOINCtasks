@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Converts and formats input time values.
+Functions: string_to_m, sec_t_format
 
     Copyright (C) 2020  C. Echt
 
