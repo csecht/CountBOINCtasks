@@ -617,14 +617,14 @@ class Logs:
             if recent_intervals:
                 if num_recent_intvl_vals == 1:
                     interval_text = (
-                        'Since last Summary, additional counts from:\n'
+                        '\nSince last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n'
                         f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals '
                         f'of {recent_intvl_vals[0]}\n'
                     )
                 else:
                     interval_text = (
-                        'Since last Summary, additional counts from:\n'
+                        '\nSince last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals\n'
                         f'There are {num_recent_intvl_vals} different interval times,\n'
@@ -1373,9 +1373,8 @@ class CountViewer(tk.Frame):
         self.update_choice = tk.Checkbutton(self.settings_win)
         self.good_settings = False
 
-        # Basic run parameters/settings passed between Viewer and Modeler.
-        # Defaults, from in Modeler.default_settings(), can be changed in
-        # settings() window.
+        # Control variables for basic run parameters/settings passed
+        #    between Viewer and Modeler.
         self.share.setting = {
             'interval_t': tk.StringVar(),
             'interval_m': tk.IntVar(),
@@ -1387,7 +1386,8 @@ class CountViewer(tk.Frame):
             'proj_update': tk.BooleanVar()
         }
 
-        # Control variables for display; passed between Viewer and Modeler
+        # Control variables for display in master, passed between
+        #    Viewer and Modeler.
         self.share.data = {
             # Start and Interval data
             'task_count': tk.IntVar(),
@@ -1411,8 +1411,8 @@ class CountViewer(tk.Frame):
             'log_summary': tk.BooleanVar()
         }
 
-        # Data for notices and logging passed between Viewer and Modeler
-        # and between Modeler threads.
+        # Control variables for notices and logging passed between
+        #   Viewer and Modeler and between Modeler threads.
         self.share.note = {
             'notice_txt': tk.StringVar(),
             'num_running': tk.IntVar(),
