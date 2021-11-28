@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Executes BOINC commands and parsing task data through boinccmd.
-.. note: Not all boinc-client commands are supported.
+.. note: Not all boinc-client commands are supported. Methods:
+run_boinc(), get_version(), check_boinc(), get_reported(), get_tasks(),
+get_runningtasks(), get_project_url(), project_actions(), no_new_tasks().
 
     Copyright (C) 2020  C. Echt
 

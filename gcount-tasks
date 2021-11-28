@@ -83,8 +83,8 @@ NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 # ################ Useful functions, not part of MVC ###################
 def check_boinc():
     """
-    Check whether BOINC client is running before proceeding to implement
-    settings and begin counting.
+    Check whether BOINC client is running. Called before proceeding to
+    implement settings and begin counting and at each notice interval.
     """
     # Note: Any BC boinccmd will return this string (in a list)
     #   if boinc-client is not running; use BC.get_version() b/c it is short.
@@ -151,7 +151,6 @@ def enter_only_digits(entry_string, action_type) -> bool:
     :param entry_string: value entered into an Entry() widget (%P).
     :param action_type: edit action code (%d).
     :return: True, False
-    :rtype: bool
     """
     # Need to restrict entries to only digits,
     #   MUST use action type parameter to allow user to delete first number
@@ -210,9 +209,10 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
     Use to compare datetimes in text files.
 
     :param dt_str: date and time string;
-                   ex '1970-Jan-01 00:00:00'
+                   ex '1970-Jan-01 00:00:00'.
     :param str_format: datetime.strftime() string;
                        ex '%Y-%b-%d %H:%M:%S'.
+    :return: datetime object formatted to str_format.
     """
     dt_obj = datetime.strptime(dt_str, str_format)
     return dt_obj
@@ -304,164 +304,13 @@ def quit_gui(*keybind):
 
 class Logs:
     """
-    Methods to write, read, backup, and analyze logged task data.
+    Methods to analyze and view logged task data.
     """
 
     # Use .resolve() to force absolute path and handle symlinks.
     # Use .cwd() to avoid relative paths with pyinstaller distributables.
     LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
     ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
-
-    @classmethod
-    def view(cls, filepath: Path) -> None:
-        """
-        Create a separate window to view the log file as scrolled text.
-        Called from View menu bar or keybinding.
-
-        :param filepath: A Path object of the file to view.
-        """
-        # Need to set messages and sizes specific to OS and files.
-        fnf_query = ''
-        text_width = 79
-        text_height = 46
-        minsize_h = 0
-        minsize_w = 0
-        if filepath == cls.LOGFILE:
-            fnf_query = 'Was the settings log option used?'
-            minsize_h = 800
-            minsize_w = 220
-            if MY_OS == 'win':
-                minsize_w = 200
-            if MY_OS == 'dar':
-                text_width = 72
-        if filepath == cls.ANALYSISFILE:
-            fnf_query = 'Have any analysis results been saved yet?'
-            text_width = 46
-            minsize_w = 450
-            minsize_h = 420
-            if MY_OS == 'win':
-                minsize_h = 400
-
-        if not Path.exists(filepath):
-            info = (f'On {node()}, file is missing:\n{filepath}\n'
-                    f'{fnf_query}\n'
-                    'Was file deleted, moved or renamed?')
-            messagebox.showerror(title='FILE NOT FOUND', detail=info)
-            return
-
-        with open(filepath, encoding='utf-8') as file:
-            logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
-            # Need to show working dir and file name in the Toplevel title.
-            if MY_OS == 'win':
-                dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
-                logwin.title(f'{dir_file} on {node()}')
-            else:
-                dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
-                logwin.title(f'{dir_file} on {node()}')
-
-            logwin.minsize(minsize_h, minsize_w)
-            logwin.focus_set()
-            # Use a "dark" background/foreground theme for log text.
-            logtext = ScrolledText(logwin, font='TkFixedFont',
-                                   width=text_width, height=text_height,
-                                   bg='grey20', fg='grey80',
-                                   relief='groove', bd=4, padx=12)
-            logtext.insert(tk.INSERT, file.read())
-            logtext.see('end')
-            logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-        ttk.Button(
-            logwin, text='Update',
-            command=(lambda: File.update(logtext, filepath, logwin))
-        ).pack(padx=4)
-
-        if filepath == cls.LOGFILE:
-            ttk.Button(
-                logwin, text='Backup',
-                command=lambda: File.backup(filepath, logwin)
-            ).pack(padx=4)
-            ttk.Button(logwin, text='Analysis',
-                       command=cls.show_analysis).pack(padx=4)
-
-        if filepath == cls.ANALYSISFILE:
-            ttk.Button(
-                logwin, text='Erase',
-                command=lambda: File.erase(cls.ANALYSISFILE, logtext, logwin)
-            ).pack(padx=4)
-
-    @classmethod
-    def uptime(cls, logcontent: str) -> str:
-        """
-        Calculate sum of hours spent counting tasks. Does not include
-        time segments with no reported tasks counts.
-
-        :param logcontent: the read log file string.
-        :return: total hours elapsed while logging active, as string.
-                 Returns 'cannot determine' if negative time calculated.
-        """
-        start2intvl = []
-        start2quit = []
-        start2interrupt = []
-        has_interval = False
-
-        # *_dt vars are datetime.timedelta objects, so initialize with
-        #    formatted Epoch origin time.
-        start_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        interval_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        final_interval_hr = 0.0
-
-        def calc_uptime_hr(start_datetime, end_datetime) -> float:
-            """Convert datetime start and end difference to hours.
-            """
-            # Cannot calculate running time from the log file when have
-            #   negative time diff between start and end times.
-            if (end_datetime - start_datetime) / timedelta(hours=1) < 0:
-                return -1.0
-            return (end_datetime - start_datetime) / timedelta(hours=1)
-
-        # Need to calc and sum uptime only for start-stop segments that have
-        #   counted tasks for one or more intervals. LONG_STRFTIME is the
-        #   time format used in the log file.
-        for line in logcontent.split('\n'):
-            if 'most recent BOINC report' in line:
-                starttime_match = search(
-                    r'^(.+); .+ most recent BOINC report', line).group(1)
-                start_dt = str2dt(starttime_match, LONG_STRFTIME)
-                has_interval = False
-
-            if 'Tasks reported' in line:
-                intvltime_match = search(
-                    r'^(.+); Tasks reported', line).group(1)
-                interval_dt = str2dt(intvltime_match, LONG_STRFTIME)
-                # Note: start2intvl list is used only to eval presence of a
-                #   negative timedelta interval somewhere in the log file.
-                start2intvl.append(calc_uptime_hr(start_dt, interval_dt))
-                has_interval = True
-
-            if 'quit' in line:
-                quittime_match = search(
-                    r'^(.+); .+ quit', line).group(1)
-                quit_dt = str2dt(quittime_match, LONG_STRFTIME)
-                if has_interval:
-                    start2quit.append(calc_uptime_hr(start_dt, quit_dt))
-
-            if 'interrupt' in line:
-                interrupttime_match = search(
-                    r'^(.+); .+ interrupt', line).group(1)
-                interrupt_dt = str2dt(interrupttime_match, LONG_STRFTIME)
-                if has_interval:
-                    start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
-
-        if -1.0 in start2quit + start2interrupt + start2intvl:
-            return 'cannot determine'
-
-        # The log text has been read, so now need to get uptime of the
-        #   final start_dt -> final interval_dt segment.
-        if has_interval:
-            final_interval_hr = calc_uptime_hr(start_dt, interval_dt)
-
-        return str(round(
-            sum(start2quit) + sum(start2interrupt) + final_interval_hr, 1))
 
     @classmethod
     def analyze_logfile(cls) -> tuple:
@@ -678,6 +527,157 @@ class Logs:
 
         return keybind
 
+    @classmethod
+    def uptime(cls, logcontent: str) -> str:
+        """
+        Calculate sum of hours spent counting tasks. Does not include
+        time segments with no reported tasks counts.
+
+        :param logcontent: the read log file string.
+        :return: total hours elapsed while logging active, as string.
+                 Returns 'cannot determine' if negative time calculated.
+        """
+        start2intvl = []
+        start2quit = []
+        start2interrupt = []
+        has_interval = False
+
+        # *_dt vars are datetime.timedelta objects, so initialize with
+        #    formatted Epoch origin time.
+        start_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        interval_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        final_interval_hr = 0.0
+
+        def calc_uptime_hr(start_datetime, end_datetime) -> float:
+            """Convert datetime start and end difference to hours.
+            """
+            # Cannot calculate running time from the log file when have
+            #   negative time diff between start and end times.
+            if (end_datetime - start_datetime) / timedelta(hours=1) < 0:
+                return -1.0
+            return (end_datetime - start_datetime) / timedelta(hours=1)
+
+        # Need to calc and sum uptime only for start-stop segments that have
+        #   counted tasks for one or more intervals. LONG_STRFTIME is the
+        #   time format used in the log file.
+        for line in logcontent.split('\n'):
+            if 'most recent BOINC report' in line:
+                starttime_match = search(
+                    r'^(.+); .+ most recent BOINC report', line).group(1)
+                start_dt = str2dt(starttime_match, LONG_STRFTIME)
+                has_interval = False
+
+            if 'Tasks reported' in line:
+                intvltime_match = search(
+                    r'^(.+); Tasks reported', line).group(1)
+                interval_dt = str2dt(intvltime_match, LONG_STRFTIME)
+                # Note: start2intvl list is used only to eval presence of a
+                #   negative timedelta interval somewhere in the log file.
+                start2intvl.append(calc_uptime_hr(start_dt, interval_dt))
+                has_interval = True
+
+            if 'quit' in line:
+                quittime_match = search(
+                    r'^(.+); .+ quit', line).group(1)
+                quit_dt = str2dt(quittime_match, LONG_STRFTIME)
+                if has_interval:
+                    start2quit.append(calc_uptime_hr(start_dt, quit_dt))
+
+            if 'interrupt' in line:
+                interrupttime_match = search(
+                    r'^(.+); .+ interrupt', line).group(1)
+                interrupt_dt = str2dt(interrupttime_match, LONG_STRFTIME)
+                if has_interval:
+                    start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
+
+        if -1.0 in start2quit + start2interrupt + start2intvl:
+            return 'cannot determine'
+
+        # The log text has been read, so now need to get uptime of the
+        #   final start_dt -> final interval_dt segment.
+        if has_interval:
+            final_interval_hr = calc_uptime_hr(start_dt, interval_dt)
+
+        return str(round(
+            sum(start2quit) + sum(start2interrupt) + final_interval_hr, 1))
+
+    @classmethod
+    def view(cls, filepath: Path) -> None:
+        """
+        Create a separate window to view the log file as scrolled text.
+        Called from View menu bar or keybinding.
+
+        :param filepath: A Path object of the file to view.
+        """
+        # Need to set messages and sizes specific to OS and files.
+        fnf_query = ''
+        text_width = 79
+        text_height = 46
+        minsize_h = 0
+        minsize_w = 0
+        if filepath == cls.LOGFILE:
+            fnf_query = 'Was the settings log option used?'
+            minsize_h = 800
+            minsize_w = 220
+            if MY_OS == 'win':
+                minsize_w = 200
+            if MY_OS == 'dar':
+                text_width = 72
+        if filepath == cls.ANALYSISFILE:
+            fnf_query = 'Have any analysis results been saved yet?'
+            text_width = 46
+            minsize_w = 450
+            minsize_h = 420
+            if MY_OS == 'win':
+                minsize_h = 400
+
+        if not Path.exists(filepath):
+            info = (f'On {node()}, file is missing:\n{filepath}\n'
+                    f'{fnf_query}\n'
+                    'Was file deleted, moved or renamed?')
+            messagebox.showerror(title='FILE NOT FOUND', detail=info)
+            return
+
+        with open(filepath, encoding='utf-8') as file:
+            logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
+            # Need to show working dir and file name in the Toplevel title.
+            if MY_OS == 'win':
+                dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
+                logwin.title(f'{dir_file} on {node()}')
+            else:
+                dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
+                logwin.title(f'{dir_file} on {node()}')
+
+            logwin.minsize(minsize_h, minsize_w)
+            logwin.focus_set()
+            # Use a "dark" background/foreground theme for log text.
+            logtext = ScrolledText(logwin, font='TkFixedFont',
+                                   width=text_width, height=text_height,
+                                   bg='grey20', fg='grey80',
+                                   relief='groove', bd=4, padx=12)
+            logtext.insert(tk.INSERT, file.read())
+            logtext.see('end')
+            logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+        ttk.Button(
+            logwin, text='Update',
+            command=(lambda: File.update(logtext, filepath, logwin))
+        ).pack(padx=4)
+
+        if filepath == cls.LOGFILE:
+            ttk.Button(
+                logwin, text='Backup',
+                command=lambda: File.backup(filepath, logwin)
+            ).pack(padx=4)
+            ttk.Button(logwin, text='Analysis',
+                       command=cls.show_analysis).pack(padx=4)
+
+        if filepath == cls.ANALYSISFILE:
+            ttk.Button(
+                logwin, text='Erase',
+                command=lambda: File.erase(cls.ANALYSISFILE, logtext, logwin)
+            ).pack(padx=4)
+
 
 # ############ A MVC add-on; independent of data functions #############
 class CountFyi:
@@ -689,44 +689,34 @@ class CountFyi:
         self.share = share
 
     @staticmethod
-    def information() -> None:
+    def about() -> None:
         """
-        Basic information, usage, and actions.
+        Basic information for gcount-tasks.
         Toplevel window called from Help menu bar.
         """
         pos_x, pos_y = app_position(15, 15)
-        infowin = tk.Toplevel()
-        infowin.geometry(f'+{pos_x}+{+pos_y}')
-        infowin.resizable(False, False)
-        infowin.title('Usage information')
-        information = ("""
-            - Counting begins once "Count now" is clicked in settings window.\n
-            - Interval and Summary data buttons switch visual emphasis;
-                    ...those buttons activate once their data post.\n
-            - At start, # tasks reported and time of last count are from
-                    the most recent hourly BOINC report.\n
-            - Number of tasks in queue and Notices update every"""
-                       f' {NOTICE_INTERVAL} seconds.\n'
-                       """
-            - Displayed countdown clock time is approximate.\n
-            - Review counts and Notices history with 'View log file'.\n
-            - File>'Backup log file', copy log to location of user's choice.\n
-            - When analysis of logged hours is "cannot determine"...\n
-                    Quick fix: backup then delete log file, restart program.
-            """)
-
-        num_doc_lines = information.count('\n')
+        aboutwin = tk.Toplevel()
+        aboutwin.geometry(f'+{pos_x}+{+pos_y}')
+        aboutwin.resizable(False, False)
+        aboutwin.title('About count-tasks')
+        num_doc_lines = __doc__.count('\n') + 2
         os_width = 0
         if MY_OS in 'lin, win':
-            os_width = 64
+            os_width = 60
         elif MY_OS == 'dar':
-            os_width = 56
-        infotxt = tk.Text(infowin, font='TkTextFont',
-                          width=os_width, height=num_doc_lines + 2,
-                          bg='grey20', fg='grey85',
-                          relief='groove', padx=15)
-        infotxt.insert(1.0, information)
-        infotxt.pack()
+            os_width = 54
+        abouttxt = tk.Text(aboutwin, font='TkTextFont',
+                           width=os_width, height=num_doc_lines + 6,
+                           bg='grey20', fg='grey85',
+                           relief='groove', borderwidth=5, padx=25)
+        abouttxt.insert(1.0, f'{__doc__}\n'
+                             f'Author:    {__author__}\n'
+                             f'Credits:   {__credits__}\n'
+                             f'License:   {__license__}\n'
+                             f'URL:       {__project_url__}\n'
+                             f'Version:   {__version__}\n'
+                             f'Status:    {__status__}\n')
+        abouttxt.pack()
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -784,34 +774,44 @@ class CountFyi:
         self.share.compliment_l.after(3333, refresh)
 
     @staticmethod
-    def about() -> None:
+    def information() -> None:
         """
-        Basic information for gcount-tasks.
+        Basic information, usage, and actions.
         Toplevel window called from Help menu bar.
         """
         pos_x, pos_y = app_position(15, 15)
-        aboutwin = tk.Toplevel()
-        aboutwin.geometry(f'+{pos_x}+{+pos_y}')
-        aboutwin.resizable(False, False)
-        aboutwin.title('About count-tasks')
-        num_doc_lines = __doc__.count('\n') + 2
+        infowin = tk.Toplevel()
+        infowin.geometry(f'+{pos_x}+{+pos_y}')
+        infowin.resizable(False, False)
+        infowin.title('Usage information')
+        information = ("""
+            - Counting begins once "Count now" is clicked in settings window.\n
+            - Interval and Summary data buttons switch visual emphasis;
+                    ...those buttons activate once their data post.\n
+            - At start, # tasks reported and time of last count are from
+                    the most recent hourly BOINC report.\n
+            - Number of tasks in queue and Notices update every"""
+                       f' {NOTICE_INTERVAL} seconds.\n'
+                       """
+            - Displayed countdown clock time is approximate.\n
+            - Review counts and Notices history with 'View log file'.\n
+            - File>'Backup log file', copy log to location of user's choice.\n
+            - When analysis of logged hours is "cannot determine"...\n
+                    Quick fix: backup then delete log file, restart program.
+            """)
+
+        num_doc_lines = information.count('\n')
         os_width = 0
         if MY_OS in 'lin, win':
-            os_width = 60
+            os_width = 64
         elif MY_OS == 'dar':
-            os_width = 54
-        abouttxt = tk.Text(aboutwin, font='TkTextFont',
-                           width=os_width, height=num_doc_lines + 6,
-                           bg='grey20', fg='grey85',
-                           relief='groove', borderwidth=5, padx=25)
-        abouttxt.insert(1.0, f'{__doc__}\n'
-                             f'Author:    {__author__}\n'
-                             f'Credits:   {__credits__}\n'
-                             f'License:   {__license__}\n'
-                             f'URL:       {__project_url__}\n'
-                             f'Version:   {__version__}\n'
-                             f'Status:    {__status__}\n')
-        abouttxt.pack()
+            os_width = 56
+        infotxt = tk.Text(infowin, font='TkTextFont',
+                          width=os_width, height=num_doc_lines + 2,
+                          bg='grey20', fg='grey85',
+                          relief='groove', padx=15)
+        infotxt.insert(1.0, information)
+        infotxt.pack()
 
 
 # ############################ MVC Classes #############################
@@ -935,7 +935,7 @@ class CountModeler:
         reference_time = time.time()
         tic_nnt = 0
         sumry_intvl_counts = []
-        sumry_intvl_ttmeans = []
+        sumry_intvl_ttavgs = []
 
         for cycle in range(cycles_max):
             if cycle == 1 or cycles_max == 1:
@@ -1010,7 +1010,6 @@ class CountModeler:
                 self.share.note['tic_nnt'].set(tic_nnt)
 
                 # Need to parse data returned from ttimes_stats().
-                # intervaldict = ttimes_stats(task_count_new, ttimes_new)
                 intervaldict = ttimes_stats(ttimes_new)
 
                 self.share.data['tt_avg'].set(intervaldict['tt_avg'])
@@ -1023,7 +1022,7 @@ class CountModeler:
                 #   a summary segment to calc weighted mean times. This sumry
                 #   list has a different function than the ttimes_smry set.
                 sumry_intvl_counts.append(task_count_new)
-                sumry_intvl_ttmeans.append(self.share.data['tt_avg'].get())
+                sumry_intvl_ttavgs.append(self.share.data['tt_avg'].get())
 
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
@@ -1053,13 +1052,13 @@ class CountModeler:
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
                     tt_wtmean = interval_stats(
-                        sumry_intvl_ttmeans, 'wtmean', sumry_intvl_counts)
+                        sumry_intvl_ttavgs, 'wtmean', sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
                     # Need to reset data set for the next summary interval.
                     ttimes_smry.clear()
                     sumry_intvl_counts.clear()
-                    sumry_intvl_ttmeans.clear()
+                    sumry_intvl_ttavgs.clear()
 
             # Call to log_it() needs to be outside of the thread lock.
             app.update_idletasks()
