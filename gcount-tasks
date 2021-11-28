@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -709,9 +709,9 @@ class CountFyi:
                        f' {NOTICE_INTERVAL} seconds.\n'
                        """
             - Displayed countdown clock time is approximate.\n
-            - Review counts and Notices history with "View log file".\n
-            - File>'Backup log file' copies log to the working folder.\n
-            - Analysis of logged hours is "cannot determine"\n
+            - Review counts and Notices history with 'View log file'.\n
+            - File>'Backup log file', copy log to location of user's choice.\n
+            - When analysis of logged hours is "cannot determine"...\n
                     Quick fix: backup then delete log file, restart program.
             """)
 
