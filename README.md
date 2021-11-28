@@ -110,11 +110,12 @@ Added features in the GUI version:
 <ul>
 <li>View the log file in a pop-up window.</li>
 <li>Backup the log file.</li>
-<li>Tally, view, and save task counts that have been recorded in the log file.</li>
+<li>Analysis of data recorded in the log file.</li>
 <li>Pop-up Help menu.</li>
 </ul>
 
-![gcount-tasks](images/gcount-tasks_scrnshot.png)
+![gcount-tasks main window](images/gcount-tasks_scrnshot.png)
+![log-analysis](images/gcount-tasks_analysis.png)
 
 ### Stand-alone versions (no Python installation needed!)
 #### gcount_tasks.exe - Windows

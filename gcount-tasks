@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.8.1'
+__version__ = '0.8.2'
 __program_name__ = 'gcount-tasks'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -130,11 +130,11 @@ def parse_args() -> None:
 def app_position(add_x=0, add_y=0) -> tuple:
     """
     Use to set position of a Toplevel child with respect to the
-    app (Master) window.
+    app (master) window.
 
     :param add_x: optional pixels added to app's x coordinate.
     :param add_y: optional pixels added to app's y coordinate.
-    :return: x,y screen geometry coordinates of the app window.
+    :return: (x,y) screen geometry coordinates of the app window.
     :rtype: tuple
     """
     app.update_idletasks()
@@ -143,7 +143,7 @@ def app_position(add_x=0, add_y=0) -> tuple:
     return pos_x, pos_y
 
 
-def only_digit_entry(entry_string, action_type) -> bool:
+def enter_only_digits(entry_string, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
     Used with .register() to configure Entry kw validatecommand.
@@ -222,15 +222,15 @@ def interval_stats(distribution: iter, stat=None, weights=None) -> str:
     """
     Calculate statistics for task times from logged interval data.
 
-    :param distribution: List or tuple of avg times, as string format
-                          00:00:00, or as seconds (floats or integers).
+    :param distribution: List or tuple of avg times, as string formatted
+                         00:00:00, or as seconds (floats or integers).
     :param stat: The statistic to run.
                  'wtmean' requires distribution and weights parameters.
                  'range' and 'stdev' require only distribution parameter.
     :param weights: List or tuple of corresponding sample numbers
                     (integers) for each element in distribution.
     :return: The distribution weighted mean OR range OR standard
-             deviation, each as string format 00:00:00,
+             deviation, each as string formatted 00:00:00,
              OR 'cannot determine' if invalid stat='wtmean' parameters.
     """
     # algorithm sources:
@@ -291,7 +291,7 @@ def quit_gui(*keybind):
     quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_msg)
     if Path.exists(Logs.LOGFILE):
-        File.append_it(Logs.LOGFILE, quit_msg, False)
+        File.append_txt(Logs.LOGFILE, quit_msg, False)
     try:
         app.update_idletasks()
         app.after(200)
@@ -673,7 +673,7 @@ class Logs:
 
         ttk.Button(
             analysiswin, text='Save analysis',
-            command=lambda: File.append_it(cls.ANALYSISFILE, text, True, analysiswin)
+            command=lambda: File.append_txt(cls.ANALYSISFILE, text, True, analysiswin)
             ).pack(padx=4)
 
         return keybind
@@ -1547,10 +1547,10 @@ class CountViewer(tk.Frame):
 
         self.share.viewlog_b = ttk.Button(text='View log file',
                                           command=lambda: Logs.view(Logs.LOGFILE))
-        # Set interval & summary focus button attributes with .share. b/c need
+        # Set interval & summary focus button attributes with *.share.* b/c need
         #   to reconfigure them in Modeler.
-        # starting_b will be replaced with ttk intvl_b after first interval
-        #   completes; it is re-grid in interval_data().
+        # starting_b will be replaced with an active ttk intvl_b after first
+        #   interval completes; it is re-gridded in interval_data().
         # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
         self.share.starting_b = tk.Button(text='Starting data', width=18,
                                           disabledforeground='grey10',
@@ -1795,7 +1795,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_value_entry.register(only_digit_entry), '%P', '%d'))
+                self.sumry_value_entry.register(enter_only_digits), '%P', '%d'))
 
         sumry_label2 = ttk.Label(
             self.settings_win, text='time unit', style='Set.TLabel')
@@ -1819,7 +1819,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
-                self.cycles_max_entry.register(only_digit_entry), '%P', '%d'))
+                self.cycles_max_entry.register(enter_only_digits), '%P', '%d'))
 
         # Need user options to log results to file and to use auto-updates.
         log_label = ttk.Label(self.settings_win, text='Log results to file',
@@ -2174,7 +2174,7 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
-        img = tk.PhotoImage(file='images/count_icon.png')
+        img = tk.PhotoImage(file='images/count_icon_512.png')
         app.wm_iconphoto(True, img)
         print(f'{Path(sys.argv[0]).name} now running...')
         app.mainloop()

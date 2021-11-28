@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Basic file handling methods used by CountBOINCtasks project.
-Functions: append_it, backup, erase, update
+Functions: append_txt, backup, erase, update
 
     Copyright (C) 2020  C. Echt
 
@@ -38,7 +38,7 @@ from shutil import copy2
 MY_OS = sys.platform[:3]
 
 
-def append_it(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
+def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
     """
     Appends text to the destination file.
 
@@ -75,11 +75,12 @@ def append_it(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
 
 def backup(source: Path, parent=None) -> None:
     """
-    Copy source file to a timestamped destination in the same folder.
+    Copy source file to a destination of user's choice;
+    timestamp provided.
 
     :param source: A Path object of the file to backup.
     :param parent: Toplevel object over which messagebox appears;
-                   defaults to app/master window.
+                   defaults to app (master) window.
     """
 
     if not Path.exists(source):
