@@ -110,7 +110,7 @@ Added features in the GUI version:
 <ul>
 <li>View the log file in a pop-up window.</li>
 <li>Backup the log file.</li>
-<li>Analysis of data recorded in the log file.</li>
+<li>Pop-up analysis of data recorded in the log file.</li>
 <li>Pop-up Help menu.</li>
 </ul>
 
