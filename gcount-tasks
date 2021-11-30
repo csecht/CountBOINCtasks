@@ -2173,8 +2173,9 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
+        # When compiling .exe with PyInstaller, comment out next two lines:
         img = tk.PhotoImage(file='images/count_icon_512.png')
-        app.wm_iconphoto(True, img)
+        app.iconphoto(True, img)
         print(f'{Path(sys.argv[0]).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
