@@ -302,6 +302,20 @@ def quit_gui(*keybind):
     return keybind
 
 
+def resource_path(relative_path: str) -> Path:
+    """
+    Get absolute path to data resource.
+    Allows adding data to temp .exe files of PyInstaller --onefile.
+
+    :param relative_path: File or dir name path, as string.
+    :return: Absolute path as pathlib Path object.
+    """
+    # Modified from: https://stackoverflow.com/questions/7674790/
+    #    bundling-data-files-with-pyinstaller-onefile
+    base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
+    return Path(base_path) / relative_path
+
+
 class Logs:
     """
     Methods to analyze and view logged task data.
@@ -2173,10 +2187,10 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {node()}')
-        # When compiling .exe with PyInstaller, comment out next two lines:
-        img = tk.PhotoImage(file='images/count_icon_512.png')
+        # Need resource_path() when making onefile with PyInstaller.
+        img = tk.PhotoImage(file=resource_path('images/count_icon_512.png'))
         app.iconphoto(True, img)
-        print(f'{Path(sys.argv[0]).name} now running...')
+        print(f'{resource_path(str(Path(__file__))).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
