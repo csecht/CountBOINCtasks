@@ -119,21 +119,20 @@ Added features in the GUI version:
 
 ### Stand-alone versions (no Python installation needed!)
 #### gcount_tasks.exe - Windows
-A **Windows** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the `CountBOINCtasks-master/Standalone_distributables` folder is `gcount-tasks_win.zip`. Alternatively, this compressed file can be downloaded directly from  https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/gcount-tasks_win.zip. Select 'Extract All' for the downloaded ZIP file. After extraction, the .exe extension may not show, depending on your system view settings. Double-click `gcount-tasks.exe` to launch. Because this project is in the beta phase, along with the program GUI, a Command Prompt window will appear to display possible Python error messages. Closing the Command Prompt window will also close the GUI.
+A **Windows** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the `CountBOINCtasks-master/Standalone_distributables` folder is `GcountTasks_win.zip`. Alternatively, this compressed file can be downloaded directly from  https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_win.zip. Select 'Extract All' for the downloaded ZIP file. After extraction, the .exe extension may not show, depending on your system view settings. Double-click `GcountTasks.exe` to launch. Because this project is in the beta phase, along with the program GUI, a Command Prompt window will appear to display possible Python error messages. Closing the Command Prompt window will also close the GUI.
 
 You will likely first need to permit Windows to run the .exe file: from the pop-up warning, click on "more info", then follow the prompts to open the program. 
 
-The `gcount-tasks` executable was created with `pyinstaller` available from https://pypi.org/project/pyinstaller/
+The `GcountTasks` executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
 #### GcountTasks.app - MacOS
-A **MacOS** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks_mac.app.zip`. Unzip that (just double click and follow the prompts) to install the `GcountTasks.app` program, which you can place where you like. Alternatively, the distributable app can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.app.zip.
+A **MacOS** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks_mac.zip`. Unzip that (just double click and follow the prompts) to install the `GcountTasks.app` program, which you can place where you like. Alternatively, the distributable app can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.zip.
 
 The first time you try to open the app, however, you will get a message saying it can't be opened. Click "Cancel", go into System Preferences > Security & Privacy, click the "Open anyway" button, then "Open". It does not open initially because it was not downloaded from the Apple Store or from a recognized Apple developer. 
 
 The process of opening apps from unrecognized Apple developers can be somewhat streamlined by re-establishing (as of MacOS Sierra) the "Allow apps downloaded from: Anywhere" option in Security & Preferences. Do this with the following command line in the Terminal: `sudo spctl --master-disable`. Using the Finder 'Open' command directly on the unzipped app in its folder, can also somewhat reduce the hassle of navigating through System Preferences; once that is done, then any alias to the app should work smoothly. With any of these "fixes", you will, initially and appropriately, be prompted by the MacOS Gatekeeper to open the app. 
 
-`GcountTasks.app` was created with `py2app` from https://pypi.org/project/py2app/ .
-Instructions for how to create your own stand-alone app from the gcount-tasks script using `py2app` are in Standalone_distributables/setup_README.txt.
+The `GcountTasks` application was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
 ### Development Plans
 * Wait for user feedback...
@@ -141,10 +140,3 @@ Instructions for how to create your own stand-alone app from the gcount-tasks sc
 ### Known Issues
 * Versions 0.4.10 - 0.4.12 were prone to freezes. 
 
-* BOINC version 7.16.14 for Mac OSX. released 1 Dec 2020, has a different 
-  boinccmd path from the default path used by count-tasks. I've yet to 
-  figure out the new path. (Any help would be appreciated.) As a work-around, 
-  if you archived a prior BOINC package, you can copy the boinccmd 
-  executable file into the default location: 
-  Users/<you>/Application Support/BOINC/ , or follow the prompts from the 
-  count-tasks Terminal command to enter a custom path to the boinccmd program.
