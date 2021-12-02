@@ -9,8 +9,6 @@ provided by by Brian Oakley at
 https://stackoverflow.com/questions/32864610/
 Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 
-    Copyright (C) 2021 C. Echt
-
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -122,6 +120,7 @@ def parse_args() -> None:
         print(f'{"Author:".ljust(13)}', __author__)
         print(f'{"Credits:".ljust(13)}', __credits__)
         print(f'{"License:".ljust(13)}', __license__)
+        print(f'{"Copyright:".ljust(13)}', __copyright__)
         print(f'{"Program:".ljust(13)}', __program_name__)
         print(f'{"Version:".ljust(13)}', __version__)
         print(f'{"Dev Env:".ljust(13)}', __dev_environment__)
@@ -341,7 +340,6 @@ class Logs:
     else:
         LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
         ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
-
 
     @classmethod
     def analyze_logfile(cls) -> tuple:

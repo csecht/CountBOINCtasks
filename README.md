@@ -123,7 +123,7 @@ A **Windows** standalone of gcount-tasks is available. Download and extract the 
 
 You will likely first need to permit Windows to run the .exe file: from the pop-up warning, click on "more info", then follow the prompts to open the program. 
 
-The `GcountTasks` executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
+The `GcountTasks.exe` executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
 #### GcountTasks.app - MacOS
 A **MacOS** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks_mac.zip`. Unzip that (just double click and follow the prompts) to install the `GcountTasks.app` program, which you can place where you like. Alternatively, the distributable app can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.zip.
