@@ -132,7 +132,7 @@ The first time you try to open the app, however, you will get a message saying i
 
 The process of opening apps from unrecognized Apple developers can be somewhat streamlined by re-establishing (as of MacOS Sierra) the "Allow apps downloaded from: Anywhere" option in Security & Preferences. Do this with the following command line in the Terminal: `sudo spctl --master-disable`. Using the Finder 'Open' command directly on the unzipped app in its folder, can also somewhat reduce the hassle of navigating through System Preferences; once that is done, then any alias to the app should work smoothly. With any of these "fixes", you will, initially and appropriately, be prompted by the MacOS Gatekeeper to open the app. 
 
-The `GcountTasks` application was created with PyInstaller available from https://pypi.org/project/pyinstaller/
+The `GcountTasks.app` application was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
 ### Development Plans
 * Wait for user feedback...

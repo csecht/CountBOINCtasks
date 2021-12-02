@@ -31,10 +31,11 @@ __copyright__ = 'Copyright (C) 2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
-__program_name__ = 'count_now-tasks.py'
+__program_name__ = 'boinc_command.py'
 __version__ = '0.4.3'
+__dev_environment__ = "Python 3.8 - 3.9"
+__project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
-__docformat__ = 'reStructuredText'
 __status__ = 'Development Status :: 4 - Beta'
 
 CFGFILE = Path('countCFG.txt')
@@ -369,13 +370,15 @@ def about() -> None:
     Print details about_gui this module.
     """
     print(__doc__)
-    print('Author: ', __author__)
-    print('Copyright: ', __copyright__)
-    print('Credits: ', *[f'\n      {item}' for item in __credits__])
-    print('License: ', __license__)
-    print('Version: ', __version__)
-    print('Maintainer: ', __maintainer__)
-    print('Status: ', __status__)
+    print(f'{"Author:".ljust(11)}', __author__)
+    print(f'{"Copyright:".ljust(11)}', __copyright__)
+    print(f'{"License:".ljust(11)}', __license__)
+    print(f'{"Module:".ljust(11)}', __program_name__)
+    print(f'{"Version:".ljust(11)}', __version__)
+    print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
+    print(f'{"URL:".ljust(11)}', __project_url__)
+    print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
+    print(f'{"Status:".ljust(11)}', __status__)
     sys.exit(0)
 
 

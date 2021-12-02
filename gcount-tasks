@@ -29,8 +29,9 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.8.4'
 __program_name__ = 'gcount-tasks'
+__version__ = '0.8.4'
+__dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'Markdown'
@@ -44,9 +45,10 @@ import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from platform import node
+# from platform import node
 from random import choice
 from re import search, findall, MULTILINE
+from socket import gethostname
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_command, time_convert, files
@@ -117,12 +119,15 @@ def parse_args() -> None:
     args = parser.parse_args()
     if args.about:
         print(__doc__)
-        print('Author:    ', __author__)
-        print('Credits:   ', __credits__)
-        print('License:   ', __license__)
-        print('URL:       ', __project_url__)
-        print('Version:   ', __version__)
-        print('Status:    ', __status__)
+        print(f'{"Author:".ljust(13)}', __author__)
+        print(f'{"Credits:".ljust(13)}', __credits__)
+        print(f'{"License:".ljust(13)}', __license__)
+        print(f'{"Program:".ljust(13)}', __program_name__)
+        print(f'{"Version:".ljust(13)}', __version__)
+        print(f'{"Dev Env:".ljust(13)}', __dev_environment__)
+        print(f'{"URL:".ljust(13)}', __project_url__)
+        print(f'{"Maintainer:".ljust(13)}', __maintainer__)
+        print(f'{"Status:".ljust(13)}', __status__)
         print()
         sys.exit(0)
 
@@ -302,18 +307,22 @@ def quit_gui(*keybind):
     return keybind
 
 
-def resource_path(relative_path: str) -> Path:
+def valid_path_to(relative_path: str) -> Path:
     """
-    Get absolute path to data resource.
-    Allows adding data to temp .exe files of PyInstaller --onefile.
+    Get absolute path to files and directories.
+    _MEIPASS var is used by distribution programs from
+    PyInstaller --onefile; e.g. for images dir.
 
     :param relative_path: File or dir name path, as string.
     :return: Absolute path as pathlib Path object.
     """
     # Modified from: https://stackoverflow.com/questions/7674790/
-    #    bundling-data-files-with-pyinstaller-onefile
-    base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
-    return Path(base_path) / relative_path
+    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
+    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
+        return Path(base_path) / relative_path
+    else:
+        return Path(relative_path).resolve()
 
 
 class Logs:
@@ -321,10 +330,18 @@ class Logs:
     Methods to analyze and view logged task data.
     """
 
-    # Use .resolve() to force absolute path and handle symlinks.
-    # Use .cwd() to avoid relative paths with pyinstaller distributables.
-    LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
-    ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
+    # Need Path.home() when running GcountTasks onefile, a frozen executable,
+    #   from PyInstaller, so that files do not end up in temp MEI folder.
+    # Need Path.cwd() when running gcount-tasks from command line, so that
+    #   files end up in local directory.
+    # Need .resolve() to force absolute path and handle possible symlinks.
+    if getattr(sys, 'frozen', False):
+        LOGFILE = Path(Path.home(), 'gcount-tasks_log.txt').resolve()
+        ANALYSISFILE = Path(Path.home(), 'gcount-tasks_analysis.txt').resolve()
+    else:
+        LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
+        ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
+
 
     @classmethod
     def analyze_logfile(cls) -> tuple:
@@ -363,7 +380,7 @@ class Logs:
             with open(cls.LOGFILE, encoding='utf-8') as file:
                 logtext = file.read()
         except FileNotFoundError:
-            info = (f'On {node()}, missing necessary file:\n{cls.LOGFILE}\n'
+            info = (f'On {gethostname()}, missing necessary file:\n{cls.LOGFILE}\n'
                     'Was the settings "log results" option used?\n'
                     'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
@@ -646,7 +663,7 @@ class Logs:
                 minsize_h = 400
 
         if not Path.exists(filepath):
-            info = (f'On {node()}, file is missing:\n{filepath}\n'
+            info = (f'On {gethostname()}, file is missing:\n{filepath}\n'
                     f'{fnf_query}\n'
                     'Was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
@@ -657,10 +674,11 @@ class Logs:
             # Need to show working dir and file name in the Toplevel title.
             if MY_OS == 'win':
                 dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
-                logwin.title(f'{dir_file} on {node()}')
+                logwin.title(f'{dir_file} on {gethostname()}')
+
             else:
                 dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
-                logwin.title(f'{dir_file} on {node()}')
+                logwin.title(f'{dir_file} on {gethostname()}')
 
             logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
@@ -714,22 +732,21 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
         num_doc_lines = __doc__.count('\n') + 2
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 60
-        elif MY_OS == 'dar':
-            os_width = 54
-        abouttxt = tk.Text(aboutwin, font='TkTextFont',
-                           width=os_width, height=num_doc_lines + 6,
+        abouttxt = tk.Text(aboutwin, font='TkFixedFont',
+                           width=74, height=num_doc_lines + 9,
                            bg='grey20', fg='grey85',
                            relief='groove', borderwidth=5, padx=25)
-        abouttxt.insert(1.0, f'{__doc__}\n'
-                             f'Author:    {__author__}\n'
-                             f'Credits:   {__credits__}\n'
-                             f'License:   {__license__}\n'
-                             f'URL:       {__project_url__}\n'
-                             f'Version:   {__version__}\n'
-                             f'Status:    {__status__}\n')
+        abouttxt.insert(1.0,
+                        f'{__doc__}\n'
+                        f'{"Author:".ljust(13)}{__author__}\n'
+                        f'{"Credits:".ljust(13)}{__credits__}\n'
+                        f'{"License:".ljust(13)}{__license__}\n'
+                        f'{"Program:".ljust(13)}{__program_name__}\n'
+                        f'{"Version:".ljust(13)}{__version__}\n'
+                        f'{"Dev. Env.:".ljust(13)}{__dev_environment__}\n'
+                        f'{"URL:".ljust(13)}{__project_url__}\n'
+                        f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
+                        f'{"Status:".ljust(13)}{__status__}\n')
         abouttxt.pack()
 
     def compliment_me(self) -> None:
@@ -2186,11 +2203,11 @@ if __name__ == "__main__":
     parse_args()
     try:
         app = CountController()
-        app.title(f'Count BOINC tasks on {node()}')
-        # Need resource_path() when making onefile with PyInstaller.
-        img = tk.PhotoImage(file=resource_path('images/count_icon_512.png'))
+        app.title(f'Count BOINC tasks on {gethostname()}')
+        # Need valid_path_to() when making onefile with PyInstaller.
+        img = tk.PhotoImage(file=valid_path_to('images/count_icon_512.png'))
         app.iconphoto(True, img)
-        print(f'{resource_path(str(Path(__file__))).name} now running...')
+        print(f'{valid_path_to(str(Path(__file__))).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
