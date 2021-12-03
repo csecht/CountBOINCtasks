@@ -1932,7 +1932,7 @@ class CountViewer(tk.Frame):
             # Need to offer user valid alternatives to bad times entered.
             if self.share.setting['sumry_t_unit'].get()  == 'min':
                 self.share.setting['sumry_t_value'].set(2 * interval_m)
-            elif self.share.setting['sumry_t_unit'].get()  == 'hr':
+            elif self.share.setting['sumry_t_unit'].get() == 'hr':
                 self.share.setting['sumry_t_value'].set(2 * sumry_value)
         elif interval_m < summary_m and summary_m % interval_m == 0:
             self.good_settings = True
