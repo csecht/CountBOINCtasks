@@ -633,7 +633,7 @@ class Logs:
     @classmethod
     def view(cls, filepath: Path) -> None:
         """
-        Create a separate window to view the log file as scrolled text.
+        Create a separate window to view a text file as scrolled text.
         Called from View menu bar or keybinding.
 
         :param filepath: A Path object of the file to view.
@@ -808,6 +808,9 @@ class CountFyi:
         Basic information, usage, and actions.
         Toplevel window called from Help menu bar.
         """
+
+        # Make call to app_position() before Toplevel() to avoid noticeable
+        #   shift of the info window.
         pos_x, pos_y = app_position(15, 15)
         infowin = tk.Toplevel()
         infowin.geometry(f'+{pos_x}+{+pos_y}')
@@ -823,7 +826,7 @@ class CountFyi:
                        f' {NOTICE_INTERVAL} seconds.\n'
                        """
             - Displayed countdown clock time is approximate.\n
-            - Review counts and Notices history with 'View log file'.\n
+            - Counts and Notices histories are in the log file.\n
             - File>'Backup log file', copy log to location of user's choice.\n
             - When analysis of logged hours is "cannot determine"...\n
                     Quick fix: backup then delete log file, restart program.
@@ -955,7 +958,7 @@ class CountModeler:
         summary data for task status and times. Set control variables
         for data and note dictionaries.
         Is threaded as interval_thread; start in Viewer.start_threads()
-        Calls to: ttimes_stats(), get_minutes() log_it().
+        Calls to: ttimes_stats(), get_minutes(), log_it().
         """
         ttimes_new = set()
         ttimes_smry = set()
