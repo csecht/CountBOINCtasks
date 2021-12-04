@@ -118,12 +118,17 @@ Added features in the GUI version:
 ![log-analysis](images/gcount-tasks_analysis.png)
 
 ### Stand-alone versions (no Python installation needed!)
-#### gcount_tasks.exe - Windows
+#### GcountTasks.exe - Windows
 A **Windows** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the `CountBOINCtasks-master/Standalone_distributables` folder is `GcountTasks_win.zip`. Alternatively, this compressed file can be downloaded directly from  https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_win.zip. Select 'Extract All' for the downloaded ZIP file. After extraction, the .exe extension may not show, depending on your system view settings. Double-click `GcountTasks.exe` to launch. Because this project is in the beta phase, along with the program GUI, a Command Prompt window will appear to display possible Python error messages. Closing the Command Prompt window will also close the GUI.
 
 You will likely first need to permit Windows to run the .exe file: from the pop-up warning, click on "more info", then follow the prompts to open the program. 
 
 The `GcountTasks.exe` executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
+
+#### gcount_tasks - Linux
+A **Linux** standalone of gcount-tasks python script is available.  Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `gcount-tasks_linux.zip`. Alternatively, the archived program can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/gcount-tasks_linux.zip . Extract the archive and move the gcount-tasks executable file to a convenient location; double-click to launch. You may need to change its permissions to allow it to launch.
+
+The `gcount-task` single file executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
 #### GcountTasks.app - MacOS
 A **MacOS** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks.dmg`. Mount that image and move the `GcountTasks.app` to your Applications folder or where you like. Alternatively, the distributable app can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks.dmg.
