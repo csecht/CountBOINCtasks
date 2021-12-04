@@ -320,8 +320,7 @@ def valid_path_to(relative_path: str) -> Path:
     if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
         base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
         return Path(base_path) / relative_path
-    else:
-        return Path(relative_path).resolve()
+    return Path(relative_path).resolve()
 
 
 class Logs:
