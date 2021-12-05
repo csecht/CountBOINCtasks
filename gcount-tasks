@@ -328,10 +328,10 @@ class Logs:
     Methods to analyze and view logged task data.
     """
 
-    # Need Path.home() when running GcountTasks onefile, a frozen executable,
-    #   from PyInstaller, so that files do not end up in temp MEI folder.
+    # Need Path.home() when running GcountTasks onefile, a frozen executable
+    #   from PyInstaller, so that log files do not end up in temp MEI folder.
     # Need Path.cwd() when running gcount-tasks from command line, so that
-    #   files end up in local directory.
+    #   files end up in parent directory.
     # Need .resolve() to force absolute path and handle possible symlinks.
     if getattr(sys, 'frozen', False):
         LOGFILE = Path(Path.home(), 'gcount-tasks_log.txt').resolve()
@@ -381,35 +381,35 @@ class Logs:
                     'Was the settings "log results" option used?\n'
                     'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
-            return summary_text, interval_text
+            return summary_text, interval_text  # <- Empty strings.
 
-        all_sumrys = findall(
+        found_sumrys = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        all_intvls = findall(
+        found_intvls = findall(
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        all_intvl_avgt = findall(
+        found_intvl_avgt = findall(
             r'Tasks reported .+\n.+ avg (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
 
-        if all_sumrys:
-            sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*all_sumrys)
+        if found_sumrys:
+            sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
             num_sumry_intvl_vals = len(set(sumry_intvl_vals))
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
 
-        if all_intvls:
-            intvl_dates, intvl_vals, intvl_cnts = zip(*all_intvls)
+        if found_intvls:
+            intvl_dates, intvl_vals, intvl_cnts = zip(*found_intvls)
             num_intvl_vals = len(set(intvl_vals))
             intvl_counts = list(map(int, intvl_cnts))
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtavg = interval_stats(all_intvl_avgt, 'wtmean', intvl_counts)
-            intvl_t_range = interval_stats(all_intvl_avgt, 'range')
+            intvl_t_wtavg = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_range = interval_stats(found_intvl_avgt, 'range')
 
         # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, then flag and move on.
-        if all_sumrys and all_intvls:
+        if found_sumrys and found_intvls:
             # When there are no intervals after last summary,
             #   the last intvl date is last summary date.
             if intvl_dates[-1] == sumry_dates[-1]:
@@ -418,18 +418,18 @@ class Logs:
                 index = [
                     i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
                 index_recent = index[0] + 1  # <- The interval after the last summary.
-                recent_dates, recent_intvl_vals, recent_cnts = zip(*all_intvls[index_recent:])
+                recent_dates, recent_intvl_vals, recent_cnts = zip(*found_intvls[index_recent:])
                 num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
 
         # Need to tailor report texts for various counting conditions.
-        if not all_sumrys and not all_intvls:
+        if not found_sumrys and not found_intvls:
             interval_text = (
                 f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
                 '   There are not enough data to analyze.\n'
                 '   Need at least one summary or one\n'
                 '   interval count in the log file.\n')
-        if not all_sumrys and all_intvls:
+        if not found_sumrys and found_intvls:
             summary_text = '\nNo summary counts are logged yet.\n\n'
             if num_intvl_vals == 1:
                 interval_text = (
@@ -456,7 +456,7 @@ class Logs:
                     f'logged, {set(intvl_vals)},\n'
                     'so interpret results with caution.\n\n'
                 )
-        if all_sumrys:
+        if found_sumrys:
             if num_sumry_intvl_vals == 1:
                 summary_text = (
                     'Analysis of reported tasks logged from\n'
@@ -489,7 +489,7 @@ class Logs:
                     '   so interpret results with caution.\n\n'
                 )
 
-        if all_sumrys and all_intvls:
+        if found_sumrys and found_intvls:
             # Summary text has been defined, so now do interval text.
             if recent_intervals:
                 if num_recent_intvl_vals == 1:
@@ -587,7 +587,8 @@ class Logs:
 
         # Need to calc and sum uptime only for start-stop segments that have
         #   counted tasks for one or more intervals. LONG_STRFTIME is the
-        #   time format used in the log file.
+        #   time format used in the log file. Times recorded for each log
+        #   entry begin the entry formatted as, '2021-Dec-05 16:33:49; ...'
         for line in logcontent.split('\n'):
             if 'most recent BOINC report' in line:
                 starttime_match = search(
@@ -897,7 +898,7 @@ class CountModeler:
         #   used in interval_data() to track tasks across intervals.
         self.ttimes_used.update(ttimes_start)
 
-        # Need to parse data returned from ttimes_stats().
+        # Need to parse and set data returned from ttimes_stats().
         startdict = ttimes_stats(ttimes_start)
         self.share.data['tt_avg'].set(startdict['tt_avg'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
