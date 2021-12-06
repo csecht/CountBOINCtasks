@@ -12,8 +12,8 @@ Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and macOS 10.13. Unles
 Download the .zip package from the Code download button and extract to your
  favorite folder. From within the resulting countBOINCtasks-master folder, open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
 <ul>
-<li>for Linux or Mac OS: <code>./count-tasks --help</code> -or- <code>python3 count-tasks --help</code></li>
-<li>for Windows: <code>python count-tasks --help</code></li>
+<li>Linux or Mac OS: <code>./count-tasks --help</code> -or- <code>python3 count-tasks --help</code></li>
+<li>Windows: <code>python count-tasks --help</code></li>
 </ul>
 Depending on your Python path settings in Windows, double-clicking on 
 the count-tasks file icon may automatically launch the program, with its default settings, in a console window.
@@ -95,8 +95,8 @@ TIP: To get only the most recent task count and time metrics without
 ### The GUI version: gcount-tasks
 Download and run as described under Usage, but launch the program with these Terminal or Command Prompt commands from within the parent folder:
 <ul>
-<li>for Linux or Mac OS: <code>./gcount-tasks</code> -or- <code>python3 gcount-tasks</code></li>
-<li>for Windows: <code>python gcount-tasks</code></li>
+<li>Linux or Mac OS: <code>./gcount-tasks</code> -or- <code>python3 gcount-tasks</code></li>
+<li>Windows: <code>python gcount-tasks</code></li>
 </ul>
 
 For a brief description and version number, use the `--about` command line option.

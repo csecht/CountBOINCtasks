@@ -1550,7 +1550,7 @@ class CountViewer(tk.Frame):
 
         self.master.config(menu=self.menubar)
         # Add pull-down menus
-        file = tk.Menu(self.menubar, tearoff=0)
+        file = tk.Menu(tearoff=0)
         self.menubar.add_cascade(label="File", menu=file)
         file.add_command(
             label="Backup log file",
@@ -1559,7 +1559,7 @@ class CountViewer(tk.Frame):
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
-        view = tk.Menu(self.menubar, tearoff=0)
+        view = tk.Menu(tearoff=0)
         self.menubar.add_cascade(label="View", menu=view)
         view.add_command(label="Log file",
                          command=lambda: Logs.view(Logs.LOGFILE),
@@ -1569,7 +1569,7 @@ class CountViewer(tk.Frame):
                          accelerator="Ctrl+A")
         view.add_command(label="Saved analyses",
                          command=lambda: Logs.view(Logs.ANALYSISFILE))
-        help_menu = tk.Menu(self.menubar, tearoff=0)
+        help_menu = tk.Menu(tearoff=0)
         self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
         help_menu.add_command(label="Compliment", command=self.share.compliment,
