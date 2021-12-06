@@ -4,11 +4,9 @@
 ## count-tasks
 
 A utility for monitoring task data reported by the boinc-client. 
-It may be useful for comparing task productivity between different computers or configurations.
+It may be useful for comparing task productivity between different computers or configurations. See further below for GUI and standalone implementations.
 
-Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and Mac OS 10.13. You
- may need to download or update to Python 3.6 or later. Recent Python
-  packages can be downloaded from https://www.python.org/downloads/.
+Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and macOS 10.13. Unless running one of the standalones, you may need to download or update to Python 3.6 or later. Recent Python packages can be downloaded from https://www.python.org/downloads/.
 
 ### Usage:  
 Download the .zip package from the Code download button and extract to your
@@ -97,8 +95,7 @@ TIP: To get only the most recent task count and time metrics without
  running count intervals, run:  `count-tasks --c 0`
 
 ### The GUI version: gcount-tasks
-Download and run as described under Usage, but launch the program with these Terminal 
-commands from within the parent folder:
+Download and run as described under Usage, but launch the program with these Terminal or Command Prompt commands from within the parent folder:
 <ul>
 <li>for Linux or Mac OS: <code>./gcount-tasks</code> -or- <code>python3 gcount-tasks</code></li>
 <li>for Windows: <code>python gcount-tasks</code></li>
@@ -117,7 +114,7 @@ Added features in the GUI version:
 ![gcount-tasks main window](images/gcount-tasks_scrnshot.png)
 ![log-analysis](images/gcount-tasks_analysis.png)
 
-### Stand-alone versions (no Python installation needed!)
+### Stand-alone versions: GcountTasks (no Python installation needed)
 #### GcountTasks.exe - Windows
 A **Windows** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the `CountBOINCtasks-master/Standalone_distributables` folder is `GcountTasks_win.zip`. Alternatively, this compressed file can be downloaded directly from  https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_win.zip. Select 'Extract All' for the downloaded ZIP file. After extraction, the .exe extension may not show, depending on your system view settings. Double-click `GcountTasks.exe` to launch. Because this project is in the beta phase, along with the program GUI, a Command Prompt window will appear to display possible Python error messages. Closing the Command Prompt window will also close the GUI.
 
@@ -125,7 +122,7 @@ You will likely first need to permit Windows to run the .exe file: from the pop-
 
 The `GcountTasks.exe` executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
-#### gcount_tasks - Linux
+#### GcountTasks - Linux
 A **Linux** standalone of gcount-tasks python script is available.  Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks_linux.zip`. Alternatively, the archived program can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_linux.zip . Extract the archive and move the GcountTasks executable file to a convenient location; double-click to launch. You may need to change its permissions to allow it to launch.
 
 The `GcountTasks` single file executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
