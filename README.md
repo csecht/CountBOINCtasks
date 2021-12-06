@@ -10,15 +10,13 @@ Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and macOS 10.13. Unles
 
 ### Usage:  
 Download the .zip package from the Code download button and extract to your
- favorite folder. From within the resulting countBOINCtasks-master folder
- , open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
+ favorite folder. From within the resulting countBOINCtasks-master folder, open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
 <ul>
-<li>Linux or Mac OS: `./count-tasks --help`  or `python3 count-tasks`</li>
-<li>Windows: `python count-tasks` --help</li>
+<li>for Linux or Mac OS: <code>./count-tasks --help</code> -or- <code>python3 count-tasks --help</code></li>
+<li>for Windows: <code>python count-tasks --help</code></li>
 </ul>
 Depending on your Python path settings in Windows, double-clicking on 
-the count-tasks file icon may automatically launch the program, with its 
-default settings, in a Terminal window.
+the count-tasks file icon may automatically launch the program, with its default settings, in a console window.
 
 Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
