@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.4'
+__version__ = '0.8.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1545,11 +1545,19 @@ class CountViewer(tk.Frame):
 
     def master_widgets(self) -> None:
         """
-        Master menus and buttons.
+        Master frame menus and buttons.
         """
-
+        # Background color of container Frame is defined in __init__
+        # OS-specific window size ranges set in Controller __init__
+        # Need to color in all of master Frame, and use near-white border;
+        #   bd changes to darker shade for click-drag and loss of focus.
+        self.master.config(menu=self.menubar,
+                           bg=self.master_bg,
+                           highlightthickness=3,
+                           highlightcolor='grey95',
+                           highlightbackground='grey75'
+                           )
         # Add pull-down menus
-        self.master.config(menu=self.menubar)
         file = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=file)
         file.add_command(
@@ -1596,15 +1604,6 @@ class CountViewer(tk.Frame):
         Master and dataframe configuration, keybindings, row headers,
         separators, and grids.
         """
-        # Background color of container Frame is configured in __init__
-        # OS-specific window size ranges set in Controller __init__
-        self.master.title('BOINC task counter')
-        # Need to color in all of master Frame, and use near-white border;
-        #    changes to grey for click-drag and loss of focus.
-        self.master.configure(bg=self.master_bg,
-                              highlightthickness=3,
-                              highlightcolor='grey95',
-                              highlightbackground='grey75')
 
         # Provide user exit info to Terminal and log.
         self.master.protocol('WM_DELETE_WINDOW', quit_gui)

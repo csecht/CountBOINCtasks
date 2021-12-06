@@ -143,5 +143,5 @@ The `GcountTasks.app` application was created with PyInstaller available from ht
 * Wait for user feedback...
 
 ### Known Issues
-* Versions 0.4.10 - 0.4.12 were prone to freezes. 
+* Waiting for user feedback...
 
