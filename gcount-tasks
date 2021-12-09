@@ -4,9 +4,8 @@
 gcount-tasks provides task counts and time statistics at timed
 intervals for tasks recently reported to BOINC servers. It can be run
 on Windows, Linux, and MacOS. It is the tkinter GUI version of
-count-tasks. The MVC architecture it uses is based on the example
-provided by by Brian Oakley at
-https://stackoverflow.com/questions/32864610/
+count-tasks. Its MVC architecture is modified from the example provided
+by Brian Oakley at https://stackoverflow.com/questions/32864610/
 Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 
     This program is free software: you can redistribute it and/or modify
@@ -22,13 +21,14 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
     You should have received a copy of the GNU General Public License
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
-# ^^ Text for --about invocation argument and __doc__>>
+# ^^ Text for --about invocation argument via __doc__.
+# Also used in Fyi.about():
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.6'
+__version__ = '0.8.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -436,7 +436,8 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {str(sum(intvl_counts)).ljust(11)}'
+                    f' tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
@@ -447,7 +448,8 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {str(sum(intvl_counts)).ljust(11)}'
+                    f' tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per count interval\n'
@@ -462,13 +464,15 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {str(sum(intvl_counts)).ljust(11)}'
+                    f' tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n'
                     f'   {str(len(sumry_counts)).ljust(7)} summaries logged\n'
-                    f'   {str(sumry_cnt_avg).ljust(7)} tasks per {sumry_intvl_vals[0]} summary interval\n'
+                    f'   {str(sumry_cnt_avg).ljust(7)}'
+                    f' tasks per {sumry_intvl_vals[0]} summary interval\n'
                     f'   {sumry_cnt_range} range of task counts\n\n'
                 )
             else:
@@ -476,7 +480,8 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {str(sum(intvl_counts)).ljust(11)}'
+                    f' tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     'Summary data logged from:\n'
@@ -852,7 +857,7 @@ class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
     """
-    # Need to have these vars as Class attributes so they will not be
+    # Need to have these vars as Class attributes, so they will not be
     # reset when interval_data() is called. ttimes_smry would be okay
     # in __init__, but is here for clarity.
     ttimes_used = set()
@@ -1371,9 +1376,12 @@ class CountViewer(tk.Frame):
     through the Controller class. All GUI widgets go here.
     """
 
-    def __init__(self, master, share):
-        super().__init__(master)
+    def __init__(self, share):
+        super().__init__()
         self.share = share
+        # Note that self.master is an internal attribute and refers to the
+        #   CountController() Tk top window. Outside of CountViewer(),
+        #   use app. to refer to the CountController() Tk object.
         self.dataframe = tk.Frame()
         self.menubar = tk.Menu()
 
@@ -1545,9 +1553,8 @@ class CountViewer(tk.Frame):
 
     def master_widgets(self) -> None:
         """
-        Master frame menus and buttons.
+        Master app menus and buttons.
         """
-
         self.master.config(menu=self.menubar)
         # Add pull-down menus
         file = tk.Menu(self.menubar, tearoff=0)
@@ -2112,18 +2119,17 @@ class CountController(tk.Tk):
     """
     The Controller through which other MVC Count Classes can interact
     through the 'share' parameter.
-    Instantiates CountViewer() with master tk.Frame inheritance.
-    Concept from https://stackoverflow.com/questions/32864610/
+    Based on https://stackoverflow.com/questions/32864610/
     """
 
     def __init__(self):
         super().__init__()
 
-        # Need geometry so that master window will be under settings()
+        # Use geometry so that master window will be underneath settings()
         #   Toplevel window at startup.
-        #   Not setting geometry here places app window below settings_win
+        #   Not setting the geometry here places app window below settings_win
         # These x, y coordinates match default window placement on Ubuntu desktop.
-        self.geometry('+96+134')
+        # self.geometry('+96+134')
 
         # Need window sizes to make room for multi-line notices,
         #    but not get minimized enough to exclude notices row.
@@ -2138,9 +2144,8 @@ class CountController(tk.Tk):
             self.minsize(600, 390)
             self.maxsize(780, 425)
 
-        # pylint: disable=assignment-from-no-return
-        container = tk.Frame(self).grid()
-        CountViewer(master=container, share=self)
+        self.winfo_toplevel()  # Also works: tk.Frame().grid()
+        CountViewer(share=self)
 
     def defaultsettings(self) -> None:
         """
