@@ -359,6 +359,7 @@ class Logs:
         intvl_vals = []
         num_intvl_vals = 0
         intvl_counts = []
+        num_tasks = str(sum(intvl_counts))
         intvl_cnt_avg = 0.0
         intvl_cnt_range = ''
         intvl_t_wtavg = ''
@@ -436,8 +437,7 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)}'
-                    f' tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {num_tasks.ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
@@ -448,8 +448,7 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)}'
-                    f' tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {num_tasks.ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per count interval\n'
@@ -464,8 +463,7 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)}'
-                    f' tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {num_tasks.ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     'Summary data logged from:\n'
@@ -480,8 +478,7 @@ class Logs:
                     'Analysis of reported tasks logged from\n'
                     f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                     f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(sum(intvl_counts)).ljust(11)}'
-                    f' tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {num_tasks.ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
                     f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
                     f'   {intvl_t_range} range of task times\n\n'
                     'Summary data logged from:\n'
