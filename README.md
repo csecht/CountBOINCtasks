@@ -126,7 +126,7 @@ A **Linux** standalone of gcount-tasks python script is available.  Download and
 The `GcountTasks` single file executable was created with PyInstaller available from https://pypi.org/project/pyinstaller/
 
 #### GcountTasks.app - MacOS
-A **MacOS** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks.dmg`. Mount that image and move the `GcountTasks.app` to your Applications folder or where you like. Alternatively, the distributable app can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks.dmg.
+A **MacOS** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside CountBOINCtasks-master/Standalone_distributables folder is `GcountTasks_mac.dmg`. Mount that image and move the `GcountTasks.app` to your Applications folder or where you like. Alternatively, the distributable app can be downloaded directly from https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_mac.dmg.
 
 The first time you try to open the app, however, you will get a message saying it can't be opened. Click "Cancel", go into System Preferences > Security & Privacy, click the "Open anyway" button, then "Open". It does not open initially because it was not downloaded from the Apple Store or from a recognized Apple developer. 
 
