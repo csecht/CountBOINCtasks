@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.8'
+__version__ = '0.8.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -133,14 +133,18 @@ def parse_args() -> None:
 
 def app_position(add_x=0, add_y=0) -> tuple:
     """
-    Use to set position of a Toplevel child with respect to the
-    app (master) window.
+    Sets position of a Toplevel child with respect to the
+    app (master) window. Use with the geometry() method, e.g.,
+      pos_x, pos_y = app_position()  or  = app_position(15, 15)
+      mytopwin.geometry(f'+{pos_x}+{+pos_y}')
 
     :param add_x: optional pixels added to app's x coordinate.
     :param add_y: optional pixels added to app's y coordinate.
-    :return: (x,y) screen geometry coordinates of the app window.
-    :rtype: tuple
+    :return: x and y screen pixel positions.
     """
+    # NOTE: cannot return a geometry()-ready f-string b/c that causes a
+    #   jarring shift of the Toplevel from the default screen position to
+    #   the desired position.
     app.update_idletasks()
     pos_x = app.winfo_x() + add_x
     pos_y = app.winfo_y() + add_y
@@ -1615,7 +1619,7 @@ class CountViewer(tk.Frame):
         self.master.protocol('WM_DELETE_WINDOW', quit_gui)
 
         self.master.bind_all('<Escape>', quit_gui)
-        self.master.bind('<Control-q>', quit_gui)
+        self.master.bind_all('<Control-q>', quit_gui)
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
         self.master.bind_all('<Shift-Control-A>', Logs.show_analysis)
         self.master.bind('<Shift-Control-C>', self.share.compliment)
@@ -1752,13 +1756,14 @@ class CountViewer(tk.Frame):
         """
         # Toplevel window basics
         self.settings_win.title('Set run settings')
-        # Need to position over app window, which is at '+96+134'.
-        self.settings_win.geometry('+136+174')
         self.settings_win.resizable(False, False)
         self.settings_win.config(relief='raised', bg=self.master_bg,
                                  highlightthickness=3,
                                  highlightcolor=self.share.highlight,
                                  highlightbackground=self.deemphasize)
+
+        # Need to make settings window topmost to place it above the
+        #   app window.
         if MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
         # In macOS, topmost places Combobox selections BEHIND the window,
