@@ -2124,7 +2124,7 @@ class CountController(tk.Tk):
 
         # Use geometry so that master window will be underneath settings()
         #   Toplevel window at startup.
-        #   Not setting the geometry here places app window below settings_win
+        #   Not setting the geometry here places app window below settings_win.
         # These x, y coordinates match default window placement on Ubuntu desktop.
         # self.geometry('+96+134')
 
@@ -2143,13 +2143,6 @@ class CountController(tk.Tk):
 
         self.winfo_toplevel()
         CountViewer(share=self)
-        # NOTE: Instead of self.winfo_toplevel(), can use tk.Frame().grid().
-        # It creates a tkinter.Frame object as the first child widget, but
-        #   it makes no difference to function or layout.
-        # Using winfo_toplevel() first creates the __main__.CountViewer child,
-        #   without any enclosing Frame.
-        # In neither case is it necessary to name the child as a master
-        #   parameter to call CountViewer() b/c self.master is implicit.
 
     def defaultsettings(self) -> None:
         """
