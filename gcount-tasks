@@ -32,7 +32,6 @@ __version__ = '0.8.10'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
-__docformat__ = 'Markdown'
 __status__ = 'Development Status :: 2 - Beta'
 
 import argparse
@@ -2042,11 +2041,10 @@ class CountViewer(tk.Frame):
         which ends the startup sequence.
         Called from settings() countnow_button.
         """
-        # Need to run final validation of settings in case user changed
-        #   something since a prior "Confirm" check_and_set() call.
+        # Need to validate user-customized settings.
         self.check_and_set()
+        # Either running a 1-off status report or beginning interval counts:
         if self.good_settings:
-            # Run 1-off status report or begin interval counts...
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.data['cycles_remain'].set(0)
                 self.share.setting['interval_t'].set('DISABLED')
@@ -2055,7 +2053,6 @@ class CountViewer(tk.Frame):
                 self.emphasize_start_data()
                 self.share.startdata()
                 self.settings_win.destroy()
-            # Begin main interval counting functions...
             else:
                 self.start_threads()
                 self.emphasize_start_data()
@@ -2083,7 +2080,7 @@ class CountViewer(tk.Frame):
         """
         Config data labels in master window for starting data emphasis.
         Establish start time.
-        Called from check_and_start() with 'Count now' button.
+        Called from check_and_start() from 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
         self.time_start_l.config(text=time_start)
@@ -2157,8 +2154,7 @@ class CountViewer(tk.Frame):
     def app_got_focus(self, *click_event):
         """
         Give menu bar headings normal color when app has focus.
-
-        :param click_event: <FocusIn> mouse click.
+        :param click_event: FocusIn mouse click.
         """
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
@@ -2173,7 +2169,7 @@ class CountViewer(tk.Frame):
         """
         Give menu bar headings grey-out color when app looses focus.
 
-        :param click_event: <FocusOut> mouse click.
+        :param click_event: FocusOut mouse click.
         """
         self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
