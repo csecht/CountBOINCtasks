@@ -4,8 +4,8 @@
 gcount-tasks provides task counts and time statistics at timed
 intervals for tasks recently reported to BOINC servers. It can be run
 on Windows, Linux, and MacOS. It is the tkinter GUI version of
-count-tasks. Its MVC architecture is modified from the example provided
-by Brian Oakley at https://stackoverflow.com/questions/32864610/
+count-tasks. Its MVC architecture is modified from examples provided
+at https://stackoverflow.com/questions/32864610/ and links therein.
 Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 
     This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.9'
+__version__ = '0.8.10'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -171,6 +171,21 @@ def enter_only_digits(entry_string, action_type) -> bool:
     return True
 
 
+def button_bindings(click_obj) -> None:
+    """
+    Mouse button bindings for the named object.
+
+    :param click_obj: Name of the object in which click commands are
+                      active.
+    """
+    # These bindings are direct calls to Controller methods, but outside of MVC.
+    # Don't replace with bind_all() b/c not suitable for master window.
+    if MY_OS in 'lin, win':
+        click_obj.bind('<Button-3>', RightClickCmds)
+    elif MY_OS == 'dar':
+        click_obj.bind('<Button-2>', RightClickCmds)
+
+
 def ttimes_stats(tasktimes: iter) -> dict:
     """
     Sum and run statistics of BOINC task times for reporting in
@@ -179,7 +194,7 @@ def ttimes_stats(tasktimes: iter) -> dict:
 
     :param tasktimes: A list, tuple, or set of times, in seconds as
                       integers or floats.
-    :return: Dict keys: tt_total, tt_avg, tt_sd, tt_min, tt_max;
+    :return: Dict keys as: tt_total, tt_avg, tt_sd, tt_min, tt_max;
              Dict values as: 00:00:00.
     """
     numtasks = len(tasktimes)
@@ -232,14 +247,14 @@ def interval_stats(distribution: iter, stat=None, weights=None) -> str:
 
     :param distribution: List or tuple of avg times, as string formatted
                          00:00:00, or as seconds (floats or integers).
-    :param stat: The statistic to run.
-                 'wtmean' requires distribution and weights parameters.
-                 'range' and 'stdev' require only distribution parameter.
+    :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
+                 wtmean requires distribution and weights parameters.
+                 range and stdev require only distribution parameter.
     :param weights: List or tuple of corresponding sample numbers
                     (integers) for each element in distribution.
-    :return: The distribution weighted mean OR range OR standard
-             deviation, each as string formatted 00:00:00,
-             OR 'cannot determine' if invalid stat='wtmean' parameters.
+    :return: The distribution weighted mean, range, or standard
+             deviation, each as string formatted 00:00:00. Returns
+             'cannot determine' if invalid data given for wtmean stat.
     """
     # algorithm sources:
     # https://towardsdatascience.com/
@@ -325,6 +340,43 @@ def valid_path_to(relative_path: str) -> Path:
         base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
         return Path(base_path) / relative_path
     return Path(relative_path).resolve()
+
+
+class RightClickCmds:
+    """
+    Right-click pop-up commands to edit text;
+    call as a Button-2 or Button-3 binding for the text-containing
+    object, Text, Label, Toplevel, etc., that needs the commands.
+    """
+
+    # Based on: https://stackoverflow.com/questions/57701023/
+    def __init__(self, event):
+        right_click_menu = tk.Menu(None, tearoff=0, takefocus=0,
+                                   )
+
+        right_click_menu.add_command(
+            label='Select all',
+            command=lambda: self.on_click(event, 'SelectAll'))
+        right_click_menu.add_command(
+            label='Copy',
+            command=lambda: self.on_click(event, 'Copy'))
+        right_click_menu.add_command(
+            label='Paste',
+            command=lambda: self.on_click(event, 'Paste'))
+        right_click_menu.add_command(
+            label='Cut',
+            command=lambda: self.on_click(event, 'Cut'))
+
+        right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
+
+    @staticmethod
+    def on_click(event, command):
+        """
+        Sets menu command to the selected predefined virtual event.
+        Event is a unifying binding across multiple platforms.
+        https://www.tcl.tk/man/tcl8.6/TkCmd/event.htm#M7
+        """
+        event.widget.event_generate(f'<<{command}>>')
 
 
 class Logs:
@@ -550,15 +602,16 @@ class Logs:
         num_lines = text.count('\n')
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
                               width=46, height=num_lines,
-                              bg='grey85', fg='grey5',
+                              bg='grey95', fg='grey5',
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, text)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        button_bindings(analysistxt)
 
         ttk.Button(
             analysiswin, text='Save analysis',
-            command=lambda: File.append_txt(cls.ANALYSISFILE, text, True, analysiswin)
-            ).pack(padx=4)
+            command=lambda: File.append_txt(
+                cls.ANALYSISFILE, text, True, analysiswin)).pack(padx=4)
 
         return keybind
 
@@ -687,6 +740,7 @@ class Logs:
 
             logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
+
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, font='TkFixedFont',
                                    width=text_width, height=text_height,
@@ -695,6 +749,7 @@ class Logs:
             logtext.insert(tk.INSERT, file.read())
             logtext.see('end')
             logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+            button_bindings(logtext)
 
         ttk.Button(
             logwin, text='Update',
@@ -736,10 +791,11 @@ class CountFyi:
         aboutwin.geometry(f'+{pos_x}+{+pos_y}')
         aboutwin.resizable(False, False)
         aboutwin.title('About count-tasks')
+        button_bindings(aboutwin)
         num_doc_lines = __doc__.count('\n') + 2
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
                            width=74, height=num_doc_lines + 9,
-                           bg='grey20', fg='grey85',
+                           bg='grey95', fg='grey5',
                            relief='groove', borderwidth=5, padx=25)
         abouttxt.insert(1.0,
                         f'{__doc__}\n'
@@ -823,20 +879,21 @@ class CountFyi:
         infowin.geometry(f'+{pos_x}+{+pos_y}')
         infowin.resizable(False, False)
         infowin.title('Usage information')
+        button_bindings(infowin)
         information = ("""
             - Counting begins once "Count now" is clicked in settings window.\n
             - Interval and Summary data buttons switch visual emphasis;
                     ...those buttons activate once their data post.\n
-            - At start, # tasks reported and time of last count are from
+            - At start, '# tasks reported' and 'Interval time' are from
                     the most recent hourly BOINC report.\n
             - Number of tasks in queue and Notices update every"""
                        f' {NOTICE_INTERVAL} seconds.\n'
                        """
             - Displayed countdown clock time is approximate.\n
             - Counts and Notices histories are in the log file.\n
-            - File>'Backup log file', copy log to location of user's choice.\n
             - When analysis of logged hours is "cannot determine"...\n
-                    Quick fix: backup then delete log file, restart program.
+                    Quick fix: backup then delete log file, restart program.\n
+            - Right-click actions only affect on-screen text, not file content.
             """)
 
         num_doc_lines = information.count('\n')
@@ -847,7 +904,7 @@ class CountFyi:
             os_width = 56
         infotxt = tk.Text(infowin, font='TkTextFont',
                           width=os_width, height=num_doc_lines + 2,
-                          bg='grey20', fg='grey85',
+                          bg='grey95', fg='grey5',
                           relief='groove', padx=15)
         infotxt.insert(1.0, information)
         infotxt.pack()
@@ -1560,31 +1617,31 @@ class CountViewer(tk.Frame):
         self.master.config(menu=self.menubar)
         # Add pull-down menus
         file = tk.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="File", menu=file)
+        self.menubar.add_cascade(label='File', menu=file)
         file.add_command(
-            label="Backup log file",
+            label='Backup log file',
             command=lambda: File.backup(Logs.LOGFILE))
         file.add_separator()
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="View", menu=view)
-        view.add_command(label="Log file",
+        self.menubar.add_cascade(label='View', menu=view)
+        view.add_command(label='Log file',
                          command=lambda: Logs.view(Logs.LOGFILE),
-                         # MacOS: can't display "Cmd+L" b/c won't override native cmd.
-                         accelerator="Ctrl+L")
-        view.add_command(label="Analysis", command=Logs.show_analysis,
-                         accelerator="Ctrl+A")
-        view.add_command(label="Saved analyses",
+                         # MacOS: can't display 'Cmd+L' b/c won't override native cmd.
+                         accelerator='Ctrl+L')
+        view.add_command(label='Analysis of log data', command=Logs.show_analysis,
+                         accelerator='Ctrl+Shift+L')
+        view.add_command(label='Analysis file',
                          command=lambda: Logs.view(Logs.ANALYSISFILE),
-                         accelerator="Ctrl+Shift+A")
+                         accelerator='Ctrl+Shift+A')
         help_menu = tk.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="Help", menu=help_menu)
+        self.menubar.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
-        help_menu.add_command(label="Compliment", command=self.share.compliment,
-                              accelerator="Ctrl+Shift+C")
-        help_menu.add_command(label="About", command=self.share.about)
+        help_menu.add_command(label='Compliment', command=self.share.compliment,
+                              accelerator='Ctrl+Shift+C')
+        help_menu.add_command(label='About', command=self.share.about)
 
         self.share.viewlog_b = ttk.Button(self.master, text='View log file',
                                           command=lambda: Logs.view(Logs.LOGFILE))
@@ -1593,8 +1650,8 @@ class CountViewer(tk.Frame):
         # starting_b will be replaced with an active ttk intvl_b after first
         #   interval completes; it is re-gridded in interval_data().
         # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
-        self.share.starting_b = tk.Button(self.master, text='Starting data', width=18,
-                                          disabledforeground='grey10',
+        self.share.starting_b = tk.Button(self.master, text='Starting data',
+                                          width=18,  disabledforeground='grey10',
                                           state=tk.DISABLED)
         self.share.intvl_b = ttk.Button(self.master, text='Interval data', width=18,
                                         command=self.emphasize_intvl_data)
@@ -1621,16 +1678,18 @@ class CountViewer(tk.Frame):
         self.master.bind_all('<Escape>', quit_gui)
         self.master.bind_all('<Control-q>', quit_gui)
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
-        self.master.bind_all('<Shift-Control-A>', Logs.show_analysis)
+        self.master.bind('<Control-l>',
+                         lambda event: Logs.view(Logs.LOGFILE))
+        self.master.bind('<Shift-Control-L>', Logs.show_analysis)
+        self.master.bind_all('<Shift-Control-A>',
+                             lambda event: Logs.view(Logs.ANALYSISFILE))
         self.master.bind('<Shift-Control-C>', self.share.compliment)
-        self.master.bind('<Control-l>', lambda event: Logs.view(Logs.LOGFILE))
 
         # Need to specify Ctrl-A for Linux b/c in tkinter that key is
         #   bound to <<LineStart>>, not <<SelectAll>>, for some reason?
         if MY_OS in 'lin':
             def select_all():
                 app.focus_get().event_generate('<<SelectAll>>')
-
             self.master.bind_all('<Control-a>', lambda _: select_all())
 
         # Theme controls entire window theme, but only for ttk.Style objects.
