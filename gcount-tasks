@@ -602,7 +602,7 @@ class Logs:
         num_lines = text.count('\n')
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
                               width=46, height=num_lines,
-                              bg='grey95', fg='grey5',
+                              bg='grey100', fg='grey5',
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, text)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
@@ -795,7 +795,7 @@ class CountFyi:
         num_doc_lines = __doc__.count('\n') + 2
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
                            width=74, height=num_doc_lines + 9,
-                           bg='grey95', fg='grey5',
+                           bg='grey100', fg='grey5',
                            relief='groove', borderwidth=5, padx=25)
         abouttxt.insert(1.0,
                         f'{__doc__}\n'
@@ -904,7 +904,7 @@ class CountFyi:
             os_width = 56
         infotxt = tk.Text(infowin, font='TkTextFont',
                           width=os_width, height=num_doc_lines + 2,
-                          bg='grey95', fg='grey5',
+                          bg='grey100', fg='grey5',
                           relief='groove', padx=15)
         infotxt.insert(1.0, information)
         infotxt.pack()
