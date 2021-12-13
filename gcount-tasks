@@ -43,7 +43,6 @@ import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-# from platform import node
 from random import choice
 from re import search, findall, MULTILINE
 from socket import gethostname
