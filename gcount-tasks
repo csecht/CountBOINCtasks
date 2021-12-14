@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.13'
+__version__ = '0.8.14'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -356,6 +356,7 @@ def close_toplevel(*keybind) -> None:
     #   listed at or toward the end, so read children list in reverse.
     # To prevent all toplevels from closing, break loop when the focus
     #   toplevel parent is found.
+
     for widget in reversed(app.winfo_children()):
         # pylint: disable=no-else-break
         if widget == app.focus_get():
@@ -640,7 +641,10 @@ class Logs:
         analysiswin.title('Analysis of logged data')
         analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
-        analysiswin.focus_set()
+        # Need to set focus when cursor is in logwin so any rt-click
+        #   pop-up commands are executed on the logwin which may have lost
+        #   focus to another object. (A rt-click does not restore focus.)
+        analysiswin.bind("<Enter>", lambda event: event.widget.focus_set())
         close_with_key(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
@@ -786,7 +790,10 @@ class Logs:
                 logwin.title(f'{dir_file} on {gethostname()}')
 
             logwin.minsize(minsize_h, minsize_w)
-            logwin.focus_set()
+            # Need to set focus when cursor is in logwin so any rt-click
+            #   pop-up commands are executed on the logwin which may have lost
+            #   focus to another object. (A rt-click does not restore focus.)
+            logwin.bind("<Enter>", lambda event: event.widget.focus_set())
             close_with_key(logwin)
 
             # Use a "dark" background/foreground theme for log text.
