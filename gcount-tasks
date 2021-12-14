@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.12'
+__version__ = '0.8.13'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -40,6 +40,7 @@ import statistics
 import sys
 import threading
 import time
+import tkinter
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice
@@ -129,10 +130,27 @@ def parse_args() -> None:
         sys.exit(0)
 
 
+def valid_path_to(relative_path: str) -> Path:
+    """
+    Get absolute path to files and directories.
+    _MEIPASS var is used by distribution programs from
+    PyInstaller (--onefile or --windowed), e.g. for an images directory.
+
+    :param relative_path: File or dir name path, as string.
+    :return: Absolute path as pathlib Path object.
+    """
+    # Modified from: https://stackoverflow.com/questions/7674790/
+    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
+    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
+        return Path(base_path) / relative_path
+    return Path(relative_path).resolve()
+
+
 def position_wrt_app(mod_x=0, mod_y=0) -> str:
     """
-    Sets position of a Toplevel child with respect to the
-    app window. Use with the geometry() method, example:
+    Sets screen position of a Toplevel child with respect to the app
+    window position. Use with the geometry() method, example:
       mytopwin.geometry(position_wrt_app(15, -15))
 
     :param mod_x: optional pixels to add/subtract to app's x coordinate.
@@ -148,11 +166,15 @@ def position_wrt_app(mod_x=0, mod_y=0) -> str:
 def enter_only_digits(entry_string, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
-    Used with .register() to configure Entry kw validatecommand.
+    Used with register() to configure Entry kw validatecommand. Example:
+    myentry.configure(
+        validate='key', textvariable=myvalue,
+        validatecommand=(myentry.register(enter_only_digits), '%P', '%d')
+        )
 
     :param entry_string: value entered into an Entry() widget (%P).
     :param action_type: edit action code (%d).
-    :return: True, False
+    :return: True or False
     """
     # Need to restrict entries to only digits,
     #   MUST use action type parameter to allow user to delete first number
@@ -163,21 +185,6 @@ def enter_only_digits(entry_string, action_type) -> bool:
     if action_type == '1' and not entry_string.isdigit():
         return False
     return True
-
-
-def button_bindings(click_obj) -> None:
-    """
-    Mouse button bindings for the named object.
-
-    :param click_obj: Name of the object in which click commands are
-                      active.
-    """
-    # These bindings are direct calls to Controller methods, but outside of MVC.
-    # Don't replace with bind_all() b/c not suitable for master window.
-    if MY_OS in 'lin, win':
-        click_obj.bind('<Button-3>', RightClickCmds)
-    elif MY_OS == 'dar':
-        click_obj.bind('<Button-2>', RightClickCmds)
 
 
 def ttimes_stats(tasktimes: iter) -> dict:
@@ -319,29 +326,28 @@ def quit_gui(*keybind):
     return keybind
 
 
-def valid_path_to(relative_path: str) -> Path:
+def click_bindings(click_obj, click_type) -> None:
     """
-    Get absolute path to files and directories.
-    _MEIPASS var is used by distribution programs from
-    PyInstaller --onefile; e.g. for images dir.
+    Mouse button bindings for the named object.
 
-    :param relative_path: File or dir name path, as string.
-    :return: Absolute path as pathlib Path object.
+    :param click_obj: Name of the object in which click commands are
+                      to be active.
+    :param click_type: The mouse button or button modifier used;
+    'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
     """
-    # Modified from: https://stackoverflow.com/questions/7674790/
-    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
-    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
-        return Path(base_path) / relative_path
-    return Path(relative_path).resolve()
+    if click_type == 'right':
+        if MY_OS in 'lin, win':
+            click_obj.bind('<Button-3>', RightClickCmds)
+        elif MY_OS == 'dar':
+            click_obj.bind('<Button-2>', RightClickCmds)
 
 
 def close_toplevel(*keybind) -> None:
     """
     Close the toplevel window that has focus.
-    Called from Command-W or Control-W keybinding or right-click menu.
+    Called from keybinding or right-click menu.
 
-    :param keybind: Needed for keybindings.
+    :param keybind: Empty parameter to pass implicit keybinding event.
     """
     # Based on https://stackoverflow.com/questions/66384144/
     # Need to cover all cases when the focus is on any toplevel window,
@@ -367,17 +373,30 @@ def close_toplevel(*keybind) -> None:
                 break
 
 
+def close_with_key(toplevel: tkinter.Toplevel) -> None:
+    """
+    Close with an OS-specific 'w' keybinding the Toplevel window that
+    has focus.
+
+    :param toplevel: Name of tk.Toplevel() object to close.
+    """
+    if MY_OS in 'lin, win':
+        toplevel.bind('<Control-w>', close_toplevel)
+    elif MY_OS == 'dar':
+        toplevel.bind('<Command-w>', close_toplevel)
+
+
 class RightClickCmds:
     """
     Right-click pop-up commands to edit text;
     call as a Button-2 or Button-3 binding for the text-containing
     object, Text, Label, Toplevel, etc., that needs the commands.
+    Use in click_bindings() function or directly.
     """
 
     # Based on: https://stackoverflow.com/questions/57701023/
     def __init__(self, event):
-        right_click_menu = tk.Menu(None, tearoff=0, takefocus=0,
-                                   )
+        right_click_menu = tk.Menu(None, tearoff=0, takefocus=0)
 
         right_click_menu.add_command(
             label='Select all',
@@ -622,6 +641,7 @@ class Logs:
         analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
         analysiswin.focus_set()
+        close_with_key(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         sep = f'\n{"─" * 46}\n'
@@ -633,7 +653,7 @@ class Logs:
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, text)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-        button_bindings(analysistxt)
+        click_bindings(analysistxt, 'right')
 
         ttk.Button(
             analysiswin, text='Save analysis',
@@ -767,6 +787,7 @@ class Logs:
 
             logwin.minsize(minsize_h, minsize_w)
             logwin.focus_set()
+            close_with_key(logwin)
 
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, font='TkFixedFont',
@@ -776,7 +797,7 @@ class Logs:
             logtext.insert(tk.INSERT, file.read())
             logtext.see('end')
             logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-            button_bindings(logtext)
+            click_bindings(logtext, 'right')
 
         ttk.Button(
             logwin, text='Update',
@@ -817,7 +838,9 @@ class CountFyi:
         aboutwin.geometry(position_wrt_app(15, 15))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
-        button_bindings(aboutwin)
+        click_bindings(aboutwin, 'right')
+        close_with_key(aboutwin)
+
         num_doc_lines = __doc__.count('\n') + 2
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
                            width=74, height=num_doc_lines + 9,
@@ -902,7 +925,9 @@ class CountFyi:
         infowin.geometry(position_wrt_app(15, -15))
         infowin.resizable(False, False)
         infowin.title('Usage information')
-        button_bindings(infowin)
+        click_bindings(infowin, 'right')
+        close_with_key(infowin)
+
         information = ("""
             - Counting begins once "Count now" is clicked in settings window.\n
             - Interval and Summary data buttons switch visual emphasis;
