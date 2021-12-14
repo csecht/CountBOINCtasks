@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.11'
+__version__ = '0.8.12'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -129,24 +129,20 @@ def parse_args() -> None:
         sys.exit(0)
 
 
-def app_position(add_x=0, add_y=0) -> tuple:
+def position_wrt_app(mod_x=0, mod_y=0) -> str:
     """
     Sets position of a Toplevel child with respect to the
-    app (master) window. Use with the geometry() method, e.g.,
-      pos_x, pos_y = app_position()  or  = app_position(15, 15)
-      mytopwin.geometry(f'+{pos_x}+{+pos_y}')
+    app window. Use with the geometry() method, example:
+      mytopwin.geometry(position_wrt_app(15, -15))
 
-    :param add_x: optional pixels added to app's x coordinate.
-    :param add_y: optional pixels added to app's y coordinate.
+    :param mod_x: optional pixels to add/subtract to app's x coordinate.
+    :param mod_y: optional pixels to add/subtract to app's y coordinate.
     :return: x and y screen pixel positions.
     """
-    # NOTE: cannot return a geometry()-ready f-string b/c that causes a
-    #   jarring shift of the Toplevel from the default screen position to
-    #   the desired position.
-    app.update_idletasks()
-    pos_x = app.winfo_x() + add_x
-    pos_y = app.winfo_y() + add_y
-    return pos_x, pos_y
+
+    pos_x = app.winfo_x() + mod_x
+    pos_y = app.winfo_y() + mod_y
+    return f'+{pos_x}+{pos_y}'
 
 
 def enter_only_digits(entry_string, action_type) -> bool:
@@ -621,10 +617,9 @@ class Logs:
         if not summary_text and not interval_text:
             return keybind
 
-        pos_x, pos_y = app_position(15, 15)
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged data')
-        analysiswin.geometry(f'+{pos_x}+{+pos_y}')
+        analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
         analysiswin.focus_set()
 
@@ -818,9 +813,8 @@ class CountFyi:
         Basic information for gcount-tasks.
         Toplevel window called from Help menu bar.
         """
-        pos_x, pos_y = app_position(15, 15)
         aboutwin = tk.Toplevel()
-        aboutwin.geometry(f'+{pos_x}+{+pos_y}')
+        aboutwin.geometry(position_wrt_app(15, 15))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         button_bindings(aboutwin)
@@ -904,11 +898,8 @@ class CountFyi:
         Toplevel window called from Help menu bar.
         """
 
-        # Make call to app_position() before Toplevel() to avoid noticeable
-        #   shift of the info window.
-        pos_x, pos_y = app_position(15, 15)
         infowin = tk.Toplevel()
-        infowin.geometry(f'+{pos_x}+{+pos_y}')
+        infowin.geometry(position_wrt_app(15, -15))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         button_bindings(infowin)
@@ -920,7 +911,7 @@ class CountFyi:
                     the most recent hourly BOINC report.\n
             - Number of tasks in queue and Notices update every"""
                        f' {NOTICE_INTERVAL} seconds.\n'
-                       """
+            """
             - Displayed countdown clock time is approximate.\n
             - Counts and Notices histories are in the log file.\n
             - When analysis of logged hours is "cannot determine"...\n
