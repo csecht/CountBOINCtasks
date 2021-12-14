@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.14'
+__version__ = '0.8.15'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -333,7 +333,7 @@ def click_bindings(click_obj, click_type) -> None:
     :param click_obj: Name of the object in which click commands are
                       to be active.
     :param click_type: The mouse button or button modifier used;
-    'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
+                     'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
     """
     if click_type == 'right':
         if MY_OS in 'lin, win':
@@ -346,6 +346,7 @@ def close_toplevel(*keybind) -> None:
     """
     Close the toplevel window that has focus.
     Called from keybinding or right-click menu.
+    Use with close_with_key().
 
     :param keybind: Empty parameter to pass implicit keybinding event.
     """
@@ -641,10 +642,10 @@ class Logs:
         analysiswin.title('Analysis of logged data')
         analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
-        # Need to set focus when cursor is in logwin so any rt-click
+        # Need to set focus when cursor is in logwin so that any rt-click
         #   pop-up commands are executed on the logwin which may have lost
         #   focus to another object. (A rt-click does not restore focus.)
-        analysiswin.bind("<Enter>", lambda event: event.widget.focus_set())
+        analysiswin.bind('<Enter>', lambda event: event.widget.focus_set())
         close_with_key(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
@@ -793,7 +794,7 @@ class Logs:
             # Need to set focus when cursor is in logwin so any rt-click
             #   pop-up commands are executed on the logwin which may have lost
             #   focus to another object. (A rt-click does not restore focus.)
-            logwin.bind("<Enter>", lambda event: event.widget.focus_set())
+            logwin.bind('<Enter>', lambda event: event.widget.focus_set())
             close_with_key(logwin)
 
             # Use a "dark" background/foreground theme for log text.
@@ -812,10 +813,6 @@ class Logs:
         ).pack(padx=4)
 
         if filepath == cls.LOGFILE:
-            ttk.Button(
-                logwin, text='Backup',
-                command=lambda: File.backup(filepath, logwin)
-            ).pack(padx=4)
             ttk.Button(logwin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
 
@@ -824,6 +821,11 @@ class Logs:
                 logwin, text='Erase',
                 command=lambda: File.erase(cls.ANALYSISFILE, logtext, logwin)
             ).pack(padx=4)
+
+        ttk.Button(
+            logwin, text='Backup',
+            command=lambda: File.backup(filepath, logwin)
+        ).pack(padx=4)
 
 
 # ############ A MVC add-on; independent of data functions #############
@@ -1676,6 +1678,9 @@ class CountViewer(tk.Frame):
         file.add_command(
             label='Backup log file',
             command=lambda: File.backup(Logs.LOGFILE))
+        file.add_command(
+            label='Backup analysis file',
+            command=lambda: File.backup(Logs.ANALYSISFILE))
         file.add_separator()
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
