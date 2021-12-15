@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.17'
+__version__ = '0.8.18'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -633,6 +633,7 @@ class Logs:
         Called from a Log.view() button or a master keybinding.
 
         :param keybind: Empty parameter to pass implicit keybind event.
+        :param parent:
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
@@ -645,6 +646,7 @@ class Logs:
         analysiswin.title('Analysis of logged data')
         analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
+        analysiswin.focus_set()
         close_with_key(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
@@ -752,24 +754,26 @@ class Logs:
         # Need to set messages and sizes specific to OS and files.
         fnf_query = ''
         text_width = 79
-        text_height = 46
-        minsize_h = 0
+        text_height = 30
         minsize_w = 0
+        minsize_h = 0
+
         if filepath == cls.LOGFILE:
-            fnf_query = 'Was the settings log option used?'
-            minsize_h = 800
-            minsize_w = 220
+            minsize_w = 800
+            minsize_h = 220
             if MY_OS == 'win':
-                minsize_w = 200
+                minsize_w = 840
             if MY_OS == 'dar':
                 text_width = 72
+            fnf_query = 'Was the settings log option used?'
+
         if filepath == cls.ANALYSISFILE:
-            fnf_query = 'Have any analysis results been saved yet?'
             text_width = 46
-            minsize_w = 450
-            minsize_h = 420
+            minsize_w = 510
+            minsize_h = 150
             if MY_OS == 'win':
-                minsize_h = 400
+                minsize_w = 550
+            fnf_query = 'Have any analysis results been saved yet?'
 
         if not Path.exists(filepath):
             info = (f'On {gethostname()}, file is missing:\n{filepath}\n'
@@ -779,7 +783,11 @@ class Logs:
             return
 
         with open(filepath, encoding='utf-8') as file:
-            logwin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
+            logwin = tk.Toplevel(bg='SteelBlue4',
+                                 highlightthickness=5,
+                                 highlightcolor='grey95',
+                                 highlightbackground='grey75'
+                                 )  # <- bg = master_bg
             # Need to show working dir and file name in the Toplevel title.
             if MY_OS == 'win':
                 dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
@@ -789,17 +797,19 @@ class Logs:
                 dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
                 logwin.title(f'{dir_file} on {gethostname()}')
 
-            logwin.minsize(minsize_h, minsize_w)
+            logwin.minsize(minsize_w, minsize_h)
             # Need to set focus when cursor is in logwin so any rt-click
             #   pop-up commands are executed on the logwin which may have lost
             #   focus to another object. (A rt-click does not restore focus.)
-            logwin.bind('<Enter>', lambda event: event.widget.focus_set())
+            # Note: how focus shifts is OS-dependent. Disable until debugged.
+            # logwin.bind('<Enter>', lambda event: event.widget.focus_set())
             close_with_key(logwin)
 
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, font='TkFixedFont',
                                    width=text_width, height=text_height,
                                    bg='grey20', fg='grey80',
+                                   insertbackground='grey80',
                                    relief='groove', bd=4, padx=12)
             logtext.insert(tk.INSERT, file.read())
             logtext.see('end')
@@ -842,10 +852,13 @@ class CountFyi:
         Basic information for gcount-tasks.
         Toplevel window called from Help menu bar.
         """
-        aboutwin = tk.Toplevel()
+        aboutwin = tk.Toplevel(highlightthickness=5,
+                               highlightcolor='SteelBlue4',
+                               highlightbackground='grey75')
         aboutwin.geometry(position_wrt_app(15, 15))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
+        aboutwin.focus_set()
         click_bindings(aboutwin, 'right')
         close_with_key(aboutwin)
 
@@ -929,10 +942,13 @@ class CountFyi:
         Toplevel window called from Help menu bar.
         """
 
-        infowin = tk.Toplevel()
+        infowin = tk.Toplevel(highlightthickness=5,
+                              highlightcolor='SteelBlue4',
+                              highlightbackground='grey75')
         infowin.geometry(position_wrt_app(15, -15))
         infowin.resizable(False, False)
         infowin.title('Usage information')
+        infowin.focus_set()
         click_bindings(infowin, 'right')
         close_with_key(infowin)
 
