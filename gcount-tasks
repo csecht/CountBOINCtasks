@@ -804,6 +804,7 @@ class Logs:
             # Note: how focus shifts is OS-dependent. Disable until debugged.
             # logwin.bind('<Enter>', lambda event: event.widget.focus_set())
             close_with_key(logwin)
+            logwin.focus_set()
 
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, font='TkFixedFont',
