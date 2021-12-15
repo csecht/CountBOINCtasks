@@ -22,7 +22,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'files.py'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -56,6 +56,10 @@ def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
             if showmsg:
                 messagebox.showinfo(message='Results saved to:',
                                     detail=dest, parent=parent)
+            # Need to remove focus from calling Button so can execute any
+            #   immediately following rt-click commands in parent.
+            if parent:
+                parent.focus_set()
     except PermissionError:
         perr = (f'On {node()}, {dest}\n could not be opened because\n'
                 'of insufficient permissions.')
@@ -71,7 +75,6 @@ def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
                   'Was file deleted, moved or renamed?')
         messagebox.showerror(title='FILE NOT FOUND',
                              detail=fnferr, parent=parent)
-    return
 
 
 def backup(source: Path, parent=None) -> None:
@@ -99,7 +102,7 @@ def backup(source: Path, parent=None) -> None:
         filetypes=[('TEXT', '*.txt'), ],
         title=f'Backup {source.name} as')
     # Need to avoid raising a TypeError when "Cancel" is selected from
-    # filedialog and returns a null Tuple as the file path string.
+    #   filedialog and returns a null Tuple as the file path string.
     if not backupfile:
         return
     destination = Path(backupfile).resolve()
@@ -108,6 +111,10 @@ def backup(source: Path, parent=None) -> None:
         messagebox.showinfo(title='Backup completed', parent=parent,
                             message='Log file has been copied to: ',
                             detail=str(destination))
+        # Need to remove focus from calling Button so can execute any
+        #   immediately following rt-click commands in parent.
+        if parent:
+            parent.focus_set()
     except PermissionError:
         messagebox.showinfo(title='Log copy error',
                             message="Permission denied",
@@ -131,6 +138,10 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
                 'Was it deleted, moved or renamed?')
         messagebox.showerror(title='FILE NOT FOUND',
                              detail=info, parent=parent)
+        # Need to remove focus from calling Button so can execute any
+        #   immediately following rt-click commands in parent.
+        if parent:
+            parent.focus_set()
         return
 
     if MY_OS == 'dar':
@@ -147,6 +158,8 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
             with open(file, 'w') as _f:
                 _f.close()
             tktext.delete('1.0', tk.END)
+            if parent:
+                parent.focus_set()
         except PermissionError:
             info = (f'On {node()}, could not erase contents of\n'
                     f'{file}\nbecause it could not be opened.')
@@ -177,6 +190,10 @@ def update(tktext: tk.Text, file: Path, parent=None) -> None:
         tktext.insert('1.0', new_text.read())
         tktext.see(tk.END)
         tktext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        # Need to remove focus from calling Button so can execute any
+        #   immediately following rt-click commands in parent.
+        if parent:
+            parent.focus_set()
 
 
 def about() -> None:
