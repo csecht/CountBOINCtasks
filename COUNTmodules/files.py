@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Basic file handling methods used by CountBOINCtasks project.
-Functions: save_text, backup, erase, update
+Functions: append_txt(), backup(), erase(), update()
 
     Copyright (C) 2020  C. Echt
 
@@ -61,17 +61,17 @@ def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
                 'of insufficient permissions.')
         messagebox.showerror(title='FILE PERMISSION ERROR',
                              detail=perr, parent=parent)
-    except UnicodeError as err:
+    except UnicodeError as unierr:
         messagebox.showerror(title='Wrong file encoding',
-                             detail=err, parent=parent)
-        print(err)
+                             detail=unierr, parent=parent)
+        print(unierr)
     except FileNotFoundError:
         fnferr = (f'On {node()}, file is missing:\n{dest}\n'
                   'Have any analysis results been saved yet?\n'
                   'Was file deleted, moved or renamed?')
         messagebox.showerror(title='FILE NOT FOUND',
                              detail=fnferr, parent=parent)
-        return
+    return
 
 
 def backup(source: Path, parent=None) -> None:

@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.15'
+__version__ = '0.8.16'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -40,7 +40,6 @@ import statistics
 import sys
 import threading
 import time
-import tkinter
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice
@@ -312,10 +311,10 @@ def quit_gui(*keybind):
     # Write exit message to an existing log file, even if the settings
     #  do log option was not selected.
     time_now = datetime.now().strftime(LONG_STRFTIME)
-    quit_msg = f'\n{time_now}; *** User quit the program. ***\n'
-    print(quit_msg)
+    quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
+    print(quit_txt)
     if Path.exists(Logs.LOGFILE):
-        File.append_txt(Logs.LOGFILE, quit_msg, False)
+        File.append_txt(Logs.LOGFILE, quit_txt, False)
     try:
         app.update_idletasks()
         app.after(200)
@@ -355,27 +354,26 @@ def close_toplevel(*keybind) -> None:
     #  or on a child of that window, i.e. .!text or .!frame.
     # There are many children in app and any toplevel window will be
     #   listed at or toward the end, so read children list in reverse.
-    # To prevent all toplevels from closing, break loop when the focus
+    # To prevent all toplevels from closing, stop when the focus
     #   toplevel parent is found.
-
     for widget in reversed(app.winfo_children()):
         # pylint: disable=no-else-break
         if widget == app.focus_get():
             widget.destroy()
-            break
-        elif '.!text' in str(app.focus_get()):
+            return
+        if '.!text' in str(app.focus_get()):
             parent = str(app.focus_get())[:-6]
             if parent in str(widget):
                 widget.destroy()
-                break
-        elif '.!frame' in str(app.focus_get()):
+                return
+        if '.!frame' in str(app.focus_get()):
             parent = str(app.focus_get())[:-7]
             if parent in str(widget):
                 widget.destroy()
-                break
+                return
 
 
-def close_with_key(toplevel: tkinter.Toplevel) -> None:
+def close_with_key(toplevel: tk.Toplevel) -> None:
     """
     Close with an OS-specific 'w' keybinding the Toplevel window that
     has focus.
@@ -642,28 +640,24 @@ class Logs:
         analysiswin.title('Analysis of logged data')
         analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
-        # Need to set focus when cursor is in logwin so that any rt-click
-        #   pop-up commands are executed on the logwin which may have lost
-        #   focus to another object. (A rt-click does not restore focus.)
-        analysiswin.bind('<Enter>', lambda event: event.widget.focus_set())
         close_with_key(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         sep = f'\n{"─" * 46}\n'
-        text = summary_text + interval_text + sep
-        num_lines = text.count('\n')
+        txt = summary_text + interval_text + sep
+        num_lines = txt.count('\n')
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
                               width=46, height=num_lines,
                               bg='grey100', fg='grey5',
                               relief='groove', bd=4, padx=15, pady=10)
-        analysistxt.insert(1.0, text)
+        analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         click_bindings(analysistxt, 'right')
 
         ttk.Button(
             analysiswin, text='Save analysis',
             command=lambda: File.append_txt(
-                cls.ANALYSISFILE, text, True, analysiswin)).pack(padx=4)
+                cls.ANALYSISFILE, txt, True, analysiswin)).pack(padx=4)
 
         return keybind
 
