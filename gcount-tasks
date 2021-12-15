@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.16'
+__version__ = '0.8.17'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -431,10 +431,10 @@ class Logs:
     Methods to analyze and view logged task data.
     """
 
-    # Need Path.home() when running GcountTasks onefile, a frozen executable
-    #   from PyInstaller, so that log files do not end up in temp MEI folder.
+    # Need Path.home() when running GcountTasks, a frozen executable from
+    #   PyInstaller, so that written files do not end up in temp MEI folder.
     # Need Path.cwd() when running gcount-tasks from command line, so that
-    #   files end up in parent directory.
+    #   written files end up in parent directory.
     # Need .resolve() to force absolute path and handle possible symlinks.
     if getattr(sys, 'frozen', False):
         LOGFILE = Path(Path.home(), 'gcount-tasks_log.txt').resolve()
@@ -493,6 +493,9 @@ class Logs:
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         found_intvl_avgt = findall(
             r'Tasks reported .+\n.+ avg (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
+        found_intvl_t_range = findall(
+            r'Tasks reported .+\n.+\n.+ range \[(\d{2}:\d{2}:\d{2}) -- (\d{2}:\d{2}:\d{2})]',
+            logtext, MULTILINE)
 
         if found_sumrys:
             sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
@@ -509,7 +512,9 @@ class Logs:
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
             intvl_t_wtavg = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
-            intvl_t_range = interval_stats(found_intvl_avgt, 'range')
+            intvl_t_max = max(max(zip(*found_intvl_t_range)))
+            intvl_t_min = min(min(zip(*found_intvl_t_range)))
+            intvl_t_range = f'[{intvl_t_min} -- {intvl_t_max}]'
 
         # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
