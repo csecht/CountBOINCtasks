@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.18'
+__version__ = '0.8.19'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -787,7 +787,7 @@ class Logs:
                                  highlightthickness=5,
                                  highlightcolor='grey95',
                                  highlightbackground='grey75'
-                                 )  # <- bg = master_bg
+                                 )  # <- bg matches master_bg
             # Need to show working dir and file name in the Toplevel title.
             if MY_OS == 'win':
                 dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
@@ -800,11 +800,14 @@ class Logs:
             logwin.minsize(minsize_w, minsize_h)
             # Need to set focus when cursor is in logwin so any rt-click
             #   pop-up commands are executed on the logwin which may have lost
-            #   focus to another object. (A rt-click does not restore focus.)
-            # Note: how focus shifts is OS-dependent. Disable until debugged.
-            # logwin.bind('<Enter>', lambda event: event.widget.focus_set())
+            #   focus to another object. (Rt-click does not restore focus.)
+            # Note: How focus shifts toplevel stacking is OS-dependent.
+            if MY_OS in 'lin, dar':
+                logwin.bind('<Enter>', lambda event: event.widget.focus_set())
+            else:
+                logwin.focus_set()
+
             close_with_key(logwin)
-            logwin.focus_set()
 
             # Use a "dark" background/foreground theme for log text.
             logtext = ScrolledText(logwin, font='TkFixedFont',
@@ -856,7 +859,7 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(position_wrt_app(15, 15))
+        aboutwin.geometry(position_wrt_app(30, 20))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
@@ -946,7 +949,7 @@ class CountFyi:
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(position_wrt_app(15, -15))
+        infowin.geometry(position_wrt_app(30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
