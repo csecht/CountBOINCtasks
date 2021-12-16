@@ -345,7 +345,7 @@ def close_toplevel(*keybind) -> None:
     """
     Close the toplevel window that has focus.
     Called from keybinding or right-click menu.
-    Use with close_with_key().
+    Use with keybind_to_close().
 
     :param keybind: Empty parameter to pass implicit keybinding event.
     """
@@ -373,7 +373,7 @@ def close_toplevel(*keybind) -> None:
                 return
 
 
-def close_with_key(toplevel: tk.Toplevel) -> None:
+def keybind_to_close(toplevel: tk.Toplevel) -> None:
     """
     Close with an OS-specific 'w' keybinding the Toplevel window that
     has focus.
@@ -647,7 +647,7 @@ class Logs:
         analysiswin.geometry(position_wrt_app(15, 15))
         analysiswin.minsize(520, 320)
         analysiswin.focus_set()
-        close_with_key(analysiswin)
+        keybind_to_close(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         sep = f'\n{"─" * 46}\n'
@@ -798,17 +798,18 @@ class Logs:
                 filewin.title(f'{dir_file} on {gethostname()}')
 
             filewin.minsize(minsize_w, minsize_h)
-            # Need to set focus when cursor is in filewin so any rt-click pop-up
-            #   commands can be executed on the filewin which may have lost
-            #   focus to another object. (Rt-click does not restore focus,
-            #   only click does; evident when a button click remembers focus.)
-            # Note: How focus shifts toplevel stacking is OS-dependent.
+            keybind_to_close(filewin)
+
+            # Need to set focus to filewin so any rt-click pop-up commands can
+            #   immediately be executed, b/c filewin may have lost focus to
+            #   another object, e.g. Button(). Because rt-click does not restore
+            #   focus immediately (only a preceding click does), need single
+            #   focus-setting actions that works for all OS.
             if MY_OS in 'lin, dar':
                 filewin.bind('<Enter>', lambda event: event.widget.focus_set())
             else:
-                filewin.focus_set()
-
-            close_with_key(filewin)
+                filewin.bind('<Button-3>', lambda event: event.widget.focus_set())
+                filewin.bind('<Button-3>', app.update_idletasks(), add=True)
 
             # Use a "dark" background/foreground theme for log text.
             filetext = ScrolledText(filewin, font='TkFixedFont',
@@ -865,7 +866,7 @@ class CountFyi:
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
         click_bindings(aboutwin, 'right')
-        close_with_key(aboutwin)
+        keybind_to_close(aboutwin)
 
         num_doc_lines = __doc__.count('\n') + 2
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
@@ -955,7 +956,7 @@ class CountFyi:
         infowin.title('Usage information')
         infowin.focus_set()
         click_bindings(infowin, 'right')
-        close_with_key(infowin)
+        keybind_to_close(infowin)
 
         information = ("""
             - Counting begins once "Count now" is clicked in settings window.\n
