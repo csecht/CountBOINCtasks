@@ -783,62 +783,63 @@ class Logs:
             return
 
         with open(filepath, encoding='utf-8') as file:
-            logwin = tk.Toplevel(bg='SteelBlue4',
-                                 highlightthickness=5,
-                                 highlightcolor='grey95',
-                                 highlightbackground='grey75'
-                                 )  # <- bg matches master_bg
+            filewin = tk.Toplevel(bg='SteelBlue4',
+                                  highlightthickness=5,
+                                  highlightcolor='grey95',
+                                  highlightbackground='grey75'
+                                  )  # <- bg matches master_bg
             # Need to show working dir and file name in the Toplevel title.
             if MY_OS == 'win':
                 dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
-                logwin.title(f'{dir_file} on {gethostname()}')
+                filewin.title(f'{dir_file} on {gethostname()}')
 
             else:
                 dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
-                logwin.title(f'{dir_file} on {gethostname()}')
+                filewin.title(f'{dir_file} on {gethostname()}')
 
-            logwin.minsize(minsize_w, minsize_h)
-            # Need to set focus when cursor is in logwin so any rt-click
-            #   pop-up commands are executed on the logwin which may have lost
-            #   focus to another object. (Rt-click does not restore focus.)
+            filewin.minsize(minsize_w, minsize_h)
+            # Need to set focus when cursor is in filewin so any rt-click pop-up
+            #   commands can be executed on the filewin which may have lost
+            #   focus to another object. (Rt-click does not restore focus,
+            #   only click does; evident when a button click remembers focus.)
             # Note: How focus shifts toplevel stacking is OS-dependent.
             if MY_OS in 'lin, dar':
-                logwin.bind('<Enter>', lambda event: event.widget.focus_set())
+                filewin.bind('<Enter>', lambda event: event.widget.focus_set())
             else:
-                logwin.focus_set()
+                filewin.focus_set()
 
-            close_with_key(logwin)
+            close_with_key(filewin)
 
             # Use a "dark" background/foreground theme for log text.
-            logtext = ScrolledText(logwin, font='TkFixedFont',
-                                   width=text_width, height=text_height,
-                                   bg='grey20', fg='grey80',
-                                   insertbackground='grey80',
-                                   relief='groove', bd=4, padx=12)
-            logtext.insert(tk.INSERT, file.read())
-            logtext.see('end')
-            logtext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-            click_bindings(logtext, 'right')
+            filetext = ScrolledText(filewin, font='TkFixedFont',
+                                    width=text_width, height=text_height,
+                                    bg='grey20', fg='grey80',
+                                    insertbackground='grey80',
+                                    relief='groove', bd=4, padx=12
+                                    )
+            filetext.insert(tk.INSERT, file.read())
+            filetext.see('end')
+            filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+            click_bindings(filetext, 'right')
 
         ttk.Button(
-            logwin, text='Update',
-            command=(lambda: File.update(logtext, filepath, logwin))
-        ).pack(padx=4)
+            filewin, text='Update',
+            command=(lambda: File.update(filetext, filepath, filewin))
+                    ).pack(padx=4)
 
         if filepath == cls.LOGFILE:
-            ttk.Button(logwin, text='Analysis',
+            ttk.Button(filewin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
 
         if filepath == cls.ANALYSISFILE:
             ttk.Button(
-                logwin, text='Erase',
-                command=lambda: File.erase(cls.ANALYSISFILE, logtext, logwin)
-            ).pack(padx=4)
+                filewin, text='Erase',
+                command=lambda: File.erase(cls.ANALYSISFILE, filetext, filewin)
+                        ).pack(padx=4)
 
         ttk.Button(
-            logwin, text='Backup',
-            command=lambda: File.backup(filepath, logwin)
-        ).pack(padx=4)
+            filewin, text='Backup',
+            command=lambda: File.backup(filepath, filewin)).pack(padx=4)
 
 
 # ############ A MVC add-on; independent of data functions #############
