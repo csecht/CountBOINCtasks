@@ -252,9 +252,9 @@ def interval_stats(distribution: iter, stat=None, weights=None) -> str:
                  range and stdev require only distribution parameter.
     :param weights: List or tuple of corresponding sample numbers
                     (integers) for each element in distribution.
-    :return: The distribution weighted mean, range, or standard
-             deviation, each as string formatted 00:00:00. Returns
-             'cannot determine' if invalid data given for wtmean stat.
+    :return: The distribution's stat, string formatted as 00:00:00.
+             Returns 'cannot determine' if invalid data given for wtmean
+             stat.
     """
     # algorithm sources:
     # https://towardsdatascience.com/
@@ -375,8 +375,8 @@ def close_toplevel(*keybind) -> None:
 
 def keybind_to_close(toplevel: tk.Toplevel) -> None:
     """
-    Close with an OS-specific 'w' keybinding the Toplevel window that
-    has focus.
+    Close, with an OS-specific 'w' keybinding, the Toplevel window
+    that has focus. Focus is determined by call to close_toplevel().
 
     :param toplevel: Name of tk.Toplevel() object to close.
     """
@@ -388,7 +388,7 @@ def keybind_to_close(toplevel: tk.Toplevel) -> None:
 
 class RightClickCmds:
     """
-    Right-click pop-up commands to edit text;
+    Right-click pop-up commands that edit text;
     call as a Button-2 or Button-3 binding for the text-containing
     object, Text, Label, Toplevel, etc., that needs the commands.
     Use in click_bindings() function or directly.
@@ -428,7 +428,8 @@ class RightClickCmds:
 
 class Logs:
     """
-    Methods to analyze and view logged task data.
+    Methods to analyze and view task data logged to a file. Specific file
+    paths are defined as Class attributes.
     """
 
     # Need Path.home() when running GcountTasks, a frozen executable from
