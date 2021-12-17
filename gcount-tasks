@@ -645,7 +645,7 @@ class Logs:
 
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged data')
-        analysiswin.geometry(position_wrt_app(15, 15))
+        analysiswin.geometry(position_wrt_app(30, 20))
         analysiswin.minsize(520, 320)
         analysiswin.focus_set()
         keybind_to_close(analysiswin)
