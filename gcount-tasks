@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.19'
+__version__ = '0.8.20'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -241,7 +241,7 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
     return dt_obj
 
 
-def interval_stats(distribution: iter, stat=None, weights=None) -> str:
+def interval_stats(distribution: iter, stat: str, weights=None) -> str:
     """
     Calculate statistics for task times from logged interval data.
 
@@ -466,7 +466,8 @@ class Logs:
         num_tasks = 0
         intvl_cnt_avg = 0.0
         intvl_cnt_range = ''
-        intvl_t_wtavg = ''
+        intvl_t_wtmean = ''
+        intvl_t_stdev = ''
         intvl_t_range = ''
 
         recent_dates = []
@@ -476,7 +477,7 @@ class Logs:
         recent_intervals = True
 
         summary_text = ''
-        interval_text = ''
+        recent_interval_text = ''
 
         try:
             with open(cls.LOGFILE, encoding='utf-8') as file:
@@ -486,7 +487,7 @@ class Logs:
                     'Was the settings "log results" option used?\n'
                     'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
-            return summary_text, interval_text  # <- Empty strings.
+            return summary_text, recent_interval_text  # <- Empty strings.
 
         found_sumrys = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
@@ -512,10 +513,20 @@ class Logs:
             num_tasks = sum(intvl_counts)
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtavg = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_wtmean = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_stdev = interval_stats(found_intvl_avgt, 'stdev', intvl_counts)
             intvl_t_max = max(max(zip(*found_intvl_t_range)))
             intvl_t_min = min(min(zip(*found_intvl_t_range)))
             intvl_t_range = f'[{intvl_t_min} -- {intvl_t_max}]'
+
+        logged_intvl_data = (
+            'Analysis of reported tasks logged from\n'
+            f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
+            f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
+            f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+            f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
+            f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
+            f'   {intvl_t_range} range of task times\n\n')
 
         # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -535,7 +546,7 @@ class Logs:
 
         # Need to tailor report texts for various counting conditions.
         if not found_sumrys and not found_intvls:
-            interval_text = (
+            recent_interval_text = (
                 f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
                 '   There are not enough data to analyze.\n'
                 '   Need at least one summary or one\n'
@@ -543,26 +554,15 @@ class Logs:
         if not found_sumrys and found_intvls:
             summary_text = '\nNo summary counts are logged yet.\n\n'
             if num_intvl_vals == 1:
-                interval_text = (
-                    'Analysis of reported tasks logged from\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
-                    f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
-                    f'   {intvl_t_range} range of task times\n\n'
+                recent_interval_text = (
+                    f'{logged_intvl_data}'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
                     f'   {intvl_cnt_range} range of task counts\n'
                 )
             else:
-                interval_text = (
-                    'Analysis of reported tasks logged from\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
-                    f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
-                    f'   {intvl_t_range} range of task times\n\n'
+                recent_interval_text = (
+                    f'{logged_intvl_data}'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per count interval\n'
-                    f'   {intvl_cnt_range} range of task counts\n'
                     f'There are {num_intvl_vals} different interval times\n'
                     f'logged, {set(intvl_vals)},\n'
                     'so interpret results with caution.\n\n'
@@ -570,12 +570,7 @@ class Logs:
         if found_sumrys:
             if num_sumry_intvl_vals == 1:
                 summary_text = (
-                    'Analysis of reported tasks logged from\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
-                    f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
-                    f'   {intvl_t_range} range of task times\n\n'
+                    f'{logged_intvl_data}'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n'
                     f'   {str(len(sumry_counts)).ljust(7)} summaries logged\n'
@@ -585,12 +580,7 @@ class Logs:
                 )
             else:
                 summary_text = (
-                    'Analysis of reported tasks logged from\n'
-                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
-                    f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                    f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
-                    f'   {intvl_t_wtavg.ljust(11)} weighted mean task time\n'
-                    f'   {intvl_t_range} range of task times\n\n'
+                    f'{logged_intvl_data}'
                     'Summary data logged from:\n'
                     f'{sumry_dates[0]} to {sumry_dates[-1]}\n\n'
                     f'   {str(len(sumry_counts)).ljust(7)} summaries logged\n'
@@ -602,17 +592,17 @@ class Logs:
                 )
 
         if found_sumrys and found_intvls:
-            # Summary text has been defined, so now do interval text.
+            # Summary text has been defined, so now do supplementary interval text.
             if recent_intervals:
                 if num_recent_intvl_vals == 1:
-                    interval_text = (
+                    recent_interval_text = (
                         'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n'
                         f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals '
                         f'of {recent_intvl_vals[0]}\n'
                     )
                 else:
-                    interval_text = (
+                    recent_interval_text = (
                         'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
                         f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals\n'
@@ -621,9 +611,9 @@ class Logs:
                         '   so interpret results with caution.\n'
                     )
             else:
-                interval_text = 'No counts logged after last Summary.\n'
+                recent_interval_text = 'No counts logged after last Summary.\n'
 
-        return summary_text, interval_text
+        return summary_text, recent_interval_text
 
     @classmethod
     def show_analysis(cls, *keybind):
