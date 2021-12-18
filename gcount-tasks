@@ -249,9 +249,10 @@ def interval_stats(distribution: iter, stat: str, weights=None) -> str:
                          00:00:00, or as seconds (floats or integers).
     :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
                  wtmean requires distribution and weights parameters.
-                 range and stdev require only distribution parameter.
+                 range and stdev do not use the weights parameter.
     :param weights: List or tuple of corresponding sample numbers
-                    (integers) for each element in distribution.
+                    (integers) for each element in distribution. Used
+                    only for the 'wtmean' stat.
     :return: The distribution's stat, string formatted as 00:00:00.
              Returns 'cannot determine' if invalid data given for wtmean
              stat.
@@ -281,8 +282,8 @@ def interval_stats(distribution: iter, stat: str, weights=None) -> str:
     else:
         dist_sec = list(distribution)
 
-    #   Need to convert the timedelta clock fmt object to a string for display,
-    #   and remove microseconds from the clock fmt string.
+    # Need to convert the timedelta clock fmt object to a string for display,
+    #    and remove microseconds from the clock fmt string.
     if stat == 'range':
         shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
         longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
@@ -515,9 +516,14 @@ class Logs:
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
             intvl_t_wtmean = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
             intvl_t_stdev = interval_stats(found_intvl_avgt, 'stdev', intvl_counts)
-            intvl_t_max = max(max(zip(*found_intvl_t_range)))
-            intvl_t_min = min(min(zip(*found_intvl_t_range)))
-            intvl_t_range = f'[{intvl_t_min} -- {intvl_t_max}]'
+            # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
+            #   This works b/c sum() concatenates each element of each tuple
+            #     into the starting value (), a tuple.
+            intvl_t_range = interval_stats(sum(found_intvl_t_range, ()), 'range')
+            # Alternative:
+            # intvl_t_min = min(min(zip(*found_intvl_t_range)))
+            # intvl_t_max = max(max(zip(*found_intvl_t_range)))
+            # intvl_t_range = f'[{intvl_t_min} -- {intvl_t_max}]'
 
         logged_intvl_data = (
             'Analysis of reported tasks logged from\n'
@@ -624,7 +630,6 @@ class Logs:
         Called from a Log.view() button or a master keybinding.
 
         :param keybind: Empty parameter to pass implicit keybind event.
-        :param parent:
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
