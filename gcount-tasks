@@ -200,7 +200,7 @@ def ttimes_stats(tasktimes: iter) -> dict:
     numtasks = len(tasktimes)
     total = TC.sec_to_format(int(sum(tasktimes)), 'std')
     if numtasks > 1:
-        avg = TC.sec_to_format(int(statistics.mean(tasktimes)), 'std')
+        avg = TC.sec_to_format(int(statistics.fmean(tasktimes)), 'std')
         stdev = TC.sec_to_format(int(statistics.stdev(tasktimes)), 'std')
         low = TC.sec_to_format(int(min(tasktimes)), 'std')
         high = TC.sec_to_format(int(max(tasktimes)), 'std')
@@ -235,7 +235,7 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
                    ex '1970-Jan-01 00:00:00'.
     :param str_format: datetime.strftime() string;
                        ex '%Y-%b-%d %H:%M:%S'.
-    :return: datetime object formatted to str_format.
+    :return: datetime object formatted to *str_format*.
     """
     dt_obj = datetime.strptime(dt_str, str_format)
     return dt_obj
@@ -243,19 +243,19 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
 
 def interval_stats(distribution: iter, stat: str, weights=None) -> str:
     """
-    Calculate statistics for task times from logged interval data.
+    Calculate statistics for task times obtained from logged interval
+    data.
 
-    :param distribution: List or tuple of avg times, as string formatted
-                         00:00:00, or as seconds (floats or integers).
+    :param distribution: List or tuple of avg times, in string format
+                         ('00:00:00'), or as seconds (floats or integers).
     :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
-                 wtmean requires distribution and weights parameters.
-                 range and stdev do not use the weights parameter.
+                 'wtmean' requires *distribution* and *weights* parameters.
+                 'range' and 'stdev' do not use *weights*.
     :param weights: List or tuple of corresponding sample numbers
-                    (integers) for each element in distribution. Used
-                    only for the 'wtmean' stat.
-    :return: The distribution's stat, string formatted as 00:00:00.
-             Returns 'cannot determine' if invalid data given for wtmean
-             stat.
+                    (integers) for each element in *distribution*. Used
+                    only for the 'wtmean' *stat*.
+    :return: The distribution's statistic, as formatted string, '00:00:00'.
+             Returns 'cannot determine' if invalid data given for 'wtmean'.
     """
     # algorithm sources:
     # https://towardsdatascience.com/
@@ -284,15 +284,15 @@ def interval_stats(distribution: iter, stat: str, weights=None) -> str:
 
     # Need to convert the timedelta clock fmt object to a string for display,
     #    and remove microseconds from the clock fmt string.
-    if stat == 'range':
-        shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
-        longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
-        return f'[{shortest} -- {longest}]'
     if stat == 'wtmean':
         numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
         denominator = sum(weights)
         return str(
             timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
+    if stat == 'range':
+        shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
+        longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
+        return f'[{shortest} -- {longest}]'
     if stat == 'stdev':
         return str(
             timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
@@ -519,9 +519,10 @@ class Logs:
             intvl_t_wtmean = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
             intvl_t_stdev = interval_stats(found_intvl_avgt, 'stdev', intvl_counts)
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
-            #   This works b/c sum() can't sum tuples but can concatenate elements
-            #     of tuples and lists; with a starting value of (), a tuple, it
-            #     repacks each element of each tuple into one tuple.
+            # This works b/c while sum() can't sum tuples or strings, it can
+            #   concatenate elements of tuples and lists; with a sum() starting
+            #   value of (), a tuple, it flattens the list of string tuples into
+            #   one tuple of strings.
             intvl_t_range = interval_stats(sum(found_intvl_t_range, ()), 'range')
             # Alternative:
             # intvl_t_min = min(min(zip(*found_intvl_t_range)))
