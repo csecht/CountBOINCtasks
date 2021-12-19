@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.20'
+__version__ = '0.8.21'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -475,6 +475,8 @@ class Logs:
         recent_intvl_vals = []
         num_recent_intvl_vals = 0
         recent_counts = []
+        num_recent_tasks = 0
+        recent_t_wtmean = ''
         recent_intervals = True
 
         summary_text = ''
@@ -553,6 +555,15 @@ class Logs:
                 recent_dates, recent_intvl_vals, recent_cnts = zip(*found_intvls[index_recent:])
                 num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
+                num_recent_tasks = sum(recent_counts)
+                recent_t_wtmean = interval_stats(
+                    found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
+                # recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
+                # recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
+                # recent_t_stdev = interval_stats(
+                #     found_intvl_avgt[index_recent:], 'stdev', recent_counts)
+                # recent_t_range = interval_stats(sum(
+                #     found_intvl_t_range[index_recent:], ()), 'range')
 
         # Need to tailor report texts for various counting conditions.
         if not found_sumrys and not found_intvls:
@@ -602,20 +613,23 @@ class Logs:
                 )
 
         if found_sumrys and found_intvls:
-            # Summary text has been defined, so now do supplementary interval text.
+            # Summary text has been defined, so now do recent interval text.
             if recent_intervals:
                 if num_recent_intvl_vals == 1:
                     recent_interval_text = (
                         'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n'
-                        f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals '
-                        f'of {recent_intvl_vals[0]}\n'
+                        f'   {str(num_recent_tasks).ljust(11)} '
+                        f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
+                        f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
                     )
                 else:
                     recent_interval_text = (
                         'Since last Summary, additional counts from:\n'
                         f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                        f'   {sum(recent_counts)} tasks in {len(recent_counts)} intervals\n'
+                        f'   {str(num_recent_tasks).ljust(11)} '
+                        f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
+                        f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
                         f'There are {num_recent_intvl_vals} different interval times,\n'
                         f'   {set(recent_intvl_vals)},\n'
                         '   so interpret results with caution.\n'
