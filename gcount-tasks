@@ -349,7 +349,7 @@ def click_bindings(click_obj, click_type) -> None:
             click_obj.bind('<Button-2>', popup_menu)
 
 
-def close_toplevel(*keybind) -> None:
+def close_toplevel(keybind=None) -> None:
     """
     Close the toplevel window that has focus.
     Called from keybinding or right-click menu.
@@ -368,17 +368,17 @@ def close_toplevel(*keybind) -> None:
         # pylint: disable=no-else-break
         if widget == app.focus_get():
             widget.destroy()
-            return
+            return keybind
         if '.!text' in str(app.focus_get()):
             parent = str(app.focus_get())[:-6]
             if parent in str(widget):
                 widget.destroy()
-                return
+                return keybind
         if '.!frame' in str(app.focus_get()):
             parent = str(app.focus_get())[:-7]
             if parent in str(widget):
                 widget.destroy()
-                return
+                return keybind
 
 
 def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
@@ -426,7 +426,7 @@ def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
 
 
 # noinspection PyBroadException
-def quit_gui(*keybind):
+def quit_gui(keybind=None):
     """
     Error-free and informative exit from the program.
     Called from multiple widgets or keybindings.
@@ -2289,7 +2289,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def app_got_focus(self, *click_event):
+    def app_got_focus(self, click_event=None):
         """
         Give menu bar headings normal color when app has focus.
         :param click_event: FocusIn mouse click.
@@ -2303,7 +2303,7 @@ class CountViewer(tk.Frame):
             self.share.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
         return click_event
 
-    def app_lost_focus(self, *click_event):
+    def app_lost_focus(self, click_event=None):
         """
         Give menu bar headings grey-out color when app looses focus.
 
@@ -2394,7 +2394,7 @@ class CountController(tk.Tk):
         CountFyi(share=self).information()
 
     # pylint: disable=unused-argument
-    def compliment(self, *keybind):
+    def compliment(self, keybind=None):
         """Is called from Help menu bar. A silly diversion.
 
         :param keybind: Empty parameter to pass implicit keybinding event.
