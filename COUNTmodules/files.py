@@ -54,7 +54,7 @@ def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
         with open(dest, 'a', encoding='utf-8') as saved:
             saved.write(savetxt)
             if showmsg:
-                messagebox.showinfo(message='Results saved to:',
+                messagebox.showinfo(message='Results saved (appended) to:',
                                     detail=dest, parent=parent)
             # Need to remove focus from calling Button so can execute any
             #   immediately following rt-click commands in parent.
