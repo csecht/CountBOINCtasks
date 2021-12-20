@@ -364,6 +364,7 @@ def close_toplevel(keybind=None) -> None:
     #   listed at or toward the end, so read children list in reverse.
     # To prevent all toplevels from closing, stop when the focus
     #   toplevel parent is found.
+
     for widget in reversed(app.winfo_children()):
         # pylint: disable=no-else-break
         if widget == app.focus_get():
@@ -393,11 +394,10 @@ def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
     append txt string to the file MYFILEPATH.
 
     :param toplevel: Name of tk.Toplevel() object.
-    :param func: Function to execute: 'close', 'append', 'save', 'show'.
+    :param func: Function to execute: 'close', 'append', 'save'.
                  For 'close', the key is 'w' with OS-specific modifier.
                  For 'append' and 'save', the key is 's' with
                  OS-specific modifier.
-                 For 'show', the key is Shift-Control-L.
     :param filepath: A Path file object; use with *func* 'save' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -419,10 +419,6 @@ def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
     if func == 'save':
         toplevel.bind('<Control-s>',
                       lambda event: File.backup(filepath))
-
-    if func == 'show':
-        toplevel.bind('<Shift-Control-L>',
-                      Logs.show_analysis)
 
 
 # noinspection PyBroadException
@@ -704,6 +700,8 @@ class Logs:
 
         keybind_to_toplevel(analysiswin, 'close')
         keybind_to_toplevel(analysiswin, 'append', cls.ANALYSISFILE, txt)
+        analysiswin.bind('<Shift-Control-A>',
+                         lambda event: cls.view(cls.ANALYSISFILE))
 
         ttk.Button(
             analysiswin, text='Save analysis',
@@ -877,11 +875,9 @@ class Logs:
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
-            keybind_to_toplevel(filewin, 'show', filepath)
-            # NOTE: shift-ctrl-A also will select text to beginning of
-            #   cursor line in filetext; add=False does not override.
+            filewin.bind('<Shift-Control-L>', cls.show_analysis)
             filewin.bind('<Shift-Control-A>',
-                         lambda event: Logs.view(Logs.ANALYSISFILE))
+                         lambda _: cls.view(cls.ANALYSISFILE))
 
         if filepath == cls.ANALYSISFILE:
             ttk.Button(
@@ -915,7 +911,6 @@ class CountFyi:
         aboutwin.geometry(position_wrt_app(30, 20))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
-        aboutwin.focus_set()
         click_bindings(aboutwin, 'right')
         keybind_to_toplevel(aboutwin, 'close')
 
@@ -936,6 +931,7 @@ class CountFyi:
                         f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
                         f'{"Status:".ljust(13)}{__status__}\n')
         abouttxt.pack()
+        abouttxt.focus_set()
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -1005,7 +1001,6 @@ class CountFyi:
         infowin.geometry(position_wrt_app(30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
-        infowin.focus_set()
         click_bindings(infowin, 'right')
         keybind_to_toplevel(infowin, 'close')
 
@@ -1023,7 +1018,7 @@ class CountFyi:
             - When analysis of logged hours is "cannot determine"...\n
                     Quick fix: backup then delete log file, restart program.\n
             - Right-click actions only affect on-screen text, not file content\n
-            - Common key actions to close window and save text work as expected.
+            - Key commands to close window and save text work as expected.
             """)
 
         num_doc_lines = information.count('\n')
@@ -1038,6 +1033,7 @@ class CountFyi:
                           relief='groove', padx=15)
         infotxt.insert(1.0, information)
         infotxt.pack()
+        infotxt.focus_set()
 
 
 # ############################ MVC Classes #############################
@@ -1821,12 +1817,18 @@ class CountViewer(tk.Frame):
                          lambda event: Logs.view(Logs.ANALYSISFILE))
         self.master.bind('<Shift-Control-C>', self.share.compliment)
 
-        # Need to specify Ctrl-A for Linux b/c in tkinter that key is
-        #   bound to <<LineStart>>, not <<SelectAll>>, for some reason?
+        # Need to specify Ctrl-a for Linux b/c in tkinter that key is
+        #   bound to the tkinter predefined virtual event <<LineStart>>,
+        #   not <<SelectAll>>, for some reason? And  Shift-Control-A
+        #   will select text from cursor to <<LineStart>>.
         if MY_OS in 'lin':
             def select_all():
                 app.focus_get().event_generate('<<SelectAll>>')
             self.master.bind_all('<Control-a>', lambda _: select_all())
+
+            def select_none():
+                app.focus_get().event_generate('<<SelectNone>>')
+            self.master.bind_all('<Shift-Control-A>', lambda _: select_none())
 
         # Theme controls entire window theme, but only for ttk.Style objects.
         # Options: classic, alt, clam, default, aqua(MacOS only)
