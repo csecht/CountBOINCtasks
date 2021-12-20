@@ -48,6 +48,7 @@ from socket import gethostname
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_command, time_convert, files
+
 BC = boinc_command.BoincCommand()
 TC = time_convert
 File = files
@@ -300,53 +301,59 @@ def interval_stats(distribution: iter, stat: str, weights=None) -> str:
     return 'unexpected condition'
 
 
-# noinspection PyBroadException
-def quit_gui(*keybind):
-    """
-    Error-free and informative exit from the program.
-    Called from multiple widgets or keybindings.
-
-    :param keybind: Empty parameter to pass implicit keybinding event.
-    """
-
-    # Write exit message to an existing log file, even if the settings
-    #  do log option was not selected.
-    time_now = datetime.now().strftime(LONG_STRFTIME)
-    quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
-    print(quit_txt)
-    if Path.exists(Logs.LOGFILE):
-        File.append_txt(Logs.LOGFILE, quit_txt, False)
-    try:
-        app.update_idletasks()
-        app.after(200)
-        app.destroy()
-    # pylint: disable=broad-except
-    except Exception:
-        sys.exit(0)
-    return keybind
-
-
 def click_bindings(click_obj, click_type) -> None:
     """
     Mouse button bindings for the named object.
+    Creates pop-up menu of commands for the clicked object.
 
     :param click_obj: Name of the object in which click commands are
                       to be active.
-    :param click_type: The mouse button or button modifier used;
+    :param click_type: Example mouse button or button modifiers;
                      'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
     """
+
+    def on_click(event, command):
+        """
+        Sets menu command to the selected predefined virtual event.
+        Event is a unifying binding across multiple platforms.
+        https://www.tcl.tk/man/tcl8.6/TkCmd/event.htm#M7
+        """
+        event.widget.event_generate(f'<<{command}>>')
+
+    # Based on: https://stackoverflow.com/questions/57701023/
+    def popup_menu(event):
+        right_click_menu = tk.Menu(None, tearoff=0, takefocus=0)
+
+        right_click_menu.add_command(
+            label='Select all',
+            command=lambda: on_click(event, 'SelectAll'))
+        right_click_menu.add_command(
+            label='Copy',
+            command=lambda: on_click(event, 'Copy'))
+        right_click_menu.add_command(
+            label='Paste',
+            command=lambda: on_click(event, 'Paste'))
+        right_click_menu.add_command(
+            label='Cut',
+            command=lambda: on_click(event, 'Cut'))
+        right_click_menu.add(tk.SEPARATOR)
+        right_click_menu.add_command(label='Close window',
+                                     command=close_toplevel)
+
+        right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
+
     if click_type == 'right':
         if MY_OS in 'lin, win':
-            click_obj.bind('<Button-3>', RightClickCmds)
+            click_obj.bind('<Button-3>', popup_menu)
         elif MY_OS == 'dar':
-            click_obj.bind('<Button-2>', RightClickCmds)
+            click_obj.bind('<Button-2>', popup_menu)
 
 
 def close_toplevel(*keybind) -> None:
     """
     Close the toplevel window that has focus.
     Called from keybinding or right-click menu.
-    Use with keybind_to_close().
+    Called from keybind_to_toplevel().
 
     :param keybind: Empty parameter to pass implicit keybinding event.
     """
@@ -374,57 +381,74 @@ def close_toplevel(*keybind) -> None:
                 return
 
 
-def keybind_to_close(toplevel: tk.Toplevel) -> None:
+def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
     """
-    Close, with an OS-specific 'w' keybinding, the Toplevel window
-    that has focus. Focus is determined by call to close_toplevel().
+    Bind a key to a function for the specified Toplevel() window. Use to
+    add standard keyboard actions or to provide keybinding equivalents
+    for button commands used in the Toplevel() window.
 
-    :param toplevel: Name of tk.Toplevel() object to close.
+    Example usage in a function that creates mytopwin:
+    keybind_to_toplevel(mytopwin, 'close'), Mod-w will close mytopwin.
+    keybind_to_toplevel(mytopwin, 'append', MYFILEPATH, txt), Mod-s will
+    append txt string to the file MYFILEPATH.
+
+    :param toplevel: Name of tk.Toplevel() object.
+    :param func: Function to execute: 'close', 'append', 'save', 'show'.
+                 For 'close', the key is 'w' with OS-specific modifier.
+                 For 'append' and 'save', the key is 's' with
+                 OS-specific modifier.
+                 For 'show', the key is Shift-Control-L.
+    :param filepath: A Path file object; use with *func* 'save' and
+                     'append'.
+    :param text: Text to append to *filepath*; use with *func* 'append'.
     """
+    cmd_key = ''
     if MY_OS in 'lin, win':
-        toplevel.bind('<Control-w>', close_toplevel)
+        cmd_key = 'Control'
     elif MY_OS == 'dar':
-        toplevel.bind('<Command-w>', close_toplevel)
+        cmd_key = 'Command'
+
+    if func == 'close':
+        toplevel.bind(f'<{f"{cmd_key}"}-w>',
+                      close_toplevel)
+
+    if func == 'append':
+        toplevel.bind(f'<{f"{cmd_key}"}-s>',
+                      lambda event: File.append_txt(filepath, text, True))
+
+    if func == 'save':
+        toplevel.bind('<Control-s>',
+                      lambda event: File.backup(filepath))
+
+    if func == 'show':
+        toplevel.bind('<Shift-Control-L>',
+                      Logs.show_analysis)
 
 
-class RightClickCmds:
+# noinspection PyBroadException
+def quit_gui(*keybind):
     """
-    Right-click pop-up commands that edit text;
-    call as a Button-2 or Button-3 binding for the text-containing
-    object, Text, Label, Toplevel, etc., that needs the commands.
-    Use in click_bindings() function or directly.
+    Error-free and informative exit from the program.
+    Called from multiple widgets or keybindings.
+
+    :param keybind: Empty parameter to pass implicit keybinding event.
     """
 
-    # Based on: https://stackoverflow.com/questions/57701023/
-    def __init__(self, event):
-        right_click_menu = tk.Menu(None, tearoff=0, takefocus=0)
-
-        right_click_menu.add_command(
-            label='Select all',
-            command=lambda: self.on_click(event, 'SelectAll'))
-        right_click_menu.add_command(
-            label='Copy',
-            command=lambda: self.on_click(event, 'Copy'))
-        right_click_menu.add_command(
-            label='Paste',
-            command=lambda: self.on_click(event, 'Paste'))
-        right_click_menu.add_command(
-            label='Cut',
-            command=lambda: self.on_click(event, 'Cut'))
-        right_click_menu.add(tk.SEPARATOR)
-        right_click_menu.add_command(label='Close window',
-                                     command=close_toplevel)
-
-        right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
-
-    @staticmethod
-    def on_click(event, command):
-        """
-        Sets menu command to the selected predefined virtual event.
-        Event is a unifying binding across multiple platforms.
-        https://www.tcl.tk/man/tcl8.6/TkCmd/event.htm#M7
-        """
-        event.widget.event_generate(f'<<{command}>>')
+    # Write exit message to an existing log file, even if the settings
+    #  do log option was not selected.
+    time_now = datetime.now().strftime(LONG_STRFTIME)
+    quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
+    print(quit_txt)
+    if Path.exists(Logs.LOGFILE):
+        File.append_txt(Logs.LOGFILE, quit_txt, False)
+    try:
+        app.update_idletasks()
+        app.after(200)
+        app.destroy()
+    # pylint: disable=broad-except
+    except Exception:
+        sys.exit(0)
+    return keybind
 
 
 class Logs:
@@ -661,7 +685,6 @@ class Logs:
         analysiswin.geometry(position_wrt_app(30, 20))
         analysiswin.minsize(520, 320)
         analysiswin.focus_set()
-        keybind_to_close(analysiswin)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         # print(ord("─")) -> 9472
@@ -678,6 +701,9 @@ class Logs:
         analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         click_bindings(analysistxt, 'right')
+
+        keybind_to_toplevel(analysiswin, 'close')
+        keybind_to_toplevel(analysiswin, 'append', cls.ANALYSISFILE, txt)
 
         ttk.Button(
             analysiswin, text='Save analysis',
@@ -816,7 +842,6 @@ class Logs:
                 filewin.title(f'{dir_file} on {gethostname()}')
 
             filewin.minsize(minsize_w, minsize_h)
-            keybind_to_close(filewin)
 
             # Need to set focus to filewin so any rt-click pop-up commands can
             #   immediately be executed, b/c filewin may have lost focus to
@@ -841,20 +866,28 @@ class Logs:
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
             click_bindings(filetext, 'right')
 
+        keybind_to_toplevel(filewin, 'close')
+        keybind_to_toplevel(filewin, 'save', filepath)
+
         ttk.Button(
             filewin, text='Update',
             command=(lambda: File.update(filetext, filepath, filewin))
-                    ).pack(padx=4)
+        ).pack(padx=4)
 
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
                        command=cls.show_analysis).pack(padx=4)
+            keybind_to_toplevel(filewin, 'show', filepath)
+            # NOTE: shift-ctrl-A also will select text to beginning of
+            #   cursor line in filetext; add=False does not override.
+            filewin.bind('<Shift-Control-A>',
+                         lambda event: Logs.view(Logs.ANALYSISFILE))
 
         if filepath == cls.ANALYSISFILE:
             ttk.Button(
                 filewin, text='Erase',
                 command=lambda: File.erase(cls.ANALYSISFILE, filetext, filewin)
-                        ).pack(padx=4)
+            ).pack(padx=4)
 
         ttk.Button(
             filewin, text='Backup',
@@ -884,7 +917,7 @@ class CountFyi:
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
         click_bindings(aboutwin, 'right')
-        keybind_to_close(aboutwin)
+        keybind_to_toplevel(aboutwin, 'close')
 
         num_doc_lines = __doc__.count('\n') + 2
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
@@ -974,7 +1007,7 @@ class CountFyi:
         infowin.title('Usage information')
         infowin.focus_set()
         click_bindings(infowin, 'right')
-        keybind_to_close(infowin)
+        keybind_to_toplevel(infowin, 'close')
 
         information = ("""
             - Counting begins once "Count now" is clicked in settings window.\n
@@ -984,12 +1017,13 @@ class CountFyi:
                     the most recent hourly BOINC report.\n
             - Number of tasks in queue and Notices update every"""
                        f' {NOTICE_INTERVAL} seconds.\n'
-            """
+                       """
             - Displayed countdown clock time is approximate.\n
             - Counts and Notices histories are in the log file.\n
             - When analysis of logged hours is "cannot determine"...\n
                     Quick fix: backup then delete log file, restart program.\n
-            - Right-click actions only affect on-screen text, not file content.
+            - Right-click actions only affect on-screen text, not file content\n
+            - Common key actions to close window and save text work as expected.
             """)
 
         num_doc_lines = information.count('\n')
@@ -1752,7 +1786,7 @@ class CountViewer(tk.Frame):
         #   interval completes; it is re-gridded in interval_data().
         # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
         self.share.starting_b = tk.Button(self.master, text='Starting data',
-                                          width=18,  disabledforeground='grey10',
+                                          width=18, disabledforeground='grey10',
                                           state=tk.DISABLED)
         self.share.intvl_b = ttk.Button(self.master, text='Interval data', width=18,
                                         command=self.emphasize_intvl_data)
@@ -1777,13 +1811,14 @@ class CountViewer(tk.Frame):
         self.master.protocol('WM_DELETE_WINDOW', quit_gui)
 
         self.master.bind_all('<Escape>', quit_gui)
-        self.master.bind_all('<Control-q>', quit_gui)
+        self.master.bind('<Control-q>', quit_gui)
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
-        self.master.bind_all('<Control-l>',
-                             lambda event: Logs.view(Logs.LOGFILE))
-        self.master.bind_all('<Shift-Control-L>', Logs.show_analysis)
-        self.master.bind_all('<Shift-Control-A>',
-                             lambda event: Logs.view(Logs.ANALYSISFILE))
+        # Note: Toplevel key bindings are set with keybind_to_toplevel().
+        self.master.bind('<Control-l>',
+                         lambda event: Logs.view(Logs.LOGFILE))
+        self.master.bind('<Shift-Control-L>', Logs.show_analysis)
+        self.master.bind('<Shift-Control-A>',
+                         lambda event: Logs.view(Logs.ANALYSISFILE))
         self.master.bind('<Shift-Control-C>', self.share.compliment)
 
         # Need to specify Ctrl-A for Linux b/c in tkinter that key is
@@ -2111,7 +2146,7 @@ class CountViewer(tk.Frame):
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
             # Need to offer user valid alternatives to bad times entered.
-            if self.share.setting['sumry_t_unit'].get()  == 'min':
+            if self.share.setting['sumry_t_unit'].get() == 'min':
                 self.share.setting['sumry_t_value'].set(2 * interval_m)
             elif self.share.setting['sumry_t_unit'].get() == 'hr':
                 self.share.setting['sumry_t_value'].set(2 * sumry_value)
