@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Basic file handling methods used by CountBOINCtasks project.
-Functions: append_txt(), backup(), erase(), update()
+Functions: append_txt(), save_as(), erase(), update()
 
     Copyright (C) 2020  C. Echt
 
@@ -22,7 +22,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'files.py'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -77,12 +77,12 @@ def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
                              detail=fnferr, parent=parent)
 
 
-def backup(source: Path, parent=None) -> None:
+def save_as(source: Path, parent=None) -> None:
     """
     Copy source file to a destination of user's choice;
     timestamp provided.
 
-    :param source: A Path object of the file to backup.
+    :param source: A Path object of the file to back up.
     :param parent: Toplevel object over which messagebox appears;
                    defaults to app (master) window.
     """
@@ -94,7 +94,7 @@ def backup(source: Path, parent=None) -> None:
                              parent=parent)
         return
 
-    # Offer to use a timestamp for each backup file saved.
+    # Offer to use a timestamp for each save_as file saved.
     _ts = datetime.now().strftime("%d%m%Y_%H%M")
     backupname = f'{source.stem}({_ts}){source.suffix}'
     backupfile = filedialog.asksaveasfilename(
