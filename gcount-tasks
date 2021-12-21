@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.22'
+__version__ = '0.8.23'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -242,7 +242,7 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
     return dt_obj
 
 
-def interval_stats(distribution: iter, stat: str, weights=None) -> str:
+def interval_stat(distribution: iter, stat: str, weights=None) -> str:
     """
     Calculate statistics for task times obtained from logged interval
     data.
@@ -301,6 +301,39 @@ def interval_stats(distribution: iter, stat: str, weights=None) -> str:
     return 'unexpected condition'
 
 
+def close_toplevel(keybind=None) -> None:
+    """
+    Close the toplevel window that has focus.
+    Called from keybinding or right-click menu.
+    Called from keybind_to_toplevel().
+
+    :param keybind: Empty parameter to pass implicit keybinding event.
+    """
+    # Based on https://stackoverflow.com/questions/66384144/
+    # Need to cover all cases when the focus is on any toplevel window,
+    #  or on a child of that window, i.e. .!text or .!frame.
+    # There are many children in app and any toplevel window will be
+    #   listed at or toward the end, so read children list in reverse.
+    # To prevent all toplevels from closing, stop when the focus
+    #   toplevel parent is found.
+
+    for widget in reversed(app.winfo_children()):
+        # pylint: disable=no-else-break
+        if widget == app.focus_get():
+            widget.destroy()
+            return keybind
+        if '.!text' in str(app.focus_get()):
+            parent = str(app.focus_get())[:-6]
+            if parent in str(widget):
+                widget.destroy()
+                return keybind
+        if '.!frame' in str(app.focus_get()):
+            parent = str(app.focus_get())[:-7]
+            if parent in str(widget):
+                widget.destroy()
+                return keybind
+
+
 def click_bindings(click_obj, click_type) -> None:
     """
     Mouse button bindings for the named object.
@@ -349,39 +382,6 @@ def click_bindings(click_obj, click_type) -> None:
             click_obj.bind('<Button-2>', popup_menu)
 
 
-def close_toplevel(keybind=None) -> None:
-    """
-    Close the toplevel window that has focus.
-    Called from keybinding or right-click menu.
-    Called from keybind_to_toplevel().
-
-    :param keybind: Empty parameter to pass implicit keybinding event.
-    """
-    # Based on https://stackoverflow.com/questions/66384144/
-    # Need to cover all cases when the focus is on any toplevel window,
-    #  or on a child of that window, i.e. .!text or .!frame.
-    # There are many children in app and any toplevel window will be
-    #   listed at or toward the end, so read children list in reverse.
-    # To prevent all toplevels from closing, stop when the focus
-    #   toplevel parent is found.
-
-    for widget in reversed(app.winfo_children()):
-        # pylint: disable=no-else-break
-        if widget == app.focus_get():
-            widget.destroy()
-            return keybind
-        if '.!text' in str(app.focus_get()):
-            parent = str(app.focus_get())[:-6]
-            if parent in str(widget):
-                widget.destroy()
-                return keybind
-        if '.!frame' in str(app.focus_get()):
-            parent = str(app.focus_get())[:-7]
-            if parent in str(widget):
-                widget.destroy()
-                return keybind
-
-
 def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
@@ -394,11 +394,11 @@ def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
     append txt string to the file MYFILEPATH.
 
     :param toplevel: Name of tk.Toplevel() object.
-    :param func: Function to execute: 'close', 'append', 'save'.
+    :param func: Function to execute: 'close', 'append', 'saveas'.
                  For 'close', the key is 'w' with OS-specific modifier.
-                 For 'append' and 'save', the key is 's' with
+                 For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
-    :param filepath: A Path file object; use with *func* 'save' and
+    :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
     """
@@ -409,16 +409,15 @@ def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
         cmd_key = 'Command'
 
     if func == 'close':
-        toplevel.bind(f'<{f"{cmd_key}"}-w>',
-                      close_toplevel)
+        toplevel.bind(f'<{f"{cmd_key}"}-w>', close_toplevel)
 
     if func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
                       lambda _: File.append_txt(filepath, text, True))
 
-    if func == 'save':
-        toplevel.bind('<Control-s>',
-                      lambda _: File.backup(filepath))
+    if func == 'saveas':
+        toplevel.bind(f'<{f"{cmd_key}"}-s>',
+                      lambda _: File.save_as(filepath))
 
 
 # noinspection PyBroadException
@@ -533,18 +532,12 @@ class Logs:
             num_tasks = sum(intvl_counts)
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtmean = interval_stats(found_intvl_avgt, 'wtmean', intvl_counts)
-            intvl_t_stdev = interval_stats(found_intvl_avgt, 'stdev', intvl_counts)
+            intvl_t_wtmean = interval_stat(found_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_stdev = interval_stat(found_intvl_avgt, 'stdev', intvl_counts)
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
-            # This works b/c while sum() can't sum tuples or strings, it can
-            #   concatenate elements of tuples and lists; with a sum() starting
-            #   value of (), a tuple, it flattens the list of string tuples into
-            #   one tuple of strings.
-            intvl_t_range = interval_stats(sum(found_intvl_t_range, ()), 'range')
-            # Alternative:
-            # intvl_t_min = min(min(zip(*found_intvl_t_range)))
-            # intvl_t_max = max(max(zip(*found_intvl_t_range)))
-            # intvl_t_range = f'[{intvl_t_min} -- {intvl_t_max}]'
+            # Note: using an empty tuple as a sum() starting value flattens the
+            #    list of string tuples into one tuple of strings.
+            intvl_t_range = interval_stat(sum(found_intvl_t_range, ()), 'range')
 
             logged_intvl_report = (
                 'Analysis of reported tasks logged from\n'
@@ -571,7 +564,7 @@ class Logs:
                 num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
                 num_recent_tasks = sum(recent_counts)
-                recent_t_wtmean = interval_stats(
+                recent_t_wtmean = interval_stat(
                     found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
 
         # Need to tailor report texts for various counting conditions.
@@ -669,7 +662,6 @@ class Logs:
         analysiswin.title('Analysis of logged data')
         analysiswin.geometry(position_wrt_app(30, 20))
         analysiswin.minsize(520, 320)
-        analysiswin.focus_set()
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         # print(ord("─")) -> 9472
@@ -686,16 +678,14 @@ class Logs:
         analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         click_bindings(analysistxt, 'right')
-
         keybind_to_toplevel(analysiswin, 'close')
         keybind_to_toplevel(analysiswin, 'append', cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
-
-        ttk.Button(
-            analysiswin, text='Save analysis',
-            command=lambda: File.append_txt(
-                cls.ANALYSISFILE, txt, True, analysiswin)).pack(padx=4)
+        ttk.Button(analysiswin, text='Save analysis',
+                   command=lambda: File.append_txt(
+                        cls.ANALYSISFILE, txt, True, analysiswin)
+                   ).pack(padx=4)
 
         return keybind
 
@@ -841,31 +831,23 @@ class Logs:
             filetext.see('end')
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        # Need to set focus to filewin so any rt-click pop-up commands can
-        #   immediately be executed, b/c filewin may have lost focus to
-        #   another object, e.g. Button(). Because rt-click does not restore
-        #   focus immediately (only a preceding click does), need single
-        #   focus-setting actions that works for all OS.
-        # NOTE: These focus bindings sometimes interfere with a click to raise
-        #   window to the top; need a click on title bar to ensure that.
-        if MY_OS in 'lin, dar':
-            filewin.bind('<Enter>', lambda _: _.widget.focus_set())
-        else:
-            filewin.bind('<Button-3>', lambda _: _.widget.focus_set())
-            filewin.bind('<Button-3>', app.update_idletasks(), add=True)
-
-        click_bindings(filetext, 'right')
+        click_bindings(filewin, 'right')
         keybind_to_toplevel(filewin, 'close')
-        keybind_to_toplevel(filewin, 'save', filepath)
+        keybind_to_toplevel(filewin, 'saveas', filepath)
 
         ttk.Button(
             filewin, text='Update',
-            command=(lambda: File.update(filetext, filepath, filewin))
-        ).pack(padx=4)
+            command=(lambda: File.update(filetext, filepath, filewin)),
+            takefocus=False).pack(padx=4)
+        ttk.Button(
+            filewin, text='Backup',
+            command=lambda: File.save_as(filepath, filewin),
+            takefocus=False).pack(padx=4)
 
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
-                       command=cls.show_analysis).pack(padx=4)
+                       command=cls.show_analysis,
+                       takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>', cls.show_analysis)
             filewin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
@@ -873,12 +855,8 @@ class Logs:
         if filepath == cls.ANALYSISFILE:
             ttk.Button(
                 filewin, text='Erase',
-                command=lambda: File.erase(cls.ANALYSISFILE, filetext, filewin)
-            ).pack(padx=4)
-
-        ttk.Button(
-            filewin, text='Backup',
-            command=lambda: File.backup(filepath, filewin)).pack(padx=4)
+                command=lambda: File.erase(cls.ANALYSISFILE, filetext, filewin),
+                takefocus=False).pack(padx=4)
 
 
 # ############ A MVC add-on; independent of data functions #############
@@ -1264,7 +1242,7 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    tt_wtmean = interval_stats(
+                    tt_wtmean = interval_stat(
                         sumry_intvl_ttavgs, 'wtmean', sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
@@ -1739,10 +1717,10 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label='File', menu=file)
         file.add_command(
             label='Backup log file',
-            command=lambda: File.backup(Logs.LOGFILE))
+            command=lambda: File.save_as(Logs.LOGFILE))
         file.add_command(
             label='Backup analysis file',
-            command=lambda: File.backup(Logs.ANALYSISFILE))
+            command=lambda: File.save_as(Logs.ANALYSISFILE))
         file.add_separator()
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
