@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.21'
+__version__ = '0.8.22'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -414,11 +414,11 @@ def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
 
     if func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda event: File.append_txt(filepath, text, True))
+                      lambda _: File.append_txt(filepath, text, True))
 
     if func == 'save':
         toplevel.bind('<Control-s>',
-                      lambda event: File.backup(filepath))
+                      lambda _: File.backup(filepath))
 
 
 # noinspection PyBroadException
@@ -483,13 +483,9 @@ class Logs:
         intvl_dates = []
         intvl_vals = []
         num_intvl_vals = 0
-        intvl_counts = []
-        num_tasks = 0
         intvl_cnt_avg = 0.0
         intvl_cnt_range = ''
-        intvl_t_wtmean = ''
-        intvl_t_stdev = ''
-        intvl_t_range = ''
+        logged_intvl_report = ''
 
         recent_dates = []
         recent_intvl_vals = []
@@ -530,7 +526,6 @@ class Logs:
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
-
         if found_intvls:
             intvl_dates, intvl_vals, intvl_cnts = zip(*found_intvls)
             num_intvl_vals = len(set(intvl_vals))
@@ -551,14 +546,14 @@ class Logs:
             # intvl_t_max = max(max(zip(*found_intvl_t_range)))
             # intvl_t_range = f'[{intvl_t_min} -- {intvl_t_max}]'
 
-        logged_intvl_report = (
-            'Analysis of reported tasks logged from\n'
-            f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
-            f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-            f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
-            f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
-            f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
-            f'   {intvl_t_range} range of task times\n\n')
+            logged_intvl_report = (
+                'Analysis of reported tasks logged from\n'
+                f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
+                f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
+                f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
+                f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
+                f'   {intvl_t_range} range of task times\n\n')
 
         # Need recent vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -578,12 +573,6 @@ class Logs:
                 num_recent_tasks = sum(recent_counts)
                 recent_t_wtmean = interval_stats(
                     found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
-                # recent_cnt_avg = round(sum(recent_counts) / len(recent_counts), 1)
-                # recent_cnt_range = f'[{min(recent_counts)} -- {max(recent_counts)}]'
-                # recent_t_stdev = interval_stats(
-                #     found_intvl_avgt[index_recent:], 'stdev', recent_counts)
-                # recent_t_range = interval_stats(sum(
-                #     found_intvl_t_range[index_recent:], ()), 'range')
 
         # Need to tailor report texts for various counting conditions.
         if not found_sumrys and not found_intvls:
@@ -701,7 +690,7 @@ class Logs:
         keybind_to_toplevel(analysiswin, 'close')
         keybind_to_toplevel(analysiswin, 'append', cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
-                         lambda event: cls.view(cls.ANALYSISFILE))
+                         lambda _: cls.view(cls.ANALYSISFILE))
 
         ttk.Button(
             analysiswin, text='Save analysis',
@@ -841,17 +830,6 @@ class Logs:
 
             filewin.minsize(minsize_w, minsize_h)
 
-            # Need to set focus to filewin so any rt-click pop-up commands can
-            #   immediately be executed, b/c filewin may have lost focus to
-            #   another object, e.g. Button(). Because rt-click does not restore
-            #   focus immediately (only a preceding click does), need single
-            #   focus-setting actions that works for all OS.
-            if MY_OS in 'lin, dar':
-                filewin.bind('<Enter>', lambda event: event.widget.focus_set())
-            else:
-                filewin.bind('<Button-3>', lambda event: event.widget.focus_set())
-                filewin.bind('<Button-3>', app.update_idletasks(), add=True)
-
             # Use a "dark" background/foreground theme for log text.
             filetext = ScrolledText(filewin, font='TkFixedFont',
                                     width=text_width, height=text_height,
@@ -862,8 +840,21 @@ class Logs:
             filetext.insert(tk.INSERT, file.read())
             filetext.see('end')
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-            click_bindings(filetext, 'right')
 
+        # Need to set focus to filewin so any rt-click pop-up commands can
+        #   immediately be executed, b/c filewin may have lost focus to
+        #   another object, e.g. Button(). Because rt-click does not restore
+        #   focus immediately (only a preceding click does), need single
+        #   focus-setting actions that works for all OS.
+        # NOTE: These focus bindings sometimes interfere with a click to raise
+        #   window to the top; need a click on title bar to ensure that.
+        if MY_OS in 'lin, dar':
+            filewin.bind('<Enter>', lambda _: _.widget.focus_set())
+        else:
+            filewin.bind('<Button-3>', lambda _: _.widget.focus_set())
+            filewin.bind('<Button-3>', app.update_idletasks(), add=True)
+
+        click_bindings(filetext, 'right')
         keybind_to_toplevel(filewin, 'close')
         keybind_to_toplevel(filewin, 'save', filepath)
 
@@ -1811,10 +1802,10 @@ class CountViewer(tk.Frame):
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
         # Note: Toplevel key bindings are set with keybind_to_toplevel().
         self.master.bind('<Control-l>',
-                         lambda event: Logs.view(Logs.LOGFILE))
+                         lambda _: Logs.view(Logs.LOGFILE))
         self.master.bind('<Shift-Control-L>', Logs.show_analysis)
         self.master.bind('<Shift-Control-A>',
-                         lambda event: Logs.view(Logs.ANALYSISFILE))
+                         lambda _: Logs.view(Logs.ANALYSISFILE))
         self.master.bind('<Shift-Control-C>', self.share.compliment)
 
         # Need to specify Ctrl-a for Linux b/c in tkinter that key is
