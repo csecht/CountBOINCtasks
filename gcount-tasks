@@ -247,10 +247,11 @@ def interval_stat(distribution: iter, stat: str, weights=None) -> str:
     Calculate statistics for task times obtained from logged interval
     data.
 
-    :param distribution: List or tuple of avg times, in string format
+    :param distribution: List or tuple of times, as string format
                          ('00:00:00'), or as seconds (floats or integers).
     :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
-                 'wtmean' requires *distribution* and *weights* parameters.
+                 'wtmean' requires *distribution* and *weights* parameters
+                  and *distribution* times are expected to be averages.
                  'range' and 'stdev' do not use *weights*.
     :param weights: List or tuple of corresponding sample numbers
                     (integers) for each element in *distribution*. Used
@@ -258,7 +259,7 @@ def interval_stat(distribution: iter, stat: str, weights=None) -> str:
     :return: The distribution's statistic, as formatted string, '00:00:00'.
              Returns 'cannot determine' if invalid data given for 'wtmean'.
     """
-    # algorithm sources:
+    # Algorithm sources:
     # https://towardsdatascience.com/
     #   3-ways-to-compute-a-weighted-average-in-python-4e066de7a719
     # https://stackoverflow.com/questions/10663720/
