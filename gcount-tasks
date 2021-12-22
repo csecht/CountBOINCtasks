@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.26'
+__version__ = '0.8.27'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -890,28 +890,27 @@ class CountFyi:
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
         keybind_to_toplevel(aboutwin, 'close')
-
-        num_doc_lines = __doc__.count('\n') + 2
+        insert = (f'{__doc__}\n'
+                  f'{"Author:".ljust(13)}{__author__}\n'
+                  f'{"Credits:".ljust(13)}{__credits__}\n'
+                  f'{"License:".ljust(13)}{__license__}\n'
+                  f'{"Program:".ljust(13)}{__program_name__}\n'
+                  f'{"Version:".ljust(13)}{__version__}\n'
+                  f'{"Dev. Env.:".ljust(13)}{__dev_environment__}\n'
+                  f'{"URL:".ljust(13)}{__project_url__}\n'
+                  f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
+                  f'{"Status:".ljust(13)}{__status__}\n'
+                  )
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
-                           width=74, height=num_doc_lines + 9,
+                           width=74, height=insert.count('\n') + 2,
                            bg='grey100', fg='grey5',
                            relief='groove', borderwidth=5, padx=25)
-        abouttxt.insert(1.0,
-                        f'{__doc__}\n'
-                        f'{"Author:".ljust(13)}{__author__}\n'
-                        f'{"Credits:".ljust(13)}{__credits__}\n'
-                        f'{"License:".ljust(13)}{__license__}\n'
-                        f'{"Program:".ljust(13)}{__program_name__}\n'
-                        f'{"Version:".ljust(13)}{__version__}\n'
-                        f'{"Dev. Env.:".ljust(13)}{__dev_environment__}\n'
-                        f'{"URL:".ljust(13)}{__project_url__}\n'
-                        f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
-                        f'{"Status:".ljust(13)}{__status__}\n')
+        abouttxt.insert(1.0, insert)
         abouttxt.pack()
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
-        click_bindings(abouttxt, 'right')
         abouttxt.configure(state=tk.DISABLED)
+        click_bindings(abouttxt, 'right')
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -983,8 +982,7 @@ class CountFyi:
         infowin.title('Usage information')
         infowin.focus_set()
         keybind_to_toplevel(infowin, 'close')
-
-        information = ("""
+        insert = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;
                 ...those buttons activate once their data post.\n
@@ -997,21 +995,21 @@ class CountFyi:
         - Counts and Notices histories are in the log file.\n
         - When analysis of logged hours is "cannot determine"...\n
                 Quick fix: backup then delete log file, restart program.\n
-        - Right-click actions only affect on-screen text, not file content\n
+        - Right-click actions only affect on-screen text, not file content.\n
         - Key commands to close window and save text work as expected.
         """)
 
-        num_doc_lines = information.count('\n')
+        # OS-specific Text widths were empirically determined for TkTextFont.
         os_width = 0
         if MY_OS in 'lin, win':
             os_width = 64
         elif MY_OS == 'dar':
             os_width = 56
         infotxt = tk.Text(infowin, font='TkTextFont',
-                          width=os_width, height=num_doc_lines + 2,
+                          width=os_width, height=insert.count('\n') + 2,
                           bg='grey100', fg='grey5',
                           relief='groove', padx=15)
-        infotxt.insert(1.0, information)
+        infotxt.insert(1.0, insert)
         infotxt.pack()
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
