@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.27'
+__version__ = '0.8.28'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -47,10 +47,10 @@ from re import search, findall, MULTILINE
 from socket import gethostname
 
 # pylint: disable=import-error
-from COUNTmodules import boinc_command, time_convert, files
+from COUNTmodules import boinc_command, times, files
 
 BC = boinc_command.BoincCommand()
-TC = time_convert
+T = times
 File = files
 
 try:
@@ -191,7 +191,7 @@ def ttimes_stats(tasktimes: iter) -> dict:
     """
     Sum and run statistics of BOINC task times for reporting in
     master Frame and log file.
-    Called from Modeler. Calls to time_convert.sec_to_format().
+    Called from Modeler. Calls to COUNTmodules.times.sec_to_format().
 
     :param tasktimes: A list, tuple, or set of times, in seconds as
                       integers or floats.
@@ -199,12 +199,12 @@ def ttimes_stats(tasktimes: iter) -> dict:
              Dict values as: 00:00:00.
     """
     numtasks = len(tasktimes)
-    total = TC.sec_to_format(int(sum(tasktimes)), 'std')
+    total = T.sec_to_format(int(sum(tasktimes)), 'std')
     if numtasks > 1:
-        avg = TC.sec_to_format(int(statistics.fmean(tasktimes)), 'std')
-        stdev = TC.sec_to_format(int(statistics.stdev(tasktimes)), 'std')
-        low = TC.sec_to_format(int(min(tasktimes)), 'std')
-        high = TC.sec_to_format(int(max(tasktimes)), 'std')
+        avg = T.sec_to_format(int(statistics.fmean(tasktimes)), 'std')
+        stdev = T.sec_to_format(int(statistics.stdev(tasktimes)), 'std')
+        low = T.sec_to_format(int(min(tasktimes)), 'std')
+        high = T.sec_to_format(int(max(tasktimes)), 'std')
         return {
             'tt_total': total,
             'tt_avg': avg,
@@ -242,66 +242,6 @@ def str2dt(dt_str: str, str_format: str) -> datetime:
     return dt_obj
 
 
-def interval_stat(distribution: iter, stat: str, weights=None) -> str:
-    """
-    Calculate statistics for task times obtained from logged interval
-    data.
-
-    :param distribution: List or tuple of times, as string format
-                         ('00:00:00'), or as seconds (floats or integers).
-    :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
-                 'wtmean' requires *distribution* and *weights* parameters
-                  and *distribution* times are expected to be averages.
-                 'range' and 'stdev' do not use *weights*.
-    :param weights: List or tuple of corresponding sample numbers
-                    (integers) for each element in *distribution*. Used
-                    only for the 'wtmean' *stat*.
-    :return: The distribution's statistic, as formatted string, '00:00:00'.
-             Returns 'cannot determine' if invalid data given for 'wtmean'.
-    """
-    # Algorithm sources:
-    # https://towardsdatascience.com/
-    #   3-ways-to-compute-a-weighted-average-in-python-4e066de7a719
-    # https://stackoverflow.com/questions/10663720/
-    #   how-to-convert-a-time-string-to-seconds
-    # https://stackoverflow.com/questions/18470627/
-    #   how-do-i-remove-the-microseconds-from-a-timedelta-object
-
-    if not stat:
-        return 'missing stat param'
-    if weights:
-        if not all(isinstance(w, int) for w in weights):
-            return 'cannot determine'
-        if len(distribution) != len(weights):
-            return 'cannot determine'
-
-    # Need to convert distribution clock time strings to integer seconds, but
-    #    not if distribution times are float or integer seconds.
-    if all(isinstance(t, str) for t in distribution):
-        dist_sec = [
-            sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
-            for clk_fmt in distribution]
-    else:
-        dist_sec = list(distribution)
-
-    # Need to convert the timedelta clock fmt object to a string for display,
-    #    and remove microseconds from the clock fmt string.
-    if stat == 'wtmean':
-        numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
-        denominator = sum(weights)
-        return str(
-            timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
-    if stat == 'range':
-        shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
-        longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
-        return f'[{shortest} -- {longest}]'
-    if stat == 'stdev':
-        return str(
-            timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
-
-    return 'unexpected condition'
-
-
 def close_toplevel(keybind=None) -> None:
     """
     Close the toplevel window that has focus.
@@ -333,6 +273,7 @@ def close_toplevel(keybind=None) -> None:
             if parent in str(widget):
                 widget.destroy()
                 return keybind
+    return keybind
 
 
 def click_bindings(click_obj, click_type) -> None:
@@ -536,12 +477,12 @@ class Logs:
             num_tasks = sum(intvl_counts)
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtmean = interval_stat(found_intvl_avgt, 'wtmean', intvl_counts)
-            intvl_t_stdev = interval_stat(found_intvl_avgt, 'stdev', intvl_counts)
+            intvl_t_wtmean = T.time_stat(found_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_stdev = T.time_stat(found_intvl_avgt, 'stdev', intvl_counts)
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
-            intvl_t_range = interval_stat(sum(found_intvl_t_range, ()), 'range')
+            intvl_t_range = T.time_stat(sum(found_intvl_t_range, ()), 'range')
 
             logged_intvl_report = (
                 'Analysis of reported tasks logged from\n'
@@ -568,7 +509,7 @@ class Logs:
                 num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
                 num_recent_tasks = sum(recent_counts)
-                recent_t_wtmean = interval_stat(
+                recent_t_wtmean = T.time_stat(
                     found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
 
         # Need to tailor report texts for various counting conditions.
@@ -1167,7 +1108,7 @@ class CountModeler:
                 interval_sec -= 1
                 # Need to show the time remaining in clock time format.
                 self.share.data['time_next_cnt'].set(
-                    TC.sec_to_format(interval_sec, 'clock'))
+                    T.sec_to_format(interval_sec, 'clock'))
                 time.sleep(1.0)
 
             # NOTE: Starting tasks are not included in interval and summary
@@ -1229,7 +1170,7 @@ class CountModeler:
 
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
-                summary_m = TC.string_to_m(self.share.setting['summary_t'].get())
+                summary_m = T.string_to_m(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
                 #   prior summary rather than weekday, as above (%A %H:%M).
                 if summary_m >= 10080:
@@ -1254,7 +1195,7 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    tt_wtmean = interval_stat(
+                    tt_wtmean = T.time_stat(
                         sumry_intvl_ttavgs, 'wtmean', sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
@@ -1308,7 +1249,7 @@ class CountModeler:
                             'BOINC client is about to run out of tasks.\n'
                             'Check BOINC Manager.')
                     elif tic_nnt > 0:
-                        nnt_time = TC.sec_to_format(
+                        nnt_time = T.sec_to_format(
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}\n'
@@ -2122,7 +2063,7 @@ class CountViewer(tk.Frame):
         #   then convert to minutes to use in comparisons.
         summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
-        summary_m = TC.string_to_m(summary_t)
+        summary_m = T.string_to_m(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
             self.good_settings = False
             info = "Summary time must be greater than, and a multiple of, interval time"

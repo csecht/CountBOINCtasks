@@ -5,7 +5,7 @@ Executes BOINC commands and parsing task data through boinccmd.
 run_boinc(), get_version(), check_boinc(), get_reported(), get_tasks(),
 get_runningtasks(), get_project_url(), project_actions(), no_new_tasks().
 
-    Copyright (C) 2020  C. Echt
+    Copyright (C) 2020-2021  C. Echt
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C. Echt'
+__copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
