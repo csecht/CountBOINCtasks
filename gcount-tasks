@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.25'
+__version__ = '0.8.26'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -352,6 +352,9 @@ def click_bindings(click_obj, click_type) -> None:
         Event is a unifying binding across multiple platforms.
         https://www.tcl.tk/man/tcl8.6/TkCmd/event.htm#M7
         """
+        # Need to set possible Text widgets to be editable in case
+        #   they are set to be readonly, tk.DISABLED.
+        click_obj.configure(state=tk.NORMAL)
         event.widget.event_generate(f'<<{command}>>')
 
     # Based on: https://stackoverflow.com/questions/57701023/
@@ -885,7 +888,7 @@ class CountFyi:
         aboutwin.geometry(position_wrt_app(30, 20))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
-        click_bindings(aboutwin, 'right')
+        aboutwin.focus_set()
         keybind_to_toplevel(aboutwin, 'close')
 
         num_doc_lines = __doc__.count('\n') + 2
@@ -905,7 +908,10 @@ class CountFyi:
                         f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
                         f'{"Status:".ljust(13)}{__status__}\n')
         abouttxt.pack()
-        abouttxt.focus_set()
+        # Need to not have cursor appear in Text, but allow
+        #   rt-click edit commands to work if needed.
+        click_bindings(abouttxt, 'right')
+        abouttxt.configure(state=tk.DISABLED)
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -975,25 +981,25 @@ class CountFyi:
         infowin.geometry(position_wrt_app(30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
-        click_bindings(infowin, 'right')
+        infowin.focus_set()
         keybind_to_toplevel(infowin, 'close')
 
         information = ("""
-            - Counting begins once "Count now" is clicked in settings window.\n
-            - Interval and Summary data buttons switch visual emphasis;
-                    ...those buttons activate once their data post.\n
-            - At start, '# tasks reported' and 'Interval time' are from
-                    the most recent hourly BOINC report.\n
-            - Number of tasks in queue and Notices update every"""
-                       f' {NOTICE_INTERVAL} seconds.\n'
-                       """
-            - Displayed countdown clock time is approximate.\n
-            - Counts and Notices histories are in the log file.\n
-            - When analysis of logged hours is "cannot determine"...\n
-                    Quick fix: backup then delete log file, restart program.\n
-            - Right-click actions only affect on-screen text, not file content\n
-            - Key commands to close window and save text work as expected.
-            """)
+        - Counting begins once "Count now" is clicked in settings window.\n
+        - Interval and Summary data buttons switch visual emphasis;
+                ...those buttons activate once their data post.\n
+        - At start, '# tasks reported' and 'Interval time' are from
+                the most recent hourly BOINC report.\n
+        - Number of tasks in queue and Notices update every"""
+                   f' {NOTICE_INTERVAL} seconds.\n'
+                   """
+        - Displayed countdown clock time is approximate.\n
+        - Counts and Notices histories are in the log file.\n
+        - When analysis of logged hours is "cannot determine"...\n
+                Quick fix: backup then delete log file, restart program.\n
+        - Right-click actions only affect on-screen text, not file content\n
+        - Key commands to close window and save text work as expected.
+        """)
 
         num_doc_lines = information.count('\n')
         os_width = 0
@@ -1007,7 +1013,10 @@ class CountFyi:
                           relief='groove', padx=15)
         infotxt.insert(1.0, information)
         infotxt.pack()
-        infotxt.focus_set()
+        # Need to not have cursor appear in Text, but allow
+        #   rt-click edit commands to work if needed.
+        infotxt.configure(state=tk.DISABLED)
+        click_bindings(infotxt, 'right')
 
 
 # ############################ MVC Classes #############################
