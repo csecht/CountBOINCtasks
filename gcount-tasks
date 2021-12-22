@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.24'
+__version__ = '0.8.25'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -781,14 +781,16 @@ class Logs:
         minsize_h = 0
 
         if filepath == cls.LOGFILE:
-            minsize_w = 800
             minsize_h = 220
+            # Need to set OS-specific width for font used in filetext.
+            #   These widths are based on TkFixedFont:
+            if MY_OS == 'lin':
+                minsize_w = 800
             if MY_OS == 'win':
                 minsize_w = 840
             if MY_OS == 'dar':
                 minsize_w = 675
-                # text_width = 72
-            fnf_query = 'Was the 9settings log option used?'
+            fnf_query = 'Was the log option ticked in settings?'
 
         if filepath == cls.ANALYSISFILE:
             text_width = 46
@@ -821,6 +823,7 @@ class Logs:
                 filewin.title(f'{dir_file} on {gethostname()}')
 
             filewin.minsize(minsize_w, minsize_h)
+            filewin.focus_set()
 
             # Use a "dark" background/foreground theme for log text.
             filetext = ScrolledText(filewin, font='TkFixedFont',
