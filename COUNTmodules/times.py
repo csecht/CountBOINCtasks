@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 Functions to convert, format, and analyse input time values.
-Functions: string_to_m() Convert a time string to minutes.
+Functions: string_to_min() Convert a time string to minutes.
+           string_to_dt() Convert formatted date string to datetime object.
            sec_to_format() Convert seconds to a specified time format.
-           time_stat() Calculate statistical metric of a group of times.
+           logtimes_stat() Calculate statistical metric of a group of times.
 
     Copyright (C) 2020-2021  C. Echt
 
@@ -24,7 +25,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -32,11 +33,11 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import statistics
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Union
 
 
-def string_to_m(time_string: str) -> Union[float, int]:
+def string_to_min(time_string: str) -> Union[float, int]:
     """Convert time string to minutes.
 
     :param time_string: format as VALUEunit, e.g., 200s, 35m, 8h, or 7d;
@@ -59,6 +60,21 @@ def string_to_m(time_string: str) -> Union[float, int]:
     except KeyError as keyerr:
         err_msg = f'Invalid time unit: {unit} -  Use: s, m, h, or d'
         raise KeyError(err_msg) from keyerr
+
+
+def string_to_dt(dt_str: str, str_format: str) -> datetime:
+    """
+    Convert formatted date string to datetime object.
+    Use to compare datetimes in text files.
+
+    :param dt_str: date and time string;
+                   ex '1970-Jan-01 00:00:00'.
+    :param str_format: datetime.strftime() string;
+                       ex '%Y-%b-%d %H:%M:%S'.
+    :return: datetime object formatted to *str_format*.
+    """
+    dt_obj = datetime.strptime(dt_str, str_format)
+    return dt_obj
 
 
 def sec_to_format(secs: int, format_type: str) -> str:
@@ -94,10 +110,10 @@ def sec_to_format(secs: int, format_type: str) -> str:
             f"format_type={format_type}.\n")
 
 
-def time_stat(distribution: iter, stat: str, weights=None) -> str:
+def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     """
     Calculate statistics for group of times. Use to analyse task times
-    in a file of logged interval data.
+    from a file of logged task times over timed intervals.
 
     :param distribution: List or tuple of times, as string format
                          ('00:00:00'), or as seconds (floats or integers).
@@ -153,6 +169,45 @@ def time_stat(distribution: iter, stat: str, weights=None) -> str:
             timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
 
     return 'unexpected condition'
+
+
+def boinc_ttimes_stats(times_sec: iter) -> dict:
+    """
+    Gather statistics for times to display and log.
+    Use to analyse task times from boinc-client reports.
+
+    :param times_sec: A list, tuple, or set of times, in seconds as
+                      integers or floats.
+    :return: Dict keys: 'tt_total', 'tt_avg', 'tt_sd', 'tt_min', 'tt_max'.
+             Dict values format: 00:00:00.
+    """
+    numtimes = len(times_sec)
+    total = sec_to_format(int(sum(times_sec)), 'std')
+    if numtimes > 1:
+        avg = sec_to_format(int(statistics.fmean(times_sec)), 'std')
+        stdev = sec_to_format(int(statistics.stdev(times_sec)), 'std')
+        low = sec_to_format(int(min(times_sec)), 'std')
+        high = sec_to_format(int(max(times_sec)), 'std')
+        return {
+            'tt_total': total,
+            'tt_avg': avg,
+            'tt_sd': stdev,
+            'tt_min': low,
+            'tt_max': high}
+    if numtimes == 1:
+        return {
+            'tt_total': total,
+            'tt_avg': total,
+            'tt_sd': 'n/a',
+            'tt_min': 'n/a',
+            'tt_max': 'n/a'}
+    # numtimes is 0...
+    return {
+        'tt_total': '00:00:00',
+        'tt_avg': '00:00:00',
+        'tt_sd': 'n/a',
+        'tt_min': 'n/a',
+        'tt_max': 'n/a'}
 
 
 def about() -> None:

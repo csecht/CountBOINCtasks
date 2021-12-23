@@ -27,7 +27,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - Testing, debug']
 __license__ =   'GNU General Public License'
-__version__ =   '0.4.28'
+__version__ =   '0.4.29'
 __program_name__ = 'count-tasks'
 __maintainer__ = 'cecht'
 __docformat__ = 'reStructuredText'
@@ -37,15 +37,15 @@ import argparse
 import logging
 import os
 import re
-import statistics as stats
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
-from COUNTmodules import boinc_command
+from COUNTmodules import boinc_command, times
 
 BC = boinc_command.BoincCommand()
+T = times 
 # Assume log file is in the CountBOINCtasks-master folder.
 LOGPATH = str(Path('count-tasks_log.txt'))
 # LOGFILE = str(Path('../count-tasks_log.txt'))
@@ -115,8 +115,8 @@ class DataIntervals:
         self.ttimes_start = BC.get_reported('elapsed time')
         tcount_start = len(self.ttimes_start)
         # Not the most robust way to get dict values, but it's concise.
-        tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
-            tcount_start, self.ttimes_start).values()
+        tt_total, tt_mean, tt_sd, tt_lo, tt_hi = T.boinc_ttimes_stats(
+            self.ttimes_start).values()
         self.num_tasks = len(BC.get_tasks('name'))
 
         if COUNT_LIM > 0:
@@ -272,8 +272,8 @@ class DataIntervals:
 
             elif self.task_count_new > 0 and self.notrunning is False:
                 self.tic_nnt = 0
-                tt_total, tt_mean, tt_sd, tt_lo, tt_hi = self.get_timestats(
-                    self.task_count_new, self.ttimes_new).values()
+                tt_total, tt_mean, tt_sd, tt_lo, tt_hi = T.boinc_ttimes_stats(
+                    self.ttimes_new).values()
                 report = (
                     f'{self.time_now}; Tasks reported in the past {INTERVAL_M}m:'
                     f' {self.blue}{self.task_count_new}{self.undo_color}\n'
@@ -314,8 +314,8 @@ class DataIntervals:
             self.ttimes_uniq = set(ttimes_smry)
             count_sumry = len(self.ttimes_uniq)
 
-            tt_total, tt_mean, tt_sd, tt_lo, tt_hi = \
-                self.get_timestats(count_sumry, self.ttimes_uniq).values()
+            tt_total, tt_mean, tt_sd, tt_lo, tt_hi = T.boinc_ttimes_stats(
+                self.ttimes_uniq).values()
             report = (
                 f'{self.time_now}; '
                 f'{self.orng}>>> SUMMARY:{self.undo_color} Count for the past'
@@ -333,61 +333,6 @@ class DataIntervals:
             # summary interval.
             self.ttimes_smry.clear()
             self.ttimes_uniq.clear()
-
-    @staticmethod
-    def get_min(time_string: str) -> int:
-        """
-        Convert time string to minutes.
-
-        :param time_string: format as TIMEunit, e.g., 35m, 7h, or 7d.
-        :return: Integer minutes for any time length.
-        :raises KeyError: exception for bad unit in time_string
-        """
-        t_min = {
-            'm': 1, 'h': 60, 'd': 1440}
-        val = int(time_string[:-1])
-        unit = time_string[-1]
-        try:
-            return t_min[unit] * val
-        except KeyError as err:
-            err_msg = f'Invalid time unit: {unit} -  Use: m, h, or d'
-            raise KeyError(err_msg) from err
-        except ValueError as verr:
-            err_msg = f'Invalid value unit: {val} '
-            raise ValueError(err_msg) from verr
-
-    @staticmethod
-    def frmat_sec(secs: int, time_format: str) -> str:
-        """
-        Convert seconds to the specified time format for display.
-
-        :param secs: Time in seconds, any integer except 0.
-        :param time_format: Either 'std' or 'short'
-        :return: 'std' time as 00:00:00; 'short' as s, m, h, or d.
-        """
-        # Time conversion concept from Niko
-        # https://stackoverflow.com/questions/3160699/python-progress-bar
-        # /3162864
-
-        _m, _s = divmod(secs, 60)
-        _h, _m = divmod(_m, 60)
-        day, _h = divmod(_h, 24)
-        note = ('fmt_sec error: Enter secs as seconds, fmt (format) as either'
-                f" 'std' or 'short'. Arguments as entered: secs={secs}, "
-                f"format={time_format}.")
-        if time_format == 'short':
-            if secs >= 86400:
-                return f'{day:1d}d'  # option, add {h:01d}h'
-            if 86400 > secs >= 3600:
-                return f'{_h:01d}h'  # option, add :{m:01d}m
-            if 3600 > secs >= 60:
-                return f'{_m:01d}m'  # option, add :{s:01d}s
-            return f'{_s:01d}s'
-        if time_format == 'std':
-            if secs >= 86400:
-                return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
-            return f'{_h:02d}:{_m:02d}:{_s:02d}'
-        return note
 
     def intvl_timer(self, interval: int) -> None:
         """
@@ -427,11 +372,11 @@ class DataIntervals:
             remain_bar = prettybar[i:]
             num_segments = len(remain_bar)
             print(f"\r{self.del_line}{white_on_red}"
-                  f"{self.frmat_sec(remain_s, 'short')}{remain_bar}"
+                  f"{T.sec_to_format(remain_s, 'short')}{remain_bar}"
                   f"{self.undo_color}|< ~time to next count", end='')
             if num_segments == 1:
                 print(f"\r{self.del_line}{white_on_grn}"
-                      f"{self.frmat_sec(remain_s, 'short')}{remain_bar}"
+                      f"{T.sec_to_format(remain_s, 'short')}{remain_bar}"
                       f"{self.undo_color}|< ~time to next count", end='')
             remain_s = (remain_s - barseg_s)
             # Need to clear the progress bar line for a clean report print.
@@ -441,42 +386,6 @@ class DataIntervals:
 
             # t.sleep(.5)  # DEBUG
             time.sleep(barseg_s)
-
-    def get_timestats(self, numtasks: int, tasktimes: iter) -> dict:
-        """
-        Sum and run statistics from times, as sec (integers or floats).
-
-        :param numtasks: The number of elements in tasktimes.
-        :param tasktimes: A list, tuple, or set of times, in seconds.
-        :return: Dict keys: tt_total, tt_mean, tt_sd, tt_min, tt_max.
-                 Dict values as: 00:00:00.
-        """
-        total = self.frmat_sec(int(sum(set(tasktimes))), 'std')
-        if numtasks > 1:
-            mean = self.frmat_sec(int(stats.mean(set(tasktimes))), 'std')
-            stdev = self.frmat_sec(int(stats.stdev(set(tasktimes))), 'std')
-            low = self.frmat_sec(int(min(tasktimes)), 'std')
-            high = self.frmat_sec(int(max(tasktimes)), 'std')
-            return {
-                'tt_total': total,
-                'tt_mean': mean,
-                'tt_sd': stdev,
-                'tt_min': low,
-                'tt_max': high}
-        if numtasks == 1:
-            return {
-                'tt_total': total,
-                'tt_mean': total,
-                'tt_sd': 'na',
-                'tt_min': 'na',
-                'tt_max': 'na'}
-
-        return {
-            'tt_total': '00:00:00',
-            'tt_mean': '00:00:00',
-            'tt_sd': 'na',
-            'tt_min': 'na',
-            'tt_max': 'na'}
 
 
 def check_summary_arg(parameter: str) -> str:
@@ -558,7 +467,7 @@ if __name__ == '__main__':
     COUNT_LIM = int(args.count_lim)
     INTERVAL_M = int(args.interval)
     SUMMARY_T = str(args.summary)
-    summary_m = DataIntervals.get_min(SUMMARY_T)
+    summary_m = T.string_to_min(SUMMARY_T)
     SUMRY_FACTOR = summary_m // INTERVAL_M
 
     if INTERVAL_M >= summary_m:

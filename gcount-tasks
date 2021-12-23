@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.29'
+__version__ = '0.8.30'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -36,7 +36,6 @@ __status__ = 'Development Status :: 2 - Beta'
 
 import argparse
 import logging
-import statistics
 import sys
 import threading
 import time
@@ -185,61 +184,6 @@ def enter_only_digits(entry_string, action_type) -> bool:
     if action_type == '1' and not entry_string.isdigit():
         return False
     return True
-
-
-def ttimes_stats(tasktimes: iter) -> dict:
-    """
-    Sum and run statistics of BOINC task times for reporting in
-    master Frame and log file.
-    Called from Modeler. Calls to COUNTmodules.times.sec_to_format().
-
-    :param tasktimes: A list, tuple, or set of times, in seconds as
-                      integers or floats.
-    :return: Dict keys as: tt_total, tt_avg, tt_sd, tt_min, tt_max;
-             Dict values as: 00:00:00.
-    """
-    numtasks = len(tasktimes)
-    total = T.sec_to_format(int(sum(tasktimes)), 'std')
-    if numtasks > 1:
-        avg = T.sec_to_format(int(statistics.fmean(tasktimes)), 'std')
-        stdev = T.sec_to_format(int(statistics.stdev(tasktimes)), 'std')
-        low = T.sec_to_format(int(min(tasktimes)), 'std')
-        high = T.sec_to_format(int(max(tasktimes)), 'std')
-        return {
-            'tt_total': total,
-            'tt_avg': avg,
-            'tt_sd': stdev,
-            'tt_min': low,
-            'tt_max': high}
-    if numtasks == 1:
-        return {
-            'tt_total': total,
-            'tt_avg': total,
-            'tt_sd': 'n/a',
-            'tt_min': 'n/a',
-            'tt_max': 'n/a'}
-    # numtasks is 0...
-    return {
-        'tt_total': '00:00:00',
-        'tt_avg': '00:00:00',
-        'tt_sd': 'n/a',
-        'tt_min': 'n/a',
-        'tt_max': 'n/a'}
-
-
-def str2dt(dt_str: str, str_format: str) -> datetime:
-    """
-    Convert formatted date string to datetime object.
-    Use to compare datetimes in text files.
-
-    :param dt_str: date and time string;
-                   ex '1970-Jan-01 00:00:00'.
-    :param str_format: datetime.strftime() string;
-                       ex '%Y-%b-%d %H:%M:%S'.
-    :return: datetime object formatted to *str_format*.
-    """
-    dt_obj = datetime.strptime(dt_str, str_format)
-    return dt_obj
 
 
 def close_toplevel(keybind=None) -> None:
@@ -477,12 +421,12 @@ class Logs:
             num_tasks = sum(intvl_counts)
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtmean = T.time_stat(found_intvl_avgt, 'wtmean', intvl_counts)
-            intvl_t_stdev = T.time_stat(found_intvl_avgt, 'stdev', intvl_counts)
+            intvl_t_wtmean = T.logtimes_stat(found_intvl_avgt, 'wtmean', intvl_counts)
+            intvl_t_stdev = T.logtimes_stat(found_intvl_avgt, 'stdev', intvl_counts)
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
-            intvl_t_range = T.time_stat(sum(found_intvl_t_range, ()), 'range')
+            intvl_t_range = T.logtimes_stat(sum(found_intvl_t_range, ()), 'range')
 
             logged_intvl_report = (
                 'Analysis of reported tasks logged from\n'
@@ -509,7 +453,7 @@ class Logs:
                 num_recent_intvl_vals = len(set(recent_intvl_vals))
                 recent_counts = list(map(int, recent_cnts))
                 num_recent_tasks = sum(recent_counts)
-                recent_t_wtmean = T.time_stat(
+                recent_t_wtmean = T.logtimes_stat(
                     found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
 
         # Need to tailor report texts for various counting conditions.
@@ -651,8 +595,8 @@ class Logs:
 
         # *_dt vars are datetime.timedelta objects, so initialize with
         #    formatted Epoch origin time.
-        start_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        interval_dt = str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        start_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        interval_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
         final_interval_hr = 0.0
 
         def calc_uptime_hr(start_datetime, end_datetime) -> float:
@@ -672,13 +616,13 @@ class Logs:
             if 'most recent BOINC report' in line:
                 starttime_match = search(
                     r'^(.+); .+ most recent BOINC report', line).group(1)
-                start_dt = str2dt(starttime_match, LONG_STRFTIME)
+                start_dt = T.string_to_dt(starttime_match, LONG_STRFTIME)
                 has_interval = False
 
             if 'Tasks reported' in line:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
-                interval_dt = str2dt(intvltime_match, LONG_STRFTIME)
+                interval_dt = T.string_to_dt(intvltime_match, LONG_STRFTIME)
                 # Note: start2intvl list is used only to eval presence of a
                 #   negative timedelta interval somewhere in the log file.
                 start2intvl.append(calc_uptime_hr(start_dt, interval_dt))
@@ -687,14 +631,14 @@ class Logs:
             if 'quit' in line:
                 quittime_match = search(
                     r'^(.+); .+ quit', line).group(1)
-                quit_dt = str2dt(quittime_match, LONG_STRFTIME)
+                quit_dt = T.string_to_dt(quittime_match, LONG_STRFTIME)
                 if has_interval:
                     start2quit.append(calc_uptime_hr(start_dt, quit_dt))
 
             if 'interrupt' in line:
                 interrupttime_match = search(
                     r'^(.+); .+ interrupt', line).group(1)
-                interrupt_dt = str2dt(interrupttime_match, LONG_STRFTIME)
+                interrupt_dt = T.string_to_dt(interrupttime_match, LONG_STRFTIME)
                 if has_interval:
                     start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
 
@@ -1011,8 +955,7 @@ class CountModeler:
         #   used in interval_data() to track tasks across intervals.
         self.ttimes_used.update(ttimes_start)
 
-        # Need to parse and set data returned from ttimes_stats().
-        startdict = ttimes_stats(ttimes_start)
+        startdict = T.boinc_ttimes_stats(ttimes_start)
         self.share.data['tt_avg'].set(startdict['tt_avg'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
         self.share.data['tt_range'].set(
@@ -1069,9 +1012,9 @@ class CountModeler:
         """
         Run timer and countdown clock to update and analyze regular and
         summary data for task status and times. Set control variables
-        for data and note dictionaries.
+        for data and notice dictionaries.
         Is threaded as interval_thread; start in Viewer.start_threads()
-        Calls to: ttimes_stats(), get_minutes(), log_it().
+        Calls to: get_minutes(), log_it().
         """
         ttimes_new = set()
         ttimes_smry = set()
@@ -1154,9 +1097,7 @@ class CountModeler:
                     tic_nnt = 0
                 self.share.note['tic_nnt'].set(tic_nnt)
 
-                # Need to parse data returned from ttimes_stats().
-                intervaldict = ttimes_stats(ttimes_new)
-
+                intervaldict = T.boinc_ttimes_stats(ttimes_new)
                 self.share.data['tt_avg'].set(intervaldict['tt_avg'])
                 self.share.data['tt_sd'].set(intervaldict['tt_sd'])
                 self.share.data['tt_range'].set(
@@ -1171,7 +1112,7 @@ class CountModeler:
 
                 # SUMMARY DATA ####################################################
                 # NOTE: Starting data are not included in summary tabulations.
-                summary_m = T.string_to_m(self.share.setting['summary_t'].get())
+                summary_m = T.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
                 #   prior summary rather than weekday, as above (%A %H:%M).
                 if summary_m >= 10080:
@@ -1188,7 +1129,7 @@ class CountModeler:
                     # Set time and stats of summary count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     self.share.data['task_count_sumry'].set(len(ttimes_smry))
-                    summarydict = ttimes_stats(ttimes_smry)
+                    summarydict = T.boinc_ttimes_stats(ttimes_smry)
                     self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
                     self.share.data['tt_range_sumry'].set(
                         f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
@@ -1196,7 +1137,7 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    tt_wtmean = T.time_stat(
+                    tt_wtmean = T.logtimes_stat(
                         sumry_intvl_ttavgs, 'wtmean', sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
@@ -2064,7 +2005,7 @@ class CountViewer(tk.Frame):
         #   then convert to minutes to use in comparisons.
         summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
-        summary_m = T.string_to_m(summary_t)
+        summary_m = T.string_to_min(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
             self.good_settings = False
             info = "Summary time must be greater than, and a multiple of, interval time"
