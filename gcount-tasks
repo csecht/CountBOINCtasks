@@ -38,12 +38,12 @@ import argparse
 import logging
 import sys
 import threading
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice
 from re import search, findall, MULTILINE
 from socket import gethostname
+from time import sleep, time
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_commands, times, files, binds, utils
@@ -73,10 +73,10 @@ if sys.version_info < (3, 6):
     sys.exit(0)
 
 MY_OS = sys.platform[:3]
-SHORT_STRFTIME = '%Y %b %d %H:%M'
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
+SHORT_STRFTIME = '%Y %b %d %H:%M'
+SHORTER_STRFTIME = '%b %d %H:%M'
 DAY_STRFTIME = '%A %H:%M'
-LONGSMRY_STRF = '%b %d %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
 
@@ -147,6 +147,7 @@ def quit_gui(keybind=None):
     print(quit_txt)
     if Path.exists(Logs.LOGFILE):
         File.append_txt(Logs.LOGFILE, quit_txt, False)
+    # noinspection PyBroadException
     try:
         app.update_idletasks()
         app.after(200)
@@ -662,7 +663,7 @@ class CountFyi:
         praise = choice(compliments)
         self.share.compliment_l.config(text=praise)
         self.share.notice_l.grid_remove()
-        # Need to re-grid initial master_widgets gridding b/c its grid may
+        # Need to re-grid initial master_widgets() grids b/c its grid may
         #   have been removed by a notice_l call. Original grid coordinates
         #   are set in master_widgets().
         self.share.compliment_l.grid()
@@ -697,8 +698,8 @@ class CountFyi:
         - At start, '# tasks reported' and 'Interval time' are from
                 the most recent hourly BOINC report.\n
         - Number of tasks in queue and Notices update every"""
-                   f' {NOTICE_INTERVAL} seconds.\n'
-                   """
+                  f' {NOTICE_INTERVAL} seconds.\n'
+                  """
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
         - When analysis of logged hours is "cannot determine"...\n
@@ -767,13 +768,13 @@ class CountModeler:
         Called from check_and_start().
         """
         # As with task names, task times as sec.microsec are unique.
-        #   In future, may want to inspect task names with
+        #   In the future, may want to inspect task names with
         #     tnames = BC.get_reported('tasks').
         ttimes_start = BC.get_reported('elapsed time')
         self.share.data['task_count'].set(len(ttimes_start))
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
 
-        # Begin set of used/old tasks to exclude from new tasks;
+        # Begin the set of used/old tasks to exclude from new tasks;
         #   used in interval_data() to track tasks across intervals.
         self.ttimes_used.update(ttimes_start)
 
@@ -842,7 +843,7 @@ class CountModeler:
         ttimes_smry = set()
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
-        reference_time = time.time()
+        reference_time = time()
         tic_nnt = 0
         sumry_intvl_counts = []
         sumry_intvl_ttavgs = []
@@ -868,14 +869,14 @@ class CountModeler:
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
                     break
-                if time.time() > target_elapsed_time:
+                if time() > target_elapsed_time:
                     self.share.data['time_next_cnt'].set('00:00')
                     break
                 interval_sec -= 1
                 # Need to show the time remaining in clock time format.
                 self.share.data['time_next_cnt'].set(
                     T.sec_to_format(interval_sec, 'clock'))
-                time.sleep(1.0)
+                sleep(1.0)
 
             # NOTE: Starting tasks are not included in interval and summary
             #   counts, but starting task times are used here to determine
@@ -939,7 +940,7 @@ class CountModeler:
                 #   prior summary rather than weekday, as above (%A %H:%M).
                 if summary_m >= 10080:
                     self.share.data['time_prev_cnt'].set(
-                        datetime.now().strftime(LONGSMRY_STRF))
+                        datetime.now().strftime(SHORTER_STRFTIME))
                 summary_time = self.share.data['time_prev_cnt'].get()
                 if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
                     # Flag used in log_it() to log summary data.
@@ -968,7 +969,7 @@ class CountModeler:
                     sumry_intvl_counts.clear()
                     sumry_intvl_ttavgs.clear()
 
-            # Call to log_it() needs to be outside of the thread lock.
+            # Call to log_it() needs to be outside the thread lock.
             app.update_idletasks()
             if self.share.setting['do_log'].get():
                 self.share.logit('interval')
@@ -981,7 +982,7 @@ class CountModeler:
         Calls to: task_states() and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
-            time.sleep(NOTICE_INTERVAL)
+            sleep(NOTICE_INTERVAL)
             with self.thread_lock:
                 # Need to quit app if boinc-client is no longer running.
                 check_boinc()
@@ -1068,7 +1069,7 @@ class CountModeler:
                     print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n')
 
             app.update_idletasks()
-            # Call to log_it() here needs to be outside of the thread lock.
+            # Call to log_it() here needs to be outside the thread lock.
             if self.share.setting['do_log'].get():
                 self.share.logit('notice')
 
@@ -1239,7 +1240,7 @@ class CountModeler:
             self.share.logit('notice')
         # Need to provide time for BOINC Project server to respond before
         #   continuing with notice_it() thread.
-        time.sleep(70)
+        sleep(70)
 
 
 # MVC Viewer, the tkinter GUI engine; runs in main thread.
@@ -1385,7 +1386,8 @@ class CountViewer(tk.Frame):
         self.ttsum_sumry_l = tk.Label(
             self.dataframe, width=3, bg=self.data_bg,
             textvariable=self.share.data['tt_total_sumry'])
-        # Data labels in master
+
+        # Master data labels (self.master is implicit).
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
             bg=self.master_bg, fg=self.share.row_fg)
@@ -1548,7 +1550,7 @@ class CountViewer(tk.Frame):
                      bg=self.master_bg, fg=self.share.row_fg
                      ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.NE)
             # ^^ Grid to N (NE) to prevent Notices label from shifting down
-            #    when more than one row of notice_it text appears.
+            #    when more than one row of notice_it() text appears.
         # Need to accommodate instances of two headers in same row.
         tk.Label(self.master, text='Summary time:',
                  bg=self.master_bg, fg=self.share.row_fg
@@ -1824,7 +1826,7 @@ class CountViewer(tk.Frame):
             sumry_value = 1
 
         # Need to set summary_t here as concat of the two sumry_t element strings,
-        #   then convert to minutes to use in comparisons.
+        #   then convert it to minutes to use in comparisons.
         summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
         summary_m = T.string_to_min(summary_t)
@@ -2011,7 +2013,7 @@ class CountController(tk.Tk):
     """
     The Controller through which other MVC Count Classes can interact
     through the 'share' parameter.
-    Based on https://stackoverflow.com/questions/32864610/
+    Based on https://stackoverflow.com/questions/32864610/.
     """
 
     def __init__(self):
