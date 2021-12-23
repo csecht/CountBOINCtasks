@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.30'
+__version__ = '0.8.31'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -46,11 +46,12 @@ from re import search, findall, MULTILINE
 from socket import gethostname
 
 # pylint: disable=import-error
-from COUNTmodules import boinc_command, times, files
+from COUNTmodules import boinc_commands, times, files, binds
 
-BC = boinc_command.BoincCommand()
+BC = boinc_commands.BoincCommand()
 T = times
 File = files
+Binds = binds
 
 try:
     import tkinter as tk
@@ -86,7 +87,8 @@ def check_boinc():
     """
     # Note: Any BC boinccmd will return this string (in a list)
     #   if boinc-client is not running; use BC.get_version() b/c it is short.
-    #   Could be run with BC.check_boinc(), but only for Terminal output.
+    #   Could be run with BC.check_boinc(), but only for Terminal output;
+    #     need to use messagebox with the GUI.
     if "can't connect to local host" in BC.get_version():
         okay = messagebox.askokcancel(
             title='BOINC ERROR',
@@ -186,130 +188,6 @@ def enter_only_digits(entry_string, action_type) -> bool:
     return True
 
 
-def close_toplevel(keybind=None) -> None:
-    """
-    Close the toplevel window that has focus.
-    Called from keybinding or right-click menu.
-    Called from keybind_to_toplevel().
-
-    :param keybind: Empty parameter to pass implicit keybinding event.
-    """
-    # Based on https://stackoverflow.com/questions/66384144/
-    # Need to cover all cases when the focus is on any toplevel window,
-    #  or on a child of that window, i.e. .!text or .!frame.
-    # There are many children in app and any toplevel window will be
-    #   listed at or toward the end, so read children list in reverse.
-    # To prevent all toplevels from closing, stop when the focus
-    #   toplevel parent is found.
-
-    for widget in reversed(app.winfo_children()):
-        # pylint: disable=no-else-break
-        if widget == app.focus_get():
-            widget.destroy()
-            return keybind
-        if '.!text' in str(app.focus_get()):
-            parent = str(app.focus_get())[:-6]
-            if parent in str(widget):
-                widget.destroy()
-                return keybind
-        if '.!frame' in str(app.focus_get()):
-            parent = str(app.focus_get())[:-7]
-            if parent in str(widget):
-                widget.destroy()
-                return keybind
-    return keybind
-
-
-def click_bindings(click_obj, click_type) -> None:
-    """
-    Mouse button bindings for the named object.
-    Creates pop-up menu of commands for the clicked object.
-
-    :param click_obj: Name of the object in which click commands are
-                      to be active.
-    :param click_type: Example mouse button or button modifiers;
-                     'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
-    """
-
-    def on_click(event, command):
-        """
-        Sets menu command to the selected predefined virtual event.
-        Event is a unifying binding across multiple platforms.
-        https://www.tcl.tk/man/tcl8.6/TkCmd/event.htm#M7
-        """
-        # Need to set possible Text widgets to be editable in case
-        #   they are set to be readonly, tk.DISABLED.
-        click_obj.configure(state=tk.NORMAL)
-        event.widget.event_generate(f'<<{command}>>')
-
-    # Based on: https://stackoverflow.com/questions/57701023/
-    def popup_menu(event):
-        right_click_menu = tk.Menu(None, tearoff=0, takefocus=0)
-
-        right_click_menu.add_command(
-            label='Select all',
-            command=lambda: on_click(event, 'SelectAll'))
-        right_click_menu.add_command(
-            label='Copy',
-            command=lambda: on_click(event, 'Copy'))
-        right_click_menu.add_command(
-            label='Paste',
-            command=lambda: on_click(event, 'Paste'))
-        right_click_menu.add_command(
-            label='Cut',
-            command=lambda: on_click(event, 'Cut'))
-        right_click_menu.add(tk.SEPARATOR)
-        right_click_menu.add_command(label='Close window',
-                                     command=close_toplevel)
-
-        right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
-
-    if click_type == 'right':
-        if MY_OS in 'lin, win':
-            click_obj.bind('<Button-3>', popup_menu)
-        elif MY_OS == 'dar':
-            click_obj.bind('<Button-2>', popup_menu)
-
-
-def keybind_to_toplevel(toplevel, func: str, filepath=None, text=None) -> None:
-    """
-    Bind a key to a function for the specified Toplevel() window. Use to
-    add standard keyboard actions or to provide keybinding equivalents
-    for button commands used in the Toplevel() window.
-
-    Example usage in a function that creates mytopwin:
-    keybind_to_toplevel(mytopwin, 'close'), Mod-w will close mytopwin.
-    keybind_to_toplevel(mytopwin, 'append', MYFILEPATH, txt), Mod-s will
-    append txt string to the file MYFILEPATH.
-
-    :param toplevel: Name of tk.Toplevel() object.
-    :param func: Function to execute: 'close', 'append', 'saveas'.
-                 For 'close', the key is 'w' with OS-specific modifier.
-                 For 'append' and 'saveas', the key is 's' with
-                 OS-specific modifier.
-    :param filepath: A Path file object; use with *func* 'saveas' and
-                     'append'.
-    :param text: Text to append to *filepath*; use with *func* 'append'.
-    """
-    cmd_key = ''
-    if MY_OS in 'lin, win':
-        cmd_key = 'Control'
-    elif MY_OS == 'dar':
-        cmd_key = 'Command'
-
-    if func == 'close':
-        toplevel.bind(f'<{f"{cmd_key}"}-w>', close_toplevel)
-
-    if func == 'append':
-        toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda _: File.append_txt(filepath, text, True))
-
-    if func == 'saveas':
-        toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda _: File.save_as(filepath))
-
-
-# noinspection PyBroadException
 def quit_gui(keybind=None):
     """
     Error-free and informative exit from the program.
@@ -566,9 +444,9 @@ class Logs:
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-        click_bindings(analysistxt, 'right')
-        keybind_to_toplevel(analysiswin, 'close')
-        keybind_to_toplevel(analysiswin, 'append', cls.ANALYSISFILE, txt)
+        Binds.click(app, analysistxt, 'right')
+        Binds.keyboard(app, analysiswin, 'close')
+        Binds.keyboard(app, analysiswin, 'append', cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
         ttk.Button(analysiswin, text='Save analysis',
@@ -724,9 +602,9 @@ class Logs:
             filetext.see('end')
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        click_bindings(filewin, 'right')
-        keybind_to_toplevel(filewin, 'close')
-        keybind_to_toplevel(filewin, 'saveas', filepath)
+        Binds.click(app, filewin, 'right')
+        Binds.keyboard(app, filewin, 'close')
+        Binds.keyboard(app, filewin, 'saveas', filepath)
 
         ttk.Button(
             filewin, text='Update',
@@ -775,7 +653,7 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
-        keybind_to_toplevel(aboutwin, 'close')
+        Binds.keyboard(app, aboutwin, 'close')
         insert = (f'{__doc__}\n'
                   f'{"Author:".ljust(13)}{__author__}\n'
                   f'{"Credits:".ljust(13)}{__credits__}\n'
@@ -796,7 +674,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
-        click_bindings(abouttxt, 'right')
+        Binds.click(app, abouttxt, 'right')
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -867,7 +745,7 @@ class CountFyi:
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
-        keybind_to_toplevel(infowin, 'close')
+        Binds.keyboard(app, infowin, 'close')
         insert = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;
@@ -900,7 +778,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
-        click_bindings(infotxt, 'right')
+        Binds.click(app, infotxt, 'right')
 
 
 # ############################ MVC Classes #############################
@@ -1405,7 +1283,7 @@ class CountModeler:
         # B/c of how BC.project_action is structured, here I use the
         #  url to get the Project name ID which is used to get the
         #  url needed for the project cmd.  Silly, but uses existing
-        #  boinc_command.py methods. Is there a better way?
+        #  boinc_commands.py methods. Is there a better way?
         first_local_url = BC.get_project_url()[0]
         self.share.first_project = list(BC.project_url.keys())[
             list(BC.project_url.values()).index(first_local_url)]
@@ -1673,7 +1551,7 @@ class CountViewer(tk.Frame):
         self.master.bind_all('<Escape>', quit_gui)
         self.master.bind('<Control-q>', quit_gui)
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
-        # Note: Toplevel key bindings are set with keybind_to_toplevel().
+        # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE))
         self.master.bind('<Shift-Control-L>', Logs.show_analysis)
