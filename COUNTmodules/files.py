@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Basic file handling methods used by CountBOINCtasks project.
-Functions: append_txt(), save_as(), erase(), update()
+Basic tkinter file handling functions.
+Functions:
+    append_txt() - Append text to the destination file.
+    save_as() - Copy source file to destination of choice.
+    erase() - Delete file content and the displayed window text.
+    update() - Replace text in window with current file content.
 
     Copyright (C) 2020  C. Echt
 
@@ -22,26 +26,26 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'files.py'
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
-import sys
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, filedialog
 from pathlib import Path
 from platform import node
 from shutil import copy2
+from sys import exit, platform
 
-MY_OS = sys.platform[:3]
+MY_OS = platform[:3]
 
 
 def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
     """
-    Appends text to the destination file.
+    Append text to the destination file.
 
     :param dest: Path object of destination file.
     :param savetxt: Text to be written to dest.
@@ -129,7 +133,8 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
     :param file: Path object of file from which to erase content.
     :param tktext: A tkinter.ScrolledText or tkinter.Text insert.
     :param parent: The parent window over which to place messagebox,
-           usually the tktext Toplevel. Defaults to app window.
+                   usually the *tktext* Toplevel. Defaults to root
+                   as parent window.
     """
 
     if not Path.exists(file):
@@ -210,7 +215,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sys.exit(0)
+    exit(0)
 
 
 if __name__ == '__main__':
