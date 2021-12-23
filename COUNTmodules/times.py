@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Functions to convert, format, and analyse input time values.
-Functions: string_to_min() Convert a time string to minutes.
-           string_to_dt() Convert formatted date string to datetime object.
-           sec_to_format() Convert seconds to a specified time format.
-           logtimes_stat() Calculate statistical metric of a group of times.
+Functions:
+    string_to_min() - Convert a time string to minutes.
+    string_to_dt() - Convert formatted date string to datetime object.
+    sec_to_format() - Convert seconds to a specified time format.
+    logtimes_stat() - Calculate statistical metric of a group of times.
 
     Copyright (C) 2020-2021  C. Echt
 

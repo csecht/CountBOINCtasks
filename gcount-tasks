@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.31'
+__version__ = '0.8.32'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -46,12 +46,13 @@ from re import search, findall, MULTILINE
 from socket import gethostname
 
 # pylint: disable=import-error
-from COUNTmodules import boinc_commands, times, files, binds
+from COUNTmodules import boinc_commands, times, files, binds, utils
 
 BC = boinc_commands.BoincCommand()
 T = times
 File = files
 Binds = binds
+Utils = utils
 
 try:
     import tkinter as tk
@@ -129,63 +130,6 @@ def parse_args() -> None:
         print(f'{"Status:".ljust(13)}', __status__)
         print()
         sys.exit(0)
-
-
-def valid_path_to(relative_path: str) -> Path:
-    """
-    Get absolute path to files and directories.
-    _MEIPASS var is used by distribution programs from
-    PyInstaller (--onefile or --windowed), e.g. for an images directory.
-
-    :param relative_path: File or dir name path, as string.
-    :return: Absolute path as pathlib Path object.
-    """
-    # Modified from: https://stackoverflow.com/questions/7674790/
-    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
-    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
-        return Path(base_path) / relative_path
-    return Path(relative_path).resolve()
-
-
-def position_wrt_app(mod_x=0, mod_y=0) -> str:
-    """
-    Sets screen position of a Toplevel child with respect to the app
-    window position. Use with the geometry() method, example:
-      mytopwin.geometry(position_wrt_app(15, -15))
-
-    :param mod_x: optional pixels to add/subtract to app's x coordinate.
-    :param mod_y: optional pixels to add/subtract to app's y coordinate.
-    :return: x and y screen pixel positions as string f'+{x}+{y}'
-    """
-
-    pos_x = app.winfo_x() + mod_x
-    pos_y = app.winfo_y() + mod_y
-    return f'+{pos_x}+{pos_y}'
-
-
-def enter_only_digits(entry_string, action_type) -> bool:
-    """
-    Only digits are accepted and displayed in Entry field.
-    Used with register() to configure Entry kw validatecommand. Example:
-    myentry.configure(
-        validate='key', textvariable=myvalue,
-        validatecommand=(myentry.register(enter_only_digits), '%P', '%d')
-        )
-
-    :param entry_string: value entered into an Entry() widget (%P).
-    :param action_type: edit action code (%d).
-    :return: True or False
-    """
-    # Need to restrict entries to only digits,
-    #   MUST use action type parameter to allow user to delete first number
-    #   entered when wants to re-enter following backspace deletion.
-    # source: https://stackoverflow.com/questions/4140437/
-    # %P = value of the entry if the edit is allowed
-    # Desired action type 1 is "insert", %d.
-    if action_type == '1' and not entry_string.isdigit():
-        return False
-    return True
 
 
 def quit_gui(keybind=None):
@@ -427,7 +371,7 @@ class Logs:
 
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
         analysiswin.title('Analysis of logged data')
-        analysiswin.geometry(position_wrt_app(30, 20))
+        analysiswin.geometry(Utils.position_wrt_root(app, 30, 20))
         analysiswin.minsize(520, 320)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
@@ -649,7 +593,7 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(position_wrt_app(30, 20))
+        aboutwin.geometry(Utils.position_wrt_root(app, 30, 20))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
@@ -741,7 +685,7 @@ class CountFyi:
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(position_wrt_app(30, 20))
+        infowin.geometry(Utils.position_wrt_root(app, 30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
@@ -1783,7 +1727,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_value_entry.register(enter_only_digits), '%P', '%d'))
+                self.sumry_value_entry.register(Utils.enter_only_digits), '%P', '%d'))
 
         sumry_label2 = ttk.Label(
             self.settings_win, text='time unit', style='Set.TLabel')
@@ -1807,7 +1751,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
-                self.cycles_max_entry.register(enter_only_digits), '%P', '%d'))
+                self.cycles_max_entry.register(Utils.enter_only_digits), '%P', '%d'))
 
         # Need user options to log results to file and to use auto-updates.
         log_label = ttk.Label(self.settings_win, text='Log results to file',
@@ -2158,9 +2102,9 @@ if __name__ == "__main__":
         app = CountController()
         app.title(f'Count BOINC tasks on {gethostname()}')
         # Need valid_path_to() when making onefile with PyInstaller.
-        img = tk.PhotoImage(file=valid_path_to('images/count_icon_512.png'))
+        img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
         app.iconphoto(True, img)
-        print(f'{valid_path_to(str(Path(__file__))).name} now running...')
+        print(f'{Utils.valid_path_to(str(Path(__file__))).name} now running...')
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
