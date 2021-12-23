@@ -42,9 +42,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from COUNTmodules import boinc_command, times
+from COUNTmodules import boinc_commands, times
 
-BC = boinc_command.BoincCommand()
+BC = boinc_commands.BoincCommand()
 T = times 
 # Assume log file is in the CountBOINCtasks-master folder.
 LOGPATH = str(Path('count-tasks_log.txt'))
@@ -496,4 +496,3 @@ if __name__ == '__main__':
         # Need to remove formatting from log text.
         exit_cleaned = exit_msg.replace('\r\x1b[K\n', '')
         logging.info(msg=exit_cleaned)
-    # TODO: Consider this? https://dev.to/xowap/the-ultimate-python-main-18kn

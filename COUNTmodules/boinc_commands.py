@@ -31,7 +31,7 @@ __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
-__program_name__ = 'boinc_command.py'
+__program_name__ = 'boinc_commands.py'
 __version__ = '0.4.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
