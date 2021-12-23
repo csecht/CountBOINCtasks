@@ -89,7 +89,7 @@ def check_boinc():
     # Note: Any BC boinccmd will return this string (in a list)
     #   if boinc-client is not running; use BC.get_version() b/c it is short.
     #   Could be run with BC.check_boinc(), but only for Terminal output;
-    #     need to use messagebox with the GUI.
+    #     need to use messagebox and destroy() with the GUI.
     if "can't connect to local host" in BC.get_version():
         okay = messagebox.askokcancel(
             title='BOINC ERROR',
@@ -140,8 +140,8 @@ def quit_gui(keybind=None):
     :param keybind: Empty parameter to pass implicit keybinding event.
     """
 
-    # Write exit message to an existing log file, even if the settings
-    #  do log option was not selected.
+    # Write exit message to an existing log file, even if the setting
+    #  to log to file was not selected.
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
@@ -159,8 +159,8 @@ def quit_gui(keybind=None):
 
 class Logs:
     """
-    Methods to analyze and view task data logged to a file. Specific file
-    paths are defined as Class attributes.
+    Methods to analyze and view task data logged to a file.
+    Specific file paths are defined as Class attributes.
     """
 
     # Need Path.home() when running GcountTasks, a frozen executable from
@@ -369,7 +369,7 @@ class Logs:
         if not summary_text and not recent_interval_text:
             return keybind
 
-        analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg)
+        analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
         analysiswin.title('Analysis of logged data')
         analysiswin.geometry(Utils.position_wrt_root(app, 30, 20))
         analysiswin.minsize(520, 320)

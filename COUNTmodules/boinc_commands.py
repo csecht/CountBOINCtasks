@@ -353,7 +353,8 @@ class BoincCommand:
         Get data from current boinc-client tasks.
 
         :param cmd: The boinccmd command to get Project information.
-        :return: True or False indicating status of no new work setting.
+        :return: True or False indicating status of "No new tasks"
+                 Project setting.
         """
 
         output = self.run_boinc(self.boincpath + cmd)

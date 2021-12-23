@@ -57,10 +57,10 @@ def position_wrt_root(widget, mod_x=0, mod_y=0) -> str:
     """
     Sets screen position of *widget*, usually a Toplevel object, with
     respect to the root window position. Used with the geometry() method,
-    example: mytopwin.geometry(app, position_wrt_app(15, -15))
+    example: mytopwin.geometry(app, position_wrt_root(app, 15, -15))
 
     :param widget: The widget (usually the 'root', 'main', or 'app'
-                   object) for which to get the screen pixel position.
+                   object) for which to get its screen pixel position.
     :param mod_x: optional pixels to add/subtract to app's x coordinate.
     :param mod_y: optional pixels to add/subtract to app's y coordinate.
     :return: x and y screen pixel positions as string f'+{x}+{y}'
