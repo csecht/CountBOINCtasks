@@ -465,7 +465,7 @@ class Logs:
                 if has_interval:
                     start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
 
-        if -1.0 in start2quit + start2interrupt + start2intvl:
+        if -1.0 in start2intvl + start2quit + start2interrupt:
             return 'cannot determine'
 
         # The log text has been read, so now need to get uptime of the
@@ -1387,7 +1387,7 @@ class CountViewer(tk.Frame):
             self.dataframe, width=3, bg=self.data_bg,
             textvariable=self.share.data['tt_total_sumry'])
 
-        # Master data labels (self.master is implicit).
+        # Master data labels (self.master is implicit as the parent).
         self.time_prev_cnt_l = tk.Label(
             textvariable=self.share.data['time_prev_cnt'],
             bg=self.master_bg, fg=self.share.row_fg)
@@ -1860,6 +1860,7 @@ class CountViewer(tk.Frame):
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
+        # Note: logging package is used only to lazily manage the data log file.
         if self.share.setting['do_log'].get():
             logging.basicConfig(filename=str(Logs.LOGFILE), level=logging.INFO,
                                 filemode="a", format='%(message)s')
@@ -1893,8 +1894,7 @@ class CountViewer(tk.Frame):
     def start_threads(self) -> None:
         """
         Set up and start threads for intervals, notices, and logging.
-        Called from check_and_start() in Viewer as part of
-        startup sequence.
+        Called from check_and_start() as part of startup sequence.
         """
         # There are no thread.join(), so use daemon for clean exits.
         intvl_thread = threading.Thread(
