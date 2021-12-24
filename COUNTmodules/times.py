@@ -113,8 +113,8 @@ def sec_to_format(secs: int, format_type: str) -> str:
 
 def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     """
-    Calculate statistics for group of times. Use to analyse task times
-    from a file of logged task times over timed intervals.
+    Calculate a statistical metric for a distribution of times.
+    Used to analyse times obtained from logged task times.
 
     :param distribution: List or tuple of times, as string format
                          ('00:00:00'), or as seconds (floats or integers).
