@@ -1696,11 +1696,11 @@ class CountViewer(tk.Frame):
                        ' all tasks are "Ready to report" in the BOINC Manager.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
-        def update_intvl(*event):
+        def update_intvl(event=None):
             self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_unit_choice.get()]
             return event
 
-        def update_sumry_unit(*event):
+        def update_sumry_unit(event=None):
             self.share.sumry_unit_choice['values'] = interval_t[self.share.intvl_choice.get()]
             return event
 
@@ -2100,7 +2100,7 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {gethostname()}')
-        # Need valid_path_to() when making onefile with PyInstaller.
+        # Need valid_path_to() when making onefile or windowed with PyInstaller.
         img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
         app.iconphoto(True, img)
         print(f'{Utils.valid_path_to(str(Path(__file__))).name} now running...')
