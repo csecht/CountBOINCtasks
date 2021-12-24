@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.33'
+__version__ = '0.8.34'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -108,7 +108,7 @@ def check_boinc():
 
 
 def parse_args() -> None:
-    """Allow handling of common execution arguments.
+    """Allow handling of common command line arguments.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--about',
@@ -164,17 +164,16 @@ class Logs:
     File paths are defined as Class attribute constants.
     """
 
+    # Need Path.cwd() when running gcount-tasks from command line, so that
+    #   written files are written to the parent directory.
+    # Need .resolve() to force absolute path and handle possible symlinks.
+    LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
+    ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
     # Need Path.home() when running GcountTasks, a frozen executable from
     #   PyInstaller, so that written files do not end up in temp MEI folder.
-    # Need Path.cwd() when running gcount-tasks from command line, so that
-    #   written files end up in parent directory.
-    # Need .resolve() to force absolute path and handle possible symlinks.
     if getattr(sys, 'frozen', False):
         LOGFILE = Path(Path.home(), 'gcount-tasks_log.txt').resolve()
         ANALYSISFILE = Path(Path.home(), 'gcount-tasks_analysis.txt').resolve()
-    else:
-        LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
-        ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
 
     @classmethod
     def analyze_logfile(cls) -> tuple:
@@ -220,7 +219,18 @@ class Logs:
             return summary_text, recent_interval_text  # <- Empty strings.
 
         # NOTE: regex needs to track any changes to log file structure made
-        #   in CountModeler.log_it().
+        #   in CountModeler.log_it(). Regex is based on this structure:
+        # 2021-Dec-21 06:27:18; Tasks reported in the past 1h: 18
+        #                       Task Time: avg 00:21:35,
+        #                                  range [00:21:20 -- 00:21:54],
+        #                                  stdev 00:00:11, total 06:28:45
+        #                       Total tasks in queue: 53
+        #                       984 counts remain.
+        #
+        # 2021-Dec-21 06:27:18; >>> SUMMARY: Count for the past 1d: 402
+        #                       Task Time: mean 0:21:28,
+        #                                  range [00:16:03 -- 00:22:33],
+        #                                  stdev 00:00:42, total 5d 23:54:05
         found_sumrys = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         found_intvls = findall(
@@ -251,6 +261,7 @@ class Logs:
             #    list of string tuples into one tuple of strings.
             intvl_t_range = T.logtimes_stat(sum(found_intvl_t_range, ()), 'range')
 
+            # Text & data used in most count reporting conditions below:
             logged_intvl_report = (
                 'Analysis of reported tasks logged from\n'
                 f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
@@ -372,7 +383,7 @@ class Logs:
 
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
         analysiswin.title('Analysis of logged data')
-        analysiswin.geometry(Utils.position_wrt_root(app, 30, 20))
+        analysiswin.geometry(Utils.position_wrt_main(app, 30, 20))
         analysiswin.minsize(520, 320)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
@@ -594,7 +605,7 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(Utils.position_wrt_root(app, 30, 20))
+        aboutwin.geometry(Utils.position_wrt_main(app, 30, 20))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
@@ -679,14 +690,14 @@ class CountFyi:
     @staticmethod
     def information() -> None:
         """
-        Basic information, usage, and actions.
+        Basic information for usage and actions.
         Toplevel window called from Help menu bar.
         """
 
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(Utils.position_wrt_root(app, 30, 20))
+        infowin.geometry(Utils.position_wrt_main(app, 30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
@@ -2021,12 +2032,6 @@ class CountController(tk.Tk):
 
     def __init__(self):
         super().__init__()
-
-        # Use geometry so that master window will be underneath settings()
-        #   Toplevel window at startup.
-        #   Not setting the geometry here places app window below settings_win.
-        # These x, y coordinates match default window placement on Ubuntu desktop.
-        # self.geometry('+96+134')
 
         # Need window sizes to make room for multi-line notices,
         #    but not get minimized enough to exclude notices row.

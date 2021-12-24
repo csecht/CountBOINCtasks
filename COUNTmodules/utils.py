@@ -3,7 +3,7 @@
 General utility functions in gcount-tasks.
 Functions:
     valid_path_to() - Get absolute path to files and directories.
-    position_wrt_root() - Set coordinates of a tk.Toplevel window
+    position_wrt_main() - Set coordinates of a tk.Toplevel window
         relative to root window position.
     enter_only_digits() - Constrain tk.Entry() values to digits.
 
@@ -53,21 +53,21 @@ def valid_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def position_wrt_root(widget, mod_x=0, mod_y=0) -> str:
+def position_wrt_main(mainwin, mod_x=0, mod_y=0) -> str:
     """
-    Sets screen position of *widget*, usually a Toplevel object, with
-    respect to the root window position. Used with the geometry() method,
-    example: mytopwin.geometry(app, position_wrt_root(app, 15, -15))
+    Gets screen position of *mainwin* and applies optional offsets.
+    Used to set screen position of a Toplevel object with respect to
+    the main/root window position. Use with the geometry() method,
+    example: mytopwin.geometry(utils.position_wrt_main(root, 15, -15))
 
-    :param widget: The widget (usually the 'root', 'main', or 'app'
-                   object) for which to get its screen pixel position.
-    :param mod_x: optional pixels to add/subtract to app's x coordinate.
-    :param mod_y: optional pixels to add/subtract to app's y coordinate.
-    :return: x and y screen pixel positions as string f'+{x}+{y}'
+    :param mainwin: The main window object (e.g., 'root', 'main', or
+                    'app') for which to get screen pixel coordinates.
+    :param mod_x: optional pixels to add/subtract to *mainwin* x coordinate.
+    :param mod_y: optional pixels to add/subtract to *mainwin* y coordinate.
+    :return: x and y screen pixel coordinates as string f'+{x}+{y}'
     """
-
-    pos_x = widget.winfo_x() + mod_x
-    pos_y = widget.winfo_y() + mod_y
+    pos_x = mainwin.winfo_x() + mod_x
+    pos_y = mainwin.winfo_y() + mod_y
     return f'+{pos_x}+{pos_y}'
 
 
