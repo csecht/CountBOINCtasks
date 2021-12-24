@@ -114,7 +114,7 @@ def sec_to_format(secs: int, format_type: str) -> str:
 def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     """
     Calculate a statistical metric for a distribution of times.
-    Used to analyse times obtained from logged task times.
+    Used to analyse times extracted from logged task times.
 
     :param distribution: List or tuple of times, as string format
                          ('00:00:00'), or as seconds (floats or integers).
@@ -126,7 +126,8 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
                     (integers) for each element in *distribution*. Must
                     have same number of elements as *distribution*.
                     Needed only for the 'wtmean' *stat*.
-    :return: The distribution's statistic, as formatted string, '00:00:00'.
+    :return: The distribution's statistic as formatted string, '00:00:00'.
+             For 'range', returns as format '[00:00:00 -- 00:00:00]'.
              Returns 'cannot determine' if invalid data given for 'wtmean'.
     """
     # Algorithm sources:
@@ -174,8 +175,8 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
 
 def boinc_ttimes_stats(times_sec: iter) -> dict:
     """
-    Gather statistics for times to display and log.
-    Use to analyse task times from boinc-client reports.
+    Gather statistics for iterable distribution of times to display and
+    log. Used to analyse task times extracted from boinc-client reports.
 
     :param times_sec: A list, tuple, or set of times, in seconds as
                       integers or floats.
@@ -213,7 +214,7 @@ def boinc_ttimes_stats(times_sec: iter) -> dict:
 
 def about() -> None:
     """
-    Print details about_gui this module.
+    Print basic information about this module.
     """
     print(__doc__)
     print(f'{"Author:".ljust(11)}', __author__)

@@ -173,7 +173,7 @@ def keyboard(widget, toplevel, func: str, filepath=None, text=None) -> None:
 
 def about() -> None:
     """
-    Print details about_gui this module.
+    Print basic information about this module.
     """
     print(__doc__)
     print(f'{"Author:".ljust(11)}', __author__)

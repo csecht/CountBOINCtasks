@@ -203,7 +203,7 @@ def update(tktext: tk.Text, file: Path, parent=None) -> None:
 
 def about() -> None:
     """
-    Print details about_gui this module.
+    Print basic information about this module.
     """
     print(__doc__)
     print(f'{"Author:".ljust(11)}', __author__)

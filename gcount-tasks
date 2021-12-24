@@ -50,7 +50,7 @@ from COUNTmodules import boinc_commands, times, files, binds, utils
 
 BC = boinc_commands.BoincCommand()
 T = times
-File = files
+Files = files
 Binds = binds
 Utils = utils
 
@@ -146,13 +146,13 @@ def quit_gui(keybind=None):
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
     if Path.exists(Logs.LOGFILE):
-        File.append_txt(Logs.LOGFILE, quit_txt, False)
+        Files.append_txt(Logs.LOGFILE, quit_txt, False)
     # noinspection PyBroadException
+    # pylint: disable=broad-except
     try:
         app.update_idletasks()
         app.after(200)
         app.destroy()
-    # pylint: disable=broad-except
     except Exception:
         sys.exit(0)
     return keybind
@@ -161,7 +161,7 @@ def quit_gui(keybind=None):
 class Logs:
     """
     Methods to analyze and view task data logged to a file.
-    Specific file paths are defined as Class attributes.
+    File paths are defined as Class attribute constants.
     """
 
     # Need Path.home() when running GcountTasks, a frozen executable from
@@ -395,7 +395,7 @@ class Logs:
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
         ttk.Button(analysiswin, text='Save analysis',
-                   command=lambda: File.append_txt(
+                   command=lambda: Files.append_txt(
                         cls.ANALYSISFILE, txt, True, analysiswin)
                    ).pack(padx=4)
 
@@ -553,11 +553,11 @@ class Logs:
 
         ttk.Button(
             filewin, text='Update',
-            command=(lambda: File.update(filetext, filepath, filewin)),
+            command=(lambda: Files.update(filetext, filepath, filewin)),
             takefocus=False).pack(padx=4)
         ttk.Button(
             filewin, text='Backup',
-            command=lambda: File.save_as(filepath, filewin),
+            command=lambda: Files.save_as(filepath, filewin),
             takefocus=False).pack(padx=4)
 
         if filepath == cls.LOGFILE:
@@ -571,7 +571,7 @@ class Logs:
         if filepath == cls.ANALYSISFILE:
             ttk.Button(
                 filewin, text='Erase',
-                command=lambda: File.erase(cls.ANALYSISFILE, filetext, filewin),
+                command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>', cls.show_analysis)
 
@@ -1437,10 +1437,10 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label='File', menu=file)
         file.add_command(
             label='Backup log file',
-            command=lambda: File.save_as(Logs.LOGFILE))
+            command=lambda: Files.save_as(Logs.LOGFILE))
         file.add_command(
             label='Backup analysis file',
-            command=lambda: File.save_as(Logs.ANALYSISFILE))
+            command=lambda: Files.save_as(Logs.ANALYSISFILE))
         file.add_separator()
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
