@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.32'
+__version__ = '0.8.33'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -354,7 +354,7 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, *keybind):
+    def show_analysis(cls, keybind=None):
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
@@ -1073,7 +1073,7 @@ class CountModeler:
             if self.share.setting['do_log'].get():
                 self.share.logit('notice')
 
-    def log_it(self, called_from=None) -> None:
+    def log_it(self, called_from) -> None:
         """
         Write to file interval and summary metrics for recently reported
         BOINC tasks. Provide information on aberrant task status.
@@ -1899,7 +1899,7 @@ class CountViewer(tk.Frame):
         notice_thread = threading.Thread(
             target=self.share.taskstatenotices, daemon=True)
         log_thread = threading.Thread(
-            target=self.share.logit, daemon=True)
+            target=self.share.logit, daemon=True, args=(None,))
         intvl_thread.start()
         notice_thread.start()
         log_thread.start()
@@ -2056,22 +2056,19 @@ class CountController(tk.Tk):
 
     def intervaldata(self) -> None:
         """
-        Is called from Viewer.start_threads(), which starts the Modeler
-        interval thread.
+        Is called from Viewer.start_threads().
         """
         CountModeler(share=self).interval_data()
 
     def taskstatenotices(self) -> None:
         """
-        Is called from Viewer.start_threads(), which starts the Modeler
-        task state notification thread.
+        Is called from Viewer.start_threads().
         """
         CountModeler(share=self).notice_it()
 
-    def logit(self, called_from=None) -> None:
+    def logit(self, called_from) -> None:
         """Send data to log file.
-        Is called from Viewer.start_threads(), which starts the Modeler
-        log_it() thread.
+        Is called from Viewer.start_threads()
 
         :param called_from: Either 'start', 'interval' or 'notice',
                             depending on type of data to be logged.
