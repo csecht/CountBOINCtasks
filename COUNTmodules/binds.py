@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -87,7 +87,7 @@ def click(click_obj, click_type, mainwin=None) -> None:
         right_click_menu.add(constants.SEPARATOR)
         right_click_menu.add_command(
             label='Close window',
-            command=lambda: utils.get_toplevel('object', mainwin).destroy())
+            command=lambda: utils.get_toplevel('winpath', mainwin).destroy())
 
         right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
 
@@ -130,7 +130,7 @@ def keyboard(toplevel, func: str, mainwin=None, filepath=None, text=None) -> Non
     if func == 'close':
         toplevel.bind(
             f'<{f"{cmd_key}"}-w>',
-            lambda _: utils.get_toplevel('object', mainwin).destroy())
+            lambda _: utils.get_toplevel('winpath', mainwin).destroy())
 
     if func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',

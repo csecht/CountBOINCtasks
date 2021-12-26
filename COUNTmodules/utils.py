@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -85,13 +85,13 @@ def get_toplevel(action: str, mainwin) -> Union[str, Any]:
     *mainwin* do not retain focus, i.e., 'takefocus=False'.
 
     :param action: The action needed for the parent; e.g.,
-                   'position', 'object'.
+                   'position', 'winpath'.
     :param mainwin: The main window object of the tk() mainloop, e.g.,
                     'root', 'main', or 'app', etc.
     :return: For *action* 'position', returns string of screen
              coordinates for the parent toplevel window.
-             For *action* 'object', returns the object name for the
-             parent toplevel window.
+             For *action* 'winpath', returns the tk window path
+             name for the parent toplevel window.
     """
     # Based on https://stackoverflow.com/questions/66384144/
     # Need to cover all cases when the focus is on any toplevel window,
@@ -100,38 +100,37 @@ def get_toplevel(action: str, mainwin) -> Union[str, Any]:
     #   window will likely be listed at or toward the end, so read
     #   children list in reverse.
     if action == 'position':
-        pos = None
+        coordinates = None
         for child in reversed(mainwin.winfo_children()):
             if child == child.focus_get():
-                pos = position_wrt_window(child, 30, 20)
-                break
-            if '.!text' in str(child.focus_get()):
+                coordinates = position_wrt_window(child, 30, 20)
+            elif '.!text' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-6]
                 if parent in str(child):
-                    pos = position_wrt_window(child, 30, 20)
-                    break
-            if '.!frame' in str(child.focus_get()):
+                    coordinates = position_wrt_window(child, 30, 20)
+            elif '.!frame' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-7]
                 if parent in str(child):
-                    pos = position_wrt_window(child, 30, 20)
-                    break
-            if str(child.focus_get()) == '.':
-                pos =  position_wrt_window(mainwin, 30, 20)
-        return pos
-    if action == 'object':
+                    coordinates = position_wrt_window(child, 30, 20)
+            elif str(child.focus_get()) == '.':
+                coordinates =  position_wrt_window(mainwin, 30, 20)
+        return coordinates
+    if action == 'winpath':
+        relative_path = mainwin.winfo_children()[-1]
         for child in reversed(mainwin.winfo_children()):
             if child == child.focus_get():
-                return child
-            if '.!text' in str(child.focus_get()):
+                relative_path = child
+            elif '.!text' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-6]
                 if parent in str(child):
-                    return child
-            if '.!frame' in str(child.focus_get()):
+                    relative_path = child
+            elif '.!frame' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-7]
                 if parent in str(child):
-                    return child
-            if str(child.focus_get()) == '.':
-                return mainwin
+                    relative_path = child
+            elif str(child.focus_get()) == '.':
+                relative_path = mainwin
+        return relative_path
     return None
 
 
