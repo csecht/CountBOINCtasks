@@ -26,69 +26,35 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 from tkinter import constants, Menu
-from sys import exit, platform
+from sys import platform, exit as sysexit
 
-from COUNTmodules import files
+from COUNTmodules import files, utils
 
 MY_OS = platform[:3]
 
 
-# close_toplevel is called only internally.
-def close_toplevel(widget, keybind=None) -> None:
-    """
-    Close the toplevel window that has focus.
-    Use with keybinding or right-click pop-up commands.
-
-    :param widget: The widget (usually the 'root', 'main', or 'app'
-                   object) on which to get the focus on and destroy().
-    :param keybind: Empty parameter to pass implicit keybinding event.
-    """
-    # Based on https://stackoverflow.com/questions/66384144/
-    # Need to cover all cases when the focus is on any toplevel window,
-    #  or on a child of that window, i.e. .!text or .!frame.
-    # There may be many children in *widget* and any toplevel window will
-    #   be listed at or toward the end, so read children list in reverse.
-    # To prevent all toplevels from closing, stop when the focus
-    #   toplevel parent is found.
-
-    for child in reversed(widget.winfo_children()):
-        # pylint: disable=no-else-break
-        if child == child.focus_get():
-            child.destroy()
-            return keybind
-        if '.!text' in str(child.focus_get()):
-            parent = str(child.focus_get())[:-6]
-            if parent in str(child):
-                child.destroy()
-                return keybind
-        if '.!frame' in str(child.focus_get()):
-            parent = str(child.focus_get())[:-7]
-            if parent in str(child):
-                child.destroy()
-                return keybind
-    return keybind
-
-
-def click(widget, click_obj, click_type) -> None:
+def click(click_obj, click_type, mainwin=None) -> None:
     """
     Mouse button bindings for the named object.
     Creates pop-up menu of commands for the clicked object.
     Example: from COUNTmodules import binds
              binds.click(root, mytextobject, 'right')
 
-    :param widget: The widget (usually the 'root', 'main', or 'app'
-                   object) to pass to close_toplevel().
     :param click_obj: Name of the object in which click commands are
                       to be active.
     :param click_type: Example mouse button or button modifiers;
                      'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
+    :param mainwin: When calling utils.get_toplevel(), the main window
+                    object of the tk() mainloop, e.g., 'root', 'main',
+                    or 'app', from which to identify a tk.Toplevel that
+                    has focus.
     """
 
     def on_click(event, command):
@@ -119,8 +85,9 @@ def click(widget, click_obj, click_type) -> None:
             label='Cut',
             command=lambda: on_click(event, 'Cut'))
         right_click_menu.add(constants.SEPARATOR)
-        right_click_menu.add_command(label='Close window',
-                                     command=lambda: close_toplevel(widget))
+        right_click_menu.add_command(
+            label='Close window',
+            command=lambda: utils.get_toplevel('object', mainwin).destroy())
 
         right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
 
@@ -131,7 +98,7 @@ def click(widget, click_obj, click_type) -> None:
             click_obj.bind('<Button-2>', popup_menu)
 
 
-def keyboard(widget, toplevel, func: str, filepath=None, text=None) -> None:
+def keyboard(toplevel, func: str, mainwin=None, filepath=None, text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
     add standard keyboard actions or to provide keybinding equivalents
@@ -142,13 +109,14 @@ def keyboard(widget, toplevel, func: str, filepath=None, text=None) -> None:
     binds.keyboard(mytopwin, 'close')
     binds.keyboard(mytopwin, 'append', MYFILEPATH, txt)
 
-    :param widget: The widget (usually the 'root', 'main', or 'app'
-                   object) to pass to close_toplevel().
     :param toplevel: Name of tk.Toplevel() object.
     :param func: Function to execute: 'close', 'append', 'saveas'.
                  For 'close', the key is 'w' with OS-specific modifier.
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
+    :param mainwin: The main window object of the tk() mainloop, e.g.,
+                    root', 'main', or 'app'. Used only as a pass-through
+                    parameter when calling utils.get_toplevel().
     :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -160,7 +128,9 @@ def keyboard(widget, toplevel, func: str, filepath=None, text=None) -> None:
         cmd_key = 'Command'
 
     if func == 'close':
-        toplevel.bind(f'<{f"{cmd_key}"}-w>', lambda _: close_toplevel(widget))
+        toplevel.bind(
+            f'<{f"{cmd_key}"}-w>',
+            lambda _: utils.get_toplevel('object', mainwin).destroy())
 
     if func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
@@ -185,7 +155,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    exit(0)
+    sysexit(0)
 
 
 if __name__ == '__main__':

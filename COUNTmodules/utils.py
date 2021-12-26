@@ -3,7 +3,7 @@
 General utility functions in gcount-tasks.
 Functions:
     valid_path_to() - Get absolute path to files and directories.
-    position_wrt_main() - Set coordinates of a tk.Toplevel window
+    position_wrt_window() - Set coordinates of a tk.Toplevel window
         relative to root window position.
     enter_only_digits() - Constrain tk.Entry() values to digits.
 
@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.0.1'
+__version__ = '0.1.0'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -34,6 +34,7 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import sys
 from pathlib import Path
+from typing import Union, Any
 
 
 def valid_path_to(relative_path: str) -> Path:
@@ -53,22 +54,85 @@ def valid_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def position_wrt_main(mainwin, mod_x=0, mod_y=0) -> str:
+def position_wrt_window(window, offset_x=0, offset_y=0) -> str:
     """
-    Gets screen position of *mainwin* and applies optional offsets.
+    Get screen position of *window* and apply optional offsets.
     Used to set screen position of a Toplevel object with respect to
-    the main/root window position. Use with the geometry() method,
-    example: mytopwin.geometry(utils.position_wrt_main(root, 15, -15))
+    a parent's window position. Example use with the geometry() method:
+      mytopwin.geometry(utils.position_wrt_window(root, 15, -15))
+    When used with get_toplevel(), it is expected that all Button()
+    widgets are configured for 'takefocus=False'.
 
-    :param mainwin: The main window object (e.g., 'root', 'main', or
-                    'app') for which to get screen pixel coordinates.
-    :param mod_x: optional pixels to add/subtract to *mainwin* x coordinate.
-    :param mod_y: optional pixels to add/subtract to *mainwin* y coordinate.
-    :return: x and y screen pixel coordinates as string f'+{x}+{y}'
+    :param window: The main window object (e.g., 'root', 'app',
+                   '.!toplevel2') of the tk() mainloop for which to get
+                   its screen pixel coordinates.
+    :param offset_x: optional pixels to add/subtract to x coordinate of
+                     *window*.
+    :param offset_y: optional pixels to add/subtract to x coordinate of
+                     *window*.
+    :return: x and y screen pixel coordinates as string, f'+{x}+{y}'
     """
-    pos_x = mainwin.winfo_x() + mod_x
-    pos_y = mainwin.winfo_y() + mod_y
-    return f'+{pos_x}+{pos_y}'
+    coord_x = window.winfo_x() + offset_x
+    coord_y = window.winfo_y() + offset_y
+    return f'+{coord_x}+{coord_y}'
+
+
+def get_toplevel(action: str, mainwin) -> Union[str, Any]:
+    """
+    Identify the parent tkinter.Toplevel() window when it, or its
+    child widget, has focus.
+    Works as intended when Button widgets in parent toplevel or
+    *mainwin* do not retain focus, i.e., 'takefocus=False'.
+
+    :param action: The action needed for the parent; e.g.,
+                   'position', 'object'.
+    :param mainwin: The main window object of the tk() mainloop, e.g.,
+                    'root', 'main', or 'app', etc.
+    :return: For *action* 'position', returns string of screen
+             coordinates for the parent toplevel window.
+             For *action* 'object', returns the object name for the
+             parent toplevel window.
+    """
+    # Based on https://stackoverflow.com/questions/66384144/
+    # Need to cover all cases when the focus is on any toplevel window,
+    #  or on a child of that window path, i.e. '.!text' or '.!frame'.
+    # There may be many children in *mainwin* and any target toplevel
+    #   window will likely be listed at or toward the end, so read
+    #   children list in reverse.
+    if action == 'position':
+        pos = None
+        for child in reversed(mainwin.winfo_children()):
+            if child == child.focus_get():
+                pos = position_wrt_window(child, 30, 20)
+                break
+            if '.!text' in str(child.focus_get()):
+                parent = str(child.focus_get())[:-6]
+                if parent in str(child):
+                    pos = position_wrt_window(child, 30, 20)
+                    break
+            if '.!frame' in str(child.focus_get()):
+                parent = str(child.focus_get())[:-7]
+                if parent in str(child):
+                    pos = position_wrt_window(child, 30, 20)
+                    break
+            if str(child.focus_get()) == '.':
+                pos =  position_wrt_window(mainwin, 30, 20)
+        return pos
+    if action == 'object':
+        for child in reversed(mainwin.winfo_children()):
+            if child == child.focus_get():
+                return child
+            if '.!text' in str(child.focus_get()):
+                parent = str(child.focus_get())[:-6]
+                if parent in str(child):
+                    return child
+            if '.!frame' in str(child.focus_get()):
+                parent = str(child.focus_get())[:-7]
+                if parent in str(child):
+                    return child
+            if str(child.focus_get()) == '.':
+                return mainwin
+    return None
 
 
 def enter_only_digits(entry_string, action_type) -> bool:
@@ -109,7 +173,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    exit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':

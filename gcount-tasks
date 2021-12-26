@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.34'
+__version__ = '0.8.35'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -383,7 +383,9 @@ class Logs:
 
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
         analysiswin.title('Analysis of logged data')
-        analysiswin.geometry(Utils.position_wrt_main(app, 30, 20))
+        # Need to position analysiswin over the window from which it is called.
+        analysiswin.geometry(Utils.get_toplevel('position', app))
+
         analysiswin.minsize(520, 320)
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
@@ -400,15 +402,15 @@ class Logs:
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-        Binds.click(app, analysistxt, 'right')
-        Binds.keyboard(app, analysiswin, 'close')
-        Binds.keyboard(app, analysiswin, 'append', cls.ANALYSISFILE, txt)
+        Binds.click(analysistxt, 'right', app)
+        Binds.keyboard(analysiswin, 'close', app)
+        Binds.keyboard(analysiswin, 'append', app, cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
         ttk.Button(analysiswin, text='Save analysis',
                    command=lambda: Files.append_txt(
-                        cls.ANALYSISFILE, txt, True, analysiswin)
-                   ).pack(padx=4)
+                        cls.ANALYSISFILE, txt, True, analysiswin),
+                   takefocus=False).pack(padx=4)
 
         return keybind
 
@@ -558,13 +560,13 @@ class Logs:
             filetext.see('end')
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        Binds.click(app, filewin, 'right')
-        Binds.keyboard(app, filewin, 'close')
-        Binds.keyboard(app, filewin, 'saveas', filepath)
+        Binds.click(filewin, 'right', app)
+        Binds.keyboard(filewin, 'close', app)
+        Binds.keyboard(filewin, 'saveas', app, filepath)
 
         ttk.Button(
             filewin, text='Update',
-            command=(lambda: Files.update(filetext, filepath, filewin)),
+            command=lambda: Files.update(filetext, filepath, filewin),
             takefocus=False).pack(padx=4)
         ttk.Button(
             filewin, text='Backup',
@@ -605,11 +607,11 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(Utils.position_wrt_main(app, 30, 20))
+        aboutwin.geometry(Utils.position_wrt_window(app, 30, 20))
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
-        Binds.keyboard(app, aboutwin, 'close')
+        Binds.keyboard(aboutwin, 'close', app)
         insert = (f'{__doc__}\n'
                   f'{"Author:".ljust(13)}{__author__}\n'
                   f'{"Credits:".ljust(13)}{__credits__}\n'
@@ -630,7 +632,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
-        Binds.click(app, abouttxt, 'right')
+        Binds.click(abouttxt, 'right', app)
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -697,11 +699,11 @@ class CountFyi:
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(Utils.position_wrt_main(app, 30, 20))
+        infowin.geometry(Utils.position_wrt_window(app, 30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
-        Binds.keyboard(app, infowin, 'close')
+        Binds.keyboard(infowin, 'close', app)
         insert = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;
@@ -734,7 +736,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
-        Binds.click(app, infotxt, 'right')
+        Binds.click(infotxt, 'right', app)
 
 
 # ############################ MVC Classes #############################
@@ -1476,7 +1478,8 @@ class CountViewer(tk.Frame):
 
         # For Button constructors, self.master is implicit as the parent.
         self.share.viewlog_b = ttk.Button(text='View log file',
-                                          command=lambda: Logs.view(Logs.LOGFILE))
+                                          command=lambda: Logs.view(Logs.LOGFILE),
+                                          takefocus=False)
         # Set interval & summary focus button attributes with *.share.* b/c need
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with an active ttk intvl_b after first
@@ -1484,11 +1487,14 @@ class CountViewer(tk.Frame):
         # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
         self.share.starting_b = tk.Button(text='Starting data',
                                           width=18, disabledforeground='grey10',
+                                          takefocus=False,
                                           state=tk.DISABLED)
         self.share.intvl_b = ttk.Button(text='Interval data', width=18,
-                                        command=self.emphasize_intvl_data)
+                                        command=self.emphasize_intvl_data,
+                                        takefocus=False)
         self.share.sumry_b = ttk.Button(text='Summary data', width=20,
-                                        command=self.emphasize_sumry_data)
+                                        command=self.emphasize_sumry_data,
+                                        takefocus=False)
 
     def master_layout(self) -> None:
         """
