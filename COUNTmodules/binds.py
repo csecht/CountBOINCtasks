@@ -2,8 +2,6 @@
 """
 Functions to set tkinter mouse click and keyboard bindings.
 Functions:
-    close_toplevel() - Close the toplevel window that has focus;
-        called only by other binds.py module functions.
     click() - Mouse button bindings for a named object.
     keyboard() - Bind a key to a function for the specified toplevel.
 
@@ -25,8 +23,8 @@ Functions:
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
-__program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.1.2'
+__module_name__ = 'binds.py'
+__module_ver__ = '0.1.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -149,8 +147,8 @@ def about() -> None:
     print(f'{"Author:".ljust(11)}', __author__)
     print(f'{"Copyright:".ljust(11)}', __copyright__)
     print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __program_name__)
-    print(f'{"Version:".ljust(11)}', __version__)
+    print(f'{"Module:".ljust(11)}', __module_name__)
+    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)

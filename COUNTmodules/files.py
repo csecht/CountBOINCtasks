@@ -25,8 +25,8 @@ Functions:
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
-__program_name__ = 'files.py'
-__version__ = '0.1.4'
+__module_name__ = 'files.py'
+__module_ver__ = '0.1.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -38,7 +38,7 @@ from tkinter import messagebox, filedialog
 from pathlib import Path
 from platform import node
 from shutil import copy2
-from sys import exit, platform
+from sys import platform, exit as sysexit
 
 MY_OS = platform[:3]
 
@@ -209,13 +209,13 @@ def about() -> None:
     print(f'{"Author:".ljust(11)}', __author__)
     print(f'{"Copyright:".ljust(11)}', __copyright__)
     print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __program_name__)
-    print(f'{"Version:".ljust(11)}', __version__)
+    print(f'{"Module:".ljust(11)}', __module_name__)
+    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    exit(0)
+    sysexit(0)
 
 
 if __name__ == '__main__':

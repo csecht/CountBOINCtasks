@@ -3,8 +3,9 @@
 General utility functions in gcount-tasks.
 Functions:
     valid_path_to() - Get absolute path to files and directories.
-    position_wrt_window() - Set coordinates of a tk.Toplevel window
-        relative to root window position.
+    position_wrt_window() - Set coordinates of a tk.Toplevel relative
+        to another window position.
+    get_toplevel - Identify the parent tk.Toplevel with focus.
     enter_only_digits() - Constrain tk.Entry() values to digits.
 
     Copyright (C) 2020-2021  C. Echt
@@ -25,8 +26,8 @@ Functions:
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
-__program_name__ = 'gcount-tasks, count-tasks'
-__version__ = '0.1.1'
+__module_name__ = 'utils.py'
+__module_ver__ = '0.1.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -166,8 +167,8 @@ def about() -> None:
     print(f'{"Author:".ljust(11)}', __author__)
     print(f'{"Copyright:".ljust(11)}', __copyright__)
     print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __program_name__)
-    print(f'{"Version:".ljust(11)}', __version__)
+    print(f'{"Module:".ljust(11)}', __module_name__)
+    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)

@@ -31,8 +31,8 @@ __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
-__program_name__ = 'boinc_commands.py'
-__version__ = '0.4.3'
+__module_name__ = 'boinc_commands.py'
+__module_ver__ = '0.4.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -374,8 +374,8 @@ def about() -> None:
     print(f'{"Author:".ljust(11)}', __author__)
     print(f'{"Copyright:".ljust(11)}', __copyright__)
     print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __program_name__)
-    print(f'{"Version:".ljust(11)}', __version__)
+    print(f'{"Module:".ljust(11)}', __module_name__)
+    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
