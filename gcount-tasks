@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.36'
+__version__ = '0.8.37'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -403,8 +403,8 @@ class Logs:
         analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         Binds.click(analysistxt, 'right', app)
-        Binds.keyboard(analysiswin, 'close', app)
-        Binds.keyboard(analysiswin, 'append', app, cls.ANALYSISFILE, txt)
+        Binds.keyboard('close', analysiswin, app)
+        Binds.keyboard('append', analysiswin, app, cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
         ttk.Button(analysiswin, text='Save analysis',
@@ -561,8 +561,8 @@ class Logs:
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
         Binds.click(filewin, 'right', app)
-        Binds.keyboard(filewin, 'close', app)
-        Binds.keyboard(filewin, 'saveas', app, filepath)
+        Binds.keyboard('close', filewin, app)
+        Binds.keyboard('saveas', filewin, app, filepath)
 
         ttk.Button(
             filewin, text='Update',
@@ -611,7 +611,7 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
-        Binds.keyboard(aboutwin, 'close', app)
+        Binds.keyboard('close', aboutwin, app)
         insert = (f'{__doc__}\n'
                   f'{"Author:".ljust(13)}{__author__}\n'
                   f'{"Credits:".ljust(13)}{__credits__}\n'
@@ -703,7 +703,7 @@ class CountFyi:
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
-        Binds.keyboard(infowin, 'close', app)
+        Binds.keyboard('close', infowin, app)
         insert = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;

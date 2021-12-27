@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.2'
+__module_ver__ = '0.1.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -43,7 +43,7 @@ def click(click_obj, click_type, mainwin=None) -> None:
     Mouse button bindings for the named object.
     Creates pop-up menu of commands for the clicked object.
     Example: from COUNTmodules import binds
-             binds.click(root, mytextobject, 'right')
+             binds.click(mytextobject, 'right', root)
 
     :param click_obj: Name of the object in which click commands are
                       to be active.
@@ -96,22 +96,22 @@ def click(click_obj, click_type, mainwin=None) -> None:
             click_obj.bind('<Button-2>', popup_menu)
 
 
-def keyboard(toplevel, func: str, mainwin=None, filepath=None, text=None) -> None:
+def keyboard(func: str, toplevel, mainwin=None, filepath=None, text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
     add standard keyboard actions or to provide keybinding equivalents
     for button commands used in the Toplevel() window.
 
     Example usage in a function that creates a mytopwin Toplevel and
-    using 'from COUNTmodules import binds':
-    binds.keyboard(mytopwin, 'close')
-    binds.keyboard(mytopwin, 'append', MYFILEPATH, txt)
+    using import: 'from COUNTmodules import binds':
+        binds.keyboard('close', mytopwin)
+        binds.keyboard('append', mytopwin, MYFILEPATH, txt)
 
-    :param toplevel: Name of tk.Toplevel() object.
     :param func: Function to execute: 'close', 'append', 'saveas'.
                  For 'close', the key is 'w' with OS-specific modifier.
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
+    :param toplevel: Name of tk.Toplevel() object.
     :param mainwin: The main window object of the tk() mainloop, e.g.,
                     root', 'main', or 'app'. Used only as a pass-through
                     parameter when calling utils.get_toplevel().
