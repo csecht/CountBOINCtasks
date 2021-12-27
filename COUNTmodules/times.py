@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'times.py'
-__module_ver__ = '0.2.1'
+__module_ver__ = '0.2.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -91,24 +91,32 @@ def sec_to_format(secs: int, format_type: str) -> str:
     _m, _s = divmod(secs, 60)
     _h, _m = divmod(_m, 60)
     day, _h = divmod(_h, 24)
+    formatted = ''
     if format_type == 'short':
         if secs >= 86400:
-            return f'{day:1d}d'  # option, add {h:01d}h'
-        if 86400 > secs >= 3600:
-            return f'{_h:01d}h'  # option, add :{m:01d}m
-        if 3600 > secs >= 60:
-            return f'{_m:01d}m'  # option, add :{s:01d}s
-        return f'{_s:01d}s'
+            formatted = f'{day:1d}d' # option, add {h:01d}h'
+        elif 86400 > secs >= 3600:
+            formatted = f'{_h:01d}h' # option, add :{m:01d}m
+        elif 3600 > secs >= 60:
+            formatted = f'{_m:01d}m' # option, add :{s:01d}s
+        else:
+            formatted = f'{_s:01d}s'
     if format_type == 'std':
         if secs >= 86400:
-            return f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
-        return f'{_h:02d}:{_m:02d}:{_s:02d}'
+            formatted = f'{day:1d}d {_h:02d}:{_m:02d}:{_s:02d}'
+        else:
+            formatted = f'{_h:02d}:{_m:02d}:{_s:02d}'
     if format_type == 'clock':
-        return f'{_m:02d}:{_s:02d}'
-    # Error msg to developer
-    return ('\nEnter secs as non-zero integer, format_type as either'
-            f" 'std' or 'short'.\nArguments as entered: secs={secs}, "
-            f"format_type={format_type}.\n")
+        formatted = f'{_m:02d}:{_s:02d}'
+
+    # Error msg to developer.
+    if not (isinstance(secs, int) and format_type in 'short, std, clock'):
+        formatted = (
+            '\nEnter secs as non-zero integer, format_type as either'
+            " 'std', 'short' or 'clock'.\n"
+            f"Arguments as entered: secs={secs}, format_type={format_type}.\n")
+
+    return formatted
 
 
 def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
@@ -138,13 +146,16 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     # https://stackoverflow.com/questions/18470627/
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
 
+    error_msg = ''
     if not stat:
-        return 'missing stat param'
+        error_msg = 'missing stat param'
     if weights:
         if not all(isinstance(w, int) for w in weights):
-            return 'cannot determine'
+            error_msg = 'cannot determine'
         if len(distribution) != len(weights):
-            return 'cannot determine'
+            error_msg = 'cannot determine'
+    if error_msg:
+        return error_msg
 
     # Need to convert distribution clock time strings to integer seconds, but
     #    not if distribution times are float or integer seconds.
@@ -157,20 +168,23 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
 
     # Need to convert the timedelta clock fmt object to a string for display,
     #    and remove microseconds from the clock fmt string.
+    stat_result = ''
     if stat == 'wtmean':
         numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
         denominator = sum(weights)
-        return str(
+        stat_result = str(
             timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
-    if stat == 'range':
+    elif stat == 'range':
         shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
         longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
-        return f'[{shortest} -- {longest}]'
-    if stat == 'stdev':
-        return str(
+        stat_result = f'[{shortest} -- {longest}]'
+    elif stat == 'stdev':
+        stat_result = str(
             timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
+    else:
+        stat_result = 'unexpected condition'
 
-    return 'unexpected condition'
+    return stat_result
 
 
 def boinc_ttimes_stats(times_sec: iter) -> dict:
