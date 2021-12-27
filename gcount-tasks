@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.35'
+__version__ = '0.8.36'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1552,7 +1552,11 @@ class CountViewer(tk.Frame):
         self.dataframe.columnconfigure(2, weight=1)
 
         # Fill in headers for all data rows.
-        row_header = {'Counting since': 2,
+        # Pady first row to better align headers with data in dataframe.
+        tk.Label(
+            text='Counting since', bg=self.master_bg, fg=self.share.row_fg
+            ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
+        row_header = {#'Counting since': 2,
                       'Count interval, t': 3,
                       '# tasks reported': 4,
                       'Task times:  avg': 5,
@@ -1565,12 +1569,12 @@ class CountViewer(tk.Frame):
                       'Notices:': 13
                       }
         for header, rownum in row_header.items():
-            tk.Label(text=f'{header}',
-                     bg=self.master_bg, fg=self.share.row_fg
-                     ).grid(row=rownum, column=0, padx=(5, 0), sticky=tk.NE)
-            # ^^ Grid to N (NE) to prevent Notices label from shifting down
+            tk.Label(
+                text=f'{header}', bg=self.master_bg, fg=self.share.row_fg
+                ).grid(row=rownum, column=0, padx=(5, 0), pady=(0, 1), sticky=tk.NE)
+            # ^^ Grid to N or NE to prevent Notices label from shifting down
             #    when more than one row of notice_it() text appears.
-            #    For all Label constructors, self.master is implicit.
+            #    For all Label constructors, self.master parent is implicit.
         # Need to accommodate instances of two headers in same row.
         tk.Label(text='Summary time:',
                  bg=self.master_bg, fg=self.share.row_fg
@@ -1592,35 +1596,35 @@ class CountViewer(tk.Frame):
         self.share.starting_b.grid(
             row=0, column=1, padx=(16, 0), pady=(6, 4))
         self.share.sumry_b.grid(
-            row=0, column=2, padx=(0, 22), pady=(8, 4))
+            row=0, column=2, padx=(0, 20), pady=(8, 4))
         sep1.grid(
             row=1, column=0, columnspan=5, padx=5, pady=(2, 5), sticky=tk.EW)
-        self.time_start_l.grid(
-            row=2, column=1, columnspan=2, padx=(10, 16), sticky=tk.EW)
+        self.time_start_l.grid(  # No padx + sticky EW = centered.
+            row=2, column=1, columnspan=2, sticky=tk.EW)
         self.interval_t_l.grid(
-            row=3, column=1, padx=(12, 6), sticky=tk.EW)
+            row=3, column=1, padx=(10, 8), sticky=tk.EW)
         self.summary_t_l.grid(
-            row=3, column=2, padx=(0, 16), sticky=tk.EW)
+            row=3, column=2, padx=(0, 12), sticky=tk.EW)
         self.task_count_l.grid(
-            row=4, column=1, padx=10, sticky=tk.EW)
+            row=4, column=1, padx=12, sticky=tk.EW)
         self.task_count_sumry_l.grid(
-            row=4, column=2, padx=(0, 16), sticky=tk.EW)
+            row=4, column=2, padx=(0, 12), sticky=tk.EW)
         self.tt_avg_l.grid(
-            row=5, column=1, padx=10, sticky=tk.EW)
+            row=5, column=1, padx=12, sticky=tk.EW)
         self.ttmean_sumry_l.grid(
-            row=5, column=2, padx=(0, 16), sticky=tk.EW)
+            row=5, column=2, padx=(0, 12), sticky=tk.EW)
         self.tt_sd_l.grid(
-            row=6, column=1, padx=10, sticky=tk.EW)
+            row=6, column=1, padx=12, sticky=tk.EW)
         self.ttsd_sumry_l.grid(
-            row=6, column=2, padx=(0, 16), sticky=tk.EW)
+            row=6, column=2, padx=(0, 12), sticky=tk.EW)
         self.tt_range_l.grid(
-            row=7, column=1, padx=10, sticky=tk.EW)
+            row=7, column=1, padx=12, sticky=tk.EW)
         self.ttrange_sumry_l.grid(
-            row=7, column=2, padx=(0, 16), sticky=tk.EW)
+            row=7, column=2, padx=(0, 12), sticky=tk.EW)
         self.tt_total_l.grid(
-            row=8, column=1, padx=10, sticky=tk.EW)
+            row=8, column=1, padx=12, sticky=tk.EW)
         self.ttsum_sumry_l.grid(
-            row=8, column=2, padx=(0, 16), sticky=tk.EW)
+            row=8, column=2, padx=(0, 12), sticky=tk.EW)
         sep2.grid(
             row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
         self.time_prev_cnt_l.grid(
