@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.3'
+__module_ver__ = '0.1.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -38,17 +38,17 @@ from COUNTmodules import files, utils
 MY_OS = platform[:3]
 
 
-def click(click_obj, click_type, mainwin=None) -> None:
+def click(click_type, click_obj, mainwin=None) -> None:
     """
     Mouse button bindings for the named object.
     Creates pop-up menu of commands for the clicked object.
     Example: from COUNTmodules import binds
              binds.click(mytextobject, 'right', root)
 
-    :param click_obj: Name of the object in which click commands are
-                      to be active.
     :param click_type: Example mouse button or button modifiers;
                      'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
+    :param click_obj: Name of the object in which click commands are
+                      to be active.
     :param mainwin: When calling utils.get_toplevel(), the main window
                     object of the tk() mainloop, e.g., 'root', 'main',
                     or 'app', from which to identify a tk.Toplevel that

@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.37'
+__version__ = '0.8.38'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -402,7 +402,7 @@ class Logs:
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-        Binds.click(analysistxt, 'right', app)
+        Binds.click('right', analysistxt, app)
         Binds.keyboard('close', analysiswin, app)
         Binds.keyboard('append', analysiswin, app, cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
@@ -560,7 +560,7 @@ class Logs:
             filetext.see('end')
             filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        Binds.click(filewin, 'right', app)
+        Binds.click('right', filewin, app)
         Binds.keyboard('close', filewin, app)
         Binds.keyboard('saveas', filewin, app, filepath)
 
@@ -632,7 +632,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
-        Binds.click(abouttxt, 'right', app)
+        Binds.click('right', abouttxt, app)
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -736,7 +736,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
-        Binds.click(infotxt, 'right', app)
+        Binds.click('right', infotxt, app)
 
 
 # ############################ MVC Classes #############################
@@ -1824,7 +1824,7 @@ class CountViewer(tk.Frame):
             cycles_query_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
 
-    def check_and_set(self):
+    def check_and_set(self) -> None:
         """
         Confirm validity of summary and interval times, set all
         to valid control variable dictionary values, and set up logging
@@ -1886,7 +1886,7 @@ class CountViewer(tk.Frame):
             logging.basicConfig(filename=str(Logs.LOGFILE), level=logging.INFO,
                                 filemode="a", format='%(message)s')
 
-    def check_and_start(self):
+    def check_and_start(self) -> None:
         """
         Main gatekeeper for settings().
         Calls check_and_set(); if all is good then starts threads,
@@ -2003,7 +2003,7 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def app_got_focus(self, click_event=None):
+    def app_got_focus(self, click_event=None) -> None:
         """
         Give menu bar headings normal color when app has focus.
         :param click_event: FocusIn mouse click.
@@ -2017,7 +2017,7 @@ class CountViewer(tk.Frame):
             self.share.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
         return click_event
 
-    def app_lost_focus(self, click_event=None):
+    def app_lost_focus(self, click_event=None) -> None:
         """
         Give menu bar headings grey-out color when app looses focus.
 
@@ -2099,7 +2099,7 @@ class CountController(tk.Tk):
         CountFyi(share=self).information()
 
     # pylint: disable=unused-argument
-    def compliment(self, keybind=None):
+    def compliment(self, keybind=None) -> None:
         """Is called from Help menu bar. A silly diversion.
 
         :param keybind: Empty parameter to pass implicit keybinding event.
@@ -2107,7 +2107,7 @@ class CountController(tk.Tk):
         CountFyi(share=self).compliment_me()
         return keybind
 
-    def about(self):
+    def about(self) -> None:
         """Is called from Viewer Help menu bar.
         """
         CountFyi(share=self).about()
