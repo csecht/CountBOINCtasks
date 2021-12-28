@@ -132,10 +132,12 @@ def parse_args() -> None:
         sys.exit(0)
 
 
-def quit_gui() -> None:
+def quit_gui(keybind=None) -> None:
     """
     Error-free and informative exit from the program.
     Called from multiple widgets or keybindings.
+
+    :param keybind: Implicit event passed from .bind().
     """
 
     # Write exit message to an existing log file, even if the setting
@@ -153,6 +155,7 @@ def quit_gui() -> None:
         app.destroy()
     except Exception:
         sys.exit(0)
+    return keybind
 
 
 class Logs:
@@ -568,7 +571,7 @@ class Logs:
 
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
-                       command=lambda: cls.show_analysis(),
+                       command=cls.show_analysis,
                        takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis())
             filewin.bind('<Shift-Control-A>',
@@ -1278,8 +1281,8 @@ class CountViewer(tk.Frame):
         #   another application has focus.
         #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
-        self.bind_all("<FocusIn>", lambda _: self.app_got_focus())
-        self.bind_all("<FocusOut>", lambda _: self.app_lost_focus())
+        self.bind_all("<FocusIn>", self.app_got_focus)
+        self.bind_all("<FocusOut>", self.app_lost_focus)
 
         # settings() window widgets:
         self.settings_win = tk.Toplevel()
@@ -1448,7 +1451,7 @@ class CountViewer(tk.Frame):
             label='Backup analysis file',
             command=lambda: Files.save_as(Logs.ANALYSISFILE))
         file.add_separator()
-        file.add_command(label='Quit', command=lambda: quit_gui(),
+        file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
@@ -1466,7 +1469,7 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
         help_menu.add_command(label='Compliment',
-                              command=lambda: self.share.compliment(),
+                              command=self.share.compliment,
                               accelerator='Ctrl+Shift+C')
         help_menu.add_command(label='About', command=self.share.about)
 
@@ -1505,10 +1508,10 @@ class CountViewer(tk.Frame):
                            highlightbackground='grey75'
                            )
         # Need to provide exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', lambda: quit_gui())
+        self.master.protocol('WM_DELETE_WINDOW', quit_gui)
 
-        self.master.bind_all('<Escape>', lambda _: quit_gui())
-        self.master.bind('<Control-q>', lambda _: quit_gui())
+        self.master.bind_all('<Escape>', quit_gui)
+        self.master.bind('<Control-q>', quit_gui)
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
         # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
@@ -1997,8 +2000,10 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def app_got_focus(self) -> None:
+    def app_got_focus(self, focus_event) -> None:
         """Give menu bar headings normal color when app has focus.
+
+        :param focus_event: Implicit event passed from .bind_all()
         """
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
@@ -2007,10 +2012,12 @@ class CountViewer(tk.Frame):
                                          background='grey75')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
-        # return click_event
+        return focus_event
 
-    def app_lost_focus(self) -> None:
+    def app_lost_focus(self, focus_event) -> None:
         """Give menu bar headings grey-out color when app looses focus.
+
+        :param focus_event: Implicit event passed from .bind_all()
         """
         self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
@@ -2018,6 +2025,7 @@ class CountViewer(tk.Frame):
         self.view_button_style.configure('View.TButton', foreground='grey')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
+        return focus_event
 
 
 # ################## MVC Controller; is app mainloop ##################
