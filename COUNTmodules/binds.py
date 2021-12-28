@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.4'
+__module_ver__ = '0.1.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -63,7 +63,6 @@ def click(click_type, click_obj, mainwin=None) -> None:
         """
         # Need to set possible Text widgets to be editable in case
         #   they are set to be readonly, tk.DISABLED.
-        click_obj.configure(state=constants.NORMAL)
         event.widget.event_generate(f'<<{command}>>')
 
     # Based on: https://stackoverflow.com/questions/57701023/
