@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.38'
+__version__ = '0.8.39'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -81,7 +81,7 @@ NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
 
 # ################ Useful functions, not part of MVC ###################
-def check_boinc():
+def check_boinc() -> None:
     """
     Check whether BOINC client is running. Called before proceeding to
     implement settings and begin counting and at each notice interval.
@@ -132,12 +132,10 @@ def parse_args() -> None:
         sys.exit(0)
 
 
-def quit_gui(keybind=None):
+def quit_gui() -> None:
     """
     Error-free and informative exit from the program.
     Called from multiple widgets or keybindings.
-
-    :param keybind: Empty parameter to pass implicit keybinding event.
     """
 
     # Write exit message to an existing log file, even if the setting
@@ -155,7 +153,6 @@ def quit_gui(keybind=None):
         app.destroy()
     except Exception:
         sys.exit(0)
-    return keybind
 
 
 class Logs:
@@ -365,21 +362,19 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, keybind=None):
+    def show_analysis(cls) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
         Button appends displayed results to an analysis log file.
         Called from a Log.view() button or a master keybinding.
-
-        :param keybind: Empty parameter to pass implicit keybind event.
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
         #   returned texts will be empty, so no need to continue.
         summary_text, recent_interval_text = cls.analyze_logfile()
         if not summary_text and not recent_interval_text:
-            return keybind
+            return
 
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
         analysiswin.title('Analysis of logged data')
@@ -411,8 +406,6 @@ class Logs:
                    command=lambda: Files.append_txt(
                         cls.ANALYSISFILE, txt, True, analysiswin),
                    takefocus=False).pack(padx=4)
-
-        return keybind
 
     @classmethod
     def uptime(cls, logcontent: str) -> str:
@@ -575,9 +568,9 @@ class Logs:
 
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
-                       command=cls.show_analysis,
+                       command=lambda: cls.show_analysis(),
                        takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', cls.show_analysis)
+            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis())
             filewin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
 
@@ -586,7 +579,7 @@ class Logs:
                 filewin, text='Erase',
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', cls.show_analysis)
+            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis())
 
 
 # ############ A MVC add-on; independent of data functions #############
@@ -774,7 +767,7 @@ class CountModeler:
         self.share.setting['do_log'].set(True)
         self.share.setting['proj_update'].set(False)
 
-    def start_data(self):
+    def start_data(self) -> None:
         """
         Gather initial task data and times; set data dictionary
         control variables. Log data to file if so optioned.
@@ -1233,9 +1226,9 @@ class CountModeler:
                 report = f'\n### {cycles_max} counting cycles have ended. ###\n'
                 logging.info(report)
 
-    def update_project(self):
+    def update_project(self) -> None:
         """
-        Called from notice_it() when update project setting is True.
+        Called from notice_it() when auto-update project setting is True.
         """
         # I'm not sure how to handle multiple concurrent Projects.
         # B/c of how BC.project_action is structured, here I use the
@@ -1285,8 +1278,8 @@ class CountViewer(tk.Frame):
         #   another application has focus.
         #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
-        self.bind_all("<FocusIn>", self.app_got_focus)
-        self.bind_all("<FocusOut>", self.app_lost_focus)
+        self.bind_all("<FocusIn>", lambda _: self.app_got_focus())
+        self.bind_all("<FocusOut>", lambda _: self.app_lost_focus())
 
         # settings() window widgets:
         self.settings_win = tk.Toplevel()
@@ -1455,7 +1448,7 @@ class CountViewer(tk.Frame):
             label='Backup analysis file',
             command=lambda: Files.save_as(Logs.ANALYSISFILE))
         file.add_separator()
-        file.add_command(label='Quit', command=quit_gui,
+        file.add_command(label='Quit', command=lambda: quit_gui(),
                          accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
         view = tk.Menu(self.menubar, tearoff=0)
@@ -1472,7 +1465,8 @@ class CountViewer(tk.Frame):
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
-        help_menu.add_command(label='Compliment', command=self.share.compliment,
+        help_menu.add_command(label='Compliment',
+                              command=lambda: self.share.compliment(),
                               accelerator='Ctrl+Shift+C')
         help_menu.add_command(label='About', command=self.share.about)
 
@@ -1511,10 +1505,10 @@ class CountViewer(tk.Frame):
                            highlightbackground='grey75'
                            )
         # Need to provide exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', quit_gui)
+        self.master.protocol('WM_DELETE_WINDOW', lambda: quit_gui())
 
-        self.master.bind_all('<Escape>', quit_gui)
-        self.master.bind('<Control-q>', quit_gui)
+        self.master.bind_all('<Escape>', lambda _: quit_gui())
+        self.master.bind('<Control-q>', lambda _: quit_gui())
         # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
         # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
@@ -1522,7 +1516,7 @@ class CountViewer(tk.Frame):
         self.master.bind('<Shift-Control-L>', Logs.show_analysis)
         self.master.bind('<Shift-Control-A>',
                          lambda _: Logs.view(Logs.ANALYSISFILE))
-        self.master.bind('<Shift-Control-C>', self.share.compliment)
+        self.master.bind('<Shift-Control-C>', lambda _: self.share.compliment())
 
         # Need to specify Ctrl-a for Linux b/c in tkinter that key is
         #   bound to the tkinter predefined virtual event <<LineStart>>,
@@ -1720,13 +1714,11 @@ class CountViewer(tk.Frame):
                        ' all tasks are "Ready to report" in the BOINC Manager.')
             messagebox.showinfo(parent=self.settings_win, detail=explain)
 
-        def update_intvl(event=None):
+        def update_intvl():
             self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_unit_choice.get()]
-            return event
 
-        def update_sumry_unit(event=None):
+        def update_sumry_unit():
             self.share.sumry_unit_choice['values'] = interval_t[self.share.intvl_choice.get()]
-            return event
 
         # Settings widget construction, configurations, and grids.
         intvl_query_btn = ttk.Button(self.settings_win, text='?', width=0,
@@ -1743,7 +1735,8 @@ class CountViewer(tk.Frame):
             state='readonly', width=4, height=5,
             textvariable=self.share.setting['interval_t'],
             values=tuple(interval_t.keys()))
-        self.share.intvl_choice.bind("<<ComboboxSelected>>", update_sumry_unit)
+        self.share.intvl_choice.bind(
+            "<<ComboboxSelected>>", lambda _: update_sumry_unit())
         self.share.setting['interval_t'].set(self.share.intvl_choice.get())
 
         sumry_label1 = ttk.Label(
@@ -1765,7 +1758,8 @@ class CountViewer(tk.Frame):
             state='readonly', width=4,
             textvariable=self.share.setting['sumry_t_unit'],
             values=tuple(sumry_unit.keys()))
-        self.share.sumry_unit_choice.bind("<<ComboboxSelected>>", update_intvl)
+        self.share.sumry_unit_choice.bind(
+            "<<ComboboxSelected>>", lambda _: update_intvl())
         self.share.setting['sumry_t_unit'].set(self.share.sumry_unit_choice.get())
 
         # Specify number limit of counting cycles to run.
@@ -2003,10 +1997,8 @@ class CountViewer(tk.Frame):
         self.tt_range_l.configure(foreground=self.deemphasize)
         self.tt_total_l.configure(foreground=self.deemphasize)
 
-    def app_got_focus(self, click_event=None) -> None:
-        """
-        Give menu bar headings normal color when app has focus.
-        :param click_event: FocusIn mouse click.
+    def app_got_focus(self) -> None:
+        """Give menu bar headings normal color when app has focus.
         """
         self.menubar.entryconfig("File", foreground='black', state=tk.NORMAL)
         self.menubar.entryconfig("View", foreground='black', state=tk.NORMAL)
@@ -2015,13 +2007,10 @@ class CountViewer(tk.Frame):
                                          background='grey75')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.NORMAL)
-        return click_event
+        # return click_event
 
-    def app_lost_focus(self, click_event=None) -> None:
-        """
-        Give menu bar headings grey-out color when app looses focus.
-
-        :param click_event: FocusOut mouse click.
+    def app_lost_focus(self) -> None:
+        """Give menu bar headings grey-out color when app looses focus.
         """
         self.menubar.entryconfig("File", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
@@ -2029,7 +2018,6 @@ class CountViewer(tk.Frame):
         self.view_button_style.configure('View.TButton', foreground='grey')
         if self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
-        return click_event
 
 
 # ################## MVC Controller; is app mainloop ##################
@@ -2098,14 +2086,10 @@ class CountController(tk.Tk):
         """
         CountFyi(share=self).information()
 
-    # pylint: disable=unused-argument
-    def compliment(self, keybind=None) -> None:
+    def compliment(self) -> None:
         """Is called from Help menu bar. A silly diversion.
-
-        :param keybind: Empty parameter to pass implicit keybinding event.
         """
         CountFyi(share=self).compliment_me()
-        return keybind
 
     def about(self) -> None:
         """Is called from Viewer Help menu bar.
