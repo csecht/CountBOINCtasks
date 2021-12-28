@@ -57,12 +57,13 @@ def valid_path_to(relative_path: str) -> Path:
 
 def position_wrt_window(window, offset_x=0, offset_y=0) -> str:
     """
-    Get screen position of *window* and apply optional offsets.
-    Used to set screen position of a Toplevel object with respect to
-    a parent's window position. Example use with the geometry() method:
+    Get screen position of a tkinter Toplevel object and apply optional
+    coordinate offsets. Used to set screen position of a child Toplevel
+    with respect to the parent window.
+    Example use with the geometry() method:
       mytopwin.geometry(utils.position_wrt_window(root, 15, -15))
-    When used with get_toplevel(), it is expected that all Button()
-    widgets are configured for 'takefocus=False'.
+    When used with get_toplevel(), it is expected that all the parent's
+    Toplevel Button() widgets are configured for 'takefocus=False'.
 
     :param window: The main window object (e.g., 'root', 'app',
                    '.!toplevel2') of the tk() mainloop for which to get
