@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.39'
+__version__ = '0.8.40'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -44,6 +44,7 @@ from random import choice
 from re import search, findall, MULTILINE
 from socket import gethostname
 from time import sleep, time
+from tempfile import NamedTemporaryFile
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_commands, times, files, binds, utils
@@ -78,6 +79,10 @@ SHORT_STRFTIME = '%Y %b %d %H:%M'
 SHORTER_STRFTIME = '%b %d %H:%M'
 DAY_STRFTIME = '%A %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
+
+# instance_run_flag = NamedTemporaryFile(
+#     dir='.', prefix='log-lock_no-delete_', suffix='.tmp')
+instance_run_flag = NamedTemporaryFile(prefix='gcount-tasks_')
 
 
 # ################ Useful functions, not part of MVC ###################
@@ -145,15 +150,18 @@ def quit_gui(keybind=None) -> None:
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
-    if Path.exists(Logs.LOGFILE):
+    num_running = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
+    if Path.exists(Logs.LOGFILE) and num_running <= 1:
         Files.append_txt(Logs.LOGFILE, quit_txt, False)
     # noinspection PyBroadException
     # pylint: disable=broad-except
     try:
+        instance_run_flag.close()
         app.update_idletasks()
         app.after(200)
         app.destroy()
     except Exception:
+        instance_run_flag.close()
         sys.exit(0)
     return keybind
 
@@ -711,6 +719,8 @@ class CountFyi:
                   """
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
+        - Logging is allowed only for one program running at a time
+                in the same directory.
         - When analysis of logged hours is "cannot determine"...\n
                 Quick fix: backup then delete log file, restart program.\n
         - Right-click actions only affect on-screen text, not file content.\n
@@ -1776,18 +1786,24 @@ class CountViewer(tk.Frame):
             validatecommand=(
                 self.cycles_max_entry.register(Utils.enter_only_digits), '%P', '%d'))
 
-        # Need user options to log results to file and to use auto-updates.
+        # Provide user options for logging results to file and using auto-update.
         log_label = ttk.Label(self.settings_win, text='Log results to file',
                               style='Set.TLabel')
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
-
         update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
                                       command=explain_update)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update',
                                  style='Set.TLabel')
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
+
+        # Need to prevent subsequent program instances from writing to the log
+        #   file in the working directory. A conditional messagebox in
+        #   check_and_set() explains this once the "Count Now" button is clicked.
+        is_running = tuple(Path('/tmp').glob('gcount-tasks_*'))
+        if len(is_running) > 1:
+            self.log_choice.configure(state=tk.DISABLED)
 
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
@@ -1877,6 +1893,18 @@ class CountViewer(tk.Frame):
 
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
+
+        # Need to prevent additional instances from writing to log file, thus
+        #   insuring valid results from Logs.analyze_logfile().
+        num_running = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
+        if num_running > 1:
+            msg = ("Another instance is already running.\n"
+                   "To avoid corrupting log file data,\n"
+                   "the log file option is disabled for this new instance.")
+            messagebox.showinfo(parent=self.settings_win, detail=msg)
+            self.share.setting['do_log'].set(False)
+            app.title(
+                f'Count BOINC tasks on {gethostname()} (#{num_running}, no logging)')
 
         # Note: logging package is used only to lazily manage the data log file.
         if self.share.setting['do_log'].get():
