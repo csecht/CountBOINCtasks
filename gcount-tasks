@@ -80,9 +80,10 @@ SHORTER_STRFTIME = '%b %d %H:%M'
 DAY_STRFTIME = '%A %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
-# instance_run_flag = NamedTemporaryFile(
-#     dir='.', prefix='log-lock_no-delete_', suffix='.tmp')
-instance_run_flag = NamedTemporaryFile(prefix='gcount-tasks_')
+# Need to prevent additional instances from writing to log file, thus
+#   insuring valid results from Logs.analyze_logfile().
+instance_flag = NamedTemporaryFile(prefix='gcount-tasks_')
+num_instances = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
 
 
 # ################ Useful functions, not part of MVC ###################
@@ -146,7 +147,8 @@ def quit_gui(keybind=None) -> None:
     """
 
     # Write exit message to an existing log file, even if the setting
-    #  to log to file was not selected.
+    #   "log to file" was not selected. BUT not if the instance was
+    #   started in addition to another running instance.
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
@@ -156,12 +158,12 @@ def quit_gui(keybind=None) -> None:
     # noinspection PyBroadException
     # pylint: disable=broad-except
     try:
-        instance_run_flag.close()
+        instance_flag.close()
         app.update_idletasks()
         app.after(200)
         app.destroy()
     except Exception:
-        instance_run_flag.close()
+        instance_flag.close()
         sys.exit(0)
     return keybind
 
@@ -424,7 +426,7 @@ class Logs:
         Calculate sum of hours spent counting tasks. Does not include
         time segments with no reported tasks counts.
 
-        :param logcontent: the read log file string.
+        :param logcontent: the full text content string from a log file.
         :return: total hours elapsed while logging active, as string.
                  Returns 'cannot determine' if negative time calculated.
         """
@@ -448,10 +450,12 @@ class Logs:
                 return -1.0
             return (end_datetime - start_datetime) / timedelta(hours=1)
 
-        # Need to calc and sum uptime only for start-stop segments that have
-        #   counted tasks for one or more intervals. LONG_STRFTIME is the
-        #   time format used in the log file. Times recorded for each log
-        #   entry begin the entry formatted as, '2021-Dec-05 16:33:49; ...'
+        # Need to calc and sum uptime only for start-quit segments that have
+        #   counted tasks for one or more intervals and for the recent
+        #   start-current segment.
+        #   LONG_STRFTIME is the time format used in the log file.
+        # Times recorded for each log entry begin the entry formatted as,
+        #    '2021-Dec-05 16:33:49; ...'
         for line in logcontent.split('\n'):
             if 'most recent BOINC report' in line:
                 starttime_match = search(
@@ -1894,17 +1898,14 @@ class CountViewer(tk.Frame):
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
-        # Need to prevent additional instances from writing to log file, thus
-        #   insuring valid results from Logs.analyze_logfile().
-        num_running = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
-        if num_running > 1:
+        if num_instances > 1:
             msg = ("Another instance is already running.\n"
                    "To avoid corrupting log file data,\n"
                    "the log file option is disabled for this new instance.")
             messagebox.showinfo(parent=self.settings_win, detail=msg)
             self.share.setting['do_log'].set(False)
             app.title(
-                f'Count BOINC tasks on {gethostname()} (#{num_running}, no logging)')
+                f'Count BOINC tasks on {gethostname()} (#{num_instances}, no logging)')
 
         # Note: logging package is used only to lazily manage the data log file.
         if self.share.setting['do_log'].get():
