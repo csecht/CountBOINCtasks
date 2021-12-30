@@ -41,8 +41,9 @@ from typing import Union, Any
 def valid_path_to(relative_path: str) -> Path:
     """
     Get absolute path to files and directories.
-    _MEIPASS var is used by distribution programs from
-    PyInstaller (--onefile or --windowed), e.g. for an images directory.
+    A temporary folder, _MEIPASS var, is used by -onefile or --windowed
+    distributions from PyInstaller, e.g. for an 'images' directory,
+    therefore cannot use relative paths for program folders or files.
 
     :param relative_path: File or dir name path, as string.
     :return: Absolute path as pathlib Path object.
