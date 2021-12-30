@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.40'
+__version__ = '0.8.41'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -80,7 +80,7 @@ SHORTER_STRFTIME = '%b %d %H:%M'
 DAY_STRFTIME = '%A %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
-# Need to prevent additional instances from writing to log file, thus
+# Need to prevent multiple instances from writing to log file, thus
 #   insuring valid results from Logs.analyze_logfile().
 instance_flag = NamedTemporaryFile(prefix='gcount-tasks_')
 num_instances = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
@@ -421,25 +421,21 @@ class Logs:
                    takefocus=False).pack(padx=4)
 
     @classmethod
-    def uptime(cls, logcontent: str) -> str:
+    def uptime(cls, logtext: str) -> str:
         """
         Calculate sum of hours spent counting tasks. Does not include
         time segments with no reported tasks counts.
 
-        :param logcontent: the full text content string from a log file.
+        :param logtext: the full text content string from a log file.
         :return: total hours elapsed while logging active, as string.
                  Returns 'cannot determine' if negative time calculated.
         """
         start2intvl = []
-        start2quit = []
-        start2interrupt = []
-        has_interval = False
+        duration = []
 
         # *_dt vars are datetime.timedelta objects, so initialize with
         #    formatted Epoch origin time.
         start_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        interval_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-        final_interval_hr = 0.0
 
         def calc_uptime_hr(start_datetime, end_datetime) -> float:
             """Convert datetime start and end difference to hours.
@@ -450,52 +446,41 @@ class Logs:
                 return -1.0
             return (end_datetime - start_datetime) / timedelta(hours=1)
 
-        # Need to calc and sum uptime only for start-quit segments that have
-        #   counted tasks for one or more intervals and for the recent
-        #   start-current segment.
-        #   LONG_STRFTIME is the time format used in the log file.
-        # Times recorded for each log entry begin the entry formatted as,
-        #    '2021-Dec-05 16:33:49; ...'
-        for line in logcontent.split('\n'):
+        # Need to calc uptime for all start-to-finish segments that have
+        #   interval task counts.
+        # Datetimes that begin each log entry are formatted as,
+        #    '2021-Dec-05 16:33:49; ...'; LONG_STRFTIME is the time
+        #     format used in the log file.
+        for line in logtext.split('\n'):
             if 'most recent BOINC report' in line:
                 starttime_match = search(
                     r'^(.+); .+ most recent BOINC report', line).group(1)
                 start_dt = T.string_to_dt(starttime_match, LONG_STRFTIME)
-                has_interval = False
-
             if 'Tasks reported' in line:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
                 interval_dt = T.string_to_dt(intvltime_match, LONG_STRFTIME)
-                # Note: start2intvl list is used only to eval presence of a
-                #   negative timedelta interval somewhere in the log file.
                 start2intvl.append(calc_uptime_hr(start_dt, interval_dt))
-                has_interval = True
+                if any(hr < 0 for hr in start2intvl):
+                    return 'cannot determine'
 
-            if 'quit' in line:
-                quittime_match = search(
-                    r'^(.+); .+ quit', line).group(1)
-                quit_dt = T.string_to_dt(quittime_match, LONG_STRFTIME)
-                if has_interval:
-                    start2quit.append(calc_uptime_hr(start_dt, quit_dt))
+        # To calculate total interval hours, need a list of local maximums
+        #    from all logged start-to-finish segments of count intervals.
+        # There is no need for condition of no logged interval hours b/c
+        #    this is only called from analyze_logfile() when there are hrs.
+        for i, hr in enumerate(start2intvl):
+            if len(start2intvl) == 1:
+                duration.append(hr)
+            elif i == 0:
+                pass
+            elif i < len(start2intvl) - 1:
+                after = start2intvl[i + 1]
+                if after < hr:
+                    duration.append(hr)
+            elif i == len(start2intvl) - 1:
+                duration.append(hr)
 
-            if 'interrupt' in line:
-                interrupttime_match = search(
-                    r'^(.+); .+ interrupt', line).group(1)
-                interrupt_dt = T.string_to_dt(interrupttime_match, LONG_STRFTIME)
-                if has_interval:
-                    start2interrupt.append(calc_uptime_hr(start_dt, interrupt_dt))
-
-        if -1.0 in start2intvl + start2quit + start2interrupt:
-            return 'cannot determine'
-
-        # The log text has been read, so now need to get uptime of the
-        #   final start_dt -> final interval_dt segment.
-        if has_interval:
-            final_interval_hr = calc_uptime_hr(start_dt, interval_dt)
-
-        return str(round(
-            sum(start2quit) + sum(start2interrupt) + final_interval_hr, 1))
+        return str(round(sum(duration), 1))
 
     @classmethod
     def view(cls, filepath: Path) -> None:
@@ -1530,7 +1515,7 @@ class CountViewer(tk.Frame):
         # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE))
-        self.master.bind('<Shift-Control-L>', Logs.show_analysis)
+        self.master.bind('<Shift-Control-L>', lambda _: Logs.show_analysis())
         self.master.bind('<Shift-Control-A>',
                          lambda _: Logs.view(Logs.ANALYSISFILE))
         self.master.bind('<Shift-Control-C>', lambda _: self.share.compliment())
@@ -1898,8 +1883,8 @@ class CountViewer(tk.Frame):
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
-        if num_instances > 1:
-            msg = ("Another instance is already running.\n"
+        if num_instances > 1 and self.good_settings:
+            msg = (f"{__program_name__} is already running.\n"
                    "To avoid corrupting log file data,\n"
                    "the log file option is disabled for this new instance.")
             messagebox.showinfo(parent=self.settings_win, detail=msg)
@@ -2139,10 +2124,11 @@ if __name__ == "__main__":
     try:
         app = CountController()
         app.title(f'Count BOINC tasks on {gethostname()}')
-        # Need valid_path_to() when making onefile or windowed with PyInstaller.
+        # Need valid_path_to() for making onefile or windowed with PyInstaller.
         img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
         app.iconphoto(True, img)
-        print(f'{Utils.valid_path_to(str(Path(__file__))).name} now running...')
+        print(f'{__program_name__} now running...')
+
         app.mainloop()
     except KeyboardInterrupt:
         exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
