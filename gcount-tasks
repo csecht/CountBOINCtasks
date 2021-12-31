@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.41'
+__version__ = '0.8.42'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -81,9 +81,15 @@ DAY_STRFTIME = '%A %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
 # Need to prevent multiple instances from writing to log file, thus
-#   insuring valid results from Logs.analyze_logfile().
+#   insuring valid results from Logs.analyze_logfile(). Default dir /tmp.
 instance_flag = NamedTemporaryFile(prefix='gcount-tasks_')
 num_instances = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
+# To allow command-line execution of multiple instances from different
+#   directories, these replacement statements works, but not for a
+#   PyInstaller stand-alone b/c it creates log file in MEI temp folder.
+# localdir = str(Path(Path.cwd().resolve)
+# instance_flag = NamedTemporaryFile(prefix='log_lock.tmp', dir=localdir)
+# num_instances = len(tuple(Path(localdir).glob('log_lock.tmp*')))
 
 
 # ################ Useful functions, not part of MVC ###################
@@ -773,7 +779,7 @@ class CountModeler:
         """
         Gather initial task data and times; set data dictionary
         control variables. Log data to file if so optioned.
-        Called from check_and_start().
+        Called from start_when_confirmed().
         """
         # As with task names, task times as sec.microsec are unique.
         #   In the future, may want to inspect task names with
@@ -1292,14 +1298,13 @@ class CountViewer(tk.Frame):
         self.countnow_button = ttk.Button(self.settings_win)
         self.log_choice = tk.Checkbutton(self.settings_win)
         self.update_choice = tk.Checkbutton(self.settings_win)
-        self.good_settings = False
 
         # Control variables for basic run parameters/settings passed
         #    between Viewer and Modeler.
         self.share.setting = {
             'interval_t': tk.StringVar(),
             'interval_m': tk.IntVar(),
-            'sumry_t_value': tk.IntVar(),
+            'sumry_t_value': tk.StringVar(),
             'sumry_t_unit': tk.StringVar(),
             'summary_t': tk.StringVar(),
             'cycles_max': tk.IntVar(),
@@ -1429,7 +1434,7 @@ class CountViewer(tk.Frame):
         self.share.defaultsettings()
         self.settings()
         # Starting functions sequence after settings() is called:
-        #   check_and_set(), check_and_start(), start_threads(),
+        #   confirm_settings(), start_when_confirmed(), start_threads(),
         #   emphasize_start_data(), CountModeler.start_data().
         # Note: none of that sequence matters, however, if BOINC
         #   client is not running, so...
@@ -1789,7 +1794,7 @@ class CountViewer(tk.Frame):
 
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory. A conditional messagebox in
-        #   check_and_set() explains this once the "Count Now" button is clicked.
+        #   confirm_settings() explains this once the "Count Now" button is clicked.
         is_running = tuple(Path('/tmp').glob('gcount-tasks_*'))
         if len(is_running) > 1:
             self.log_choice.configure(state=tk.DISABLED)
@@ -1797,7 +1802,7 @@ class CountViewer(tk.Frame):
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
-                                       command=self.check_and_start)
+                                       command=self.start_when_confirmed)
 
         # Grid all window widgets; generally sorted by row.
         intvl_label.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
@@ -1826,13 +1831,16 @@ class CountViewer(tk.Frame):
             cycles_query_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
 
-    def check_and_set(self) -> None:
+    def confirm_settings(self) -> bool:
         """
-        Confirm validity of summary and interval times, set all
-        to valid control variable dictionary values, and set up logging
-        of data, if optioned.
-        Called from check_and_start().
+        Confirm validity of summary and interval times,
+        set all to valid control variable dictionary values,
+        and set up logging of data, if optioned.
+        Called from start_when_confirmed().
+
+        :return: True if settings are all valid.
         """
+        good_settings = False
 
         # Note: self.share.setting['interval_t'] and self.sumry_t_value
         #    are set in settings() or in Modeler.default_settings().
@@ -1845,11 +1853,13 @@ class CountViewer(tk.Frame):
             interval_m = 60
         self.share.setting['interval_m'].set(interval_m)
 
-        sumry_value = int(self.share.setting['sumry_t_value'].get())
-        # When sumry_value == 0, it will be caught by interval_m comparison.
-        if not sumry_value:
+        if not self.share.setting['sumry_t_value'].get():
+            msg = "Summary value cannot be blank. A default of '1' will be used."
+            messagebox.showerror(title='Invalid entry', detail=msg,
+                                 parent=self.settings_win)
             self.share.setting['sumry_t_value'].set(1)
-            sumry_value = 1
+        sumry_value = self.share.setting['sumry_t_value'].get()
+        # If sumry_value = 0, it will be caught by interval_m comparison below.
 
         # Need to set summary_t here as concat of the two sumry_t element strings,
         #   then convert it to minutes to use in comparisons.
@@ -1857,7 +1867,6 @@ class CountViewer(tk.Frame):
         self.share.setting['summary_t'].set(summary_t)
         summary_m = T.string_to_min(summary_t)
         if interval_m >= summary_m or summary_m % interval_m != 0:
-            self.good_settings = False
             info = "Summary time must be greater than, and a multiple of, interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
                                  parent=self.settings_win)
@@ -1867,7 +1876,7 @@ class CountViewer(tk.Frame):
             elif self.share.setting['sumry_t_unit'].get() == 'hr':
                 self.share.setting['sumry_t_value'].set(2 * sumry_value)
         elif interval_m < summary_m and summary_m % interval_m == 0:
-            self.good_settings = True
+            good_settings = True
 
         # Need to remove leading zeros, but allow a zero entry.
         #   Replace empty Entry with default values.
@@ -1883,7 +1892,7 @@ class CountViewer(tk.Frame):
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
-        if num_instances > 1 and self.good_settings:
+        if num_instances > 1 and good_settings:
             msg = (f"{__program_name__} is already running.\n"
                    "To avoid corrupting log file data,\n"
                    "the log file option is disabled for this new instance.")
@@ -1896,19 +1905,18 @@ class CountViewer(tk.Frame):
         if self.share.setting['do_log'].get():
             logging.basicConfig(filename=str(Logs.LOGFILE), level=logging.INFO,
                                 filemode="a", format='%(message)s')
+        return good_settings
 
-    def check_and_start(self) -> None:
+    def start_when_confirmed(self) -> None:
         """
         Main gatekeeper for settings().
-        Calls check_and_set(); if all is good then starts threads,
+        Calls confirm_settings(); if all is good then starts threads,
         calls emphasize_start_data(), and closes settings() window,
         which ends the startup sequence.
         Called from settings() countnow_button.
         """
-        # Need to validate user-customized settings.
-        self.check_and_set()
         # Either running a 1-off status report or beginning interval counts:
-        if self.good_settings:
+        if self.confirm_settings():
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.data['cycles_remain'].set(0)
                 self.share.setting['interval_t'].set('DISABLED')
@@ -1926,7 +1934,7 @@ class CountViewer(tk.Frame):
     def start_threads(self) -> None:
         """
         Set up and start threads for intervals, notices, and logging.
-        Called from check_and_start() as part of startup sequence.
+        Called from start_when_confirmed() as part of startup sequence.
         """
         # There are no thread.join(), so use daemon for clean exits.
         intvl_thread = threading.Thread(
@@ -1943,7 +1951,7 @@ class CountViewer(tk.Frame):
         """
         Config data labels in master window for starting data emphasis.
         Establish start time.
-        Called from check_and_start() from 'Count now' button.
+        Called from start_when_confirmed() from 'Count now' button.
         """
         time_start = datetime.now().strftime(SHORT_STRFTIME)
         self.time_start_l.config(text=time_start)
