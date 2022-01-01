@@ -30,8 +30,8 @@ __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
-from tkinter import constants, Menu
 from sys import platform, exit as sysexit
+from tkinter import constants, Menu
 
 from COUNTmodules import files, utils
 

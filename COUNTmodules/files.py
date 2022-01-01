@@ -34,11 +34,11 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import tkinter as tk
 from datetime import datetime
-from tkinter import messagebox, filedialog
 from pathlib import Path
 from platform import node
 from shutil import copy2
 from sys import platform, exit as sysexit
+from tkinter import messagebox, filedialog
 
 MY_OS = platform[:3]
 

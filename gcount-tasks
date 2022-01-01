@@ -37,15 +37,14 @@ __status__ = 'Development Status :: 2 - Beta'
 import argparse
 import logging
 import sys
-import tempfile
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice
 from re import search, findall, MULTILINE
 from socket import gethostname
+from tempfile import gettempdir, NamedTemporaryFile as Ntf
 from time import sleep, time
-from tempfile import NamedTemporaryFile as Ntf
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_commands, times, files, binds, utils
@@ -2145,7 +2144,7 @@ if __name__ == "__main__":
     #   Given these try...except statements, when app quits or fails,
     #   the Ntf context manager ought always close/delete the temp file:
     with Ntf(mode='rb', prefix=f'{__program_name__}_') as instance_flag:
-        temp_dir = tempfile.gettempdir()
+        temp_dir = gettempdir()
         # pylint: disable=broad-except
         try:
             app = CountController()
