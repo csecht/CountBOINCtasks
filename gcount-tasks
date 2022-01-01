@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.43'
+__version__ = '0.8.44'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1129,9 +1129,9 @@ class CountModeler:
                     f'{indent}Counts every {interval_t}, summaries every {summary_t}.\n'
                     f'{indent}BOINC status evaluations every {NOTICE_INTERVAL}s.\n'
                     f'{indent}Project auto-update:'
-                    f" {self.share.setting['proj_update'].get()}\n"
-                    f'{indent}Temporary instance flag path:\n'
-                    f'{bigindent}{instance_flag.name}\n'
+                    f" {self.share.setting['proj_update'].get()}\n\n"
+                    "Temporary instance sentinel's file path:\n"
+                    f'  {instance_flag.name}\n'
                     'Timed intervals beginning now...\n')
                 logging.info(report)
             # Need to provide a truncated report for one-off "status" runs.
@@ -1831,13 +1831,16 @@ class CountViewer(tk.Frame):
         if self.instance_count > 1:
             self.do_not_log = True
             self.share.setting['do_log'].set(False)
-            self.settings_win.attributes('-topmost', False)
+            if MY_OS in 'lin, win':
+                self.settings_win.attributes('-topmost', False)
+                self.settings_win.focus_set()
+            elif MY_OS == 'dar':
+                self.master.lower()
+
             msg = (f"{__program_name__} is already running.\n"
                    "To avoid corrupting log file data,\n"
                    "the log file option is disabled for this new instance.")
-            messagebox.showinfo(parent=self.settings_win, detail=msg, )
-            self.settings_win.lift()
-            self.settings_win.focus_set()
+            messagebox.showinfo(parent=self.settings_win.lift(), detail=msg)
 
     def confirm_settings(self) -> bool:
         """
@@ -2153,7 +2156,7 @@ if __name__ == "__main__":
             img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
             print(f'{__program_name__} now running...')
-            print(f'...with instance sentinel: {instance_flag.name}')
+            # print(f'...with instance sentinel: {instance_flag.name}')
             app.mainloop()
         except KeyboardInterrupt:
             exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
