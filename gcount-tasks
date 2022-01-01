@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.45'
+__version__ = '0.8.46'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1693,8 +1693,9 @@ class CountViewer(tk.Frame):
             messagebox.showinfo(
                 parent=self.settings_win,
                 title='Invalid exit',
-                detail='"Count now" button closes window, or quit program'
-                       ' from the main window without starting counts.')
+                detail='"Count now" button closes window and begins'
+                       ' counting. Or you can quit program from the main'
+                       ' window (or "Esc" key) without starting counts.')
 
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
@@ -1789,13 +1790,6 @@ class CountViewer(tk.Frame):
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
 
-        # Need to prevent subsequent program instances from writing to the log
-        #   file in the working directory. A conditional messagebox in
-        #   confirm_settings() explains this once the "Count Now" button is clicked.
-        is_running = tuple(Path(temp_dir).glob(f'{__program_name__}_*'))
-        if len(is_running) > 1:
-            self.log_choice.configure(state=tk.DISABLED)
-
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
@@ -1828,9 +1822,12 @@ class CountViewer(tk.Frame):
             cycles_query_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
 
+        # Need to prevent subsequent program instances from writing to the log
+        #   file in the working directory.
         if self.instance_count > 1:
             self.do_not_log = True
             self.share.setting['do_log'].set(False)
+            self.log_choice.configure(state=tk.DISABLED)
             if MY_OS in 'lin, win':
                 self.settings_win.focus_set()
             elif MY_OS == 'dar':
