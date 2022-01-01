@@ -22,13 +22,13 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
 # ^^ Text for --about invocation argument via __doc__.
-# Also used in Fyi.about():
+# Also used in Fyi.about(); __program_name__ used throughout.
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.42'
+__version__ = '0.8.43'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -37,6 +37,7 @@ __status__ = 'Development Status :: 2 - Beta'
 import argparse
 import logging
 import sys
+import tempfile
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -44,7 +45,7 @@ from random import choice
 from re import search, findall, MULTILINE
 from socket import gethostname
 from time import sleep, time
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile as Ntf
 
 # pylint: disable=import-error
 from COUNTmodules import boinc_commands, times, files, binds, utils
@@ -79,17 +80,6 @@ SHORT_STRFTIME = '%Y %b %d %H:%M'
 SHORTER_STRFTIME = '%b %d %H:%M'
 DAY_STRFTIME = '%A %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
-
-# Need to prevent multiple instances from writing to log file, thus
-#   insuring valid results from Logs.analyze_logfile(). Default dir /tmp.
-instance_flag = NamedTemporaryFile(prefix='gcount-tasks_')
-num_instances = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
-# To allow command-line execution of multiple instances from different
-#   directories, these replacement statements works, but not for a
-#   PyInstaller stand-alone b/c it creates log file in MEI temp folder.
-# localdir = str(Path(Path.cwd().resolve)
-# instance_flag = NamedTemporaryFile(prefix='log_lock.tmp', dir=localdir)
-# num_instances = len(tuple(Path(localdir).glob('log_lock.tmp*')))
 
 
 # ################ Useful functions, not part of MVC ###################
@@ -158,19 +148,18 @@ def quit_gui(keybind=None) -> None:
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
-    num_running = len(tuple(Path('/tmp').glob('gcount-tasks_*')))
-    if Path.exists(Logs.LOGFILE) and num_running <= 1:
+    instance_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
+    if Path.exists(Logs.LOGFILE) and instance_count <= 1:
         Files.append_txt(Logs.LOGFILE, quit_txt, False)
-    # noinspection PyBroadException
     # pylint: disable=broad-except
     try:
-        instance_flag.close()
         app.update_idletasks()
         app.after(200)
         app.destroy()
-    except Exception:
+    except Exception as unk:
         instance_flag.close()
-        sys.exit(0)
+        print(f'An unexpected error occurred: {unk}')
+        sys.exit('program failure')
     return keybind
 
 
@@ -423,7 +412,7 @@ class Logs:
                          lambda _: cls.view(cls.ANALYSISFILE))
         ttk.Button(analysiswin, text='Save analysis',
                    command=lambda: Files.append_txt(
-                        cls.ANALYSISFILE, txt, True, analysiswin),
+                       cls.ANALYSISFILE, txt, True, analysiswin),
                    takefocus=False).pack(padx=4)
 
     @classmethod
@@ -474,17 +463,17 @@ class Logs:
         #    from all logged start-to-finish segments of count intervals.
         # There is no need for condition of no logged interval hours b/c
         #    this is only called from analyze_logfile() when there are hrs.
-        for i, hr in enumerate(start2intvl):
+        for i, _hr in enumerate(start2intvl):
             if len(start2intvl) == 1:
-                duration.append(hr)
+                duration.append(_hr)
             elif i == 0:
                 pass
             elif i < len(start2intvl) - 1:
                 after = start2intvl[i + 1]
-                if after < hr:
-                    duration.append(hr)
+                if after < _hr:
+                    duration.append(_hr)
             elif i == len(start2intvl) - 1:
-                duration.append(hr)
+                duration.append(_hr)
 
         return str(round(sum(duration), 1))
 
@@ -1142,6 +1131,8 @@ class CountModeler:
                     f'{indent}BOINC status evaluations every {NOTICE_INTERVAL}s.\n'
                     f'{indent}Project auto-update:'
                     f" {self.share.setting['proj_update'].get()}\n"
+                    f'{indent}Temporary instance flag path:\n'
+                    f'{bigindent}{instance_flag.name}\n'
                     'Timed intervals beginning now...\n')
                 logging.info(report)
             # Need to provide a truncated report for one-off "status" runs.
@@ -1311,6 +1302,8 @@ class CountViewer(tk.Frame):
             'do_log': tk.BooleanVar(),
             'proj_update': tk.BooleanVar()
         }
+        self.instance_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
+        self.do_not_log = False
 
         # Control variables for display in master, passed between
         #    Viewer and Modeler.
@@ -1532,10 +1525,12 @@ class CountViewer(tk.Frame):
         if MY_OS in 'lin':
             def select_all():
                 app.focus_get().event_generate('<<SelectAll>>')
+
             self.master.bind_all('<Control-a>', lambda _: select_all())
 
             def select_none():
                 app.focus_get().event_generate('<<SelectNone>>')
+
             self.master.bind_all('<Shift-Control-A>', lambda _: select_none())
 
         # Theme controls entire window theme, but only for ttk.Style objects.
@@ -1556,23 +1551,23 @@ class CountViewer(tk.Frame):
         # Pady first row to better align headers with data in dataframe.
         tk.Label(
             text='Counting since', bg=self.master_bg, fg=self.share.row_fg
-            ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
-        row_header = {#'Counting since': 2,
-                      'Count interval, t': 3,
-                      '# tasks reported': 4,
-                      'Task times:  avg': 5,
-                      'stdev': 6,
-                      'range': 7,
-                      'total': 8,
-                      'Interval time:': 10,
-                      'Next count in:': 11,
-                      'Tasks in queue:': 12,
-                      'Notices:': 13
-                      }
+        ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
+        row_header = {  #'Counting since': 2,
+            'Count interval, t': 3,
+            '# tasks reported': 4,
+            'Task times:  avg': 5,
+            'stdev': 6,
+            'range': 7,
+            'total': 8,
+            'Interval time:': 10,
+            'Next count in:': 11,
+            'Tasks in queue:': 12,
+            'Notices:': 13
+        }
         for header, rownum in row_header.items():
             tk.Label(
                 text=f'{header}', bg=self.master_bg, fg=self.share.row_fg
-                ).grid(row=rownum, column=0, padx=(5, 0), pady=(0, 1), sticky=tk.NE)
+            ).grid(row=rownum, column=0, padx=(5, 0), pady=(0, 1), sticky=tk.NE)
             # ^^ Grid to N or NE to prevent Notices label from shifting down
             #    when more than one row of notice_it() text appears.
             #    For all Label constructors, self.master parent is implicit.
@@ -1692,34 +1687,37 @@ class CountViewer(tk.Frame):
 
         # Inner functions for window and selection control and user FYI:
 
-        # Need to disable default window Exit; only allow exit from active Confirm button.
-        # https://stackoverflow.com/questions/22738412/a-suitable-do-nothing-lambda-expression-in-python
-        #   to just disable 'X' exit, the protocol func can be lambda: None, or type(None)()
-        # But if close on master X, or Escape, then get this error:
-        #   _tkinter.TclError: can't invoke "grab" command: application has been destroyed
+        # Need to disable default window Exit; only allow exit from active
+        #   Confirm button. https://stackoverflow.com/questions/22738412/
+        #   a-suitable-do-nothing-lambda-expression-in-python
         def no_exit_on_x():
-            msg = 'Please close window with "Count now" button.'
-            messagebox.showinfo(title='Invalid exit', detail=msg,
-                                parent=self.settings_win)
+            messagebox.showinfo(
+                parent=self.settings_win,
+                title='Invalid exit',
+                detail='"Count now" button closes window, or quit program'
+                       ' from the main window without starting counts.')
 
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
         def explain_intvl():
-            explain = ('If the pull-down values you want do not appear, then'
-                       ' either select a different interval time, a different'
-                       ' summary time unit, or click "Use defaults".')
-            messagebox.showinfo(parent=self.settings_win, detail=explain)
+            messagebox.showinfo(
+                parent=self.settings_win,
+                detail=('If the pull-down values you want do not appear, then'
+                        ' either select a different interval time, a different'
+                        ' summary time unit, or click "Use defaults".'))
 
         def explain_zero_max():
-            explain = ('Interval counting stops after entered number of'
-                       ' cycles. Enter 0 (zero) for a status report.')
-            messagebox.showinfo(parent=self.settings_win, detail=explain)
+            messagebox.showinfo(
+                parent=self.settings_win,
+                detail=('Interval counting stops after entered number of'
+                        ' cycles. Enter 0 (zero) for a status report.'))
 
         def explain_update():
-            explain = ('Allows automatic Project update to re-establish communication '
-                       ' with the BOINC server when no tasks are running and '
-                       ' all tasks are "Ready to report" in the BOINC Manager.')
-            messagebox.showinfo(parent=self.settings_win, detail=explain)
+            messagebox.showinfo(
+                parent=self.settings_win,
+                detail=('Allows automatic Project update to re-establish communication '
+                        ' with the BOINC server when no tasks are running and '
+                        ' all tasks are "Ready to report" in the BOINC Manager.'))
 
         def update_intvl():
             self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_unit_choice.get()]
@@ -1795,7 +1793,7 @@ class CountViewer(tk.Frame):
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory. A conditional messagebox in
         #   confirm_settings() explains this once the "Count Now" button is clicked.
-        is_running = tuple(Path('/tmp').glob('gcount-tasks_*'))
+        is_running = tuple(Path(temp_dir).glob(f'{__program_name__}_*'))
         if len(is_running) > 1:
             self.log_choice.configure(state=tk.DISABLED)
 
@@ -1831,6 +1829,17 @@ class CountViewer(tk.Frame):
             cycles_query_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
             update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
 
+        if self.instance_count > 1:
+            self.do_not_log = True
+            self.share.setting['do_log'].set(False)
+            self.settings_win.attributes('-topmost', False)
+            msg = (f"{__program_name__} is already running.\n"
+                   "To avoid corrupting log file data,\n"
+                   "the log file option is disabled for this new instance.")
+            messagebox.showinfo(parent=self.settings_win, detail=msg, )
+            self.settings_win.lift()
+            self.settings_win.focus_set()
+
     def confirm_settings(self) -> bool:
         """
         Confirm validity of summary and interval times,
@@ -1840,6 +1849,8 @@ class CountViewer(tk.Frame):
 
         :return: True if settings are all valid.
         """
+        # Need to set to True when interval and summary times are
+        #   confirmed as valid. All other settings are self-validating.
         good_settings = False
 
         # Note: self.share.setting['interval_t'] and self.sumry_t_value
@@ -1862,7 +1873,7 @@ class CountViewer(tk.Frame):
         # If sumry_value = 0, it will be caught by interval_m comparison below.
 
         # Need to set summary_t here as concat of the two sumry_t element strings,
-        #   then convert it to minutes to use in comparisons.
+        #   then convert it to minutes for use in comparisons.
         summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
         summary_m = T.string_to_min(summary_t)
@@ -1892,19 +1903,19 @@ class CountViewer(tk.Frame):
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
 
-        if num_instances > 1 and good_settings:
-            msg = (f"{__program_name__} is already running.\n"
-                   "To avoid corrupting log file data,\n"
-                   "the log file option is disabled for this new instance.")
-            messagebox.showinfo(parent=self.settings_win, detail=msg)
-            self.share.setting['do_log'].set(False)
-            app.title(
-                f'Count BOINC tasks on {gethostname()} (#{num_instances}, no logging)')
-
-        # Note: logging package is used only to lazily manage the data log file.
+        # Note: logging module is used only to lazily manage the data log file.
         if self.share.setting['do_log'].get():
             logging.basicConfig(filename=str(Logs.LOGFILE), level=logging.INFO,
                                 filemode="a", format='%(message)s')
+        else:
+            app.title(f'Count BOINC tasks on {gethostname()}'
+                      ' (not logging data)')
+
+        # Need to provide a unique name of app window for concurrent instances.
+        if self.do_not_log and good_settings:
+            app.title(f'Count BOINC tasks on {gethostname()}'
+                      f' (#{self.instance_count}, not logging data)')
+
         return good_settings
 
     def start_when_confirmed(self) -> None:
@@ -2129,17 +2140,28 @@ class CountController(tk.Tk):
 
 if __name__ == "__main__":
     parse_args()
-    try:
-        app = CountController()
-        app.title(f'Count BOINC tasks on {gethostname()}')
-        # Need valid_path_to() for making onefile or windowed with PyInstaller.
-        img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
-        app.iconphoto(True, img)
-        print(f'{__program_name__} now running...')
-
-        app.mainloop()
-    except KeyboardInterrupt:
-        exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
-                    f' *** keyboard interrupt by user ***\n')
-        print(exit_msg)
-        logging.info(msg=exit_msg)
+    # Need a sentinel to prevent multiple instances writing to same log file.
+    #   Instance monitoring and log file option handling are in settings().
+    #   Given these try...except statements, when app quits or fails,
+    #   the Ntf context manager ought always close/delete the temp file:
+    with Ntf(mode='rb', prefix=f'{__program_name__}_') as instance_flag:
+        temp_dir = tempfile.gettempdir()
+        # pylint: disable=broad-except
+        try:
+            app = CountController()
+            app.title(f'Count BOINC tasks on {gethostname()}')
+            # Need absolute path for using stand-alone app from PyInstaller.
+            img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
+            app.iconphoto(True, img)
+            print(f'{__program_name__} now running...')
+            print(f'...with instance sentinel: {instance_flag.name}')
+            app.mainloop()
+        except KeyboardInterrupt:
+            exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
+                        ' *** Keyboard interrupt by user ***\n'
+                        f'Temporary file {instance_flag.name} has been deleted.\n')
+            print(exit_msg)
+            logging.info(msg=exit_msg)
+        except Exception as unknown:
+            print(f'An unexpected error: {unknown}\n'
+                  f'Temporary file {instance_flag.name} has been deleted.\n')
