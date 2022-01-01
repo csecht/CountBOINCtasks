@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.44'
+__version__ = '0.8.45'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1832,7 +1832,6 @@ class CountViewer(tk.Frame):
             self.do_not_log = True
             self.share.setting['do_log'].set(False)
             if MY_OS in 'lin, win':
-                self.settings_win.attributes('-topmost', False)
                 self.settings_win.focus_set()
             elif MY_OS == 'dar':
                 self.master.lower()
