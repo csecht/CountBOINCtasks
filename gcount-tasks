@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.46'
+__version__ = '0.8.47'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -699,14 +699,14 @@ class CountFyi:
             f'  {Logs.LOGFILE}\n\n'
             'Text file of user-saved log analyses:\n'
             f'  {Logs.ANALYSISFILE}\n\n'
-            'Sentinel file for the current instance (deleted on exit):\n'
+            'Sentinel file for the current instance (is deleted on exit):\n'
             f'  {instance_flag.name}\n'
         )
         # Longest line length includes the 'Sentinel file...' line.
         linelength = max(len(f'{Logs.LOGFILE}') + 2,
                          len(f'{Logs.ANALYSISFILE}') + 2,
                          len(f'{instance_flag.name}') + 2,
-                         57)
+                         60)
         pathtxt = tk.Text(pathwin, font='TkFixedFont',
                           height=insert.count('\n') + 1,
                           width=linelength,
