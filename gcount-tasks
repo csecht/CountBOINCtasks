@@ -588,8 +588,10 @@ class CountFyi:
     @staticmethod
     def about() -> None:
         """
-        Basic information for gcount-tasks.
-        Toplevel window called from Help menu bar.
+        Toplevel display of program metadata.
+        Called from Viewer.master_widgets() Help menu bar.
+
+        :return: None
         """
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
@@ -612,7 +614,6 @@ class CountFyi:
                   )
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
                            width=74, height=insert.count('\n') + 2,
-                           bg='grey100', fg='grey5',
                            relief='groove', borderwidth=5, padx=25)
         abouttxt.insert(1.0, insert)
         abouttxt.pack()
@@ -676,11 +677,55 @@ class CountFyi:
 
         self.share.compliment_l.after(3333, refresh)
 
+    def file_paths(self) -> None:
+        """
+        Toplevel display of full paths for program-generated files.
+        Called from Viewer.master_widgets() Help menu bar.
+
+        :return: None
+        """
+        pathwin = tk.Toplevel(highlightthickness=5,
+                              highlightcolor='SteelBlue4',
+                              highlightbackground='grey75')
+        pathwin.geometry(Utils.position_wrt_window(app, 30, 20))
+        pathwin.resizable(False, False)
+        pathwin.title('Program-generated file paths')
+        pathwin.focus_set()
+        insert = (
+            f'Location of files created by {__program_name__}\n'
+            'File type: Full path\n\n'
+            'Text file of logged interval and BOINC status data\n'
+            f'  ...do not alter if any program instances are running:\n'
+            f'  {Logs.LOGFILE}\n\n'
+            'Text file of user-saved log analyses:\n'
+            f'  {Logs.ANALYSISFILE}\n\n'
+            'Sentinel file for the current instance (deleted on exit):\n'
+            f'  {instance_flag.name}\n'
+        )
+        # Longest line length includes the 'Sentinel file...' line.
+        linelength = max(len(f'{Logs.LOGFILE}') + 2,
+                         len(f'{Logs.ANALYSISFILE}') + 2,
+                         len(f'{instance_flag.name}') + 2,
+                         57)
+        pathtxt = tk.Text(pathwin, font='TkFixedFont',
+                          height=insert.count('\n') + 1,
+                          width=linelength,
+                          relief='groove', borderwidth=5,
+                          padx=10, pady=10)
+        pathtxt.insert(1.0, insert)
+        # Need to center the two header lines.
+        pathtxt.tag_configure("header", justify='center')
+        pathtxt.tag_add("header", "1.0", "3.0")
+        pathtxt.pack()
+        Binds.click('right', pathtxt, app)
+
     @staticmethod
     def information() -> None:
         """
-        Basic information for usage and actions.
-        Toplevel window called from Help menu bar.
+        Toplevel display of basic information for usage and actions.
+        Called from Viewer.master_widgets() Help menu bar.
+
+        :return: None
         """
 
         infowin = tk.Toplevel(highlightthickness=5,
@@ -718,7 +763,6 @@ class CountFyi:
             os_width = 56
         infotxt = tk.Text(infowin, font='TkTextFont',
                           width=os_width, height=insert.count('\n') + 2,
-                          bg='grey100', fg='grey5',
                           relief='groove', padx=15)
         infotxt.insert(1.0, insert)
         infotxt.pack()
@@ -1467,6 +1511,8 @@ class CountViewer(tk.Frame):
         help_menu.add_command(label='Compliment',
                               command=self.share.compliment,
                               accelerator='Ctrl+Shift+C')
+        help_menu.add_command(label='File paths',
+                              command=self.share.filepaths)
         help_menu.add_command(label='About', command=self.share.about)
 
         # For Button constructors, self.master is implicit as the parent.
@@ -2121,19 +2167,26 @@ class CountController(tk.Tk):
         CountModeler(share=self).log_it(called_from)
 
     def info(self) -> None:
-        """Is called from Help menu bar
+        """Is called from Viewer.master_widgets(), Help menu bar.
         """
         CountFyi(share=self).information()
 
     def compliment(self) -> None:
-        """Is called from Help menu bar. A silly diversion.
+        """Is called from Viewer.master_widgets(), Help menu bar and
+        keybind. A silly diversion.
         """
         CountFyi(share=self).compliment_me()
 
     def about(self) -> None:
-        """Is called from Viewer Help menu bar.
+        """Is called from Viewer.master_widgets(), Help menu bar.
         """
         CountFyi(share=self).about()
+
+    def filepaths(self) -> None:
+        """Is called from Viewer.master_widgets(), Help menu bar.
+        Toplevel window of full paths for program-generated files.
+        """
+        CountFyi(share=self).file_paths()
 
 
 if __name__ == "__main__":
