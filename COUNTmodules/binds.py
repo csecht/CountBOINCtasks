@@ -38,21 +38,20 @@ from COUNTmodules import files, utils
 MY_OS = platform[:3]
 
 
-def click(click_type, click_obj, mainwin=None) -> None:
+def click(click_type, click_widget, mainwin) -> None:
     """
-    Mouse button bindings for the named object.
+    Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
     Example: from COUNTmodules import binds
              binds.click(mytextobject, 'right', root)
 
     :param click_type: Example mouse button or button modifiers;
-                     'left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
-    :param click_obj: Name of the object in which click commands are
-                      to be active.
-    :param mainwin: When calling utils.get_toplevel(), the main window
-                    object of the tk() mainloop, e.g., 'root', 'main',
-                    or 'app', from which to identify a tk.Toplevel that
-                    has focus.
+        left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
+    :param click_widget: Name of the widget in which click commands are
+        to be active.
+    :param mainwin: The main window  of the tk() mainloop, e.g.,
+        'root', 'main', 'app', from which to identify the tk.Toplevel
+         that has focus.
     """
 
     def on_click(event, command):
@@ -90,9 +89,9 @@ def click(click_type, click_obj, mainwin=None) -> None:
 
     if click_type == 'right':
         if MY_OS in 'lin, win':
-            click_obj.bind('<Button-3>', popup_menu)
+            click_widget.bind('<Button-3>', popup_menu)
         elif MY_OS == 'dar':
-            click_obj.bind('<Button-2>', popup_menu)
+            click_widget.bind('<Button-2>', popup_menu)
 
 
 def keyboard(func: str, toplevel, mainwin=None, filepath=None, text=None) -> None:
