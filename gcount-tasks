@@ -28,7 +28,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.47'
+__version__ = '0.8.48'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -157,8 +157,8 @@ def quit_gui(keybind=None) -> None:
         app.destroy()
     except Exception as unk:
         instance_flag.close()
-        print(f'An unexpected error occurred: {unk}')
-        sys.exit('program failure')
+        print(f'An error occurred: {unk}')
+        sys.exit('program exit on unexpected condition')
     return keybind
 
 
@@ -677,7 +677,8 @@ class CountFyi:
 
         self.share.compliment_l.after(3333, refresh)
 
-    def file_paths(self) -> None:
+    @staticmethod
+    def file_paths() -> None:
         """
         Toplevel display of full paths for program-generated files.
         Called from Viewer.master_widgets() Help menu bar.
@@ -1878,11 +1879,15 @@ class CountViewer(tk.Frame):
                 self.settings_win.focus_set()
             elif MY_OS == 'dar':
                 self.master.lower()
-
             msg = (f"{__program_name__} is already running.\n"
                    "To avoid corrupting log file data,\n"
                    "the log file option is disabled for this new instance.")
-            messagebox.showinfo(parent=self.settings_win.lift(), detail=msg)
+            messagebox.showinfo(parent=self.settings_win.lift(),
+                                title='Heads up', detail=msg)
+            # NOTE: If Esc key is used in response to this messagebox, then
+            #   quit_qui() raises "name 'app' is not defined" error b/c
+            #   app is defined (as toplevel path '.') only once settings()
+            #   is completed.
 
     def confirm_settings(self) -> bool:
         """
@@ -2193,19 +2198,19 @@ if __name__ == "__main__":
     parse_args()
     # Need a sentinel to prevent multiple instances writing to same log file.
     #   Instance monitoring and log file option handling are in settings().
-    #   Given these try...except statements, when app quits or fails,
-    #   the Ntf context manager ought always close/delete the temp file:
+    #   Given these try...except statements within the context manager,
+    #   when app quits or fails, the Ntf context manager ought always
+    #   close/delete this instance's temp file:
     with Ntf(mode='rb', prefix=f'{__program_name__}_') as instance_flag:
         temp_dir = gettempdir()
         # pylint: disable=broad-except
         try:
+            print(f'{__program_name__} now running...')
             app = CountController()
             app.title(f'Count BOINC tasks on {gethostname()}')
             # Need absolute path for using stand-alone app from PyInstaller.
             img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
-            print(f'{__program_name__} now running...')
-            # print(f'...with instance sentinel: {instance_flag.name}')
             app.mainloop()
         except KeyboardInterrupt:
             exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
