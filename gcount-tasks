@@ -23,12 +23,13 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 """
 # ^^ Text for --about invocation argument via __doc__.
 # Also used in Fyi.about(); __program_name__ used throughout.
+# __program_name__ may use alternative name, see following if condition.
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.48'
+__version__ = '0.8.49'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -54,6 +55,10 @@ T = times
 Files = files
 Binds = binds
 Utils = utils
+
+# Need to use the PyInstaller stand-alone executable name when available.
+if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+    __program_name__ = 'GcountTasks'
 
 try:
     import tkinter as tk
@@ -138,17 +143,15 @@ def quit_gui(keybind=None) -> None:
     Error-free and informative exit from the program.
     Called from multiple widgets or keybindings.
 
-    :param keybind: Implicit event passed from .bind().
+    :param keybind: Implicit event passed from bind().
     """
 
     # Write exit message to an existing log file, even if the setting
-    #   "log to file" was not selected. BUT not if the instance was
-    #   started in addition to another running instance.
+    #   "log to file" was not selected, BUT not for additional instances.
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
-    instance_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
-    if Path.exists(Logs.LOGFILE) and instance_count <= 1:
+    if Path.exists(Logs.LOGFILE) and sentinel_count <= 1:
         Files.append_txt(Logs.LOGFILE, quit_txt, False)
     # pylint: disable=broad-except
     try:
@@ -156,9 +159,9 @@ def quit_gui(keybind=None) -> None:
         app.after(200)
         app.destroy()
     except Exception as unk:
-        instance_flag.close()
+        sentinel.close()
         print(f'An error occurred: {unk}')
-        sys.exit('program exit on unexpected condition')
+        sys.exit('program exit with unexpected condition')
     return keybind
 
 
@@ -690,31 +693,30 @@ class CountFyi:
                               highlightbackground='grey75')
         pathwin.geometry(Utils.position_wrt_window(app, 30, 20))
         pathwin.resizable(False, False)
-        pathwin.title('Program-generated file paths')
+        pathwin.title('Program-generated files')
         pathwin.focus_set()
         insert = (
-            f'Location of files created by {__program_name__}\n'
-            'File type: Full path\n\n'
-            'Text file of logged interval and BOINC status data\n'
-            f'  ...do not alter if any program instances are running:\n'
-            f'  {Logs.LOGFILE}\n\n'
-            'Text file of user-saved log analyses:\n'
-            f'  {Logs.ANALYSISFILE}\n\n'
-            'Sentinel file for the current instance (is deleted on exit):\n'
-            f'  {instance_flag.name}\n'
+            f'Full file paths created by {__program_name__}\n\n'
+            f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
+            f'   ...do not alter this file while program is running\n'
+            f'   {Logs.LOGFILE}\n\n'
+            f'User-saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
+            f'   {Logs.ANALYSISFILE}\n\n'
+            'Sentinel file for the current instance (is deleted on exit)\n'
+            f'   {sentinel.name}\n'
         )
         # Longest line length includes the 'Sentinel file...' line.
-        linelength = max(len(f'{Logs.LOGFILE}') + 2,
-                         len(f'{Logs.ANALYSISFILE}') + 2,
-                         len(f'{instance_flag.name}') + 2,
-                         60)
+        linelength = max(len(f'{Logs.LOGFILE}') + 3,
+                         len(f'{Logs.ANALYSISFILE}') + 3,
+                         len(f'{sentinel.name}') + 3,
+                         59)
         pathtxt = tk.Text(pathwin, font='TkFixedFont',
                           height=insert.count('\n') + 1,
                           width=linelength,
                           relief='groove', borderwidth=5,
                           padx=10, pady=10)
         pathtxt.insert(1.0, insert)
-        # Need to center the two header lines.
+        # Need to center the header lines.
         pathtxt.tag_configure("header", justify='center')
         pathtxt.tag_add("header", "1.0", "3.0")
         pathtxt.pack()
@@ -748,8 +750,8 @@ class CountFyi:
                   """
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
-        - Logging is allowed only for one program running at a time
-                in the same directory.
+        - Logging is allowed for only one program running at a time.
+                MacOS cannot run multiple instances of this program.\n
         - When analysis of logged hours is "cannot determine"...\n
                 Quick fix: backup then delete log file, restart program.\n
         - Right-click actions only affect on-screen text, not file content.\n
@@ -1176,7 +1178,7 @@ class CountModeler:
                     f'{indent}Project auto-update:'
                     f" {self.share.setting['proj_update'].get()}\n\n"
                     "Temporary instance sentinel's file path:\n"
-                    f'  {instance_flag.name}\n'
+                    f'  {sentinel.name}\n'
                     'Timed intervals beginning now...\n')
                 logging.info(report)
             # Need to provide a truncated report for one-off "status" runs.
@@ -1346,7 +1348,6 @@ class CountViewer(tk.Frame):
             'do_log': tk.BooleanVar(),
             'proj_update': tk.BooleanVar()
         }
-        self.instance_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
         self.do_not_log = False
 
         # Control variables for display in master, passed between
@@ -1871,7 +1872,7 @@ class CountViewer(tk.Frame):
 
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory.
-        if self.instance_count > 1:
+        if sentinel_count > 1:
             self.do_not_log = True
             self.share.setting['do_log'].set(False)
             self.log_choice.configure(state=tk.DISABLED)
@@ -1963,7 +1964,7 @@ class CountViewer(tk.Frame):
         # Need to provide a unique name of app window for concurrent instances.
         if self.do_not_log and good_settings:
             app.title(f'Count BOINC tasks on {gethostname()}'
-                      f' (#{self.instance_count}, not logging data)')
+                      f' (#{sentinel_count}, not logging data)')
 
         return good_settings
 
@@ -2200,24 +2201,30 @@ if __name__ == "__main__":
     #   Instance monitoring and log file option handling are in settings().
     #   Given these try...except statements within the context manager,
     #   when app quits or fails, the Ntf context manager ought always
-    #   close/delete this instance's temp file:
-    with Ntf(mode='rb', prefix=f'{__program_name__}_') as instance_flag:
+    #   close/delete this instance's temp file.
+    # On macOS, toplevels from additional instances do not display until
+    #   a tk.filedialog method is called, so do not allow multiple instances.
+    with Ntf(mode='rb', prefix=f'{__program_name__}_') as sentinel:
         temp_dir = gettempdir()
+        sentinel_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
+        if MY_OS == 'dar' and sentinel_count > 1:
+            sys.exit(f'Cannot run multiple instances of {__program_name__}')
         # pylint: disable=broad-except
         try:
             print(f'{__program_name__} now running...')
             app = CountController()
             app.title(f'Count BOINC tasks on {gethostname()}')
             # Need absolute path for using stand-alone app from PyInstaller.
-            img = tk.PhotoImage(file=Utils.valid_path_to('images/count_icon_512.png'))
+            img = tk.PhotoImage(
+                file=Utils.valid_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
             app.mainloop()
         except KeyboardInterrupt:
             exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
                         ' *** Keyboard interrupt by user ***\n'
-                        f'Temporary file {instance_flag.name} has been deleted.\n')
+                        f'Temporary file {sentinel.name} has been deleted.\n')
             print(exit_msg)
             logging.info(msg=exit_msg)
         except Exception as unknown:
             print(f'An unexpected error: {unknown}\n'
-                  f'Temporary file {instance_flag.name} has been deleted.\n')
+                  f'Temporary file {sentinel.name} has been deleted.\n')
