@@ -43,15 +43,15 @@ def click(click_type, click_widget, mainwin) -> None:
     Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
     Example: from COUNTmodules import binds
-             binds.click(mytextobject, 'right', root)
+             binds.click('right', mywidget, root)
 
     :param click_type: Example mouse button or button modifiers;
         left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
     :param click_widget: Name of the widget in which click commands are
         to be active.
-    :param mainwin: The main window  of the tk() mainloop, e.g.,
-        'root', 'main', 'app', from which to identify the tk.Toplevel
-         that has focus.
+    :param mainwin: The main window of the tk() mainloop, e.g.,
+        'root', 'main', 'app', etc., from which to identify its
+        tk.Toplevel child that has focus.
     """
 
     def on_click(event, command):

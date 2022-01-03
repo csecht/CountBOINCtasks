@@ -57,6 +57,9 @@ Binds = binds
 Utils = utils
 
 # Need to use the PyInstaller stand-alone executable name when available.
+# NOTE: In Class Logs, path constants are different for stand-alone and
+#    Terminal executions, so both program types can use simultaneously
+#    the log file option b/c they use different log files.
 if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
     __program_name__ = 'GcountTasks'
 
@@ -93,9 +96,9 @@ def check_boinc() -> None:
     implement settings and begin counting and at each notice interval.
     """
     # Note: Any BC boinccmd will return this string (in a list)
-    #   if boinc-client is not running; use BC.get_version() b/c it is short.
-    #   Could be run with BC.check_boinc(), but only for Terminal output;
-    #     need to use messagebox and destroy() with the GUI.
+    #   if boinc-client is not running. BC.get_version() is used b/c it
+    #   is short. A similar function is BC.check_boinc(), but only for
+    #   Terminal output; with GUI, need to use messagebox and destroy().
     if "can't connect to local host" in BC.get_version():
         okay = messagebox.askokcancel(
             title='BOINC ERROR',
@@ -700,7 +703,7 @@ class CountFyi:
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
             f'   ...do not alter this file while program is running\n'
             f'   {Logs.LOGFILE}\n\n'
-            f'User-saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
+            f'Saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
             f'   {Logs.ANALYSISFILE}\n\n'
             'Sentinel file for the current instance (is deleted on exit)\n'
             f'   {sentinel.name}\n'
