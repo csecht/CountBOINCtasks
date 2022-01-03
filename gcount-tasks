@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.49'
+__version__ = '0.8.50'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2213,7 +2213,7 @@ if __name__ == "__main__":
         try:
             print(f'{__program_name__} now running...')
             app = CountController()
-            app.title(f'Count BOINC tasks on {gethostname()}')
+            app.title(f'Counting BOINC tasks on {gethostname()}')
             # Need absolute path for using stand-alone app from PyInstaller.
             img = tk.PhotoImage(
                 file=Utils.valid_path_to('images/count_icon_512.png'))
