@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.50'
+__version__ = '0.8.51'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -65,14 +65,14 @@ try:
     from tkinter import messagebox, ttk
     from tkinter.scrolledtext import ScrolledText
 except (ImportError, ModuleNotFoundError) as error:
-    print('gcount-tasks requires tkinter, which is included with \n'
+    print(f'{__program_name__} requires tkinter, which is included with \n'
           'Python 3.7+ distributions.\n'
           'Install the most recent version or re-install Python and include Tk/Tcl.\n'
           '\nOn Linux, you may also need: $ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
 if sys.version_info < (3, 6):
-    print('Sorry, but running gcount-tasks requires Python 3.6 or later.\n'
+    print(f'Sorry, but running {__program_name__} requires Python 3.6 or later.\n'
           'Current Python version: '
           f'{sys.version_info.major}.{sys.version_info.minor}\n'
           'Python downloads are available from https://docs.python.org/')
@@ -174,13 +174,13 @@ class Logs:
     # Need Path.cwd() when running gcount-tasks from command line, so that
     #   written files are written to the parent directory.
     # Need .resolve() to force absolute path and handle possible symlinks.
-    LOGFILE = Path(Path.cwd(), 'gcount-tasks_log.txt').resolve()
-    ANALYSISFILE = Path(Path.cwd(), 'gcount-tasks_analysis.txt').resolve()
+    LOGFILE = Path(Path.cwd(), f'{__program_name__}_log.txt').resolve()
+    ANALYSISFILE = Path(Path.cwd(), f'{__program_name__}_analysis.txt').resolve()
     # Need Path.home() when running GcountTasks, a frozen executable from
     #   PyInstaller, so that written files do not end up in temp MEI folder.
     if getattr(sys, 'frozen', False):
-        LOGFILE = Path(Path.home(), 'gcount-tasks_log.txt').resolve()
-        ANALYSISFILE = Path(Path.home(), 'gcount-tasks_analysis.txt').resolve()
+        LOGFILE = Path(Path.home(), f'{__program_name__}_log.txt').resolve()
+        ANALYSISFILE = Path(Path.home(), f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
     def analyze_logfile(cls) -> tuple:
@@ -2208,7 +2208,7 @@ if __name__ == "__main__":
         temp_dir = gettempdir()
         sentinel_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
         if MY_OS == 'dar' and sentinel_count > 1:
-            sys.exit(f'Cannot run multiple instances of {__program_name__}')
+            sys.exit(f'{__program_name__} is already running; cannot run multiple instances.')
         # pylint: disable=broad-except
         try:
             print(f'{__program_name__} now running...')
