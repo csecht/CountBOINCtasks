@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.52'
+__version__ = '0.8.53'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1353,7 +1353,6 @@ class CountViewer(tk.Frame):
             'do_log': tk.BooleanVar(),
             'proj_update': tk.BooleanVar()
         }
-        self.do_not_log = False
 
         # Control variables for display in master, passed between
         #    Viewer and Modeler.
@@ -1878,16 +1877,18 @@ class CountViewer(tk.Frame):
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory.
         if sentinel_count > 1:
-            self.do_not_log = True
             self.share.setting['do_log'].set(False)
             self.log_choice.configure(state=tk.DISABLED)
+            self.share.setting['cycles_max'].set(0)
             if MY_OS in 'lin, win':
                 self.settings_win.focus_set()
             elif MY_OS == 'dar':
                 self.master.lower()
             msg = (f"{__program_name__} is already running.\n"
-                   "To avoid corrupting log file data,\n"
-                   "the log file option is disabled for this new instance.")
+                   "To avoid corrupting log file data for this new"
+                   " instance, the log file option is disabled."
+                   " Count cycles have been set for status-only,"
+                   " which can be changed.")
             messagebox.showinfo(parent=self.settings_win.lift(),
                                 title='Heads up', detail=msg)
             # NOTE: If Esc key is used in response to this messagebox, then
@@ -1967,7 +1968,7 @@ class CountViewer(tk.Frame):
                       ' (not logging data)')
 
         # Need to provide a unique name of app window for concurrent instances.
-        if self.do_not_log and good_settings:
+        if good_settings and not self.share.setting['do_log'].get():
             app.title(f'Count BOINC tasks on {gethostname()}'
                       f' (#{sentinel_count}, not logging data)')
 
@@ -2202,34 +2203,37 @@ class CountController(tk.Tk):
 
 if __name__ == "__main__":
     parse_args()
-    # Need a sentinel to prevent multiple instances writing to same log file.
+    # Need a sentinel to prevent multiple instances writing to same log
+    #   file in the same directory.
     #   Instance monitoring and log file option handling are in settings().
-    #   Given these try...except statements within the context manager,
-    #   when app quits or fails, the Ntf context manager ought always
-    #   close/delete this instance's temp file.
-    # On macOS, toplevels from additional instances do not display until
-    #   a tk.filedialog method is called, so do not allow multiple instances.
+    #   Given these try...except statements, when app quits or fails the
+    #   context manager ought always close/delete this instance's temp file.
+    # On macOS, Toplevels in subsequent instances do not display until
+    #   a tk.filedialog method is called, so restrict to one instance.
     with Ntf(mode='rb', prefix=f'{__program_name__}_') as sentinel:
         temp_dir = gettempdir()
         sentinel_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
         if MY_OS == 'dar' and sentinel_count > 1:
-            sys.exit(f'{__program_name__} is already running; cannot run multiple instances.')
+            sys.exit(f'{__program_name__} is already running;'
+                     ' cannot run multiple instances.')
         # pylint: disable=broad-except
         try:
             print(f'{__program_name__} now running...')
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
-            # Need absolute path for using stand-alone app from PyInstaller.
+            # Need absolute path when running stand-alone app from PyInstaller.
             img = tk.PhotoImage(
                 file=Utils.absolute_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
             app.mainloop()
         except KeyboardInterrupt:
-            exit_msg = (f'\n{datetime.now().strftime(LONG_STRFTIME)};'
-                        ' *** Keyboard interrupt by user ***\n'
-                        f'Temporary file {sentinel.name} has been deleted.\n')
+            exit_msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                        " *** Keyboard interrupt by user ***\n"
+                        f"This instance's temporary file, {sentinel.name},"
+                        " has been deleted.\n")
             print(exit_msg)
             logging.info(msg=exit_msg)
         except Exception as unknown:
             print(f'An unexpected error: {unknown}\n'
-                  f'Temporary file {sentinel.name} has been deleted.\n')
+                  f"This instance's temporary file, {sentinel.name},"
+                  " has been deleted.\n")
