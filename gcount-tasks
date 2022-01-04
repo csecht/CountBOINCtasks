@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.51'
+__version__ = '0.8.52'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -170,20 +170,23 @@ def quit_gui(keybind=None) -> None:
 
 class Logs:
     """
-    Methods to analyze and view task data logged to a file.
+    Methods to analyze and view task data logged to file.
     File paths are defined as Class attribute constants.
     """
 
-    # Need Path.cwd() when running gcount-tasks from command line, so that
-    #   written files are written to the parent directory.
-    # Need .resolve() to force absolute path and handle possible symlinks.
-    LOGFILE = Path(Path.cwd(), f'{__program_name__}_log.txt').resolve()
-    ANALYSISFILE = Path(Path.cwd(), f'{__program_name__}_analysis.txt').resolve()
-    # Need Path.home() when running GcountTasks, a frozen executable from
-    #   PyInstaller, so that written files do not end up in temp MEI folder.
+    # Need to write log files to current working directory unless program
+    #   is run from a PyInstaller frozen executable, then write to home
+    #   directory. In either case, the constants will be absolute paths.
     if getattr(sys, 'frozen', False):
-        LOGFILE = Path(Path.home(), f'{__program_name__}_log.txt').resolve()
-        ANALYSISFILE = Path(Path.home(), f'{__program_name__}_analysis.txt').resolve()
+        LOGFILE = Path(Path.home(),
+                       f'{__program_name__}_log.txt').resolve()
+        ANALYSISFILE = Path(Path.home(),
+                            f'{__program_name__}_analysis.txt').resolve()
+    else:
+        LOGFILE = Path(Path.cwd(),
+                       f'{__program_name__}_log.txt').resolve()
+        ANALYSISFILE = Path(Path.cwd(),
+                            f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
     def analyze_logfile(cls) -> tuple:
@@ -228,15 +231,13 @@ class Logs:
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return summary_text, recent_interval_text  # <- Empty strings.
 
-        # NOTE: regex needs to track any changes to log file structure made
-        #   in CountModeler.log_it(). Regex is based on this structure:
+        # Regex is based on this structure used in CountModeler.log_it():
         # 2021-Dec-21 06:27:18; Tasks reported in the past 1h: 18
         #                       Task Time: avg 00:21:35,
         #                                  range [00:21:20 -- 00:21:54],
         #                                  stdev 00:00:11, total 06:28:45
         #                       Total tasks in queue: 53
         #                       984 counts remain.
-        #
         # 2021-Dec-21 06:27:18; >>> SUMMARY: Count for the past 1d: 402
         #                       Task Time: mean 0:21:28,
         #                                  range [00:16:03 -- 00:22:33],
@@ -281,7 +282,7 @@ class Logs:
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n')
 
-        # Need recent vars when there are interval counts following last summary.
+        # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, then flag and move on.
         if found_sumrys and found_intvls:
@@ -606,7 +607,6 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title('About GcountTasks')
         aboutwin.focus_set()
-        Binds.keyboard('close', aboutwin, app)
         insert = (f'{__doc__}\n'
                   f'{"Author:".ljust(13)}{__author__}\n'
                   f'{"Credits:".ljust(13)}{__credits__}\n'
@@ -626,6 +626,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
+        Binds.keyboard('close', aboutwin, app)
         Binds.click('right', abouttxt, app)
 
     def compliment_me(self) -> None:
@@ -723,6 +724,7 @@ class CountFyi:
         pathtxt.tag_configure("header", justify='center')
         pathtxt.tag_add("header", "1.0", "3.0")
         pathtxt.pack()
+        Binds.keyboard('close', pathwin, app)
         Binds.click('right', pathtxt, app)
 
     @staticmethod
@@ -741,7 +743,6 @@ class CountFyi:
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
-        Binds.keyboard('close', infowin, app)
         insert = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;
@@ -775,6 +776,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
+        Binds.keyboard('close', infowin, app)
         Binds.click('right', infotxt, app)
 
 
@@ -2219,7 +2221,7 @@ if __name__ == "__main__":
             app.title(f'Counting BOINC tasks on {gethostname()}')
             # Need absolute path for using stand-alone app from PyInstaller.
             img = tk.PhotoImage(
-                file=Utils.valid_path_to('images/count_icon_512.png'))
+                file=Utils.absolute_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
             app.mainloop()
         except KeyboardInterrupt:
