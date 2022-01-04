@@ -2,7 +2,7 @@
 """
 General utility functions in gcount-tasks.
 Functions:
-    valid_path_to() - Get absolute path to files and directories.
+    absolute_path_to() - Get absolute path to files and directories.
     position_wrt_window() - Set coordinates of a tk.Toplevel relative
         to another window position.
     get_toplevel - Identify the parent tk.Toplevel with focus.
@@ -38,12 +38,13 @@ from pathlib import Path
 from typing import Union, Any
 
 
-def valid_path_to(relative_path: str) -> Path:
+def absolute_path_to(relative_path: str) -> Path:
     """
     Get absolute path to files and directories.
     A temporary folder, _MEIPASS var, is used by -onefile or --windowed
-    distributions from PyInstaller, e.g. for an 'images' directory,
-    therefore cannot use relative paths for program folders or files.
+    distributions from PyInstaller, e.g. for an 'images' directory.
+    Python execution from Terminal will use the parent folder if a file
+    name is given as the *relative_path*.
 
     :param relative_path: File or dir name path, as string.
     :return: Absolute path as pathlib Path object.
