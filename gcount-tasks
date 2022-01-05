@@ -695,7 +695,7 @@ class CountFyi:
                               highlightbackground='grey75')
         pathwin.geometry(Utils.position_wrt_window(app, 30, 20))
         pathwin.resizable(False, False)
-        pathwin.title('Program-generated files')
+        pathwin.title(f'Program-generated files on {gethostname()}')
         pathwin.focus_set()
         insert = (
             f'Full file paths created by {__program_name__}\n\n'
