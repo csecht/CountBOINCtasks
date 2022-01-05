@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.54'
+__version__ = '0.8.55'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -392,7 +392,7 @@ class Logs:
 
         analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
         analysiswin.title('Analysis of logged data')
-        # Need to position analysiswin over the window from which it is called.
+        # Need to position window over the window from which it is called.
         analysiswin.geometry(Utils.get_toplevel('position', app))
 
         analysiswin.minsize(520, 320)
@@ -432,21 +432,12 @@ class Logs:
                  Returns 'cannot determine' if negative time calculated,
                  as indication of corrupted data or user edit.
         """
-        start2intvl = []
-        duration = []
+        start2intvls = []
+        intvl_duration = []
 
         # *_dt vars are datetime.timedelta objects, so initialize with
         #    formatted Epoch origin time.
         start_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
-
-        def calc_uptime_hr(start_datetime, end_datetime) -> float:
-            """Convert datetime start and end difference to hours.
-            """
-            # Cannot calculate running time from the log file when have
-            #   negative time diff between start and end times.
-            if (end_datetime - start_datetime) / timedelta(hours=1) < 0:
-                return -1.0
-            return (end_datetime - start_datetime) / timedelta(hours=1)
 
         # Need to calc uptime for all start-to-finish segments that have
         #   interval task counts.
@@ -462,27 +453,27 @@ class Logs:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
                 interval_dt = T.string_to_dt(intvltime_match, LONG_STRFTIME)
-                start2intvl.append(calc_uptime_hr(start_dt, interval_dt))
-                if any(hr < 0 for hr in start2intvl):
+                start2intvls.append(T.duration('milliseconds', start_dt, interval_dt))
+                if any(hr < 0 for hr in start2intvls):
                     return 'cannot determine'
 
         # To calculate total interval hours, need a list of local maximums
         #    from all logged start-to-finish segments of count intervals.
         # There is no need for condition of no logged interval hours b/c
         #    this is only called from analyze_logfile() when there are hrs.
-        for i, _hr in enumerate(start2intvl):
-            if len(start2intvl) == 1:
-                duration.append(_hr)
+        for i, _hr in enumerate(start2intvls):
+            if len(start2intvls) == 1:
+                intvl_duration.append(_hr)
             elif i == 0:
                 pass
-            elif i < len(start2intvl) - 1:
-                after = start2intvl[i + 1]
+            elif i < len(start2intvls) - 1:
+                after = start2intvls[i + 1]
                 if after < _hr:
-                    duration.append(_hr)
-            elif i == len(start2intvl) - 1:
-                duration.append(_hr)
+                    intvl_duration.append(_hr)
+            elif i == len(start2intvls) - 1:
+                intvl_duration.append(_hr)
 
-        return str(round(sum(duration), 1))
+        return str(round(sum(intvl_duration), 1))
 
     @classmethod
     def view(cls, filepath: Path) -> None:
@@ -574,6 +565,7 @@ class Logs:
                          lambda _: cls.view(cls.ANALYSISFILE))
 
         if filepath == cls.ANALYSISFILE:
+            filewin.geometry(Utils.get_toplevel('position', app))
             ttk.Button(
                 filewin, text='Erase',
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
@@ -693,7 +685,8 @@ class CountFyi:
         pathwin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        pathwin.geometry(Utils.position_wrt_window(app, 30, 20))
+        # Need to position window over the window from which it is called.
+        pathwin.geometry(Utils.get_toplevel('position', app))
         pathwin.resizable(False, False)
         pathwin.title(f'Program-generated files on {gethostname()}')
         pathwin.focus_set()
