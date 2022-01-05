@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.55'
+__version__ = '0.8.56'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -439,8 +439,8 @@ class Logs:
         #    formatted Epoch origin time.
         start_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
 
-        # Need to calc uptime for all start-to-finish segments that have
-        #   interval task counts.
+        # Need to calc uptime hours for all start-to-finish segments that
+        #   have interval task counts.
         # Datetimes that begin each log entry are formatted as,
         #    '2021-Dec-05 16:33:49; ...'; LONG_STRFTIME is the time
         #     format used in the log file.
@@ -453,7 +453,7 @@ class Logs:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
                 interval_dt = T.string_to_dt(intvltime_match, LONG_STRFTIME)
-                start2intvls.append(T.duration('milliseconds', start_dt, interval_dt))
+                start2intvls.append(T.duration('hours', start_dt, interval_dt))
                 if any(hr < 0 for hr in start2intvls):
                     return 'cannot determine'
 

@@ -77,7 +77,6 @@ def string_to_dt(dt_str: str, str_format: str) -> datetime:
     :return: datetime object formatted to *str_format*.
     """
     dt_obj = datetime.strptime(dt_str, str_format)
-    print(dt_obj)
     return dt_obj
 
 
@@ -98,16 +97,12 @@ def duration(unit: str, start: datetime, end: datetime) -> float:
     :return: Time difference, as float for the given *unit*.
     """
 
-    try:
-        if unit in ('weeks', 'days', 'hours', 'minutes', 'seconds',
-                    'microseconds', 'milliseconds'):
-            if (end - start) / timedelta(**{unit: 1}) < 0:
-                return -1.0
-            return (end - start) / timedelta(**{unit: 1})
-    except ValueError as error:
-        print("Time unit must be one of 'weeks', 'days', 'hours', "
-              "'minutes', 'seconds', 'microseconds', or 'milliseconds'\n"
-              f'Entered value was:{unit}\n{error}')
+    if unit in ('weeks', 'days', 'hours', 'minutes', 'seconds',
+                'microseconds', 'milliseconds'):
+        if (end - start) / timedelta(**{unit: 1}) < 0:
+            return -1.0
+        return (end - start) / timedelta(**{unit: 1})
+    print(f'{unit} is not a recognized datetime keyword.')
     return 0.0
 
 
