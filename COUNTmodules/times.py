@@ -3,7 +3,9 @@
 Functions to convert, format, and analyse input time values.
 Functions:
     string_to_min() - Convert a time string to minutes.
-    string_to_dt() - Convert formatted date string to datetime object.
+    string_to_dt() - Convert formatted date string to datetime.strftime()
+                     object.
+    duration() - Difference between datetime.strftime() objects.
     sec_to_format() - Convert seconds to a specified time format.
     logtimes_stat() - Calculate statistical metric of a group of times.
 
@@ -26,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'times.py'
-__module_ver__ = '0.2.2'
+__module_ver__ = '0.2.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -75,7 +77,38 @@ def string_to_dt(dt_str: str, str_format: str) -> datetime:
     :return: datetime object formatted to *str_format*.
     """
     dt_obj = datetime.strptime(dt_str, str_format)
+    print(dt_obj)
     return dt_obj
+
+
+def duration(unit: str, start: datetime, end: datetime) -> float:
+    """
+    Difference between start and end datetime objects as a time unit.
+    Can use times.string_to_dt to convert formatted datetime strings to
+    datetime objects.
+
+    :param unit: The desired time duration unit, as a timedelta keyword:
+        'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds',
+        or 'microseconds'.
+
+    :param start: Starting formatted datetime.strptime object.
+    :param end: Ending formatted datetime.strptime object. Formats of
+        *start* and *end* must match.
+
+    :return: Time difference, as float for the given *unit*.
+    """
+
+    try:
+        if unit in ('weeks', 'days', 'hours', 'minutes', 'seconds',
+                    'microseconds', 'milliseconds'):
+            if (end - start) / timedelta(**{unit: 1}) < 0:
+                return -1.0
+            return (end - start) / timedelta(**{unit: 1})
+    except ValueError as error:
+        print("Time unit must be one of 'weeks', 'days', 'hours', "
+              "'minutes', 'seconds', 'microseconds', or 'milliseconds'\n"
+              f'Entered value was:{unit}\n{error}')
+    return 0.0
 
 
 def sec_to_format(secs: int, format_type: str) -> str:
