@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.53'
+__version__ = '0.8.54'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -424,12 +424,13 @@ class Logs:
     @classmethod
     def uptime(cls, logtext: str) -> str:
         """
-        Calculate sum of hours spent counting tasks. Does not include
-        time segments with no reported tasks counts.
+        Sum of hours spent counting tasks. Does not include time
+        segments with no reported tasks counts.
 
         :param logtext: the full text content string from a log file.
-        :return: total hours elapsed while logging active, as string.
-                 Returns 'cannot determine' if negative time calculated.
+        :return: total hours elapsed while logging data, as string.
+                 Returns 'cannot determine' if negative time calculated,
+                 as indication of corrupted data or user edit.
         """
         start2intvl = []
         duration = []
@@ -531,15 +532,8 @@ class Logs:
                                   highlightcolor='grey95',
                                   highlightbackground='grey75'
                                   )  # <- bg matches master_bg
-            # Need to show working dir and file name in the Toplevel title.
-            if MY_OS == 'win':
-                dir_file = f'{filepath.parts[-2]}\\{filepath.parts[-1]}'
-                filewin.title(f'{dir_file} on {gethostname()}')
-
-            else:
-                dir_file = f'{filepath.parts[-2]}/{filepath.parts[-1]}'
-                filewin.title(f'{dir_file} on {gethostname()}')
-
+            # Need title to include the file and local machine names.
+            filewin.title(f'{filepath.parts[-1]} on {gethostname()}')
             filewin.minsize(minsize_w, minsize_h)
             filewin.focus_set()
 
@@ -565,6 +559,10 @@ class Logs:
         ttk.Button(
             filewin, text='Backup',
             command=lambda: Files.save_as(filepath, filewin),
+            takefocus=False).pack(padx=4)
+        ttk.Button(
+            filewin, text='File path',
+            command=app.filepaths,
             takefocus=False).pack(padx=4)
 
         if filepath == cls.LOGFILE:
