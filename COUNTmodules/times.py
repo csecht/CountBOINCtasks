@@ -82,16 +82,15 @@ def string_to_dt(dt_str: str, str_format: str) -> datetime:
 
 def duration(unit: str, start: datetime, end: datetime) -> float:
     """
-    Difference between start and end datetime objects as a time unit.
-    Can use times.string_to_dt to convert formatted datetime strings to
-    datetime objects.
+    Difference between start and end datetime objects as the given
+    time unit. Can use times.string_to_dt to convert formatted
+    time strings to datetime objects.
 
     :param unit: The desired time duration unit, as a timedelta keyword:
         'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds',
         or 'microseconds'.
-
-    :param start: Starting formatted datetime.strptime object.
-    :param end: Ending formatted datetime.strptime object. Formats of
+    :param start: Start time formatted datetime.strptime object.
+    :param end: End time formatted datetime.strptime object. Formats of
         *start* and *end* must match.
 
     :return: Time difference, as float for the given *unit*.
@@ -99,8 +98,6 @@ def duration(unit: str, start: datetime, end: datetime) -> float:
 
     if unit in ('weeks', 'days', 'hours', 'minutes', 'seconds',
                 'microseconds', 'milliseconds'):
-        if (end - start) / timedelta(**{unit: 1}) < 0:
-            return -1.0
         return (end - start) / timedelta(**{unit: 1})
     print(f'{unit} is not a recognized datetime keyword.')
     return 0.0
