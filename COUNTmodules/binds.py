@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.5'
+__module_ver__ = '0.1.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -130,11 +130,11 @@ def keyboard(func: str, toplevel, mainwin=None, filepath=None, text=None) -> Non
 
     if func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda _: files.append_txt(filepath, text, True))
+                      lambda _: files.append_txt(filepath, text, True, toplevel))
 
     if func == 'saveas':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda _: files.save_as(filepath))
+                      lambda _: files.save_as(filepath, toplevel))
 
 
 def about() -> None:

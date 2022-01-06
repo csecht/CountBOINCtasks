@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.56'
+__version__ = '0.8.57'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -513,7 +513,7 @@ class Logs:
         if not Path.exists(filepath):
             info = (f'On {gethostname()}, file is missing:\n{filepath}\n'
                     f'{fnf_query}\n'
-                    'Was file deleted, moved or renamed?')
+                    'Or, was file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return
 
@@ -541,7 +541,7 @@ class Logs:
 
         Binds.click('right', filewin, app)
         Binds.keyboard('close', filewin, app)
-        Binds.keyboard('saveas', filewin, app, filepath)
+        Binds.keyboard('saveas', filewin, None, filepath)
 
         ttk.Button(
             filewin, text='Update',
@@ -745,12 +745,13 @@ class CountFyi:
                   """
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
-        - Logging is allowed for only one program running at a time.
-                MacOS cannot run multiple instances of this program.\n
-        - When analysis of logged hours is "cannot determine"...\n
+        - While not recommended, multiple program instances can be run
+                from within a directory, but only the first can log data. 
+                MacOS cannot run multiple instances.\n
+        - When analysis of logged hours is "cannot determine"...
                 Quick fix: backup then delete log file, restart program.\n
         - Right-click actions only affect on-screen text, not file content.\n
-        - Key commands to close window and save text work as expected.
+        - Most common key commands work as expected.
         """)
 
         # OS-specific Text widths were empirically determined for TkTextFont.
