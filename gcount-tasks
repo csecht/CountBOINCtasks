@@ -44,7 +44,7 @@ from pathlib import Path
 from random import choice
 from re import search, findall, MULTILINE
 from socket import gethostname
-from tempfile import gettempdir, NamedTemporaryFile as Ntf
+from tempfile import gettempdir, NamedTemporaryFile
 from time import sleep, time
 
 # pylint: disable=import-error
@@ -2205,7 +2205,7 @@ if __name__ == "__main__":
     #   context manager ought always close/delete this instance's temp file.
     # On macOS, Toplevels in subsequent instances do not display until
     #   a tk.filedialog method is called, so restrict to one instance.
-    with Ntf(mode='rb', prefix=f'{__program_name__}_') as sentinel:
+    with NamedTemporaryFile(mode='rb', prefix=f'{__program_name__}_') as sentinel:
         temp_dir = gettempdir()
         sentinel_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
         if MY_OS == 'dar' and sentinel_count > 1:
