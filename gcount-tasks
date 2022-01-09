@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.58'
+__version__ = '0.8.59'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -347,8 +347,8 @@ class Logs:
                     '   so interpret results with caution.\n\n'
                 )
 
+        # Summary text has been defined, so now do recent interval text.
         if found_sumrys and found_intvls:
-            # Summary text has been defined, so now do recent interval text.
             if recent_intervals:
                 if num_recent_intvl_vals == 1:
                     recent_interval_text = (
@@ -389,7 +389,8 @@ class Logs:
         if not summary_text and not recent_interval_text:
             return
 
-        analysiswin = tk.Toplevel(bg='SteelBlue4')  # <- bg = master_bg
+        # Have bg match self.master_bg of the app main window.
+        analysiswin = tk.Toplevel(bg='SteelBlue4')
         analysiswin.title('Analysis of logged data')
         # Need to position window over the window from which it is called.
         analysiswin.geometry(Utils.get_toplevel('position', app))
@@ -516,11 +517,12 @@ class Logs:
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return
 
+        # Have bg match self.master_bg of the app main window.
         filewin = tk.Toplevel(bg='SteelBlue4',
                               highlightthickness=5,
                               highlightcolor='grey95',
                               highlightbackground='grey75'
-                              )  # <- bg matches master_bg
+                              )
         # Need title to include the file and local machine names.
         filewin.title(f'{filepath.parts[-1]} on {gethostname()}')
         filewin.minsize(minsize_w, minsize_h)
@@ -588,6 +590,7 @@ class CountFyi:
 
         :return: None
         """
+        # Have highlightcolor match self.master_bg of the app main window.
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
@@ -646,7 +649,7 @@ class CountFyi:
             'I like what you did.', 'Whoa. Have you been working out?',
             "We can't thank you enough.", 'No, really, you have done enough.',
             "That's a good look for you.", 'I could not have done it better.',
-            "I can't think of anything to say. Sorry.", 'Congratulations!',
+            'Congratulations!', 'Try not. Do or do not. There is no try.',
             "Well, THAT's impressive.", 'I hear that you are the one.',
             'You excel at everything.', 'Your voice is very soothing.',
             'Is it true what people say?', 'The word is, you got it!',
@@ -654,7 +657,8 @@ class CountFyi:
             'The Academy is asking for your CV.', 'You look great!',
             'The President seeks your council.', 'Thank you so much!',
             'The Prime Minister seeks your council.', 'Crunchers rule!',
-            'Crunchers are the best sort of people.'
+            'Crunchers are the best sort of people.',
+            "I can't think of anything to say. Sorry.",
         ]
         praise = choice(compliments)
         self.share.compliment_l.config(text=praise)
@@ -680,6 +684,7 @@ class CountFyi:
 
         :return: None
         """
+        # Have highlightcolor match self.master_bg of the app main window.
         pathwin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
@@ -724,7 +729,7 @@ class CountFyi:
 
         :return: None
         """
-
+        # Have highlightcolor match self.master_bg of the app main window.
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
@@ -744,7 +749,7 @@ class CountFyi:
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
         - While not recommended, multiple program instances can be run
-                from within a directory, but only the first can log data. 
+                from within a directory, but only the first can log data.
                 MacOS cannot run multiple instances.\n
         - When analysis of logged hours is "cannot determine"...
                 Quick fix: backup then delete log file, restart program.\n
