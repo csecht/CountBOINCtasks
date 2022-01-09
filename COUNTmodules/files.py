@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'files.py'
-__module_ver__ = '0.1.4'
+__module_ver__ = '0.1.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -190,15 +190,15 @@ def update(tktext: tk.Text, file: Path, parent=None) -> None:
                              detail=msg, parent=parent)
         return
 
-    with open(file, encoding='utf-8') as new_text:
-        tktext.delete('1.0', tk.END)
-        tktext.insert('1.0', new_text.read())
-        tktext.see(tk.END)
-        tktext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-        # Need to remove focus from calling Button so can execute any
-        #   immediately following rt-click commands in parent.
-        if parent:
-            parent.focus_set()
+    tktext.delete(tk.INSERT, tk.END)
+    tktext.insert(tk.INSERT, Path(file).read_text())
+    tktext.see(tk.END)
+    tktext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+    # Need to remove focus from calling Button so can execute any
+    #   immediately following rt-click commands in parent. Use as a
+    #   precaution in case Button is not configured takefocus=False.
+    if parent:
+        parent.focus_set()
 
 
 def about() -> None:
