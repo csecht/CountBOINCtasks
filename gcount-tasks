@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.57'
+__version__ = '0.8.58'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -39,7 +39,7 @@ import argparse
 import logging
 import sys
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from random import choice
 from re import search, findall, MULTILINE
@@ -222,8 +222,7 @@ class Logs:
         recent_interval_text = ''
 
         try:
-            with open(cls.LOGFILE, encoding='utf-8') as file:
-                logtext = file.read()
+            logtext = Path(cls.LOGFILE).read_text()
         except FileNotFoundError:
             info = (f'On {gethostname()}, missing necessary file:\n{cls.LOGFILE}\n'
                     'Was the settings "log results" option used?\n'
@@ -517,27 +516,26 @@ class Logs:
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
             return
 
-        with open(filepath, encoding='utf-8') as file:
-            filewin = tk.Toplevel(bg='SteelBlue4',
-                                  highlightthickness=5,
-                                  highlightcolor='grey95',
-                                  highlightbackground='grey75'
-                                  )  # <- bg matches master_bg
-            # Need title to include the file and local machine names.
-            filewin.title(f'{filepath.parts[-1]} on {gethostname()}')
-            filewin.minsize(minsize_w, minsize_h)
-            filewin.focus_set()
+        filewin = tk.Toplevel(bg='SteelBlue4',
+                              highlightthickness=5,
+                              highlightcolor='grey95',
+                              highlightbackground='grey75'
+                              )  # <- bg matches master_bg
+        # Need title to include the file and local machine names.
+        filewin.title(f'{filepath.parts[-1]} on {gethostname()}')
+        filewin.minsize(minsize_w, minsize_h)
+        filewin.focus_set()
 
-            # Use a "dark" background/foreground theme for log text.
-            filetext = ScrolledText(filewin, font='TkFixedFont',
-                                    width=text_width, height=text_height,
-                                    bg='grey20', fg='grey80',
-                                    insertbackground='grey80',
-                                    relief='groove', bd=4, padx=12
-                                    )
-            filetext.insert(tk.INSERT, file.read())
-            filetext.see('end')
-            filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+        # Use a "dark" background/foreground theme for log text.
+        filetext = ScrolledText(filewin, font='TkFixedFont',
+                                width=text_width, height=text_height,
+                                bg='grey20', fg='grey80',
+                                insertbackground='grey80',
+                                relief='groove', bd=4, padx=12
+                                )
+        filetext.insert(tk.INSERT, Path(filepath).read_text())
+        filetext.see(tk.END)
+        filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
         Binds.click('right', filewin, app)
         Binds.keyboard('close', filewin, app)
@@ -1500,7 +1498,7 @@ class CountViewer(tk.Frame):
                          accelerator='Ctrl+L')
         view.add_command(label='Analysis of log data', command=Logs.show_analysis,
                          accelerator='Ctrl+Shift+L')
-        view.add_command(label='Analysis file',
+        view.add_command(label='Saved Analyses',
                          command=lambda: Logs.view(Logs.ANALYSISFILE),
                          accelerator='Ctrl+Shift+A')
         help_menu = tk.Menu(self.menubar, tearoff=0)
