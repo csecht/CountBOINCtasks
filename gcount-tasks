@@ -380,7 +380,7 @@ class Logs:
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
         Button appends displayed results to an analysis log file.
-        Called from a Log.view() button or a master keybinding.
+        Called from a Logs.view() button or a master keybinding.
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
@@ -419,7 +419,7 @@ class Logs:
 
         # Need to allow user to save annotated analysis text.
         def new_text():
-            new_txt = analysistxt.get('1.0', tk.END)
+            new_txt = analysistxt.get(1.0, tk.END)
             Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
 
         ttk.Button(analysiswin, text='Save analysis', command=new_text,
@@ -488,13 +488,14 @@ class Logs:
         :param filepath: A Path object of the file to view.
         """
         # Need to set messages and sizes specific to OS and files.
-        fnf_query = ''
-        text_width = 79
+        text_width = 0
         text_height = 30
         minsize_w = 0
         minsize_h = 0
+        fnf_query = ''
 
         if filepath == cls.LOGFILE:
+            text_width = 79
             minsize_h = 220
             # Need to set OS-specific width for font used in filetext.
             #   These widths are based on TkFixedFont:
@@ -532,7 +533,7 @@ class Logs:
         filewin.minsize(minsize_w, minsize_h)
         filewin.focus_set()
 
-        # Use a "dark" background/foreground theme for log text.
+        # Use a "dark" background/foreground theme for file text.
         filetext = ScrolledText(filewin, font='TkFixedFont',
                                 width=text_width, height=text_height,
                                 bg='grey20', fg='grey80',
