@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.59'
+__version__ = '0.8.60'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -416,9 +416,13 @@ class Logs:
         Binds.keyboard('append', analysiswin, app, cls.ANALYSISFILE, txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
-        ttk.Button(analysiswin, text='Save analysis',
-                   command=lambda: Files.append_txt(
-                       cls.ANALYSISFILE, txt, True, analysiswin),
+
+        # Need to allow user to save annotated analysis text.
+        def new_text():
+            new_txt = analysistxt.get('1.0', tk.END)
+            Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
+
+        ttk.Button(analysiswin, text='Save analysis', command=new_text,
                    takefocus=False).pack(padx=4)
 
     @classmethod
@@ -753,7 +757,9 @@ class CountFyi:
                 MacOS cannot run multiple instances.\n
         - When analysis of logged hours is "cannot determine"...
                 Quick fix: backup then delete log file, restart program.\n
-        - Right-click actions only affect on-screen text, not file content.\n
+        - Right-click actions only affect on-screen text, not file content,
+                except edits in the log analysis window, such as notations,
+                can be saved to the log analysis file.\n
         - Most common key commands work as expected.
         """)
 
