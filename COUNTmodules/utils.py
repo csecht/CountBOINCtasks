@@ -27,15 +27,149 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.1'
+__module_ver__ = '0.1.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 import sys
+import tkinter as tk
 from pathlib import Path
 from typing import Union, Any
+
+
+class Tooltip:
+    """
+    Create a tooltip with the given text for the given widget that the
+    mouse hovers over.
+    USAGE: Tooltip(widget, text)
+
+    see:
+    http://stackoverflow.com/questions/3221956/
+           what-is-the-simplest-way-to-make-tooltips-
+           in-tkinter/36221216#36221216
+    http://www.daniweb.com/programming/software-development/
+           code/484591/a-tooltip-class-for-tkinter
+
+    - Originally written by vegaseat on 2014.09.09.
+
+    - Modified to include a delay time by Victor Zaccardo on 2016.03.25.
+
+    - Modified
+        - to correct extreme right and extreme bottom behavior,
+        - to stay inside the screen whenever the tooltip might go out on
+          the top but still the screen is higher than the tooltip,
+        - to use the more flexible mouse positioning,
+        - to add customizable background color, padding, waittime and
+          wraplength on creation
+      by Alberto Vassena on 2016.11.05.
+      Tested on Ubuntu 16.04/16.10, running Python 3.5.2
+
+      - Customized for CountBOINCtasks Project
+        by C.Echt, 12 January 2022.
+        Tested on Ubuntu 20.04, running Python 3.8
+    """
+
+    def __init__(self, widget, text: str):
+
+        self.widget = widget
+        self.text = text
+        self.bg = 'LightYellow1'
+        self.waittime = 400  # In milliseconds
+        self.wraplength = 250  # In pixels.
+
+        self.widget.bind("<Enter>", self.on_enter)
+        self.widget.bind("<Leave>", self.on_leave)
+        self.widget.bind("<ButtonPress>", self.on_leave)
+        self.id = None
+        self.tw = None
+
+    def on_enter(self, event=None):
+        # Show tw
+        self.unschedule()
+        self.id = self.widget.after(self.waittime, self.show)
+
+    def on_leave(self, event=None):
+        # Hide tw
+        self.unschedule()
+        if self.tw:
+            self.tw.destroy()
+        self.tw = None
+
+    def unschedule(self):
+        id_ = self.id
+        self.id = None
+        if id_:
+            self.widget.after_cancel(id_)
+
+    @staticmethod
+    def tip_pos_calculator(widget, label, tip_delta=(10, 5)):
+
+        w = widget
+
+        s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
+
+        width, height = (label.winfo_reqwidth() + 10,
+                         label.winfo_reqheight() + 6)
+
+        mouse_x, mouse_y = w.winfo_pointerxy()
+
+        x1, y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
+        x2, y2 = x1 + width, y1 + height
+
+        x_delta = x2 - s_width
+        if x_delta < 0:
+            x_delta = 0
+        y_delta = y2 - s_height
+        if y_delta < 0:
+            y_delta = 0
+
+        offscreen = (x_delta, y_delta) != (0, 0)
+
+        if offscreen:
+
+            if x_delta:
+                x1 = mouse_x - tip_delta[0] - width
+
+            if y_delta:
+                y1 = mouse_y - tip_delta[1] - height
+
+        offscreen_again = y1 < 0  # out on the top
+
+        if offscreen_again:
+            # No further checks will be done.
+            y1 = 0
+
+        return x1, y1
+
+    def show(self):
+
+        self.tw = tk.Toplevel(self.widget)
+
+        # Leaves only the label and removes the app window
+        self.tw.wm_overrideredirect(True)
+
+        win = tk.Frame(self.tw,
+                       background=self.bg,
+                       borderwidth=0)
+        label = tk.Label(
+            win,
+            text=self.text,
+            font='TkTooltipFont',
+            justify=tk.LEFT,
+            background=self.bg,
+            relief=tk.SOLID,
+            borderwidth=0,
+            wraplength=self.wraplength)
+
+        label.grid(padx=10, pady=6,
+                   sticky=tk.NSEW)
+        win.grid()
+
+        x, y = self.tip_pos_calculator(self.widget, label)
+
+        self.tw.wm_geometry(f'+{x}+{y}')
 
 
 def absolute_path_to(relative_path: str) -> Path:
