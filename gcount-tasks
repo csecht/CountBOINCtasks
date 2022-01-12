@@ -1984,21 +1984,19 @@ class CountViewer(tk.Frame):
         which ends the startup sequence.
         Called from settings() countnow_button.
         """
-        # Either running a 1-off status report or beginning interval counts:
+        # Either run a 1-off status report or begin interval counts:
         if self.confirm_settings():
             if self.share.setting['cycles_max'].get() == 0:
                 self.share.data['cycles_remain'].set(0)
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
                 self.share.note['notice_txt'].set('STATUS REPORT ONLY')
-                self.emphasize_start_data()
-                self.share.startdata()
-                self.settings_win.destroy()
             else:
                 self.start_threads()
-                self.emphasize_start_data()
-                self.share.startdata()
-                self.settings_win.destroy()
+
+            self.emphasize_start_data()
+            self.share.startdata()
+            self.settings_win.destroy()
 
     def start_threads(self) -> None:
         """
@@ -2008,10 +2006,13 @@ class CountViewer(tk.Frame):
         # There are no thread.join(), so use daemon for clean exits.
         intvl_thread = threading.Thread(
             target=self.share.intervaldata, daemon=True)
+
         notice_thread = threading.Thread(
             target=self.share.taskstatenotices, daemon=True)
+
         log_thread = threading.Thread(
             target=self.share.logit, daemon=True, args=(None,))
+
         intvl_thread.start()
         notice_thread.start()
         log_thread.start()
