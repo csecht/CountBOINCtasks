@@ -67,7 +67,7 @@ class Tooltip:
       Tested on Ubuntu 16.04/16.10, running Python 3.5.2
 
       - Customized for CountBOINCtasks Project
-        by C.Echt, 12 January 2022.
+        by Craig Echt, 12 January 2022.
         Tested on Ubuntu 20.04, running Python 3.8
     """
 
@@ -86,12 +86,12 @@ class Tooltip:
         self.tw = None
 
     def on_enter(self, event=None):
-        # Show tw
+        # Show self.tw tooltip window.
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.show)
 
     def on_leave(self, event=None):
-        # Hide tw
+        # Hide self.tw tooltip window.
         self.unschedule()
         if self.tw:
             self.tw.destroy()

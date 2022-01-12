@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.61'
+__version__ = '0.8.62'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1474,6 +1474,10 @@ class CountViewer(tk.Frame):
         #   self.master is implicit as the parent.
         self.view_button_style = ttk.Style()
 
+        # Need to define image as a class variable, not a local var in methods.
+        self.info_button_img = tk.PhotoImage(
+            file=Utils.absolute_path_to('images/info_button20.png'))
+
         self.master_widgets()
         self.master_layout()
         self.share.defaultsettings()
@@ -1825,20 +1829,33 @@ class CountViewer(tk.Frame):
                                        command=self.start_when_confirmed)
 
         # Mouseover tooltips for entries and selections.
-        intvl_info_btn = ttk.Button(self.settings_win, text='?', width=0)
+        intvl_info_btn = tk.Button(self.settings_win,
+                                   image=self.info_button_img,
+                                   border=0, bg=self.master_bg,
+                                   highlightbackground=self.master_bg,
+                                   activebackground=self.master_bg)
         intvl_info_txt = (
-            'If the pull-down values you want do not appear, then'
-            ' either select a different interval time, a different'
-            ' summary time unit, or click "Use defaults".')
+            'If the desired pull-down time values do not appear, then'
+            ' either select a different summary time (or a different'
+            ' interval time if do not see a desired summary time unit)'
+            ' or click "Use defaults" and try again.')
         Tooltip(intvl_info_btn, intvl_info_txt)
 
-        cycles_info_btn = ttk.Button(self.settings_win, text='?', width=0)
+        cycles_info_btn = tk.Button(self.settings_win,
+                                    image=self.info_button_img,
+                                    border=0, bg=self.master_bg,
+                                    highlightbackground=self.master_bg,
+                                    activebackground=self.master_bg)
         cycles_info_txt = (
             'Interval counting stops after entered number of'
             ' cycles. Enter 0 (zero) for a one-off status report.')
         Tooltip(cycles_info_btn, cycles_info_txt)
 
-        update_info_btn = ttk.Button(self.settings_win, text='?', width=0)
+        update_info_btn = tk.Button(self.settings_win,
+                                    image=self.info_button_img,
+                                    border=0, bg=self.master_bg,
+                                    highlightbackground=self.master_bg,
+                                    activebackground=self.master_bg)
         update_info_txt = (
             'Allows an automatic Project update to re-establish communication'
             ' with the BOINC server when no tasks are running and'
