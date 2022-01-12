@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.60'
+__version__ = '0.8.61'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -55,6 +55,7 @@ T = times
 Files = files
 Binds = binds
 Utils = utils
+Tooltip = utils.Tooltip
 
 # Need to use the PyInstaller stand-alone executable name when available.
 # NOTE: In Class Logs, path constants are different for stand-alone and
@@ -1753,35 +1754,13 @@ class CountViewer(tk.Frame):
 
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
-        def explain_intvl():
-            messagebox.showinfo(
-                parent=self.settings_win,
-                detail=('If the pull-down values you want do not appear, then'
-                        ' either select a different interval time, a different'
-                        ' summary time unit, or click "Use defaults".'))
-
-        def explain_zero_max():
-            messagebox.showinfo(
-                parent=self.settings_win,
-                detail=('Interval counting stops after entered number of'
-                        ' cycles. Enter 0 (zero) for a status report.'))
-
-        def explain_update():
-            messagebox.showinfo(
-                parent=self.settings_win,
-                detail=('Allows automatic Project update to re-establish communication '
-                        ' with the BOINC server when no tasks are running and '
-                        ' all tasks are "Ready to report" in the BOINC Manager.'))
-
         def update_intvl():
             self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_unit_choice.get()]
 
         def update_sumry_unit():
             self.share.sumry_unit_choice['values'] = interval_t[self.share.intvl_choice.get()]
 
-        # Settings widget construction, configurations, and grids.
-        intvl_query_btn = ttk.Button(self.settings_win, text='?', width=0,
-                                     command=explain_intvl)
+        # Settings widget construction and configurations.
         intvl_label = ttk.Label(self.settings_win, text='Count time interval',
                                 style='Set.TLabel')
         interval_t = {'1h': ('day', 'hr'),
@@ -1822,8 +1801,6 @@ class CountViewer(tk.Frame):
         self.share.setting['sumry_t_unit'].set(self.share.sumry_unit_choice.get())
 
         # Specify number limit of counting cycles to run.
-        cycles_query_btn = ttk.Button(self.settings_win, text='?', width=0,
-                                      command=explain_zero_max)
         cycles_label = ttk.Label(self.settings_win, text='# Count cycles',
                                  style='Set.TLabel')
         self.cycles_max_entry.configure(
@@ -1837,8 +1814,6 @@ class CountViewer(tk.Frame):
                               style='Set.TLabel')
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
-        update_query_btn = ttk.Button(self.settings_win, text='?', width=0,
-                                      command=explain_update)
         update_label = ttk.Label(self.settings_win, text='Use Project auto-update',
                                  style='Set.TLabel')
         self.update_choice.configure(variable=self.share.setting['proj_update'],
@@ -1848,6 +1823,29 @@ class CountViewer(tk.Frame):
                                     command=self.share.defaultsettings)
         self.countnow_button.configure(text='Count now',
                                        command=self.start_when_confirmed)
+
+        # Mouseover tooltips for entries and selections.
+        intvl_info_btn = ttk.Button(self.settings_win, text='?', width=0)
+        intvl_info_txt = (
+            'If the pull-down values you want do not appear, then'
+            ' either select a different interval time, a different'
+            ' summary time unit, or click "Use defaults".')
+        Tooltip(intvl_info_btn, intvl_info_txt)
+
+        cycles_info_btn = ttk.Button(self.settings_win, text='?', width=0)
+        cycles_info_txt = (
+            'Interval counting stops after entered number of'
+            ' cycles. Enter 0 (zero) for a one-off status report.')
+        Tooltip(cycles_info_btn, cycles_info_txt)
+
+        update_info_btn = ttk.Button(self.settings_win, text='?', width=0)
+        update_info_txt = (
+            'Allows an automatic Project update to re-establish communication'
+            ' with the BOINC server when no tasks are running and'
+            ' all tasks in the BOINC Manager are "Ready to report".'
+            ' This may have unwanted effects if communication is lost'
+            " because of loss of the host's internet connection.")
+        Tooltip(update_info_btn, update_info_txt)
 
         # Grid all window widgets; generally sorted by row.
         intvl_label.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
@@ -1868,13 +1866,13 @@ class CountViewer(tk.Frame):
 
         # Need OS-specific grids for proper padding and alignments:
         if MY_OS in 'lin, dar':
-            intvl_query_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
-            cycles_query_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
-            update_query_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+            intvl_info_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
+            cycles_info_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
+            update_info_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
         if MY_OS == 'win':
-            intvl_query_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
-            cycles_query_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
-            update_query_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
+            intvl_info_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
+            cycles_info_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
+            update_info_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
 
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory.
