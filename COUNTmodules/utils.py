@@ -44,6 +44,8 @@ class Tooltip:
     Create a tooltip with the given text for the given widget that the
     mouse hovers over.
     USAGE: Tooltip(widget, text)
+    Can deactivate a tooltip with widget.unbind() with the mouse actions
+    '<Enter>', '<Leave>', and '<ButtonPress>'.
 
     see:
     http://stackoverflow.com/questions/3221956/
