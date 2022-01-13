@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.62'
+__version__ = '0.8.63'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2059,6 +2059,24 @@ class CountViewer(tk.Frame):
         self.ttsd_sumry_l.configure(foreground=self.deemphasize)
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
+
+        # Provide mouseover tooltips for data emphasis buttons.
+        if self.share.setting['cycles_max'].get() == 1:
+            starting_info_txt = (
+                'This data column is now showing task data retrieved'
+                ' from the most recent boinc-client report before'
+                f' {__program_name__} started. Once the first count'
+                ' interval time has elapsed, data for that interval will'
+                ' display and this button will become "Interval data".'
+            )
+            Tooltip(self.share.starting_b, starting_info_txt)
+
+            summary_info_txt = (
+                'This button will activate and allow switching of visual'
+                ' emphasis between interval and summary data columns'
+                ' once the first summary count interval time has elapsed.'
+            )
+            Tooltip(self.share.sumry_b, summary_info_txt)
 
     def emphasize_intvl_data(self) -> None:
         """
