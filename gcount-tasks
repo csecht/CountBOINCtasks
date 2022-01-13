@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.63'
+__version__ = '0.8.64'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1002,8 +1002,11 @@ class CountModeler:
                 if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
                     # Flag used in log_it() to log summary data.
                     self.share.data['log_summary'].set(True)
-                    # Need to activate disabled Summary data button now; only need
-                    #  statement for 1st summary, but, oh well, here we go again...
+                    # Need to deactivate tooltip and activate the Summary
+                    #  data button now; only need these statements for
+                    #  1st summary, but, oh well, here we go again...
+                    self.share.sumry_b.unbind('<Enter>')
+                    self.share.sumry_b.unbind('<Leave>')
                     self.share.sumry_b.config(state=tk.NORMAL)
 
                     # Set time and stats of summary count.
@@ -1331,8 +1334,8 @@ class CountViewer(tk.Frame):
         #   another application has focus.
         #   source: https://stackoverflow.com/questions/18089068/
         #   tk-tkinter-detect-application-lost-focus
-        self.bind_all("<FocusIn>", self.app_got_focus)
-        self.bind_all("<FocusOut>", self.app_lost_focus)
+        self.bind_all('<FocusIn>', self.app_got_focus)
+        self.bind_all('<FocusOut>', self.app_lost_focus)
 
         # settings() window widgets:
         self.settings_win = tk.Toplevel()
@@ -1778,7 +1781,7 @@ class CountViewer(tk.Frame):
             textvariable=self.share.setting['interval_t'],
             values=tuple(interval_t.keys()))
         self.share.intvl_choice.bind(
-            "<<ComboboxSelected>>", lambda _: update_sumry_unit())
+            '<<ComboboxSelected>>', lambda _: update_sumry_unit())
         self.share.setting['interval_t'].set(self.share.intvl_choice.get())
 
         sumry_label1 = ttk.Label(
@@ -1801,7 +1804,7 @@ class CountViewer(tk.Frame):
             textvariable=self.share.setting['sumry_t_unit'],
             values=tuple(sumry_unit.keys()))
         self.share.sumry_unit_choice.bind(
-            "<<ComboboxSelected>>", lambda _: update_intvl())
+            '<<ComboboxSelected>>', lambda _: update_intvl())
         self.share.setting['sumry_t_unit'].set(self.share.sumry_unit_choice.get())
 
         # Specify number limit of counting cycles to run.
@@ -2061,22 +2064,21 @@ class CountViewer(tk.Frame):
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
 
         # Provide mouseover tooltips for data emphasis buttons.
-        if self.share.setting['cycles_max'].get() == 1:
-            starting_info_txt = (
-                'This data column is now showing task data retrieved'
-                ' from the most recent boinc-client report before'
-                f' {__program_name__} started. Once the first count'
-                ' interval time has elapsed, data for that interval will'
-                ' display and this button will become "Interval data".'
-            )
-            Tooltip(self.share.starting_b, starting_info_txt)
+        starting_info_txt = (
+            'This data column is now showing task data retrieved'
+            ' from the most recent boinc-client report before'
+            f' {__program_name__} started. Once the first count'
+            ' interval time has elapsed, data for that interval will'
+            ' display and this button will become "Interval data".'
+        )
+        Tooltip(self.share.starting_b, starting_info_txt)
 
-            summary_info_txt = (
-                'This button will activate and allow switching of visual'
-                ' emphasis between interval and summary data columns'
-                ' once the first summary count interval time has elapsed.'
-            )
-            Tooltip(self.share.sumry_b, summary_info_txt)
+        summary_info_txt = (
+            'This button will activate and allow switching of visual'
+            ' emphasis between interval and summary data columns'
+            ' once the first summary count interval time has elapsed.'
+        )
+        Tooltip(self.share.sumry_b, summary_info_txt)
 
     def emphasize_intvl_data(self) -> None:
         """
