@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.2'
+__module_ver__ = '0.1.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -94,12 +94,16 @@ class Tooltip:
 
     def on_leave(self, event=None):
         # Hide self.tw tooltip window.
+        # On macOS, need to delay the destroy() b/c any
+        #   mouse movement in the widget causes a re-draw
+        #   of the tooltip. A delay lessens the annoyance.
         self.unschedule()
         if self.tw:
-            self.tw.destroy()
+            self.tw.after(300, self.tw.destroy)
         self.tw = None
 
     def unschedule(self):
+        # Immediately cancel the on_enter() waittime.
         id_ = self.id
         self.id = None
         if id_:
@@ -146,12 +150,7 @@ class Tooltip:
         return x1, y1
 
     def show(self):
-
         self.tw = tk.Toplevel(self.widget)
-
-        # Leaves only the label and removes the app window
-        self.tw.wm_overrideredirect(True)
-
         win = tk.Frame(self.tw,
                        background=self.bg,
                        borderwidth=0)
@@ -164,14 +163,21 @@ class Tooltip:
             relief=tk.SOLID,
             borderwidth=0,
             wraplength=self.wraplength)
-
-        label.grid(padx=10, pady=6,
-                   sticky=tk.NSEW)
         win.grid()
+        label.grid(padx=10, pady=6, sticky=tk.NSEW)
 
         x, y = self.tip_pos_calculator(self.widget, label)
 
         self.tw.wm_geometry(f'+{x}+{y}')
+
+        # Leaves only the label and removes the Toplevel title bar.
+        # With macOS, need to unset wm_overridedredirect() to
+        #   fully remove, not just deactivate, the title bar.
+        #   https://stackoverflow.com/questions/63613253/
+        #   how-to-disable-the-title-bar-in-tkinter-on-a-mac/
+        self.tw.overrideredirect(True)
+        if sys.platform == 'darwin':
+            self.tw.overrideredirect(False)
 
 
 def absolute_path_to(relative_path: str) -> Path:
