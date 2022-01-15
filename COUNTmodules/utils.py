@@ -38,6 +38,8 @@ import tkinter as tk
 from pathlib import Path
 from typing import Union, Any
 
+MY_OS = sys.platform[:3]
+
 
 class Tooltip:
     """
@@ -78,7 +80,7 @@ class Tooltip:
         self.widget = widget
         self.text = text
         self.bg = 'LightYellow1'
-        self.waittime = 400  # In milliseconds
+        self.waittime = 500  # In milliseconds
         self.wraplength = 250  # In pixels.
 
         self.widget.bind("<Enter>", self.on_enter)
@@ -99,7 +101,7 @@ class Tooltip:
         #   of the tooltip. A delay lessens the annoyance.
         self.unschedule()
         if self.tw:
-            self.tw.after(300, self.tw.destroy)
+            self.tw.after(self.waittime // 2, self.tw.destroy)
         self.tw = None
 
     def unschedule(self):
@@ -150,7 +152,14 @@ class Tooltip:
         return x1, y1
 
     def show(self):
+        # Minimize the window until everything is loaded to prevent
+        #   annoying re-draw on some systems.
+        # Bring new window to the top to prevent it hiding behind
+        #   parent window on some systems.
         self.tw = tk.Toplevel(self.widget)
+        self.tw.overrideredirect(True)
+        self.tw.wm_withdraw()
+        self.tw.wm_attributes('-topmost', True)
         win = tk.Frame(self.tw,
                        background=self.bg,
                        borderwidth=0)
@@ -170,14 +179,16 @@ class Tooltip:
 
         self.tw.wm_geometry(f'+{x}+{y}')
 
-        # Leaves only the label and removes the Toplevel title bar.
+        self.tw.wm_deiconify()
+
         # With macOS, need to unset wm_overridedredirect() to
         #   fully remove, not just deactivate, the title bar.
         #   https://stackoverflow.com/questions/63613253/
         #   how-to-disable-the-title-bar-in-tkinter-on-a-mac/
-        self.tw.overrideredirect(True)
-        if sys.platform == 'darwin':
+        if MY_OS == 'dar':
             self.tw.overrideredirect(False)
+
+        self.tw.focus_force()
 
 
 def absolute_path_to(relative_path: str) -> Path:
@@ -192,7 +203,7 @@ def absolute_path_to(relative_path: str) -> Path:
     :return: Absolute path as pathlib Path object.
     """
     # Modified from: https://stackoverflow.com/questions/7674790/
-    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
+    #    bundling-data-files-with -pyinstaller-onefile and PyInstaller manual.
     if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
         base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
         return Path(base_path) / relative_path
