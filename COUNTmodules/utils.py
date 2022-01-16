@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.3'
+__module_ver__ = '0.1.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -43,11 +43,18 @@ MY_OS = sys.platform[:3]
 
 class Tooltip:
     """
-    Create a tooltip with the given text for the given widget that the
-    mouse hovers over.
-    USAGE: Tooltip(widget, text)
-    Can deactivate a tooltip with widget.unbind() with the mouse actions
-    '<Enter>', '<Leave>', and '<ButtonPress>'.
+    Bind mouse hover events to create a Toplevel tooltip with the given
+    text for the given widget.
+
+    USAGE: Tooltip(tk.widget, text, wait_time, wrap_length)
+        widget for which the toottip is to appear,
+        text string of the tip,
+        wait_time (ms) delay of tip appearance (optional: default is set),
+        wrap_length (pixels) of tip window width (optional: default is set).
+
+        Tooltip mouse event bindings are persistent. Can deactivate a
+        tooltip with widget.unbind() for the mouse events Enter, Leave,
+        AND ButtonPress.
 
     see:
     http://stackoverflow.com/questions/3221956/
@@ -55,65 +62,83 @@ class Tooltip:
            in-tkinter/36221216#36221216
     http://www.daniweb.com/programming/software-development/
            code/484591/a-tooltip-class-for-tkinter
-
     - Originally written by vegaseat on 2014.09.09.
-
     - Modified to include a delay time by Victor Zaccardo on 2016.03.25.
-
     - Modified
         - to correct extreme right and extreme bottom behavior,
         - to stay inside the screen whenever the tooltip might go out on
           the top but still the screen is higher than the tooltip,
         - to use the more flexible mouse positioning,
-        - to add customizable background color, padding, waittime and
-          wraplength on creation
+        - to add customizable background color, padding, wait_time and
+          wrap_len on creation
       by Alberto Vassena on 2016.11.05.
       Tested on Ubuntu 16.04/16.10, running Python 3.5.2
 
-      - Customized for CountBOINCtasks Project
+    - Customized for CountBOINCtasks Project
         by Craig Echt, 12 January 2022.
-        Tested on Ubuntu 20.04, running Python 3.8
+        Tested on Linux Ubuntu 20.04, Windows 10, macOS 10.13,
+        running Python 3.8 - 3.9
     """
 
-    def __init__(self, widget, text: str):
+    def __init__(self, widget: tk, tt_text: str, wait_time=500, wrap_len=250):
 
+        # wait_time is milliseconds, wrap_len is pixels.
         self.widget = widget
-        self.text = text
+        self.tt_text = tt_text
+        self.wait_time = wait_time
+        self.wrap_len = wrap_len
         self.bg = 'LightYellow1'
-        self.waittime = 500  # In milliseconds
-        self.wraplength = 250  # In pixels.
 
         self.widget.bind("<Enter>", self.on_enter)
         self.widget.bind("<Leave>", self.on_leave)
         self.widget.bind("<ButtonPress>", self.on_leave)
         self.id = None
-        self.tw = None
+        self.tt_win = None
 
-    def on_enter(self, event=None):
-        # Show self.tw tooltip window.
-        self.unschedule()
-        self.id = self.widget.after(self.waittime, self.show)
+    def on_enter(self, event=None) -> None:
+        """
+        Trigger display of the tooltip when cursor rests on the widget.
 
-    def on_leave(self, event=None):
-        # Hide self.tw tooltip window.
+        :param event: Implicit virtual event of mouse binding.
+        """
+        self.tip_close()
+        self.id = self.widget.after(self.wait_time, self.show)
+
+    def on_leave(self, event=None) -> None:
+        """
+        Remove display of the tooltip when cursor leaves the widget.
+
+        :param event: Implicit virtual event of mouse binding.
+        """
         # On macOS, need to delay the destroy() b/c any
         #   mouse movement in the widget causes a re-draw
         #   of the tooltip. A delay lessens the annoyance.
-        self.unschedule()
-        if self.tw:
-            self.tw.after(self.waittime // 2, self.tw.destroy)
-        self.tw = None
+        self.tip_close()
+        if self.tt_win:
+            self.tt_win.after(self.wait_time // 2, self.tt_win.destroy)
+        self.tt_win = None
 
-    def unschedule(self):
-        # Immediately cancel the on_enter() waittime.
+    def tip_close(self) -> None:
+        """
+        Immediately cancel on_enter() wait_time to close the tooltip.
+        """
         id_ = self.id
         self.id = None
         if id_:
             self.widget.after_cancel(id_)
 
     @staticmethod
-    def tip_pos_calculator(widget, label, tip_delta=(10, 5)):
+    def tip_pos_calculator(widget, label, tip_delta=(10, 5)) -> tuple:
+        """
+        Set screen position of the tooltip Toplevel so that it remains
+        on screen with proper padding.
 
+        :param widget: the tk.widget from the call
+        :param label: The tk.Label to display the tt_text.
+        :param tip_delta: Pixel (x, y) buffer to consider "off-screen"
+            relative to mouse position.
+        :return: Tuple of pixel (x, y) used to set tooltip geometry().
+        """
         w = widget
 
         s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
@@ -151,44 +176,48 @@ class Tooltip:
 
         return x1, y1
 
-    def show(self):
+    def show(self) -> None:
+        """
+        Create the tooltip Toplevel. The order of statements is
+        optimized for best performance on Linux, Windows, and macOS.
+        """
         # Minimize the window until everything is loaded to prevent
         #   annoying re-draw on some systems.
         # Bring new window to the top to prevent it hiding behind
         #   parent window on some systems.
-        self.tw = tk.Toplevel(self.widget)
-        self.tw.overrideredirect(True)
-        self.tw.wm_withdraw()
-        self.tw.wm_attributes('-topmost', True)
-        win = tk.Frame(self.tw,
+        self.tt_win = tk.Toplevel(self.widget)
+        self.tt_win.overrideredirect(True)
+        self.tt_win.wm_withdraw()
+        self.tt_win.wm_attributes('-topmost', True)
+        win = tk.Frame(self.tt_win,
                        background=self.bg,
                        borderwidth=0)
         label = tk.Label(
             win,
-            text=self.text,
+            text=self.tt_text,
             font='TkTooltipFont',
             justify=tk.LEFT,
             background=self.bg,
             relief=tk.SOLID,
             borderwidth=0,
-            wraplength=self.wraplength)
+            wraplength=self.wrap_len)
         win.grid()
         label.grid(padx=10, pady=6, sticky=tk.NSEW)
 
         x, y = self.tip_pos_calculator(self.widget, label)
 
-        self.tw.wm_geometry(f'+{x}+{y}')
+        self.tt_win.wm_geometry(f'+{x}+{y}')
 
-        self.tw.wm_deiconify()
+        self.tt_win.wm_deiconify()
 
         # With macOS, need to unset wm_overridedredirect() to
         #   fully remove, not just deactivate, the title bar.
         #   https://stackoverflow.com/questions/63613253/
         #   how-to-disable-the-title-bar-in-tkinter-on-a-mac/
         if MY_OS == 'dar':
-            self.tw.overrideredirect(False)
+            self.tt_win.overrideredirect(False)
 
-        self.tw.focus_force()
+        self.tt_win.focus_force()
 
 
 def absolute_path_to(relative_path: str) -> Path:
