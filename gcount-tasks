@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.64'
+__version__ = '0.8.65'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1831,12 +1831,26 @@ class CountViewer(tk.Frame):
         self.countnow_button.configure(text='Count now',
                                        command=self.start_when_confirmed)
 
-        # Mouseover tooltips for entries and selections.
-        intvl_info_btn = tk.Button(self.settings_win,
-                                   image=self.info_button_img,
-                                   border=0, bg=self.master_bg,
-                                   highlightbackground=self.master_bg,
-                                   activebackground=self.master_bg)
+        # Mouseover tooltip buttons to explain entries and selections.
+        # Need ttk.Button and styles on macOS to avoid square button img.
+        s = ttk.Style()
+        s.configure('Tooltip.TButton',
+                    image=self.info_button_img,
+                    background=self.master_bg,
+                    highlightthickness=0,
+                    highlightcolor=self.master_bg,
+                    highlightbackground=self.master_bg,
+                    activebackground=self.master_bg
+                    )
+        s.map('Tooltip.TButton',
+              background=[('pressed', '!focus', self.master_bg),
+                          ('active', self.master_bg)],
+              relief=[('pressed', tk.FLAT),
+                      ('!pressed', tk.FLAT)]
+              )
+        intvl_info_btn = ttk.Button(self.settings_win,
+                                    style='Tooltip.TButton',
+                                    takefocus=False)
         intvl_info_txt = (
             'If the desired pull-down time values do not appear, then'
             ' either select a different summary time (or a different'
@@ -1844,21 +1858,17 @@ class CountViewer(tk.Frame):
             ' or click "Use defaults" and try again.')
         Tooltip(intvl_info_btn, intvl_info_txt)
 
-        cycles_info_btn = tk.Button(self.settings_win,
-                                    image=self.info_button_img,
-                                    border=0, bg=self.master_bg,
-                                    highlightbackground=self.master_bg,
-                                    activebackground=self.master_bg)
+        cycles_info_btn = ttk.Button(self.settings_win,
+                                     style='Tooltip.TButton',
+                                     takefocus=False)
         cycles_info_txt = (
             'Interval counting stops after entered number of'
             ' cycles. Enter 0 (zero) for a one-off status report.')
         Tooltip(cycles_info_btn, cycles_info_txt)
 
-        update_info_btn = tk.Button(self.settings_win,
-                                    image=self.info_button_img,
-                                    border=0, bg=self.master_bg,
-                                    highlightbackground=self.master_bg,
-                                    activebackground=self.master_bg)
+        update_info_btn = ttk.Button(self.settings_win,
+                                     style='Tooltip.TButton',
+                                     takefocus=False)
         update_info_txt = (
             'Allows an automatic Project update to re-establish communication'
             ' with the BOINC server when no tasks are running and'
@@ -1885,7 +1895,7 @@ class CountViewer(tk.Frame):
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
 
         # Need OS-specific grids for proper padding and alignments:
-        if MY_OS in 'lin, dar':
+        if MY_OS == 'lin':
             intvl_info_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
             cycles_info_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
             update_info_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
@@ -1893,6 +1903,10 @@ class CountViewer(tk.Frame):
             intvl_info_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
             cycles_info_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
             update_info_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
+        if MY_OS == 'dar':
+            intvl_info_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
+            cycles_info_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
+            update_info_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
 
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory.
