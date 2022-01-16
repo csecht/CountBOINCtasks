@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.4'
+__module_ver__ = '0.1.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -47,10 +47,10 @@ class Tooltip:
     text for the given widget.
 
     USAGE: Tooltip(tk.widget, text, wait_time, wrap_length)
-        widget for which the toottip is to appear,
+        widget for which the tootltip is to appear,
         text string of the tip,
-        wait_time (ms) delay of tip appearance (optional: default is set),
-        wrap_length (pixels) of tip window width (optional: default is set).
+        wait_time (ms) delay of tip appearance (default is 600),
+        wrap_length (pixels) of tip window width (default is 250).
 
         Tooltip mouse event bindings are persistent. Can deactivate a
         tooltip with widget.unbind() for the mouse events Enter, Leave,
@@ -80,9 +80,9 @@ class Tooltip:
         running Python 3.8 - 3.9
     """
 
-    def __init__(self, widget: tk, tt_text: str, wait_time=500, wrap_len=250):
+    def __init__(self, widget: tk, tt_text: str, wait_time=600, wrap_len=250):
 
-        # wait_time is milliseconds, wrap_len is pixels.
+        # wait_time is milliseconds, wrap_len is pixels: as integers.
         self.widget = widget
         self.tt_text = tt_text
         self.wait_time = wait_time
@@ -91,36 +91,55 @@ class Tooltip:
 
         self.widget.bind("<Enter>", self.on_enter)
         self.widget.bind("<Leave>", self.on_leave)
-        self.widget.bind("<ButtonPress>", self.on_leave)
+        self.widget.bind("<ButtonPress>", self.close_now)
         self.id = None
         self.tt_win = None
 
-    def on_enter(self, event=None) -> None:
+    def on_enter(self, *event):
         """
         Trigger display of the tooltip when cursor rests on the widget.
 
         :param event: Implicit virtual event of mouse binding.
+        :return: The bound event action.
         """
-        self.tip_close()
+        self.cancel_wait()
         self.id = self.widget.after(self.wait_time, self.show)
+        return event
 
-    def on_leave(self, event=None) -> None:
+    def on_leave(self, *event):
         """
         Remove display of the tooltip when cursor leaves the widget.
 
         :param event: Implicit virtual event of mouse binding.
+        :return: The bound event action.
         """
-        # On macOS, need to delay the destroy() b/c any
+        # On macOS, need to delay destroy() b/c any
         #   mouse movement in the widget causes a re-draw
-        #   of the tooltip. A delay lessens the annoyance.
-        self.tip_close()
+        #   of the Toplevel tooltip. A delay lessens the annoyance.
+        self.cancel_wait()
         if self.tt_win:
             self.tt_win.after(self.wait_time // 2, self.tt_win.destroy)
         self.tt_win = None
+        return event
 
-    def tip_close(self) -> None:
+    def close_now(self, *event):
         """
-        Immediately cancel on_enter() wait_time to close the tooltip.
+        Remove display of the tooltip when widget is clicked.
+
+        :param event: Implicit virtual event of mouse binding.
+        :return: The bound event action.
+        """
+        # This close method, separate from on_leave, is needed on macOS to
+        #   close on button click without a ghost tt_win behind parent win.
+        self.cancel_wait()
+        if self.tt_win:
+            self.tt_win.destroy()
+        self.tt_win = None
+        return event
+
+    def cancel_wait(self) -> None:
+        """
+        Cancel *wait_time* to immediately close the tooltip.
         """
         id_ = self.id
         self.id = None
@@ -135,8 +154,8 @@ class Tooltip:
 
         :param widget: the tk.widget from the call
         :param label: The tk.Label to display the tt_text.
-        :param tip_delta: Pixel (x, y) buffer to consider "off-screen"
-            relative to mouse position.
+        :param tip_delta: Pixel (x, y) buffer to for "off-screen"
+            relative to mouse position (default (10, 5))
         :return: Tuple of pixel (x, y) used to set tooltip geometry().
         """
         w = widget
@@ -178,7 +197,7 @@ class Tooltip:
 
     def show(self) -> None:
         """
-        Create the tooltip Toplevel. The order of statements is
+        Create the tooltip as Toplevel. The order of statements is
         optimized for best performance on Linux, Windows, and macOS.
         """
         # Minimize the window until everything is loaded to prevent
@@ -189,6 +208,7 @@ class Tooltip:
         self.tt_win.overrideredirect(True)
         self.tt_win.wm_withdraw()
         self.tt_win.wm_attributes('-topmost', True)
+
         win = tk.Frame(self.tt_win,
                        background=self.bg,
                        borderwidth=0)
@@ -205,7 +225,6 @@ class Tooltip:
         label.grid(padx=10, pady=6, sticky=tk.NSEW)
 
         x, y = self.tip_pos_calculator(self.widget, label)
-
         self.tt_win.wm_geometry(f'+{x}+{y}')
 
         self.tt_win.wm_deiconify()
