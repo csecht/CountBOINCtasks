@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.65'
+__version__ = '0.8.66'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1900,9 +1900,9 @@ class CountViewer(tk.Frame):
             cycles_info_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
             update_info_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
         if MY_OS == 'win':
-            intvl_info_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
-            cycles_info_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
-            update_info_btn.grid(row=4, column=0, padx=(10, 0), sticky=tk.W)
+            intvl_info_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
+            cycles_info_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
+            update_info_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
         if MY_OS == 'dar':
             intvl_info_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
             cycles_info_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
