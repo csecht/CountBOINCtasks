@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.5'
+__module_ver__ = '0.1.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -209,11 +209,11 @@ class Tooltip:
         self.tt_win.wm_withdraw()
         self.tt_win.wm_attributes('-topmost', True)
 
-        win = tk.Frame(self.tt_win,
-                       background=self.bg,
-                       borderwidth=0)
-        label = tk.Label(
-            win,
+        tt_frame = tk.Frame(self.tt_win,
+                            background=self.bg,
+                            borderwidth=0)
+        tt_label = tk.Label(
+            tt_frame,
             text=self.tt_text,
             font='TkTooltipFont',
             justify=tk.LEFT,
@@ -221,10 +221,10 @@ class Tooltip:
             relief=tk.SOLID,
             borderwidth=0,
             wraplength=self.wrap_len)
-        win.grid()
-        label.grid(padx=10, pady=6, sticky=tk.NSEW)
+        tt_frame.grid()
+        tt_label.grid(padx=10, pady=6, sticky=tk.NSEW)
 
-        x, y = self.tip_pos_calculator(self.widget, label)
+        x, y = self.tip_pos_calculator(self.widget, tt_label)
         self.tt_win.wm_geometry(f'+{x}+{y}')
 
         self.tt_win.wm_deiconify()
