@@ -74,13 +74,17 @@ class Tooltip:
       by Alberto Vassena on 2016.11.05.
       Tested on Ubuntu 16.04/16.10, running Python 3.5.2
 
-    - Customized for CountBOINCtasks Project
+    - Customized for GitHub CountBOINCtasks Project
         by Craig Echt, 12 January 2022.
         Tested on Linux Ubuntu 20.04, Windows 10, macOS 10.13,
         running Python 3.8 - 3.9
     """
 
-    def __init__(self, widget: tk, tt_text: str, wait_time=600, wrap_len=250):
+    def __init__(self,
+                 widget: tk,
+                 tt_text: str,
+                 wait_time=600,
+                 wrap_len=250):
 
         # wait_time is milliseconds, wrap_len is pixels: as integers.
         self.widget = widget
