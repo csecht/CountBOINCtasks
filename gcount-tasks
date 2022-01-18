@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.66'
+__version__ = '0.8.67'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1831,53 +1831,7 @@ class CountViewer(tk.Frame):
         self.countnow_button.configure(text='Count now',
                                        command=self.start_when_confirmed)
 
-        # Mouseover tooltip buttons to explain entries and selections.
-        # Need ttk.Button and styles on macOS to avoid square button img.
-        s = ttk.Style()
-        s.configure('Tooltip.TButton',
-                    image=self.info_button_img,
-                    background=self.master_bg,
-                    highlightthickness=0,
-                    highlightcolor=self.master_bg,
-                    highlightbackground=self.master_bg,
-                    activebackground=self.master_bg
-                    )
-        s.map('Tooltip.TButton',
-              background=[('pressed', '!focus', self.master_bg),
-                          ('active', self.master_bg)],
-              relief=[('pressed', tk.FLAT),
-                      ('!pressed', tk.FLAT)]
-              )
-        intvl_info_btn = ttk.Button(self.settings_win,
-                                    style='Tooltip.TButton',
-                                    takefocus=False)
-        intvl_info_txt = (
-            'If the desired pull-down time values do not appear, then'
-            ' either select a different summary time (or a different'
-            ' interval time if do not see a desired summary time unit)'
-            ' or click "Use defaults" and try again.')
-        Tooltip(intvl_info_btn, intvl_info_txt)
-
-        cycles_info_btn = ttk.Button(self.settings_win,
-                                     style='Tooltip.TButton',
-                                     takefocus=False)
-        cycles_info_txt = (
-            'Interval counting stops after entered number of'
-            ' cycles. Enter 0 (zero) for a one-off status report.')
-        Tooltip(cycles_info_btn, cycles_info_txt)
-
-        update_info_btn = ttk.Button(self.settings_win,
-                                     style='Tooltip.TButton',
-                                     takefocus=False)
-        update_info_txt = (
-            'Allows an automatic Project update to re-establish communication'
-            ' with the BOINC server when no tasks are running and'
-            ' all tasks in the BOINC Manager are "Ready to report".'
-            ' This may have unwanted effects if communication is lost'
-            " because of loss of the host's internet connection.")
-        Tooltip(update_info_btn, update_info_txt)
-
-        # Grid all window widgets; generally sorted by row.
+        # Grid settings widgets; generally sorted by row.
         intvl_label.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
         self.share.intvl_choice.grid(row=0, column=1)
         default_button.grid(row=0, column=3, padx=10, pady=(10, 0), sticky=tk.E)
@@ -1894,19 +1848,8 @@ class CountViewer(tk.Frame):
         self.countnow_button.grid(
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
 
-        # Need OS-specific grids for proper padding and alignments:
-        if MY_OS == 'lin':
-            intvl_info_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
-            cycles_info_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
-            update_info_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
-        if MY_OS == 'win':
-            intvl_info_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
-            cycles_info_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
-            update_info_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
-        if MY_OS == 'dar':
-            intvl_info_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
-            cycles_info_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
-            update_info_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
+        # Add tooltips to explain entries and selections.
+        self.settings_tooltips()
 
         # Need to prevent subsequent program instances from writing to the log
         #   file in the working directory.
@@ -1929,6 +1872,71 @@ class CountViewer(tk.Frame):
             #   quit_qui() raises "name 'app' is not defined" error b/c
             #   app is defined (as toplevel path '.') only once settings()
             #   is completed.
+
+    def settings_tooltips(self) -> None:
+        """
+        Tooltips, from mouseover of info Button icons, to explain usage
+        of entries and selections in the settings window.
+        """
+
+        # Need to use ttk.Button and styles on macOS to avoid square button img.
+        #  Provides the same look on Linux, Windows, macOS. For Linux and
+        #  Windows, works the same as tk.Button if configure with same options.
+        s = ttk.Style()
+        s.configure('Tooltip.TButton',
+                    image=self.info_button_img,
+                    background=self.master_bg,
+                    highlightthickness=0,
+                    highlightcolor=self.master_bg,
+                    highlightbackground=self.master_bg,
+                    activebackground=self.master_bg
+                    )
+        s.map('Tooltip.TButton',
+              background=[('pressed', '!focus', self.master_bg),
+                          ('active', self.master_bg)],
+              relief=[('pressed', tk.FLAT),
+                      ('!pressed', tk.FLAT)]
+              )
+
+        intvl_tt_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
+        cycles_tt_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
+        update_tt_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
+
+        intvl_tt_txt = (
+            'If the desired pull-down time values do not appear, then'
+            ' either select a different summary time (or a different'
+            ' interval time if do not see a desired summary time unit)'
+            ' or click "Use defaults" and try again.')
+        cycles_tt_txt = (
+            'Interval counting stops after entered number of'
+            ' cycles. Enter 0 (zero) for a one-off status report.')
+        update_tt_txt = (
+            'Allows an automatic Project update to re-establish communication'
+            ' with the BOINC server when no tasks are running and'
+            ' all tasks in the BOINC Manager are "Ready to report".'
+            ' This may have unwanted effects if communication is lost'
+            " because of loss of the host's internet connection.")
+
+        Tooltip(intvl_tt_btn, intvl_tt_txt)
+        Tooltip(cycles_tt_btn, cycles_tt_txt)
+        Tooltip(update_tt_btn, update_tt_txt)
+
+        # Need OS-specific grids for proper padding and alignments:
+        if MY_OS == 'lin':
+            intvl_tt_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
+            cycles_tt_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
+            update_tt_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+        if MY_OS == 'win':
+            intvl_tt_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
+            cycles_tt_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
+            update_tt_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
+        if MY_OS == 'dar':
+            intvl_tt_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
+            cycles_tt_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
+            update_tt_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
 
     def confirm_settings(self) -> bool:
         """
@@ -2078,6 +2086,7 @@ class CountViewer(tk.Frame):
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
 
         # Provide mouseover tooltips for data emphasis buttons.
+        #  These will not be active once the first interval posts.
         starting_info_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
