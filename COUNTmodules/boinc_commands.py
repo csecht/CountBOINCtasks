@@ -32,7 +32,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.4.3'
+__module_ver__ = '0.4.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -48,15 +48,16 @@ def set_boincpath() -> str:
     :return: Correct path string for executing boinccmd commands.
     """
     # Need to first check for custom path in the configuration file.
-    # .split to remove the tag, .join to re-form the path with any spaces.
+    # Do split to remove the "custom_path" tag, then join to restore the
+    #   path with any spaces it might have.
     if Path.is_file(CFGFILE):
-        with open('countCFG.txt') as cfg:
-            for line in cfg:
-                if '#' not in line and 'custom_path' in line:
-                    parts = line.split()
-                    del parts[0]
-                    custom_path = " ".join(parts)
-                    return custom_path
+        cfg = Path('countCFG.txt').read_text()
+        for line in cfg:
+            if '#' not in line and 'custom_path' in line:
+                parts = line.split()
+                del parts[0]
+                custom_path = " ".join(parts)
+                return custom_path
 
     # Need to accommodate win32 and win64? so slice [:3] for all platforms.
     #   Only win, lin, and dar values are accommodated here.
@@ -70,7 +71,7 @@ def set_boincpath() -> str:
                     'lin': lin_path,
                     'dar': dar_path
     }
-    # Note: On MacOS, the Terminal command line would be entered as:
+    # Note: On macOS, the Terminal command line would be entered as:
     # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
     if my_os in default_path:
