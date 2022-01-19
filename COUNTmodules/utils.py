@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.6'
+__module_ver__ = '0.1.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -46,15 +46,17 @@ class Tooltip:
     Bind mouse hover events to create a Toplevel tooltip with the given
     text for the given widget.
 
-    USAGE: Tooltip(tk.widget, text, wait_time, wrap_length)
-        widget for which the tootltip is to appear,
-        text string of the tip,
-        wait_time (ms) delay of tip appearance (default is 600),
-        wrap_length (pixels) of tip window width (default is 250).
+    USAGE: Tooltip(widget, text, state, wait_time, wrap_length)
+        widget: tk.widget for which the tootltip is to appear.
+        text: the widget's tip; use '' for *state* of 'disabled'.
+        state: 'normal' (default) or 'disabled'.
+        wait_time (ms): delay of tip appearance (default is 600),
+        wrap_length (pixels): of tip window width (default is 250).
 
-        Tooltip mouse event bindings are persistent. Can deactivate a
-        tooltip with widget.unbind() for the mouse events Enter, Leave,
-        AND ButtonPress.
+        Create a standard tooltip: utils.Tooltip(mywidget, mytext)
+        Deactivate: utils.Tooltip(mywidget, '', 'disabled')
+        Reactivate with longer wait time and wider wrap length:
+          utils.Tooltip(mywidget, mytext, 'normal', 1000, 400)
 
     see:
     http://stackoverflow.com/questions/3221956/
@@ -76,6 +78,7 @@ class Tooltip:
 
     - Customized for GitHub CountBOINCtasks Project
         by Craig Echt, 12 January 2022.
+        Modified to work on multiple platforms and to change state.
         Tested on Linux Ubuntu 20.04, Windows 10, macOS 10.13,
         running Python 3.8 - 3.9
     """
@@ -83,6 +86,7 @@ class Tooltip:
     def __init__(self,
                  widget: tk,
                  tt_text: str,
+                 state='normal',
                  wait_time=600,
                  wrap_len=250):
 
@@ -93,9 +97,16 @@ class Tooltip:
         self.wrap_len = wrap_len
         self.bg = 'LightYellow1'
 
-        self.widget.bind("<Enter>", self.on_enter)
-        self.widget.bind("<Leave>", self.on_leave)
-        self.widget.bind("<ButtonPress>", self.close_now)
+        if state == 'disabled':
+            self.widget.bind("<Enter>", lambda _: None)
+            self.widget.bind("<Leave>", lambda _: None)
+            self.widget.bind("<ButtonPress>", lambda _: None)
+        else:
+            # Should be 'normal', but any string value is accepted.
+            self.widget.bind("<Enter>", self.on_enter)
+            self.widget.bind("<Leave>", self.on_leave)
+            self.widget.bind("<ButtonPress>", self.close_now)
+
         self.id = None
         self.tt_win = None
 
