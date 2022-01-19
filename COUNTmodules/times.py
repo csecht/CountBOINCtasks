@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'times.py'
-__module_ver__ = '0.2.3'
+__module_ver__ = '0.2.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -161,7 +161,8 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
                     Needed only for the 'wtmean' *stat*.
     :return: The distribution's statistic as formatted string, '00:00:00'.
              For 'range', returns as format '[00:00:00 -- 00:00:00]'.
-             Returns 'cannot determine' if invalid data given for 'wtmean'.
+             Returns 'cannot determine' if invalid data given for
+             'wtmean' or if *weights* sum to 0.
     """
     # Algorithm sources:
     # https://towardsdatascience.com/
@@ -179,6 +180,8 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
             error_msg = 'cannot determine'
         if len(distribution) != len(weights):
             error_msg = 'cannot determine'
+        if sum(weights) == 0:
+            error_msg = 'cannot determine'
     if error_msg:
         return error_msg
 
@@ -193,7 +196,6 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
 
     # Need to convert the timedelta clock fmt object to a string for display,
     #    and remove microseconds from the clock fmt string.
-    stat_result = ''
     if stat == 'wtmean':
         numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
         denominator = sum(weights)
