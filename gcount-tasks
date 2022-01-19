@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.67'
+__version__ = '0.8.68'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -906,15 +906,14 @@ class CountModeler:
         sumry_intvl_ttavgs = []
 
         for cycle in range(cycles_max):
-            if cycle == 1 or cycles_max == 1:
+            if cycle == 1:
                 # Need to change button name and function from Start to Interval
                 #   after initial cycle[0] completes and intvl data displays.
                 #  It might be better if statement were in Viewer, but simpler
                 #  to put it here with easy reference to cycle.
-                self.share.starting_b.grid_forget()
                 self.share.intvl_b.grid(row=0, column=1,
                                         padx=(16, 0), pady=(8, 4))
-
+                self.share.starting_b.grid_forget()
             # Need to sleep between counts while displaying a countdown timer.
             # Need to limit total time of interval to target_elapsed_time,
             #   in Epoch seconds, b/c each interval sleep cycle will run longer
@@ -1005,8 +1004,7 @@ class CountModeler:
                     # Need to deactivate tooltip and activate the Summary
                     #  data button now; only need these statements for
                     #  1st summary, but, oh well, here we go again...
-                    self.share.sumry_b.unbind('<Enter>')
-                    self.share.sumry_b.unbind('<Leave>')
+                    Tooltip(self.share.sumry_b, '', 'disabled')
                     self.share.sumry_b.config(state=tk.NORMAL)
 
                     # Set time and stats of summary count.
@@ -2085,6 +2083,12 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.configure(foreground=self.deemphasize)
         self.ttsum_sumry_l.configure(foreground=self.deemphasize)
 
+        if not self.share.setting['do_log'].get():
+            self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
+
+        self.starting_tooltips()
+
+    def starting_tooltips(self):
         # Provide mouseover tooltips for data emphasis buttons.
         #  These will not be active once the first interval posts.
         starting_ttip_txt = (
@@ -2173,8 +2177,7 @@ class CountViewer(tk.Frame):
         self.menubar.entryconfig("View", foreground='grey', state=tk.DISABLED)
         self.menubar.entryconfig("Help", foreground='grey', state=tk.DISABLED)
         self.view_button_style.configure('View.TButton', foreground='grey')
-        if self.share.setting['do_log'].get():
-            self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
+        self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
         return focus_event
 
 
