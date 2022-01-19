@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.69'
+__version__ = '0.8.70'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -906,6 +906,7 @@ class CountModeler:
         sumry_intvl_ttavgs = []
 
         for cycle in range(cycles_max):
+            print('cycle:', cycle)
             if cycle == 1:
                 # Need to change button name and function from Start to Interval
                 #   after initial cycle[0] completes and intvl data displays.
@@ -920,6 +921,7 @@ class CountModeler:
             #   than the intended interval. Realized interval time should not
             #   drift by more than 1 second during count_max cycles.
             # Without this time limit, each 1h interval would gain ~4s.
+            interval_m = 1
             interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
@@ -994,6 +996,7 @@ class CountModeler:
                 summary_m = T.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
                 #   prior summary rather than weekday, as above (%A %H:%M).
+                summary_m = 2
                 if summary_m >= 10080:
                     self.share.data['time_prev_cnt'].set(
                         datetime.now().strftime(SHORTER_STRFTIME))
@@ -1026,6 +1029,18 @@ class CountModeler:
                     ttimes_smry.clear()
                     sumry_intvl_counts.clear()
                     sumry_intvl_ttavgs.clear()
+
+                if (cycle + 1) % (summary_m // interval_m) == 0 and num_running == 0:
+                    self.share.data['log_summary'].set(True)
+                    Tooltip(self.share.sumry_b, '', 'disabled')
+                    self.share.sumry_b.config(state=tk.NORMAL)
+
+                    self.share.data['time_prev_sumry'].set(summary_time)
+                    self.share.data['task_count_sumry'].set(0)
+                    self.share.data['tt_mean_sumry'].set('n/a')
+                    self.share.data['tt_sd_sumry'].set('n/a')
+                    self.share.data['tt_range_sumry'].set('n/a')
+                    self.share.data['tt_total_sumry'].set('n/a')
 
             # Call to log_it() needs to be outside the thread lock.
             app.update_idletasks()
