@@ -216,10 +216,10 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
 
 def boinc_ttimes_stats(times_sec: iter) -> dict:
     """
-    Gather statistics for iterable distribution of times to display and
-    log. Used to analyse task times extracted from boinc-client reports.
+    Gather statistics for a distribution of BOINC task times; times are
+    extracted from boinc-client reports.
 
-    :param times_sec: A list, tuple, or set of times, in seconds as
+    :param times_sec: A list, tuple, or set of times, in seconds, as
                       integers or floats.
     :return: Dict keys: 'tt_total', 'tt_avg', 'tt_sd', 'tt_min', 'tt_max'.
              Dict values format: 00:00:00.
