@@ -216,8 +216,9 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
 
 def boinc_ttimes_stats(times_sec: iter) -> dict:
     """
-    Gather statistics for a distribution of BOINC task times; times are
-    extracted from boinc-client reports.
+    Gather statistics for a distribution of BOINC task times extracted
+    from boinc-client reports. Returns dictionary strings for display
+    and logging.
 
     :param times_sec: A list, tuple, or set of times, in seconds, as
                       integers or floats.
