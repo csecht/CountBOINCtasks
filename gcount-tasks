@@ -1498,11 +1498,11 @@ class CountViewer(tk.Frame):
         self.master_layout()
         self.share.defaultsettings()
         self.settings()
-        # Starting functions sequence after settings() is called:
+        # Sequence of starting functions after settings() is called:
         #   confirm_settings(), start_when_confirmed(), start_threads(),
-        #   emphasize_start_data(), CountModeler.start_data().
-        # Note: none of that sequence matters, however, if BOINC
-        #   client is not running, so...
+        #   emphasize_start_data(), starting_tooltips(),
+        #   CountModeler.start_data(). Of course none of that sequence
+        #   matters if BOINC client is not running, so...
         check_boinc()
 
     def master_widgets(self) -> None:
@@ -1626,7 +1626,8 @@ class CountViewer(tk.Frame):
         tk.Label(
             text='Counting since', bg=self.master_bg, fg=self.share.row_fg
         ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
-        row_header = {  #'Counting since': 2,
+        row_header = {
+            #'Counting since': 2,
             'Count interval, t': 3,
             '# tasks reported': 4,
             'Task times:  avg': 5,
@@ -1645,7 +1646,7 @@ class CountViewer(tk.Frame):
             # ^^ Grid to N or NE to prevent Notices label from shifting down
             #    when more than one row of notice_it() text appears.
             #    For all Label constructors, self.master parent is implicit.
-        # Need to accommodate instances of two headers in same row.
+        # Need to accommodate cases of two headers in same row.
         tk.Label(text='Summary time:',
                  bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
@@ -2154,6 +2155,13 @@ class CountViewer(tk.Frame):
         self.interval_t_l.config(foreground=self.deemphasize)
         self.summary_t_l.config(foreground=self.emphasize)
 
+        # Interval data, column1, de-emphasize font color
+        self.task_count_l.configure(foreground=self.deemphasize)
+        self.tt_avg_l.configure(foreground=self.deemphasize)
+        self.tt_sd_l.configure(foreground=self.deemphasize)
+        self.tt_range_l.configure(foreground=self.deemphasize)
+        self.tt_total_l.configure(foreground=self.deemphasize)
+
         # Summary data, column2, emphasize font color
         self.task_count_sumry_l.configure(foreground=self.share.highlight)
         self.ttmean_sumry_l.configure(foreground=self.share.highlight)
@@ -2161,14 +2169,6 @@ class CountViewer(tk.Frame):
         self.ttrange_sumry_l.configure(text=self.share.data['tt_range'].get(),
                                        foreground=self.emphasize)
         self.ttsum_sumry_l.configure(foreground=self.emphasize)
-
-        # Interval data, column1, de-emphasize font color
-        self.task_count_l.configure(foreground=self.deemphasize)
-        self.task_count_l.configure(foreground=self.deemphasize)
-        self.tt_avg_l.configure(foreground=self.deemphasize)
-        self.tt_sd_l.configure(foreground=self.deemphasize)
-        self.tt_range_l.configure(foreground=self.deemphasize)
-        self.tt_total_l.configure(foreground=self.deemphasize)
 
     def app_got_focus(self, focus_event) -> None:
         """Give menu bar headings normal color when app has focus.
