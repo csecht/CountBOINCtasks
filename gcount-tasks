@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.71'
+__version__ = '0.8.72'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -907,7 +907,6 @@ class CountModeler:
         sumry_intvl_ttavgs = []
 
         for cycle in range(cycles_max):
-            print('cycle:', cycle)
             if cycle == 1:
                 # Need to change button name and function from Start to Interval
                 #   after initial cycle[0] completes and intvl data displays.
