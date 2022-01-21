@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = 'gcount-tasks'
-__version__ = '0.8.70'
+__version__ = '0.8.71'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -746,7 +746,8 @@ class CountFyi:
         insert = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;
-                ...those buttons activate once their data post.\n
+                ...those buttons activate once their data post.
+                The Summary task time "avg" is the weighted mean.\n
         - At start, '# tasks reported' and 'Interval time' are from
                 the most recent hourly BOINC report.\n
         - Number of tasks in queue and Notices update every"""
@@ -921,7 +922,6 @@ class CountModeler:
             #   than the intended interval. Realized interval time should not
             #   drift by more than 1 second during count_max cycles.
             # Without this time limit, each 1h interval would gain ~4s.
-            interval_m = 1
             interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
@@ -996,7 +996,6 @@ class CountModeler:
                 summary_m = T.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
                 #   prior summary rather than weekday, as above (%A %H:%M).
-                summary_m = 2
                 if summary_m >= 10080:
                     self.share.data['time_prev_cnt'].set(
                         datetime.now().strftime(SHORTER_STRFTIME))
