@@ -1148,7 +1148,7 @@ class CountModeler:
 
     def log_it(self, called_from) -> None:
         """
-        Write to file interval and summary metrics for recently reported
+        Write interval and summary metrics for recently reported
         BOINC tasks. Provide information on aberrant task status.
         Called from interval_data() and notice_it().
         Is threaded as log_thread; start in Viewer.start_threads()
@@ -1336,12 +1336,12 @@ class CountViewer(tk.Frame):
 
         # Set colors for row labels and data display.
         # These colors are compatible with red-green color-blindness.
-        self.share.row_fg = 'LightYellow'  # foreground for row labels
-        self.master_bg = 'SteelBlue4'  # also used for row header labels
-        self.data_bg = 'grey40'  # background for data labels and frame
-        self.share.highlight = 'gold1'  # fg for notices, compliments, et al.
-        self.emphasize = 'grey90'
-        self.deemphasize = 'grey60'
+        self.share.row_fg = 'LightYellow'  # Row header label fg.
+        self.master_bg = 'SteelBlue4'  # app and header label bg.
+        self.data_bg = 'grey40'  # Data labels and data frame bg.
+        self.share.highlight = 'gold1'  # Notices, compliments, highlight fg.
+        self.emphasize = 'grey90' # Lighter data label fg, use for grey-out.
+        self.deemphasize = 'grey60' # Darker data label fg.
 
         # Need to grey-out menu bar headings and View log button when
         #   another application has focus.
@@ -1373,7 +1373,7 @@ class CountViewer(tk.Frame):
             'proj_update': tk.BooleanVar()
         }
 
-        # Control variables for display in master, passed between
+        # Control variables for display in master; data passed between
         #    Viewer and Modeler.
         self.share.data = {
             # Start and Interval data
