@@ -138,5 +138,4 @@ The `GcountTasks.app` application was created with PyInstaller available from ht
 * Wait for user feedback...
 
 ### Known Issues
-* Waiting for user feedback...
-
+* When a gcount-tasks process is killed by closing a Terminal (Console, Command Prompt, etc.) session, the temporary sentinel file is not deleted, thus preventing data logging in gcount-tasks runs. The user can manually delete the sentinel file(s) to allow data logging in subsequent runs. From a (non-logging) gcount-tasks session, get the path to the system's temporary file directory from the "File paths" option under Help in the menu bar. Delete all files starting with "gcount-tasks_" in the temporary file folder, then restart gcount-tasks.
