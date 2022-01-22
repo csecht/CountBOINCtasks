@@ -47,23 +47,6 @@ from socket import gethostname
 from tempfile import gettempdir, NamedTemporaryFile
 from time import sleep, time
 
-# pylint: disable=import-error
-from COUNTmodules import boinc_commands, times, files, binds, utils
-
-BC = boinc_commands.BoincCommand()
-T = times
-Files = files
-Binds = binds
-Utils = utils
-Tooltip = utils.Tooltip
-
-# Need to use the PyInstaller stand-alone executable name when available.
-# NOTE: In Class Logs, path constants are different for stand-alone and
-#    Terminal executions, so both program types can use simultaneously
-#    the log file option b/c they use different log files.
-if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-    __program_name__ = 'GcountTasks'
-
 try:
     import tkinter as tk
     from tkinter import messagebox, ttk
@@ -75,12 +58,29 @@ except (ImportError, ModuleNotFoundError) as error:
           '\nOn Linux, you may also need: $ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
+# pylint: disable=import-error
+from COUNTmodules import boinc_commands, times, files, binds, utils
+
+# Need to use the PyInstaller stand-alone executable name when available.
+# NOTE: In Class Logs, path constants are different for stand-alone and
+#    Terminal executions, so both program types can use simultaneously
+#    the log file option b/c they use different log files.
+if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+    __program_name__ = 'GcountTasks'
+
 if sys.version_info < (3, 6):
     print(f'Sorry, but running {__program_name__} requires Python 3.6 or later.\n'
           'Current Python version: '
           f'{sys.version_info.major}.{sys.version_info.minor}\n'
           'Python downloads are available from https://docs.python.org/')
     sys.exit(0)
+
+BC = boinc_commands.BoincCommand()
+T = times
+Files = files
+Binds = binds
+Utils = utils
+Tooltip = utils.Tooltip
 
 MY_OS = sys.platform[:3]
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
