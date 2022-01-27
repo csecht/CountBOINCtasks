@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
 Executes BOINC commands and parsing task data through boinccmd.
-.. note: Not all boinc-client commands are supported. Methods:
+Not all boinc-client commands are supported.
+Methods: set_boinc_path(),
 run_boinc(), get_version(), check_boinc(), get_reported(), get_tasks(),
-get_runningtasks(), get_project_url(), project_actions(), no_new_tasks().
+get_runningtasks(), project_url(), get_project_url(), project_action(),
+no_new_tasks().
 
     Copyright (C) 2020-2021  C. Echt
 
@@ -32,7 +34,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.0'
+__module_ver__ = '0.5.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -62,46 +64,6 @@ projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
 #
 # gettasktags = ('name', 'state', 'scheduler state',
 #                'fraction done', 'active_task_state')
-
-
-def project_url() -> dict:
-    """Dictionary of BOINC project NAMES and server urls
-    """
-    return {
-        'AMICABLE': 'https://sech.me/boinc/Amicable/',
-        'ASTEROID': 'http://asteroidsathome.net/boinc/',
-        'TACC': 'https://boinc.tacc.utexas.edu/',
-        'CITIZEN': 'https://csgrid.org/csg/',
-        'CLIMATE': 'https://www.cpdn.org/',
-        'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
-        'COSMOL': 'http://www.cosmologyathome.org/',
-        'EINSTEIN': 'http://einstein.phys.uwm.edu/',
-        'GERASIM': 'http://gerasim.boinc.ru/',
-        'GPUGRID': 'https://www.gpugrid.net/',
-        'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
-        'ITHENA': 'https://root.ithena.net/usr/',
-        'LHC': 'https://lhcathome.cern.ch/lhcathome/',
-        'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
-        'MIND': 'https://mindmodeling.org/',
-        'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
-        'MLC': 'https://www.mlcathome.org/mlcathome/',
-        'MOO': 'http://moowrap.net/',
-        'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
-        'NFS': 'https://escatter11.fullerton.edu/nfs/',
-        'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
-        'ODLK': 'https://boinc.progger.info/odlk/',
-        'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
-        'PRIME': 'http://www.primegrid.com/',
-        'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
-        'RADIOACT': 'http://radioactiveathome.org/boinc/',
-        'RAKE': 'https://rake.boincfast.ru/rakesearch/',
-        'RNA': 'http://www.rnaworld.de/rnaworld/',
-        'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
-        'SRBASE': 'http://srbase.my-firewall.org/sr5/',
-        'UNIVERSE': 'https://universeathome.pl/universe/',
-        'WOLRD': 'https://universeathome.pl/universe/',
-        'YOYO': 'http://www.rechenkraft.net/yoyo/'
-    }
 
 
 def set_boincpath() -> str:
@@ -343,6 +305,46 @@ def get_runningtasks(tag: str, app_type: str,
             task_name = None
 
     return data
+
+
+def project_url() -> dict:
+    """Dictionary of BOINC project NAMES and server urls
+    """
+    return {
+        'AMICABLE': 'https://sech.me/boinc/Amicable/',
+        'ASTEROID': 'http://asteroidsathome.net/boinc/',
+        'TACC': 'https://boinc.tacc.utexas.edu/',
+        'CITIZEN': 'https://csgrid.org/csg/',
+        'CLIMATE': 'https://www.cpdn.org/',
+        'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
+        'COSMOL': 'http://www.cosmologyathome.org/',
+        'EINSTEIN': 'http://einstein.phys.uwm.edu/',
+        'GERASIM': 'http://gerasim.boinc.ru/',
+        'GPUGRID': 'https://www.gpugrid.net/',
+        'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
+        'ITHENA': 'https://root.ithena.net/usr/',
+        'LHC': 'https://lhcathome.cern.ch/lhcathome/',
+        'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
+        'MIND': 'https://mindmodeling.org/',
+        'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
+        'MLC': 'https://www.mlcathome.org/mlcathome/',
+        'MOO': 'http://moowrap.net/',
+        'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
+        'NFS': 'https://escatter11.fullerton.edu/nfs/',
+        'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
+        'ODLK': 'https://boinc.progger.info/odlk/',
+        'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
+        'PRIME': 'http://www.primegrid.com/',
+        'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
+        'RADIOACT': 'http://radioactiveathome.org/boinc/',
+        'RAKE': 'https://rake.boincfast.ru/rakesearch/',
+        'RNA': 'http://www.rnaworld.de/rnaworld/',
+        'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
+        'SRBASE': 'http://srbase.my-firewall.org/sr5/',
+        'UNIVERSE': 'https://universeathome.pl/universe/',
+        'WOLRD': 'https://universeathome.pl/universe/',
+        'YOYO': 'http://www.rechenkraft.net/yoyo/'
+    }
 
 
 def get_project_url(tag='master URL', cmd=' --get_project_status') -> list:
