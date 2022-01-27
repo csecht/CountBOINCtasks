@@ -38,8 +38,6 @@ import tkinter as tk
 from pathlib import Path
 from typing import Union, Any
 
-MY_OS = sys.platform[:3]
-
 
 class Tooltip:
     """
@@ -248,7 +246,7 @@ class Tooltip:
         #   fully remove, not just deactivate, the title bar.
         #   https://stackoverflow.com/questions/63613253/
         #   how-to-disable-the-title-bar-in-tkinter-on-a-mac/
-        if MY_OS == 'dar':
+        if sys.platform[:3] == 'dar':
             self.tt_win.overrideredirect(False)
 
         self.tt_win.focus_force()
