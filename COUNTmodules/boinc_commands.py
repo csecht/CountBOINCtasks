@@ -32,13 +32,73 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.4.4'
+__module_ver__ = '0.4.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 CFGFILE = Path('countCFG.txt')
+
+
+# Tuples that may be used in BoincCommand class:
+tasktags = ('name', 'WU name', 'project URL', 'received',
+            'report deadline', 'ready to report', 'state',
+            'scheduler state', 'active_task_state',
+            'app version num', 'resources', 'final CPU time',
+            'final elapsed time', 'final elapsed time',
+            'exit status', 'signal', 'estimated CPU time '
+            'remaining', 'slot', 'PID', 'current CPU time',
+            'CPU time at time_now checkpoint', 'fraction done',
+            'swap size', 'working set size', 'master URL')
+
+projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
+              'nomorework', 'allowmorework', 'detach_when_done',
+              'dont_detach_when_done')
+
+# reportedtags = ('task', 'project URL', 'app name', 'exit status',
+#                 'elapsed time', 'completed time',
+#                 'get_reported time')
+#
+# gettasktags = ('name', 'state', 'scheduler state',
+#                'fraction done', 'active_task_state')
+
+
+project_urls = {
+    'AMICABLE': 'https://sech.me/boinc/Amicable/',
+    'ASTEROID': 'http://asteroidsathome.net/boinc/',
+    'TACC': 'https://boinc.tacc.utexas.edu/',
+    'CITIZEN': 'https://csgrid.org/csg/',
+    'CLIMATE': 'https://www.cpdn.org/',
+    'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
+    'COSMOL': 'http://www.cosmologyathome.org/',
+    'EINSTEIN': 'http://einstein.phys.uwm.edu/',
+    'GERASIM': 'http://gerasim.boinc.ru/',
+    'GPUGRID': 'https://www.gpugrid.net/',
+    'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
+    'ITHENA': 'https://root.ithena.net/usr/',
+    'LHC': 'https://lhcathome.cern.ch/lhcathome/',
+    'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
+    'MIND': 'https://mindmodeling.org/',
+    'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
+    'MLC': 'https://www.mlcathome.org/mlcathome/',
+    'MOO': 'http://moowrap.net/',
+    'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
+    'NFS': 'https://escatter11.fullerton.edu/nfs/',
+    'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
+    'ODLK': 'https://boinc.progger.info/odlk/',
+    'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
+    'PRIME': 'http://www.primegrid.com/',
+    'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
+    'RADIOACT': 'http://radioactiveathome.org/boinc/',
+    'RAKE': 'https://rake.boincfast.ru/rakesearch/',
+    'RNA': 'http://www.rnaworld.de/rnaworld/',
+    'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
+    'SRBASE': 'http://srbase.my-firewall.org/sr5/',
+    'UNIVERSE': 'https://universeathome.pl/universe/',
+    'WOLRD': 'https://universeathome.pl/universe/',
+    'YOYO': 'http://www.rechenkraft.net/yoyo/'
+}
 
 
 def set_boincpath() -> str:
@@ -109,62 +169,6 @@ class BoincCommand:
     Execute boinc-client commands and parse data.
     """
 
-    project_url = {
-        'AMICABLE': 'https://sech.me/boinc/Amicable/',
-        'ASTEROID': 'http://asteroidsathome.net/boinc/',
-        'TACC': 'https://boinc.tacc.utexas.edu/',
-        'CITIZEN': 'https://csgrid.org/csg/',
-        'CLIMATE': 'https://www.cpdn.org/',
-        'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
-        'COSMOL': 'http://www.cosmologyathome.org/',
-        'EINSTEIN': 'http://einstein.phys.uwm.edu/',
-        'GERASIM': 'http://gerasim.boinc.ru/',
-        'GPUGRID': 'https://www.gpugrid.net/',
-        'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
-        'ITHENA': 'https://root.ithena.net/usr/',
-        'LHC': 'https://lhcathome.cern.ch/lhcathome/',
-        'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
-        'MIND': 'https://mindmodeling.org/',
-        'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
-        'MLC': 'https://www.mlcathome.org/mlcathome/',
-        'MOO': 'http://moowrap.net/',
-        'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
-        'NFS': 'https://escatter11.fullerton.edu/nfs/',
-        'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
-        'ODLK': 'https://boinc.progger.info/odlk/',
-        'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
-        'PRIME': 'http://www.primegrid.com/',
-        'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
-        'RADIOACT': 'http://radioactiveathome.org/boinc/',
-        'RAKE': 'https://rake.boincfast.ru/rakesearch/',
-        'RNA': 'http://www.rnaworld.de/rnaworld/',
-        'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
-        'SRBASE': 'http://srbase.my-firewall.org/sr5/',
-        'UNIVERSE': 'https://universeathome.pl/universe/',
-        'WOLRD': 'https://universeathome.pl/universe/',
-        'YOYO': 'http://www.rechenkraft.net/yoyo/'
-    }
-
-    def __init__(self):
-        self.boincpath = set_boincpath()
-        self.tasktags = ('name', 'WU name', 'project URL', 'received',
-                         'report deadline', 'ready to report', 'state',
-                         'scheduler state',  'active_task_state',
-                         'app version num', 'resources', 'final CPU time',
-                         'final elapsed time', 'final elapsed time',
-                         'exit status', 'signal', 'estimated CPU time '
-                         'remaining', 'slot', 'PID', 'current CPU time',
-                         'CPU time at time_now checkpoint', 'fraction done',
-                         'swap size', 'working set size', 'master URL')
-        self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
-                             'elapsed time', 'completed time',
-                             'get_reported time')
-        self.gettasktags = ('name', 'state', 'scheduler state',
-                            'fraction done', 'active_task_state')
-        self.projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
-                           'nomorework', 'allowmorework', 'detach_when_done',
-                           'dont_detach_when_done')
-
     @staticmethod
     def run_boinc(cmd_str: str) -> list:
         """
@@ -182,6 +186,7 @@ class BoincCommand:
         try:
             output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
             text = output.communicate()[0].split('\n')
+
             # When boinc-client is running, the specified cmd option from a get_ method
             #   will fill the first element of the text list with its output. When not
             #   running, boinccmd stderr will fill the first list element.
@@ -210,8 +215,10 @@ class BoincCommand:
         :param cmd: The boinc command to get the client version.
         :return: version info, as a list of one string.
         """
+
         # Note: run_boinc() always returns a list.
-        output = self.run_boinc(self.boincpath + cmd)
+        output = self.run_boinc(set_boincpath() + cmd)
+
         return output
 
     def check_boinc(self):
@@ -219,6 +226,7 @@ class BoincCommand:
         Check whether BOINC client is running before proceeding to implement
         settings and begin counting.
         """
+
         # Note: Any BC boinccmd will return this string (as a list)
         #   if boinc-client is not running; use get_version() b/c it is short.
         if "can't connect to local host" in self.get_version():
@@ -237,17 +245,19 @@ class BoincCommand:
         :return: List of specified data parsed from cmd.
         """
 
-        output = self.run_boinc(self.boincpath + cmd)
+        output = self.run_boinc(set_boincpath() + cmd)
         if tag == 'all':
             return output
 
         # Need only data from tagged lines of boinccmd output.
         data = ['invalid_boinc_command']
+
         if tag == 'elapsed time':
             tag_str = f'{" " * 3}{tag}: '
             data = [line.replace(tag_str, '') for line in output if tag in line]
             data = [float(e_time.replace(' sec', '')) for e_time in data]
             return data
+
         if tag == 'task':
             tag_str = 'task '
             data = [line.replace(tag_str, '') for line in output if tag in line]
@@ -268,16 +278,19 @@ class BoincCommand:
         :return: List of tagged data parsed from cmd output.
         """
 
-        output = self.run_boinc(self.boincpath + cmd)
+        output = self.run_boinc(set_boincpath() + cmd)
+
         if tag == 'all':
             return output
 
         data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+
         # if tag in self.taskXDFtags:  # Not currently used by count_now-tasks.
-        if tag in self.tasktags:
+        if tag in tasktags:
             data = [line.replace(tag_str, '') for line in output if tag_str in line]
             return data
+
         print(f'Unrecognized data tag: {tag}')
         return data
 
@@ -293,13 +306,18 @@ class BoincCommand:
         :param cmd: The boinccmd command to get task information.
         :return: List of tagged data parsed from cmd. output.
         """
-        # NOTE that cmd=' --get_tasks' will also work; get_simple lists only active tasks.
-        output = self.run_boinc(self.boincpath + cmd)
+
+        # NOTE: cmd=' --get_tasks' will also work, but
+        #   get_simple_gui_info lists only active tasks.
+        output = self.run_boinc(set_boincpath() + cmd)
+
         if tag == 'all':
             return output
+
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a tag line of data.
         task_name = None
         data = []
+
         # Need to determine whether a task's task state line following its name line
         #    specifies that it is a running task (active_task_state: EXECUTING).
         # Each loop, need to clear task name to ensure target task name is paired
@@ -308,9 +326,11 @@ class BoincCommand:
             if app_type in line and tag_str in line:
                 task_name = line.replace(tag_str, '')
                 continue
+
             if task_name is not None and 'EXECUTING' in line:
                 data.append(task_name)
                 task_name = None
+
         return data
 
     def get_project_url(self, tag='master URL', cmd=' --get_project_status') -> list:
@@ -322,14 +342,15 @@ class BoincCommand:
         :return: List of tagged data parsed from cmd output..
         """
 
-        output = self.run_boinc(self.boincpath + cmd)
+        output = self.run_boinc(set_boincpath() + cmd)
 
         data = ['stub_boinc_data']
         tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
 
-        if tag in self.tasktags:
+        if tag in tasktags:
             data = [line.replace(tag_str, '') for line in output if tag in line]
             return data
+
         print(f'Unrecognized data tag: {tag}')
         return data
 
@@ -341,12 +362,14 @@ class BoincCommand:
         :param action: Use: 'suspend', 'resume', or 'update'.
         :return: Execution of specified boinc-client action.
         """
+
         # Project commands require the Project URL, others commands don't
-        if action in self.projectcmd:
-            cmd_str = self.boincpath + f' --project {self.project_url[project]} {action}'
+        if action in projectcmd:
+            cmd_str = f'{set_boincpath()} --project {project_urls[project]} {action}'
             return self.run_boinc(cmd_str)
-        msg = (f"Unrecognized action: {action}. Expecting one of these: "
-               f"{self.projectcmd}")
+
+        msg = (f'Unrecognized action: {action}. Expecting one of these: '
+               f'{projectcmd}')
         return msg
 
     def no_new_tasks(self, cmd=' --get_project_status') -> bool:
@@ -358,12 +381,14 @@ class BoincCommand:
                  Project setting.
         """
 
-        output = self.run_boinc(self.boincpath + cmd)
+        output = self.run_boinc(set_boincpath() + cmd)
 
         tag_str = f'{" " * 3}don\'t request more work: '
         nnw = [line.replace(tag_str, '') for line in output if tag_str in line]
+
         if 'yes' in nnw:
             return True
+
         return False
 
 
