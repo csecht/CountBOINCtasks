@@ -40,7 +40,6 @@ __status__ = 'Development Status :: 4 - Beta'
 
 CFGFILE = Path('countCFG.txt')
 
-
 # Tuples that may be used in BoincCommand class:
 tasktags = ('name', 'WU name', 'project URL', 'received',
             'report deadline', 'ready to report', 'state',
@@ -48,13 +47,14 @@ tasktags = ('name', 'WU name', 'project URL', 'received',
             'app version num', 'resources', 'final CPU time',
             'final elapsed time', 'final elapsed time',
             'exit status', 'signal', 'estimated CPU time '
-            'remaining', 'slot', 'PID', 'current CPU time',
+                                     'remaining', 'slot', 'PID', 'current CPU time',
             'CPU time at time_now checkpoint', 'fraction done',
             'swap size', 'working set size', 'master URL')
 
 projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
               'nomorework', 'allowmorework', 'detach_when_done',
               'dont_detach_when_done')
+
 
 # reportedtags = ('task', 'project URL', 'app name', 'exit status',
 #                 'elapsed time', 'completed time',
@@ -64,41 +64,44 @@ projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
 #                'fraction done', 'active_task_state')
 
 
-project_urls = {
-    'AMICABLE': 'https://sech.me/boinc/Amicable/',
-    'ASTEROID': 'http://asteroidsathome.net/boinc/',
-    'TACC': 'https://boinc.tacc.utexas.edu/',
-    'CITIZEN': 'https://csgrid.org/csg/',
-    'CLIMATE': 'https://www.cpdn.org/',
-    'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
-    'COSMOL': 'http://www.cosmologyathome.org/',
-    'EINSTEIN': 'http://einstein.phys.uwm.edu/',
-    'GERASIM': 'http://gerasim.boinc.ru/',
-    'GPUGRID': 'https://www.gpugrid.net/',
-    'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
-    'ITHENA': 'https://root.ithena.net/usr/',
-    'LHC': 'https://lhcathome.cern.ch/lhcathome/',
-    'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
-    'MIND': 'https://mindmodeling.org/',
-    'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
-    'MLC': 'https://www.mlcathome.org/mlcathome/',
-    'MOO': 'http://moowrap.net/',
-    'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
-    'NFS': 'https://escatter11.fullerton.edu/nfs/',
-    'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
-    'ODLK': 'https://boinc.progger.info/odlk/',
-    'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
-    'PRIME': 'http://www.primegrid.com/',
-    'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
-    'RADIOACT': 'http://radioactiveathome.org/boinc/',
-    'RAKE': 'https://rake.boincfast.ru/rakesearch/',
-    'RNA': 'http://www.rnaworld.de/rnaworld/',
-    'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
-    'SRBASE': 'http://srbase.my-firewall.org/sr5/',
-    'UNIVERSE': 'https://universeathome.pl/universe/',
-    'WOLRD': 'https://universeathome.pl/universe/',
-    'YOYO': 'http://www.rechenkraft.net/yoyo/'
-}
+def project_url():
+    """Dictionary of BOINC project NAMES and server urls
+    """
+    return {
+        'AMICABLE': 'https://sech.me/boinc/Amicable/',
+        'ASTEROID': 'http://asteroidsathome.net/boinc/',
+        'TACC': 'https://boinc.tacc.utexas.edu/',
+        'CITIZEN': 'https://csgrid.org/csg/',
+        'CLIMATE': 'https://www.cpdn.org/',
+        'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
+        'COSMOL': 'http://www.cosmologyathome.org/',
+        'EINSTEIN': 'http://einstein.phys.uwm.edu/',
+        'GERASIM': 'http://gerasim.boinc.ru/',
+        'GPUGRID': 'https://www.gpugrid.net/',
+        'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',
+        'ITHENA': 'https://root.ithena.net/usr/',
+        'LHC': 'https://lhcathome.cern.ch/lhcathome/',
+        'MILKYWAY': 'http://milkyway.cs.rpi.edu/milkyway/',
+        'MIND': 'https://mindmodeling.org/',
+        'MINECRAFT': 'https://minecraftathome.com/minecrafthome/',
+        'MLC': 'https://www.mlcathome.org/mlcathome/',
+        'MOO': 'http://moowrap.net/',
+        'NANOHUB': 'https://boinc.nanohub.org/nanoHUB_at_home/',
+        'NFS': 'https://escatter11.fullerton.edu/nfs/',
+        'NUMBER': 'https://numberfields.asu.edu/NumberFields/',
+        'ODLK': 'https://boinc.progger.info/odlk/',
+        'ODLK1': 'https://boinc.multi-pool.info/latinsquares/',
+        'PRIME': 'http://www.primegrid.com/',
+        'QUCHEM': 'https://quchempedia.univ-angers.fr/athome/',
+        'RADIOACT': 'http://radioactiveathome.org/boinc/',
+        'RAKE': 'https://rake.boincfast.ru/rakesearch/',
+        'RNA': 'http://www.rnaworld.de/rnaworld/',
+        'ROSETTA': 'https://boinc.bakerlab.org/rosetta/',
+        'SRBASE': 'http://srbase.my-firewall.org/sr5/',
+        'UNIVERSE': 'https://universeathome.pl/universe/',
+        'WOLRD': 'https://universeathome.pl/universe/',
+        'YOYO': 'http://www.rechenkraft.net/yoyo/'
+    }
 
 
 def set_boincpath() -> str:
@@ -125,11 +128,11 @@ def set_boincpath() -> str:
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
     lin_path = Path('/usr/bin/boinccmd')
-    dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
+    dar_path = Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
     default_path = {
-                    'win': win_path,
-                    'lin': lin_path,
-                    'dar': dar_path
+        'win': win_path,
+        'lin': lin_path,
+        'dar': dar_path
     }
     # Note: On macOS, the Terminal command line would be entered as:
     # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
@@ -406,7 +409,7 @@ def about() -> None:
     print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
-    print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
+    print(f'{"Maintainer:".ljust(11)}', __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
     sysexit(0)
 
