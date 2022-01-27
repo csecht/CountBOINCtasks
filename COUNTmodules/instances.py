@@ -71,9 +71,8 @@ class OneWinstance:
         if one_win.already_running():
             sys.exit(exit_msg)
     """
-    # https://stackoverflow.com/questions/380870/
-    #   make-sure-only-a-single-instance-of-a-program-is-running
-    #   Modified from Pedro Lobito's post
+    # Modified from:
+    # https://code.activestate.com/recipes/474070-creating-a-single-instance-application/
     def __init__(self):
         # The mutex name needs to be static, suffix is meaningless.
         self.mutexname = f'{program_name}_ZJokEOtOTRQvOmnOylGO'
@@ -88,7 +87,7 @@ class OneWinstance:
             CloseHandle(self.mutex)
 
 
-def file_lock(wrapper: TextIO, message: str) -> None:
+def file_lock(filehandle: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel.
     Only for Linux and macOS platforms.
@@ -99,14 +98,14 @@ def file_lock(wrapper: TextIO, message: str) -> None:
         wrapper = open(lock_file, 'w')
         instances.file_lock(wrapper, message)
 
-    :param wrapper: The open() text file wrapper for the named lock file.
+    :param filehandle: The open() text file wrapper for the lock file.
     :param message: The Terminal message to display on exit when another
         instance is running.
     """
     # Inspired by https://stackoverflow.com/questions/220525/
     #   ensure-a-single-instance-of-an-application-in-linux
     try:
-        fcntl.lockf(wrapper, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(filehandle, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         # Linux and macOS PyInstaller stand-alone apps don't display Terminal?
         sys.exit(message)

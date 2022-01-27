@@ -74,6 +74,7 @@ Tooltip = utils.Tooltip
 Instances = instances
 
 __program_name__ = Instances.program_name()
+
 MY_OS = sys.platform[:3]
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 SHORT_STRFTIME = '%Y %b %d %H:%M'
@@ -2280,9 +2281,9 @@ if __name__ == "__main__":
             lockfile_path = Path(Path.home(),
                                  f'.{__program_name__}_lockfile').resolve()
 
-        _file_wrapper = open(lockfile_path, 'w')
+        _file_handle = open(lockfile_path, 'w')
         # instances.file_lock() prints msg and exits program.
-        Instances.file_lock(_file_wrapper, _instance_msg)
+        Instances.file_lock(_file_handle, _instance_msg)
 
     # Now get things running....
     try:
