@@ -65,7 +65,7 @@ if sys.version_info < (3, 6):
           'Python downloads are available from https://docs.python.org/')
     sys.exit(0)
 
-BC = boinc_commands.BoincCommand()
+BC = boinc_commands
 T = times
 Files = files
 Binds = binds
