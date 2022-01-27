@@ -45,6 +45,8 @@ from re import search, findall, MULTILINE
 from socket import gethostname
 from time import sleep, time
 
+from COUNTmodules import boinc_commands, times, files, binds, utils, instances
+
 try:
     import tkinter as tk
     from tkinter import messagebox, ttk
@@ -55,9 +57,6 @@ except (ImportError, ModuleNotFoundError) as error:
           'Install the most recent version or re-install Python and include Tk/Tcl.\n'
           '\nOn Linux, you may also need: $ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
-
-# pylint: disable=import-error
-from COUNTmodules import boinc_commands, times, files, binds, utils, instances
 
 if sys.version_info < (3, 6):
     print(f'Sorry, but this program requires Python 3.6 or later.\n'
@@ -887,7 +886,7 @@ class CountModeler:
         Run timer and countdown clock to update and analyze regular and
         summary data for task status and times. Set control variables
         for data and notice dictionaries.
-        Is threaded as interval_thread; start in Viewer.start_threads()
+        Is threaded as interval_thread; started in Viewer.start_threads()
         Calls to: get_minutes(), log_it().
         """
         ttimes_new = set()
@@ -964,6 +963,7 @@ class CountModeler:
                 # Need to update num_running value from task_states().
                 self.task_states()
                 num_running = self.share.note['num_running'].get()
+
                 if task_count_new == 0:
                     tic_nnt += 1
                 elif task_count_new > 0 and num_running > 0:
@@ -992,6 +992,7 @@ class CountModeler:
                     self.share.data['time_prev_cnt'].set(
                         datetime.now().strftime(SHORTER_STRFTIME))
                 summary_time = self.share.data['time_prev_cnt'].get()
+
                 if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
                     # Flag used in log_it() to log summary data.
                     self.share.data['log_summary'].set(True)
@@ -1041,8 +1042,8 @@ class CountModeler:
     def notice_it(self) -> None:
         """
         Notices for BOINC task state information should run on short
-        time intervals.
-        Is threaded as notice_thread; start in Viewer.start_threads().
+        time intervals. A NOTICE_INTERVAL of 15 works well.
+        Is threaded as notice_thread; started in Viewer.start_threads().
         Calls to: task_states() and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
@@ -1142,7 +1143,7 @@ class CountModeler:
         Write interval and summary metrics for recently reported
         BOINC tasks. Provide information on aberrant task status.
         Called from interval_data() and notice_it().
-        Is threaded as log_thread; start in Viewer.start_threads()
+        Is threaded as log_thread; started in Viewer.start_threads().
 
         :param called_from: Either 'start', 'interval' or 'notice',
                             depending on type of data to be logged.
