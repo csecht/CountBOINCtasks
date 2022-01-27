@@ -64,7 +64,7 @@ projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
 #                'fraction done', 'active_task_state')
 
 
-def project_url():
+def project_url() -> dict:
     """Dictionary of BOINC project NAMES and server urls
     """
     return {
@@ -120,6 +120,7 @@ def set_boincpath() -> str:
                 parts = line.split()
                 del parts[0]
                 custom_path = " ".join(parts)
+
                 return custom_path
 
     # Need to accommodate win32 and win64? so slice [:3] for all platforms.
@@ -129,13 +130,14 @@ def set_boincpath() -> str:
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
     lin_path = Path('/usr/bin/boinccmd')
     dar_path = Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
+    # Note: On macOS, the Terminal command line would be entered as:
+    # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
+
     default_path = {
         'win': win_path,
         'lin': lin_path,
         'dar': dar_path
     }
-    # Note: On macOS, the Terminal command line would be entered as:
-    # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
     if my_os in default_path:
         if not Path.is_file(default_path[my_os]):
@@ -144,6 +146,7 @@ def set_boincpath() -> str:
                 f'{default_path[my_os]}\n'
                 'You may set your custom path in countCFG.txt, enter your\n'
                 '   custom path here, or just hit enter to move on: ')
+
             if not Path.is_file(Path(custom_path)):
                 raise OSError(f'Oops. "{custom_path}" will not work.\n'
                               'Be sure to include \\boinccmd.exe or '
@@ -151,17 +154,22 @@ def set_boincpath() -> str:
                               'If you have not yet installed BOINC, read this:\n'
                               'https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
                               'Try again. Exiting now...\n')
+
             cmd_name = Path(custom_path).name
             print('The boinc command file is:', cmd_name)
+
             if cmd_name not in ('boinccmd.exe', 'boinccmd'):
                 raise OSError(f'The entered action path, {custom_path},'
                               ' must end with \\boinccmd.exe or '
                               '/boinccmd, depending on your system.\n'
                               'Try again. Exiting now...\n')
             return custom_path
+
         # MacOS paths need double-quotes here if folder names have spaces.
         boinccmd = f'"{default_path[my_os]}"'
+
         return boinccmd
+
     print(f"Platform <{my_os}> is not recognized.\n"
           "Expecting win (Win32 or Win64), lin (Linux) or dar (Darwin =>Mac OS).")
     sysexit(1)
@@ -192,11 +200,12 @@ def run_boinc(cmd_str: str) -> list:
             print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
                   f"The BOINC client associated with {cmd[0]} is not running.\n"
                   "You need to quit now and get BOINC running.")
+
             # If boinc not running, then text will be a null list.
             return text
-            # NOTE: exit works in count-tasks, not in gcount-tasks.
-            #sysexit(1)
+
         return text
+
     # This exception will only be raised by bad code calling one of the get_ methods.
     except CalledProcessError as cpe:
         msg = ('If the boinccmd usage message is displayed, then'
@@ -352,6 +361,7 @@ def get_project_url(tag='master URL', cmd=' --get_project_status') -> list:
 
     if tag in tasktags:
         data = [line.replace(tag_str, '') for line in output if tag in line]
+
         return data
 
     print(f'Unrecognized data tag: {tag}')
@@ -369,7 +379,8 @@ def project_action(project: str, action: str):
 
     # Project commands require the Project URL, others commands don't
     if action in projectcmd:
-        cmd_str = f'{set_boincpath()} --project {project_urls[project]} {action}'
+        cmd_str = f'{set_boincpath()} --project {project_url()[project]} {action}'
+
         return run_boinc(cmd_str)
 
     msg = (f'Unrecognized action: {action}. Expecting one of these: '
