@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -169,15 +169,15 @@ class Logs:
     # Need to write log files to current working directory unless program
     #   is run from a PyInstaller frozen executable, then write to home
     #   directory. In either case, the constants will be absolute paths.
+    LOGFILE = Path(Path.cwd(),
+                   f'{__program_name__}_log.txt').resolve()
+    ANALYSISFILE = Path(Path.cwd(),
+                        f'{__program_name__}_analysis.txt').resolve()
+
     if getattr(sys, 'frozen', False):
         LOGFILE = Path(Path.home(),
                        f'{__program_name__}_log.txt').resolve()
         ANALYSISFILE = Path(Path.home(),
-                            f'{__program_name__}_analysis.txt').resolve()
-    else:
-        LOGFILE = Path(Path.cwd(),
-                       f'{__program_name__}_log.txt').resolve()
-        ANALYSISFILE = Path(Path.cwd(),
                             f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
@@ -702,8 +702,8 @@ class CountFyi:
             f'   {Logs.ANALYSISFILE}\n'
         )
         if MY_OS in 'lin, dar':
-            insert_txt = insert_txt + ('\nLockfile (hidden):\n'
-                                       f'   {Path.cwd()}/{lock_file}\n')
+            insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
+                          f'   {lockfile_path}\n')
 
         max_line = len(max([line for line in insert_txt.splitlines()], key=len))
         pathstxt = tk.Text(pathswin, font='TkFixedFont',
@@ -2253,29 +2253,36 @@ if __name__ == "__main__":
     parse_args()
 
     # Need to set up conditions to control multiple instances.
-    exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
-                f' {Path.cwd()}. Exiting...\n')
+    _instance_msg = (f'\nNOTICE: {__program_name__} is already running from'
+                     f' {Path.cwd()}. Exiting...\n')
+
     if MY_OS == 'win':
-        one_win = Instances.OneWinstance()
+        _one_win = Instances.OneWinstance()
         # When a console displays for a PyInstaller Windows stand-alone,
         #   then need to leave console open long enough for user to
         #   read the exit message. Can skip this when out of Beta testing.
-        if one_win.already_running() and getattr(sys, 'frozen', False):
-            print(exit_msg)
+        if _one_win.already_running() and getattr(sys, 'frozen', False):
+            print(_instance_msg)
             sleep(6)
             sys.exit(0)
-        elif one_win.already_running():
-            sys.exit(exit_msg)
+        elif _one_win.already_running():
+            sys.exit(_instance_msg)
     elif MY_OS in 'lin, dar':
         # NOTE: In Class Logs, path constants are different for stand-alone
         #   and Terminal executions, so both program types can use the
         #   log file option b/c they have different log file paths.
         # This also allows multiple instances of command line execution
         #   to run from different directories.
-        lock_file = f'.{__program_name__}_lockfile'
-        file_wrapper = open(lock_file, 'w')
-        # instances.file_lock() prints exit_msg and exits program.
-        Instances.file_lock(file_wrapper, exit_msg)
+        lockfile_path = Path(Path.cwd(),
+                             f'.{__program_name__}_lockfile').resolve()
+
+        if getattr(sys, 'frozen', False):
+            lockfile_path = Path(Path.home(),
+                                 f'.{__program_name__}_lockfile').resolve()
+
+        _file_wrapper = open(lockfile_path, 'w')
+        # instances.file_lock() prints msg and exits program.
+        Instances.file_lock(_file_wrapper, _instance_msg)
 
     # Now get things running....
     try:
@@ -2288,9 +2295,9 @@ if __name__ == "__main__":
         app.iconphoto(True, img)
         app.mainloop()
     except KeyboardInterrupt:
-        exit_msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
-                    " *** Keyboard interrupt by user ***\n")
-        print(exit_msg)
-        logging.info(msg=exit_msg)
+        _interrupt_msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                          " *** Keyboard interrupt by user ***\n")
+        print(_interrupt_msg)
+        logging.info(msg=_interrupt_msg)
     except Exception as unknown:
         print(f'\nAn unexpected error: {unknown}\n')
