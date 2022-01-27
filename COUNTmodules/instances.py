@@ -37,13 +37,11 @@ import sys
 from pathlib import Path
 from typing import TextIO
 
-MY_OS = sys.platform[:3]
-
-if MY_OS == 'win':
+if sys.platform[:3] == 'win':
     from win32event import CreateMutex
     from win32api import CloseHandle, GetLastError
     from winerror import ERROR_ALREADY_EXISTS
-elif MY_OS in 'lin, dar':
+elif sys.platform[:3] in 'lin, dar':
     import fcntl
 
 
