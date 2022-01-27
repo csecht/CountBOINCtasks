@@ -4,6 +4,7 @@
 Functions to determine whether another program instance is running.
 
 Class OneWinstance(): Windows only; uses CreateMutex.
+program_name(): sets the program name depending on app
 file_lock(): Linux and macOS only; uses fcntl.lockf()
 track_sentinel(): Cross-platform; uses Temporary sentinel files.
 
@@ -26,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.0'
+__module_ver__ = '0.1.1'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -45,20 +46,28 @@ if MY_OS == 'win':
 elif MY_OS in 'lin, dar':
     import fcntl
 
-# HEADSUP: This condition needs to match duplicate condition in main script.
-# Use the PyInstaller stand-alone executable name as needed.
-if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-    # Need the PyInstaller spec file EXE name= to match this program name.
-    __program_name__ = 'GcountTasks'
-else:
-    __program_name__ = Path(sys.modules['__main__'].__file__).stem
+
+def program_name() -> str:
+    """
+    Returns the script name or, if called from a PyInstaller stand-alone,
+    the executable name. Use for setting file paths and naming windows.
+
+    :return: Context-specific name of the main program, as string.
+    """
+    # Use the PyInstaller stand-alone executable name as needed.
+    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+        # Need the PyInstaller spec file EXE name= to match this program name.
+        _program_name = 'GcountTasks'
+    else:
+        _program_name = Path(sys.modules['__main__'].__file__).stem
+    return _program_name
 
 
 class OneWinstance:
     """
     Limits application to single instance on Windows platforms.
     Example USAGE: Put this at top of if __name__ == "__main__":
-        exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
+        exit_msg = (f'\nNOTICE: {_program_name} is already running from'
                     f' {Path.cwd()}. Exiting...\n')
         one_win = OneWinstance()
         if one_win.already_running():
@@ -69,7 +78,7 @@ class OneWinstance:
     #   Modified from Pedro Lobito's post
     def __init__(self):
         # The mutex name needs to be static, suffix is meaningless.
-        self.mutexname = f'{__program_name__}_ZJokEOtOTRQvOmnOylGO'
+        self.mutexname = f'{program_name}_ZJokEOtOTRQvOmnOylGO'
         self.mutex = CreateMutex(None, False, self.mutexname)
         self.lasterror = GetLastError()
 
@@ -86,9 +95,9 @@ def file_lock(wrapper: TextIO, message: str) -> None:
     Lock a bespoke hidden file to serve as an instance sentinel.
     Only for Linux and macOS platforms.
     Example USAGE: Put this at top of if __name__ == "__main__":
-        message = (f'\nNOTICE: {__program_name__} is already running from'
+        message = (f'\nNOTICE: {_program_name} is already running from'
                    f' {Path.cwd()}. Exiting...\n')
-        lock_file = f'.{__program_name__}_lockfile'
+        lock_file = f'.{_program_name}_lockfile'
         wrapper = open(lock_file, 'w')
         instances.file_lock(wrapper, message)
 
@@ -115,16 +124,16 @@ def track_sentinel() -> tuple:
            sentinel_path = sentinel.name
            if sentinel_count > 1:
               sys.exit(
-                   f'NOTICE: {__program_name__} is already running from'
+                   f'NOTICE: {_program_name} is already running from'
                    f' {Path.cwd()}. Exiting...')
 
     :return: the TemporaryFileWrapper object and the integer count of
         sentinel files found in the system's temporary file folder.
     """
     from tempfile import gettempdir, NamedTemporaryFile
-    with NamedTemporaryFile(mode='rb', prefix=f'{__program_name__}_') as sentinel:
+    with NamedTemporaryFile(mode='rb', prefix=f'{program_name}_') as sentinel:
         temp_dir = gettempdir()
-        sentinel_count = len(tuple(Path(temp_dir).glob(f'{__program_name__}_*')))
+        sentinel_count = len(tuple(Path(temp_dir).glob(f'{program_name}_*')))
         return sentinel, sentinel_count
 
 

@@ -23,13 +23,12 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 """
 # ^^ Text for --about invocation argument via __doc__.
 # Also used in Fyi.about(); __program_name__ used throughout.
-# __program_name__ may use alternative name, see following if condition.
+# __program_name__ may be context-specific, see definition below.
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__program_name__ = ''  # See definition below
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -67,21 +66,15 @@ if sys.version_info < (3, 6):
           'Python downloads are available from https://docs.python.org/')
     sys.exit(0)
 
-# HEADSUP: This condition needs to match duplicate condition in instances.py module.
-# Use the PyInstaller stand-alone executable name as needed.
-if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-    # Need the PyInstaller spec file EXE name= to match this program name.
-    __program_name__ = 'GcountTasks'
-else:
-    __program_name__ = Path(sys.modules['__main__'].__file__).stem
-
 BC = boinc_commands.BoincCommand()
 T = times
 Files = files
 Binds = binds
 Utils = utils
 Tooltip = utils.Tooltip
+Instances = instances
 
+__program_name__ = Instances.program_name()
 MY_OS = sys.platform[:3]
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 SHORT_STRFTIME = '%Y %b %d %H:%M'
@@ -2262,7 +2255,7 @@ if __name__ == "__main__":
     exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
     if MY_OS == 'win':
-        one_win = instances.OneWinstance()
+        one_win = Instances.OneWinstance()
         # When a console displays for a PyInstaller Windows stand-alone,
         #   then need to leave console open long enough for user to
         #   read the exit message. Can skip this when out of Beta testing.
@@ -2281,7 +2274,7 @@ if __name__ == "__main__":
         lock_file = f'.{__program_name__}_lockfile'
         file_wrapper = open(lock_file, 'w')
         # instances.file_lock() prints exit_msg and exits program.
-        instances.file_lock(file_wrapper, exit_msg)
+        Instances.file_lock(file_wrapper, exit_msg)
 
     # Now get things running....
     try:
@@ -2299,4 +2292,4 @@ if __name__ == "__main__":
         print(exit_msg)
         logging.info(msg=exit_msg)
     except Exception as unknown:
-        print(f'An unexpected error: {unknown}\n')
+        print(f'\nAn unexpected error: {unknown}\n')
