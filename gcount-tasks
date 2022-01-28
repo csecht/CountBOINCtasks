@@ -29,7 +29,7 @@ __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
 __program_name__ = ''  # See definition below
-__version__ = '0.9.0'
+__version__ = '0.9.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2262,26 +2262,18 @@ if __name__ == "__main__":
     exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
     if MY_OS == 'win':
-        one_win = instances.OneWinstance()
-        # When a console displays for a PyInstaller Windows stand-alone,
-        #   then need to leave console open long enough for user to
-        #   read the exit message. Can skip this when out of Beta testing.
-        if one_win.already_running() and getattr(sys, 'frozen', False):
-            print(exit_msg)
-            sleep(6)
-            sys.exit(0)
-        elif one_win.already_running():
-            sys.exit(exit_msg)
-    elif MY_OS in 'lin, dar':
-        # NOTE: In Class Logs, path constants are different for stand-alone
-        #   and Terminal executions, so both program types can use the
-        #   log file option b/c they have different log file paths.
-        # This also allows multiple instances of command line execution
-        #   to run from different directories.
+        winstance = instances.OneWinstance()
+        if winstance.already_running():
+            winstance.exit_twinstance(exit_msg)
+    else:
+        # For Linux and macOS. In Class Logs, path constants are different
+        #   for stand-alone and Terminal executions, so both program types
+        #   can use data logging b/c they have different log file paths.
+        # This lockfile strategy also allows multiple instances of command
+        #   line execution to run from different directories.
         lock_file = f'.{__program_name__}_lockfile'
-        file_wrapper = open(lock_file, 'w')
-        # instances.file_lock() prints exit_msg and exits program.
-        instances.file_lock(file_wrapper, exit_msg)
+        fh = open(lock_file, 'w')
+        instances.lock_or_exit(fh, exit_msg)
 
     # Now get things running....
     try:

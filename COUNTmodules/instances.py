@@ -34,6 +34,7 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import sys
 from pathlib import Path
+from time import sleep
 from typing import TextIO
 
 MY_OS = sys.platform[:3]
@@ -57,12 +58,13 @@ else:
 class OneWinstance:
     """
     Limits application to single instance on Windows platforms.
+
     Example USAGE: Put this at top of if __name__ == "__main__":
-        exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
-                    f' {Path.cwd()}. Exiting...\n')
-        one_win = OneWinstance()
-        if one_win.already_running():
-            sys.exit(exit_msg)
+
+    msg = 'The program is already running. Exiting...'
+    winstance = OneWinstance()
+    if winstance.already_running():
+         winstance.exit_twinstance(msg)
     """
     # https://stackoverflow.com/questions/380870/
     #   make-sure-only-a-single-instance-of-a-program-is-running
@@ -73,36 +75,59 @@ class OneWinstance:
         self.mutex = CreateMutex(None, False, self.mutexname)
         self.lasterror = GetLastError()
 
-    def already_running(self):
+    def already_running(self) -> bool:
+        """
+        Check whether program instance is currently running.
+
+        :return: True when another instance is running.
+        """
         return self.lasterror == ERROR_ALREADY_EXISTS
+
+    @staticmethod
+    def exit_twinstance(message: str) -> None:
+        """
+        Prevent a second instance from launching.
+
+        :param message: The message to print upon exit.
+        :return: None
+        """
+        # When a console displays for a PyInstaller Windows stand-alone,
+        #   then need to leave console open long enough for user to
+        #   read the exit message.
+        print(message)
+        sleep(5)
+        sys.exit(0)
 
     def __del__(self):
         if self.mutex:
             CloseHandle(self.mutex)
 
 
-def file_lock(wrapper: TextIO, message: str) -> None:
+def lock_or_exit(file_handle: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel.
+    Exit program if file is locked (another instance running).
     Only for Linux and macOS platforms.
-    Example USAGE: Put this at top of if __name__ == "__main__":
-        message = (f'\nNOTICE: {__program_name__} is already running from'
-                   f' {Path.cwd()}. Exiting...\n')
-        lock_file = f'.{__program_name__}_lockfile'
-        wrapper = open(lock_file, 'w')
-        instances.file_lock(wrapper, message)
 
-    :param wrapper: The open() text file wrapper for the named lock file.
+    Example USAGE: Put this at top of if __name__ == "__main__"
+
+    msg = 'The program is already running; Exiting...'
+    lock_file = f'.{__program_name__}_lockfile'
+    fh = open(lock_file, 'w')
+    instances.lock_or_exit(fh, msg)
+
+    :param file_handle: The open() text file wrapper for the lock file.
     :param message: The Terminal message to display on exit when another
         instance is running.
     """
     # Inspired by https://stackoverflow.com/questions/220525/
     #   ensure-a-single-instance-of-an-application-in-linux
     try:
-        fcntl.lockf(wrapper, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
-        # Linux and macOS PyInstaller stand-alone apps don't display Terminal?
-        sys.exit(message)
+        print(message)
+        sleep(5)
+        sys.exit(0)
 
 
 def track_sentinel() -> tuple:
@@ -111,12 +136,12 @@ def track_sentinel() -> tuple:
     app closes normally, the sentinel is deleted.
     Works best on Windows systems. On Linux/macOS systems, the temp file
     may persist when the app is closed by closing the Terminal session.
-    USAGE: sentinel, sentinel_count = instances.count_sentinel()
-           sentinel_path = sentinel.name
-           if sentinel_count > 1:
-              sys.exit(
-                   f'NOTICE: {__program_name__} is already running from'
-                   f' {Path.cwd()}. Exiting...')
+    Example USAGE:
+    sentinel, sentinel_count = instances.count_sentinel()
+        sentinel_path = sentinel.name
+        if sentinel_count > 1:
+            sys.exit(
+                'The program' is already running. Exiting...')
 
     :return: the TemporaryFileWrapper object and the integer count of
         sentinel files found in the system's temporary file folder.
