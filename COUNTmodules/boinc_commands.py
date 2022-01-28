@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
 Executes BOINC commands and parsing task data through boinccmd.
-.. note: Not all boinc-client commands are supported. Methods:
+Not all boinc-client commands are supported.
+Methods: set_boinc_path(),
 run_boinc(), get_version(), check_boinc(), get_reported(), get_tasks(),
-get_runningtasks(), get_project_url(), project_actions(), no_new_tasks().
+get_runningtasks(), project_url(), get_project_url(), project_action(),
+no_new_tasks().
 
     Copyright (C) 2020-2021  C. Echt
 
@@ -22,9 +24,9 @@ get_runningtasks(), get_project_url(), project_actions(), no_new_tasks().
 """
 
 import shlex
-import sys
 from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from sys import platform, exit as sysexit
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
@@ -32,13 +34,36 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.4.4'
+__module_ver__ = '0.5.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 CFGFILE = Path('countCFG.txt')
+
+# Tuples that may be used in BoincCommand class:
+tasktags = ('name', 'WU name', 'project URL', 'received',
+            'report deadline', 'ready to report', 'state',
+            'scheduler state', 'active_task_state',
+            'app version num', 'resources', 'final CPU time',
+            'final elapsed time', 'final elapsed time',
+            'exit status', 'signal', 'estimated CPU time '
+                                     'remaining', 'slot', 'PID', 'current CPU time',
+            'CPU time at time_now checkpoint', 'fraction done',
+            'swap size', 'working set size', 'master URL')
+
+projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
+              'nomorework', 'allowmorework', 'detach_when_done',
+              'dont_detach_when_done')
+
+
+# reportedtags = ('task', 'project URL', 'app name', 'exit status',
+#                 'elapsed time', 'completed time',
+#                 'get_reported time')
+#
+# gettasktags = ('name', 'state', 'scheduler state',
+#                'fraction done', 'active_task_state')
 
 
 def set_boincpath() -> str:
@@ -57,22 +82,24 @@ def set_boincpath() -> str:
                 parts = line.split()
                 del parts[0]
                 custom_path = " ".join(parts)
+
                 return custom_path
 
     # Need to accommodate win32 and win64? so slice [:3] for all platforms.
     #   Only win, lin, and dar values are accommodated here.
-    my_os = sys.platform[:3]
+    my_os = platform[:3]
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
     lin_path = Path('/usr/bin/boinccmd')
-    dar_path = Path.home()/'Library'/'Application Support'/'BOINC'/'boinccmd'
-    default_path = {
-                    'win': win_path,
-                    'lin': lin_path,
-                    'dar': dar_path
-    }
+    dar_path = Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
     # Note: On macOS, the Terminal command line would be entered as:
     # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
+
+    default_path = {
+        'win': win_path,
+        'lin': lin_path,
+        'dar': dar_path
+    }
 
     if my_os in default_path:
         if not Path.is_file(default_path[my_os]):
@@ -81,6 +108,7 @@ def set_boincpath() -> str:
                 f'{default_path[my_os]}\n'
                 'You may set your custom path in countCFG.txt, enter your\n'
                 '   custom path here, or just hit enter to move on: ')
+
             if not Path.is_file(Path(custom_path)):
                 raise OSError(f'Oops. "{custom_path}" will not work.\n'
                               'Be sure to include \\boinccmd.exe or '
@@ -88,28 +116,201 @@ def set_boincpath() -> str:
                               'If you have not yet installed BOINC, read this:\n'
                               'https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
                               'Try again. Exiting now...\n')
+
             cmd_name = Path(custom_path).name
             print('The boinc command file is:', cmd_name)
+
             if cmd_name not in ('boinccmd.exe', 'boinccmd'):
                 raise OSError(f'The entered action path, {custom_path},'
                               ' must end with \\boinccmd.exe or '
                               '/boinccmd, depending on your system.\n'
                               'Try again. Exiting now...\n')
             return custom_path
+
         # MacOS paths need double-quotes here if folder names have spaces.
         boinccmd = f'"{default_path[my_os]}"'
+
         return boinccmd
+
     print(f"Platform <{my_os}> is not recognized.\n"
           "Expecting win (Win32 or Win64), lin (Linux) or dar (Darwin =>Mac OS).")
-    sys.exit(1)
+    sysexit(1)
 
 
-class BoincCommand:
+def run_boinc(cmd_str: str) -> list:
     """
-    Execute boinc-client commands and parse data.
+    Execute a boinc-client command line.
+
+    :param cmd_str: A boinccmd action, command with arguments.
+    :return: Data from a boinc-client command specified in cmd_str.
+    """
+    # source: https://stackoverflow.com/questions/33560364/
+    if platform[:3] == 'win':
+        cmd = cmd_str
+    else:
+        cmd = shlex.split(cmd_str)
+
+    try:
+        output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
+        text = output.communicate()[0].split('\n')
+
+        # When boinc-client is running, the specified cmd option from a get_ method
+        #   will fill the first element of the text list with its output. When not
+        #   running, boinccmd stderr will fill the first list element.
+        #   Is stderr "can't connect to local host" exclusive to BOINC not running?
+        if "can't connect to local host" in text:
+            print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
+                  f"The BOINC client associated with {cmd[0]} is not running.\n"
+                  "You need to quit now and get BOINC running.")
+
+            # If boinc not running, then text will be a null list.
+            return text
+
+        return text
+
+    # This exception will only be raised by bad code calling one of the get_ methods.
+    except CalledProcessError as cpe:
+        msg = ('If the boinccmd usage message is displayed, then'
+               ' boinccmd has a bad command argument.')
+        print(f'\n{msg}\n{cpe}')
+        # NOTE: exit works in count-tasks, not in gcount-tasks.
+        sysexit(1)
+
+
+def get_version(cmd=' --client_version') -> list:
+    """
+    Get version number of the boinc client.
+
+    :param cmd: The boinc command to get the client version.
+    :return: version info, as a list of one string.
     """
 
-    project_url = {
+    # Note: run_boinc() always returns a list.
+    output = run_boinc(set_boincpath() + cmd)
+
+    return output
+
+
+def check_boinc():
+    """
+    Check whether BOINC client is running before proceeding to implement
+    settings and begin counting.
+    """
+
+    # Note: Any BC boinccmd will return this string (as a list)
+    #   if boinc-client is not running; use get_version() b/c it is short.
+    if "can't connect to local host" in get_version():
+        print('BOINC ERROR: BOINC commands cannot be executed.\n'
+              'Is the BOINC client running?   Exiting now...')
+        sysexit(1)
+
+
+def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
+    """
+    Get data from reported boinc-client tasks.
+
+    :param tag: e.g., 'task' returns reported task names.
+                'elapsed time' returns final task times, sec.000000.
+                Use 'all' to get full output from cmd
+    :param cmd: The boinccmd command for tasks reported to boinc server.
+    :return: List of specified data parsed from cmd.
+    """
+
+    output = run_boinc(set_boincpath() + cmd)
+    if tag == 'all':
+        return output
+
+    # Need only data from tagged lines of boinccmd output.
+    data = ['invalid_boinc_command']
+
+    if tag == 'elapsed time':
+        tag_str = f'{" " * 3}{tag}: '
+        data = [line.replace(tag_str, '') for line in output if tag in line]
+        data = [float(e_time.replace(' sec', '')) for e_time in data]
+        return data
+
+    if tag == 'task':
+        tag_str = 'task '
+        data = [line.replace(tag_str, '') for line in output if tag in line]
+        data = [name.rstrip(':') for name in data]
+        return data
+
+    print(f'Unrecognized data tag: {tag}')
+    return data
+
+
+def get_tasks(tag: str, cmd=' --get_tasks') -> list:
+    """
+    Get data from current boinc-client tasks.
+
+    :param tag: Examples: 'name', 'state', 'scheduler
+                state', 'fraction done', 'active_task_state'
+                Use 'all' to get full output from cmd
+    :param cmd: The boinccmd command to get queued tasks information.
+    :return: List of tagged data parsed from cmd output.
+    """
+
+    output = run_boinc(set_boincpath() + cmd)
+
+    if tag == 'all':
+        return output
+
+    data = ['stub_boinc_data']
+    tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+
+    # if tag in taskXDFtags:  # Not currently used by count_now-tasks.
+    if tag in tasktags:
+        data = [line.replace(tag_str, '') for line in output if tag_str in line]
+        return data
+
+    print(f'Unrecognized data tag: {tag}')
+    return data
+
+
+def get_runningtasks(tag: str, app_type: str,
+                     cmd=' --get_simple_gui_info') -> list:
+    """
+    Get names of running boinc-client tasks of the specified app.
+
+    :param tag: boinccmd output line tag, e.g., 'name', 'WU name'.
+                Use 'all' to get full output from cmd
+    :param app_type: The app type present in all target task names,
+                    e.g. O3AS, LATeah, etc.
+    :param cmd: The boinccmd command to get task information.
+    :return: List of tagged data parsed from cmd. output.
+    """
+
+    # NOTE: cmd=' --get_tasks' will also work, but
+    #   get_simple_gui_info lists only active tasks.
+    output = run_boinc(set_boincpath() + cmd)
+
+    if tag == 'all':
+        return output
+
+    tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a tag line of data.
+    task_name = None
+    data = []
+
+    # Need to determine whether a task's task state line following its name line
+    #    specifies that it is a running task (active_task_state: EXECUTING).
+    # Each loop, need to clear task name to ensure target task name is paired
+    #    with its active state and not that of a prior non-EXECUTING task.
+    for line in output:
+        if app_type in line and tag_str in line:
+            task_name = line.replace(tag_str, '')
+            continue
+
+        if task_name is not None and 'EXECUTING' in line:
+            data.append(task_name)
+            task_name = None
+
+    return data
+
+
+def project_url() -> dict:
+    """Dictionary of BOINC project NAMES and server urls
+    """
+    return {
         'AMICABLE': 'https://sech.me/boinc/Amicable/',
         'ASTEROID': 'http://asteroidsathome.net/boinc/',
         'TACC': 'https://boinc.tacc.utexas.edu/',
@@ -145,226 +346,68 @@ class BoincCommand:
         'YOYO': 'http://www.rechenkraft.net/yoyo/'
     }
 
-    def __init__(self):
-        self.boincpath = set_boincpath()
-        self.tasktags = ('name', 'WU name', 'project URL', 'received',
-                         'report deadline', 'ready to report', 'state',
-                         'scheduler state',  'active_task_state',
-                         'app version num', 'resources', 'final CPU time',
-                         'final elapsed time', 'final elapsed time',
-                         'exit status', 'signal', 'estimated CPU time '
-                         'remaining', 'slot', 'PID', 'current CPU time',
-                         'CPU time at time_now checkpoint', 'fraction done',
-                         'swap size', 'working set size', 'master URL')
-        self.reportedtags = ('task', 'project URL', 'app name', 'exit status',
-                             'elapsed time', 'completed time',
-                             'get_reported time')
-        self.gettasktags = ('name', 'state', 'scheduler state',
-                            'fraction done', 'active_task_state')
-        self.projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
-                           'nomorework', 'allowmorework', 'detach_when_done',
-                           'dont_detach_when_done')
 
-    @staticmethod
-    def run_boinc(cmd_str: str) -> list:
-        """
-        Execute a boinc-client command line.
+def get_project_url(tag='master URL', cmd=' --get_project_status') -> list:
+    """
+    Get all current local host boinc-client Project URLs.
 
-        :param cmd_str: A boinccmd action, command with arguments.
-        :return: Data from a boinc-client command specified in cmd_str.
-        """
-        # source: https://stackoverflow.com/questions/33560364/
-        if sys.platform[:3] == 'win':
-            cmd = cmd_str
-        else:
-            cmd = shlex.split(cmd_str)
+    :param tag: Only need the name of each Project's boinc server URL.
+    :param cmd: The boinccmd command to get Project information.
+    :return: List of tagged data parsed from cmd output..
+    """
 
-        try:
-            output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
-            text = output.communicate()[0].split('\n')
-            # When boinc-client is running, the specified cmd option from a get_ method
-            #   will fill the first element of the text list with its output. When not
-            #   running, boinccmd stderr will fill the first list element.
-            #   Is stderr "can't connect to local host" exclusive to BOINC not running?
-            if "can't connect to local host" in text:
-                print(f"\nOOPS! There is a boinccmd error: {text[0]}\n"
-                      f"The BOINC client associated with {cmd[0]} is not running.\n"
-                      "You need to quit now and get BOINC running.")
-                # If boinc not running, then text will be a null list.
-                return text
-                # NOTE: exit works in count-tasks, not in gcount-tasks.
-                #sys.exit(1)
-            return text
-        # This exception will only be raised by bad code calling one of the get_ methods.
-        except CalledProcessError as cpe:
-            msg = ('If the boinccmd usage message is displayed, then'
-                   ' boinccmd has a bad command argument.')
-            print(f'\n{msg}\n{cpe}')
-            # NOTE: exit works in count-tasks, not in gcount-tasks.
-            sys.exit(1)
+    output = run_boinc(set_boincpath() + cmd)
 
-    def get_version(self, cmd=' --client_version') -> list:
-        """
-        Get version number of the boinc client.
+    data = ['stub_boinc_data']
+    tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
 
-        :param cmd: The boinc command to get the client version.
-        :return: version info, as a list of one string.
-        """
-        # Note: run_boinc() always returns a list.
-        output = self.run_boinc(self.boincpath + cmd)
-        return output
+    if tag in tasktags:
+        data = [line.replace(tag_str, '') for line in output if tag in line]
 
-    def check_boinc(self):
-        """
-        Check whether BOINC client is running before proceeding to implement
-        settings and begin counting.
-        """
-        # Note: Any BC boinccmd will return this string (as a list)
-        #   if boinc-client is not running; use get_version() b/c it is short.
-        if "can't connect to local host" in self.get_version():
-            print('BOINC ERROR: BOINC commands cannot be executed.\n'
-                  'Is the BOINC client running?   Exiting now...')
-            sys.exit(1)
-
-    def get_reported(self, tag: str, cmd=' --get_old_tasks') -> list:
-        """
-        Get data from reported boinc-client tasks.
-
-        :param tag: e.g., 'task' returns reported task names.
-                    'elapsed time' returns final task times, sec.000000.
-                    Use 'all' to get full output from cmd
-        :param cmd: The boinccmd command for tasks reported to boinc server.
-        :return: List of specified data parsed from cmd.
-        """
-
-        output = self.run_boinc(self.boincpath + cmd)
-        if tag == 'all':
-            return output
-
-        # Need only data from tagged lines of boinccmd output.
-        data = ['invalid_boinc_command']
-        if tag == 'elapsed time':
-            tag_str = f'{" " * 3}{tag}: '
-            data = [line.replace(tag_str, '') for line in output if tag in line]
-            data = [float(e_time.replace(' sec', '')) for e_time in data]
-            return data
-        if tag == 'task':
-            tag_str = 'task '
-            data = [line.replace(tag_str, '') for line in output if tag in line]
-            data = [name.rstrip(':') for name in data]
-            return data
-
-        print(f'Unrecognized data tag: {tag}')
         return data
 
-    def get_tasks(self, tag: str, cmd=' --get_tasks') -> list:
-        """
-        Get data from current boinc-client tasks.
+    print(f'Unrecognized data tag: {tag}')
+    return data
 
-        :param tag: Examples: 'name', 'state', 'scheduler
-                    state', 'fraction done', 'active_task_state'
-                    Use 'all' to get full output from cmd
-        :param cmd: The boinccmd command to get queued tasks information.
-        :return: List of tagged data parsed from cmd output.
-        """
 
-        output = self.run_boinc(self.boincpath + cmd)
-        if tag == 'all':
-            return output
+def project_action(project: str, action: str):
+    """
+    Execute a boinc-client action for a specified Project.
 
-        data = ['stub_boinc_data']
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
-        # if tag in self.taskXDFtags:  # Not currently used by count_now-tasks.
-        if tag in self.tasktags:
-            data = [line.replace(tag_str, '') for line in output if tag_str in line]
-            return data
-        print(f'Unrecognized data tag: {tag}')
-        return data
+    :param project: A project_url dict key for a BOINC 'PROJECT'
+    :param action: Use: 'suspend', 'resume', or 'update'.
+    :return: Execution of specified boinc-client action.
+    """
 
-    def get_runningtasks(self, tag: str, app_type: str,
-                         cmd=' --get_simple_gui_info') -> list:
-        """
-        Get names of running boinc-client tasks of the specified app.
+    # Project commands require the Project URL, others commands don't
+    if action in projectcmd:
+        cmd_str = f'{set_boincpath()} --project {project_url()[project]} {action}'
 
-        :param tag: boinccmd output line tag, e.g., 'name', 'WU name'.
-                    Use 'all' to get full output from cmd
-        :param app_type: The app type present in all target task names,
-                        e.g. O3AS, LATeah, etc.
-        :param cmd: The boinccmd command to get task information.
-        :return: List of tagged data parsed from cmd. output.
-        """
-        # NOTE that cmd=' --get_tasks' will also work; get_simple lists only active tasks.
-        output = self.run_boinc(self.boincpath + cmd)
-        if tag == 'all':
-            return output
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a tag line of data.
-        task_name = None
-        data = []
-        # Need to determine whether a task's task state line following its name line
-        #    specifies that it is a running task (active_task_state: EXECUTING).
-        # Each loop, need to clear task name to ensure target task name is paired
-        #    with its active state and not that of a prior non-EXECUTING task.
-        for line in output:
-            if app_type in line and tag_str in line:
-                task_name = line.replace(tag_str, '')
-                continue
-            if task_name is not None and 'EXECUTING' in line:
-                data.append(task_name)
-                task_name = None
-        return data
+        return run_boinc(cmd_str)
 
-    def get_project_url(self, tag='master URL', cmd=' --get_project_status') -> list:
-        """
-        Get all current local host boinc-client Project URLs.
+    msg = (f'Unrecognized action: {action}. Expecting one of these: '
+           f'{projectcmd}')
+    return msg
 
-        :param tag: Only need the name of each Project's boinc server URL.
-        :param cmd: The boinccmd command to get Project information.
-        :return: List of tagged data parsed from cmd output..
-        """
 
-        output = self.run_boinc(self.boincpath + cmd)
+def no_new_tasks(cmd=' --get_project_status') -> bool:
+    """
+    Get data from current boinc-client tasks.
 
-        data = ['stub_boinc_data']
-        tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+    :param cmd: The boinccmd command to get Project information.
+    :return: True or False indicating status of "No new tasks"
+             Project setting.
+    """
 
-        if tag in self.tasktags:
-            data = [line.replace(tag_str, '') for line in output if tag in line]
-            return data
-        print(f'Unrecognized data tag: {tag}')
-        return data
+    output = run_boinc(set_boincpath() + cmd)
 
-    def project_action(self, project: str, action: str):
-        """
-        Execute a boinc-client action for a specified Project.
+    tag_str = f'{" " * 3}don\'t request more work: '
+    nnw = [line.replace(tag_str, '') for line in output if tag_str in line]
 
-        :param project: A project_url dict key for a BOINC 'PROJECT'
-        :param action: Use: 'suspend', 'resume', or 'update'.
-        :return: Execution of specified boinc-client action.
-        """
-        # Project commands require the Project URL, others commands don't
-        if action in self.projectcmd:
-            cmd_str = self.boincpath + f' --project {self.project_url[project]} {action}'
-            return self.run_boinc(cmd_str)
-        msg = (f"Unrecognized action: {action}. Expecting one of these: "
-               f"{self.projectcmd}")
-        return msg
+    if 'yes' in nnw:
+        return True
 
-    def no_new_tasks(self, cmd=' --get_project_status') -> bool:
-        """
-        Get data from current boinc-client tasks.
-
-        :param cmd: The boinccmd command to get Project information.
-        :return: True or False indicating status of "No new tasks"
-                 Project setting.
-        """
-
-        output = self.run_boinc(self.boincpath + cmd)
-
-        tag_str = f'{" " * 3}don\'t request more work: '
-        nnw = [line.replace(tag_str, '') for line in output if tag_str in line]
-        if 'yes' in nnw:
-            return True
-        return False
+    return False
 
 
 def about() -> None:
@@ -379,9 +422,9 @@ def about() -> None:
     print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
-    print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
+    print(f'{"Maintainer:".ljust(11)}', __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sys.exit(0)
+    sysexit(0)
 
 
 if __name__ == '__main__':

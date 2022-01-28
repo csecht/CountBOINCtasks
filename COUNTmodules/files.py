@@ -40,8 +40,6 @@ from shutil import copy2
 from sys import platform, exit as sysexit
 from tkinter import messagebox, filedialog
 
-MY_OS = platform[:3]
-
 
 def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
     """
@@ -149,7 +147,7 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
             parent.focus_set()
         return
 
-    if MY_OS == 'dar':
+    if platform[:3] == 'dar':
         msgdetail = (f"'Enter/Return' will also delete "
                      f"content of file {file}.")
     else:
