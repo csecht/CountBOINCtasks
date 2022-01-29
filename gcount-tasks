@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.2'
+__version__ = '0.9.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2254,21 +2254,14 @@ if __name__ == "__main__":
     parse_args()
 
     # Need to set up conditions to control multiple instances.
-    _instance_msg = (f'\nNOTICE: {__program_name__} is already running from'
-                     f' {Path.cwd()}. Exiting...\n')
+    _exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
+                 f' {Path.cwd()}. Exiting...\n')
 
     if MY_OS == 'win':
-        _one_win = Instances.OneWinstance()
-        # When a console displays for a PyInstaller Windows stand-alone,
-        #   then need to leave console open long enough for user to
-        #   read the exit message. Can skip this when out of Beta testing.
-        if _one_win.already_running() and getattr(sys, 'frozen', False):
-            print(_instance_msg)
-            sleep(6)
-            sys.exit(0)
-        elif _one_win.already_running():
-            sys.exit(_instance_msg)
-    elif MY_OS in 'lin, dar':
+        # This allows only one instance in Windows.
+        winstance = Instances.OneWinstance()
+        winstance.exit_twinstance(_exit_msg)
+    else:
         # NOTE: In Class Logs, path constants are different for stand-alone
         #   and Terminal executions, so both program types can use the
         #   log file option b/c they have different log file paths.
@@ -2282,8 +2275,8 @@ if __name__ == "__main__":
                                  f'.{__program_name__}_lockfile').resolve()
 
         _file_handle = open(lockfile_path, 'w')
-        # instances.file_lock() prints msg and exits program.
-        Instances.file_lock(_file_handle, _instance_msg)
+        # This prints msg and exits if another instance running in same folder.
+        Instances.exit_if_locked(_file_handle, _exit_msg)
 
     # Now get things running....
     try:

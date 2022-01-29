@@ -5,7 +5,7 @@ Functions to determine whether another program instance is running.
 
 Class OneWinstance(): Windows only; uses CreateMutex.
 program_name(): sets the program name depending on app
-file_lock(): Linux and macOS only; uses fcntl.lockf()
+exit_if_locked(): Linux and macOS only; uses fcntl.lockf()
 track_sentinel(): Cross-platform; uses Temporary sentinel files.
 
     Copyright (C) 2020-2021  C. Echt
@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.1'
+__module_ver__ = '0.1.2'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -63,40 +63,47 @@ def program_name() -> str:
 
 class OneWinstance:
     """
-    Limits application to single instance on Windows platforms.
+    Limits program to single instance on Windows platforms.
     Example USAGE: Put this at top of if __name__ == "__main__":
-        exit_msg = (f'\nNOTICE: {_program_name} is already running from'
-                    f' {Path.cwd()}. Exiting...\n')
-        one_win = OneWinstance()
-        if one_win.already_running():
-            sys.exit(exit_msg)
+        exit_msg = 'The program is already running. Exiting...'
+        winstance = instances.OneWinstance()
+        winstance.exit_twinstance(exit_msg)
     """
     # Inspired by https://stackoverflow.com/questions/380870/
     #   make-sure-only-a-single-instance-of-a-program-is-running
     def __init__(self):
-        # The mutex name needs to be static, suffix is meaningless.
+        # The mutex name needs to be static, unique suffix is meaningless.
         self.mutexname = f'{program_name}_ZJokEOtOTRQvOmnOylGO'
         self.mutex = CreateMutex(None, False, self.mutexname)
         self.lasterror = GetLastError()
+        self.one_running = False
 
-    def already_running(self):
+    def already_running(self) -> bool:
         return self.lasterror == ERROR_ALREADY_EXISTS
+
+    # Need to leave console open long enough to read the exit message.
+    def exit_twinstance(self, message):
+        if self.lasterror == ERROR_ALREADY_EXISTS:
+            print(message)
+            sleep(6)
+            sys.exit(0)
 
     def __del__(self):
         if self.mutex:
             CloseHandle(self.mutex)
 
 
-def file_lock(filehandle: TextIO, message: str) -> None:
+def exit_if_locked(filehandle: TextIO, message: str) -> None:
     """
-    Lock a bespoke hidden file to serve as an instance sentinel.
-    Only for Linux and macOS platforms.
+    Lock a bespoke hidden file to serve as an instance sentinel for
+    Linux and macOS platforms. Exit program if the file is locked.
+
     Example USAGE: Put this at top of if __name__ == "__main__":
         message = (f'\nNOTICE: {_program_name} is already running from'
                    f' {Path.cwd()}. Exiting...\n')
         lock_file = f'.{_program_name}_lockfile'
-        wrapper = open(lock_file, 'w')
-        instances.file_lock(wrapper, message)
+        filehandle = open(lock_file, 'w')
+        instances.exit_if_locked(filehandle, message)
 
     :param filehandle: The open() text file wrapper for the lock file.
     :param message: The Terminal message to display on exit when another
