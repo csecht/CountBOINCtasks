@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.4'
+__module_ver__ = '0.1.5'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -37,6 +37,7 @@ import sys
 from pathlib import Path
 from time import sleep
 from typing import TextIO
+from tempfile import gettempdir, NamedTemporaryFile
 
 if sys.platform[:3] == 'win':
     from win32event import CreateMutex
@@ -104,7 +105,7 @@ class OneWinstance:
             CloseHandle(self.mutex)
 
 
-def lock_or_exit(filehandle: TextIO, message: str) -> None:
+def lock_or_exit(fd: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
     Linux and macOS platforms. Exit program if the file is locked.
@@ -115,14 +116,14 @@ def lock_or_exit(filehandle: TextIO, message: str) -> None:
         filehandle = open(lock_file, 'w')
         instances.lock_or_exit(filehandle, message)
 
-    :param filehandle: The open() text file wrapper for the lock file.
+    :param fd: The open() text file descriptor for the lock file.
     :param message: The Terminal message to display on exit when another
         instance is running.
     """
     # Inspired by https://stackoverflow.com/questions/380870/
     #   make-sure-only-a-single-instance-of-a-program-is-running
     try:
-        fcntl.lockf(filehandle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         # Linux PyInstaller stand-alone app doesn't display Terminal?
         print(message)
@@ -136,6 +137,8 @@ def track_sentinel() -> tuple:
     app closes normally, the sentinel is deleted.
     Works best on Windows systems. On Linux/macOS systems, the temp file
     may persist when the app is closed by closing the Terminal session.
+    The use of the cwd in temp file name allows multiple instances to
+    run from different directories.
     USAGE: sentinel, sentinel_count = instances.count_sentinel()
            sentinel_path = sentinel.name
            if sentinel_count > 1:
@@ -144,11 +147,13 @@ def track_sentinel() -> tuple:
     :return: the TemporaryFileWrapper object and the integer count of
         sentinel files found in the system's temporary file folder.
     """
-    from tempfile import gettempdir, NamedTemporaryFile
-    with NamedTemporaryFile(mode='rb', prefix=f'{program_name()}_') as sentinel:
-        temp_dir = gettempdir()
-        sentinel_count = len(tuple(Path(temp_dir).glob(f'{program_name()}_*')))
-        return sentinel, sentinel_count
+    rundir = str(Path(Path.cwd())).replace('/', '_')
+    sentinel_prefix = f'sentinel_{rundir}_{program_name()}_'
+    sentinel = NamedTemporaryFile(mode='rb', prefix=sentinel_prefix)
+    temp_dir = gettempdir()
+    sentinel_count = len(
+        tuple(Path(temp_dir).glob(f'{sentinel_prefix}*')))
+    return sentinel, sentinel_count
 
 
 def about() -> None:
