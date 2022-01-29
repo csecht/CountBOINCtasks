@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.3'
+__version__ = '0.9.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2274,9 +2274,9 @@ if __name__ == "__main__":
             lockfile_path = Path(Path.home(),
                                  f'.{__program_name__}_lockfile').resolve()
 
-        _file_handle = open(lockfile_path, 'w')
+        fd = open(lockfile_path, 'w')
         # This prints msg and exits if another instance running in same folder.
-        Instances.exit_if_locked(_file_handle, _exit_msg)
+        Instances.exit_if_locked(fd, _exit_msg)
 
     # Now get things running....
     try:

@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.3'
+__module_ver__ = '0.1.4'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -39,6 +39,9 @@ from time import sleep
 from typing import TextIO
 
 if sys.platform[:3] == 'win':
+
+    import os  # for tendo classes
+
     from win32event import CreateMutex
     from win32api import CloseHandle, GetLastError
     from winerror import ERROR_ALREADY_EXISTS
@@ -105,7 +108,7 @@ class OneWinstance:
             CloseHandle(self.mutex)
 
 
-def exit_if_locked(filehandle: TextIO, message: str) -> None:
+def exit_if_locked(fd: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
     Linux and macOS platforms. Exit program if the file is locked.
@@ -117,14 +120,14 @@ def exit_if_locked(filehandle: TextIO, message: str) -> None:
         filehandle = open(lock_file, 'w')
         instances.exit_if_locked(filehandle, message)
 
-    :param filehandle: The open() text file wrapper for the lock file.
+    :param fd: The open() text file descriptor for the lock file.
     :param message: The Terminal message to display on exit when another
         instance is running.
     """
     # Inspired by https://stackoverflow.com/questions/380870/
     #   make-sure-only-a-single-instance-of-a-program-is-running
     try:
-        fcntl.lockf(filehandle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         # Linux PyInstaller stand-alone app doesn't display Terminal?
         print(message)
