@@ -5,7 +5,7 @@ Functions to determine whether another program instance is running.
 
 Class OneWinstance(): Windows only; uses CreateMutex.
 program_name(): sets the program name depending on app
-exit_if_locked(): Linux and macOS only; uses fcntl.lockf()
+lock_or_exit(): Linux and macOS only; uses fcntl.lockf()
 track_sentinel(): Cross-platform; uses Temporary sentinel files.
 
     Copyright (C) 2020-2021  C. Echt
@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.3'
+__module_ver__ = '0.1.4'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -92,8 +92,7 @@ class OneWinstance:
         Exit the program when another instance is already running.
         Delay exit after displaying *message*.
 
-        :param message: The Command Prompt message to show upon
-            exit.
+        :param message: The Command Prompt message to show upon exit.
         """
         if self.lasterror == ERROR_ALREADY_EXISTS:
             print(message)
@@ -105,17 +104,16 @@ class OneWinstance:
             CloseHandle(self.mutex)
 
 
-def exit_if_locked(filehandle: TextIO, message: str) -> None:
+def lock_or_exit(filehandle: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
     Linux and macOS platforms. Exit program if the file is locked.
 
     Example USAGE: Put this at top of if __name__ == "__main__":
-        message = (f'\nNOTICE: {_program_name} is already running from'
-                   f' {Path.cwd()}. Exiting...\n')
-        lock_file = f'.{_program_name}_lockfile'
+        message = 'Program is already running. Exiting...'
+        lock_file = f'.{program_name}_lockfile'
         filehandle = open(lock_file, 'w')
-        instances.exit_if_locked(filehandle, message)
+        instances.lock_or_exit(filehandle, message)
 
     :param filehandle: The open() text file wrapper for the lock file.
     :param message: The Terminal message to display on exit when another
@@ -141,17 +139,15 @@ def track_sentinel() -> tuple:
     USAGE: sentinel, sentinel_count = instances.count_sentinel()
            sentinel_path = sentinel.name
            if sentinel_count > 1:
-              sys.exit(
-                   f'NOTICE: {_program_name} is already running from'
-                   f' {Path.cwd()}. Exiting...')
+              sys.exit('Program is already running. Exiting...')
 
     :return: the TemporaryFileWrapper object and the integer count of
         sentinel files found in the system's temporary file folder.
     """
     from tempfile import gettempdir, NamedTemporaryFile
-    with NamedTemporaryFile(mode='rb', prefix=f'{program_name}_') as sentinel:
+    with NamedTemporaryFile(mode='rb', prefix=f'{program_name()}_') as sentinel:
         temp_dir = gettempdir()
-        sentinel_count = len(tuple(Path(temp_dir).glob(f'{program_name}_*')))
+        sentinel_count = len(tuple(Path(temp_dir).glob(f'{program_name()}_*')))
         return sentinel, sentinel_count
 
 
