@@ -134,18 +134,20 @@ def lock_or_exit(fd: TextIO, message: str) -> None:
 def track_sentinel() -> tuple:
     """
     Create a temporary file to serve as an instance sentinel. When the
-    app closes normally, the sentinel is deleted.
-    Works best on Windows systems. On Linux/macOS systems, the temp file
+    app closes normally, the sentinel is deleted when main
+    Intended for Windows systems. On Linux/macOS systems, the temp file
     may persist when the app is closed by closing the Terminal session.
     The use of the cwd in temp file name allows multiple instances to
     run from different directories.
-    USAGE: sentinel, sentinel_count = instances.count_sentinel()
-           sentinel_path = sentinel.name
+    Example USAGE: sentinel, sentinel_count = instances.count_sentinel()
            if sentinel_count > 1:
-              sys.exit('Program is already running. Exiting...')
+                sys.exit('Program is already running. Exiting...')
+           else:
+                print(f'{sentinel.name} will be deleted on exit.')
 
     :return: the TemporaryFileWrapper object and the integer count of
-        sentinel files found in the system's temporary file folder.
+        sentinel files with the same prefix in the system's temporary
+        file folder.
     """
     rundir = str(Path(Path.cwd())).replace('/', '_')
     sentinel_prefix = f'sentinel_{rundir}_{program_name()}_'
