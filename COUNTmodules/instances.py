@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.2'
+__module_ver__ = '0.1.3'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -35,6 +35,7 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import sys
 from pathlib import Path
+from time import sleep
 from typing import TextIO
 
 if sys.platform[:3] == 'win':
@@ -73,16 +74,27 @@ class OneWinstance:
     #   make-sure-only-a-single-instance-of-a-program-is-running
     def __init__(self):
         # The mutex name needs to be static, unique suffix is meaningless.
-        self.mutexname = f'{program_name}_ZJokEOtOTRQvOmnOylGO'
+        self.mutexname = f'{program_name()}_ZJokEOtOTRQvOmnOylGO'
         self.mutex = CreateMutex(None, False, self.mutexname)
         self.lasterror = GetLastError()
-        self.one_running = False
 
     def already_running(self) -> bool:
+        """
+        No errors (ERROR_ALREADY_EXISTS == 0) when a mutex
+        is first created; an error value (True) when another
+        instance is created with the same mutex name.
+        """
         return self.lasterror == ERROR_ALREADY_EXISTS
 
     # Need to leave console open long enough to read the exit message.
-    def exit_twinstance(self, message):
+    def exit_twinstance(self, message: str):
+        """
+        Exit the program when another instance is already running.
+        Delay exit after displaying *message*.
+
+        :param message: The Command Prompt message to show upon
+            exit.
+        """
         if self.lasterror == ERROR_ALREADY_EXISTS:
             print(message)
             sleep(6)
@@ -114,8 +126,10 @@ def exit_if_locked(filehandle: TextIO, message: str) -> None:
     try:
         fcntl.lockf(filehandle, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
-        # Linux PyInstaller stand-alone apps don't display Terminal?
-        sys.exit(message)
+        # Linux PyInstaller stand-alone app doesn't display Terminal?
+        print(message)
+        sleep(6)
+        sys.exit(0)
 
 
 def track_sentinel() -> tuple:
