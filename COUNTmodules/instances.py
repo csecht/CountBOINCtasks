@@ -105,7 +105,7 @@ class OneWinstance:
             CloseHandle(self.mutex)
 
 
-def lock_or_exit(fd: TextIO, message: str) -> None:
+def lock_or_exit(_fd: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
     Linux and macOS platforms. Exit program if the file is locked.
@@ -116,14 +116,14 @@ def lock_or_exit(fd: TextIO, message: str) -> None:
         filehandle = open(lock_file, 'w')
         instances.lock_or_exit(filehandle, message)
 
-    :param fd: The open() text file descriptor for the lock file.
+    :param _fd: The open() text file descriptor for the lock file.
     :param message: The Terminal message to display on exit when another
         instance is running.
     """
     # Inspired by https://stackoverflow.com/questions/380870/
     #   make-sure-only-a-single-instance-of-a-program-is-running
     try:
-        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         # Linux PyInstaller stand-alone app doesn't display Terminal?
         print(message)
@@ -143,12 +143,13 @@ def track_sentinel(log_path: Path) -> tuple:
     USAGE: sentinel, sentinel_count = instances.count_sentinel()
            sentinel_path = sentinel.name
            if sentinel_count > 1:
-              sys.exit(f'Program is already running in {sentinel_path}. Exiting...')
+              sys.exit(f'Program is already running in {sentinel_path}.)
 
     :param log_path: The Path object defined by Logs.LOGFILE in the
         main script.
-    :return: the TemporaryFileWrapper object and the integer count of
-        sentinel files found in the system's temporary file folder.
+    :return: tuple of (current sentinel's TemporaryFileWrapper object,
+        integer count of sentinel files with a matching prefix in the
+        system's temporary file folder)
     """
 
     # Use the current working directory to restrict multiple
