@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.5'
+__version__ = '0.9.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -758,9 +758,9 @@ class CountFyi:
                       """
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
-        - While not recommended, in Linux and macOS, multiple program
-                instances can be run from separate directories.
-                Windows will not run multiple instances.\n
+        - While not recommended, multiple program instances can be run
+                from separate directories with command line execution.
+                Only one stand-alone app instance is allowed.\n
         - When analysis of logged hours is "cannot determine"...
                 Quick fix: backup then delete log file, restart program.\n
         - Right-click actions only affect on-screen text, not file content,
