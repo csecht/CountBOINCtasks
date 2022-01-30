@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.4'
+__version__ = '0.9.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1868,28 +1868,28 @@ class CountViewer(tk.Frame):
 
     def settings_tooltips(self) -> None:
         """
-        Tooltips, from mouseover of info Button icons, to explain usage
-        of entries and selections in the settings window.
+        Calls to Tooltips module, for mouseover of info Button icons, to
+        explain usage of entries and selections in the settings window.
         """
 
         # Need to use ttk.Button and styles on macOS to avoid square button img.
         #  Provides the same look on Linux, Windows, macOS. For Linux and
         #  Windows, works the same as tk.Button if configure with same options.
-        s = ttk.Style()
-        s.configure('Tooltip.TButton',
-                    image=self.info_button_img,
-                    background=self.master_bg,
-                    highlightthickness=0,
-                    highlightcolor=self.master_bg,
-                    highlightbackground=self.master_bg,
-                    activebackground=self.master_bg
-                    )
-        s.map('Tooltip.TButton',
-              background=[('pressed', '!focus', self.master_bg),
-                          ('active', self.master_bg)],
-              relief=[('pressed', tk.FLAT),
-                      ('!pressed', tk.FLAT)]
-              )
+        _s = ttk.Style()
+        _s.configure('Tooltip.TButton',
+                     image=self.info_button_img,
+                     background=self.master_bg,
+                     highlightthickness=0,
+                     highlightcolor=self.master_bg,
+                     highlightbackground=self.master_bg,
+                     activebackground=self.master_bg
+                     )
+        _s.map('Tooltip.TButton',
+               background=[('pressed', '!focus', self.master_bg),
+                           ('active', self.master_bg)],
+               relief=[('pressed', tk.FLAT),
+                       ('!pressed', tk.FLAT)]
+               )
 
         intvl_ttip_btn = ttk.Button(
             self.settings_win, style='Tooltip.TButton', takefocus=False)
@@ -2085,8 +2085,11 @@ class CountViewer(tk.Frame):
             self.starting_tooltips()
 
     def starting_tooltips(self):
-        # Provide mouseover tooltips for data emphasis buttons.
-        #  These will not be active once the first interval posts.
+        """
+        Provide mouseover tooltips for data emphasis buttons.
+        Tips will not be active once the first interval posts.
+        """
+
         starting_ttip_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
@@ -2325,8 +2328,10 @@ if __name__ == "__main__":
             lockfile_path = Path(Path.home(),
                                  f'.{__program_name__}_lockfile').resolve()
 
-        fd = open(lockfile_path, 'w')
-        Instances.lock_or_exit(fd, _exit_msg)
+        # NOTE: fcntl.lockf in Instances.lock_or_exit() does not work
+        #   when file descriptor _fd is defined as [with open()...].
+        _fd = open(lockfile_path, 'w')
+        Instances.lock_or_exit(_fd, _exit_msg)
 
         try:
             print(f'{__program_name__} now running...')
@@ -2347,4 +2352,3 @@ if __name__ == "__main__":
             logging.info(msg=_msg)
         except Exception as unknown:
             print(f'\nAn unexpected error: {unknown}\n')
-
