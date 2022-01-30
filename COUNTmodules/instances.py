@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.5'
+__module_ver__ = '0.1.7'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -154,15 +154,16 @@ def track_sentinel(log_path: Path) -> tuple:
         system's temporary file folder)
     """
 
-    # Use the current working directory to restrict multiple
-    #   instances only to the directory where the log file is
-    #   active.
-    parent_dir = str(log_path)
+    # Get the directory path where the log file is currently
+    #   active to use as ID for this instance's sentinel file.
+    #   This allows multiple instances to run from different
+    #   directories without corrupting log file data for analysis.
+    logpath_name = str(log_path.resolve())
 
     # Need to remove invalid characters from sentinel file name.
-    trans = parent_dir.maketrans('\\/:', '___')
-    parent = parent_dir.translate(trans)
-    sentinel_prefix = f'sentinel_{parent}_{program_name()}_'
+    trans_table = logpath_name.maketrans('\\/:', '___')
+    logpath_id = logpath_name.translate(trans_table)
+    sentinel_prefix = f'sentinel_{logpath_id}_{program_name()}_'
 
     sentinel = NamedTemporaryFile(mode='rb', prefix=sentinel_prefix)
     temp_dir = gettempdir()
