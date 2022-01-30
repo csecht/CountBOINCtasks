@@ -127,34 +127,46 @@ def lock_or_exit(fd: TextIO, message: str) -> None:
     except OSError:
         # Linux PyInstaller stand-alone app doesn't display Terminal?
         print(message)
-        sleep(6)
+        sleep(5)
         sys.exit(0)
 
 
-def track_sentinel() -> tuple:
+def track_sentinel(log_path: Path) -> tuple:
     """
     Create a temporary file to serve as an instance sentinel. When the
-    app closes normally, the sentinel is deleted when main
-    Intended for Windows systems. On Linux/macOS systems, the temp file
-    may persist when the app is closed by closing the Terminal session.
-    The use of the cwd in temp file name allows multiple instances to
+    app closes, the sentinel is deleted by the system. May need to
+    explicitly sentinel.close() for certain Exceptions.
+    Works best on Windows systems. On Linux/macOS systems, the temp file
+    may persist when the app is killed by closing the Terminal session.
+    The use of the log file's dir name allows multiple instances to
     run from different directories.
-    Example USAGE: sentinel, sentinel_count = instances.count_sentinel()
+    USAGE: sentinel, sentinel_count = instances.count_sentinel()
+           sentinel_path = sentinel.name
            if sentinel_count > 1:
-                sys.exit('Program is already running. Exiting...')
-           else:
-                print(f'{sentinel.name} will be deleted on exit.')
+              sys.exit(f'Program is already running in {sentinel_path}. Exiting...')
 
+    :param log_path: The Path object defined by Logs.LOGFILE in the
+        main script.
     :return: the TemporaryFileWrapper object and the integer count of
-        sentinel files with the same prefix in the system's temporary
-        file folder.
+        sentinel files found in the system's temporary file folder.
     """
-    rundir = str(Path(Path.cwd())).replace('/', '_')
-    sentinel_prefix = f'sentinel_{rundir}_{program_name()}_'
+
+    # Use the current working directory to restrict multiple
+    #   instances only to the directory where the log file is
+    #   active.
+    parent_dir = str(log_path)
+
+    # Need to remove invalid characters from sentinel file name.
+    trans = parent_dir.maketrans('\\/:', '___')
+    parent = parent_dir.translate(trans)
+    sentinel_prefix = f'sentinel_{parent}_{program_name()}_'
+
     sentinel = NamedTemporaryFile(mode='rb', prefix=sentinel_prefix)
     temp_dir = gettempdir()
+
     sentinel_count = len(
         tuple(Path(temp_dir).glob(f'{sentinel_prefix}*')))
+
     return sentinel, sentinel_count
 
 
