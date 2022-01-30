@@ -140,10 +140,12 @@ def track_sentinel(log_path: Path) -> tuple:
     may persist when the app is killed by closing the Terminal session.
     The use of the log file's dir name allows multiple instances to
     run from different directories.
-    USAGE: sentinel, sentinel_count = instances.count_sentinel()
-           sentinel_path = sentinel.name
-           if sentinel_count > 1:
-              sys.exit(f'Program is already running in {sentinel_path}.)
+    Example USAGE:
+        sentinel, sentinel_count = instances.track_sentinel(log_path)
+        if sentinel_count > 1:
+            sys.exit(f'Program is already running. Exiting...\n'
+                     f"This instance's temporary file, {sentinel.name},"
+                     ' has been deleted.\n')
 
     :param log_path: The Path object defined by Logs.LOGFILE in the
         main script.
