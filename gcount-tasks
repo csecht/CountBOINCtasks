@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.3'
+__version__ = '0.9.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -148,6 +148,7 @@ def quit_gui(keybind=None) -> None:
     time_now = datetime.now().strftime(LONG_STRFTIME)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
+
     if Path.exists(Logs.LOGFILE):
         Files.append_txt(Logs.LOGFILE, quit_txt, False)
     # pylint: disable=broad-except
@@ -157,7 +158,10 @@ def quit_gui(keybind=None) -> None:
         app.destroy()
     except Exception as unk:
         print(f'An error occurred: {unk}')
-        sys.exit('program exit with unexpected condition')
+        if MY_OS == 'win':
+            sentinel.close()
+        sys.exit('Program exit with unexpected condition.')
+
     return keybind
 
 
@@ -702,9 +706,15 @@ class CountFyi:
             f'Saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
             f'   {Logs.ANALYSISFILE}\n'
         )
+
+        # Need to add OS-specific instance management path
         if MY_OS in 'lin, dar':
             insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
                           f'   {lockfile_path}\n')
+        else:
+            insert_txt = (f'{insert_txt}\nSentinel file for this instance'
+                          f' (is deleted on exit)\n'
+                          f'   {sentinel.name}\n')
 
         max_line = len(max([line for line in insert_txt.splitlines()], key=len))
         pathstxt = tk.Text(pathswin, font='TkFixedFont',
@@ -2257,10 +2267,51 @@ if __name__ == "__main__":
     _exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                  f' {Path.cwd()}. Exiting...\n')
 
+    if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
+        _exit_msg = (f'\nNOTICE: {__program_name__}'
+                     ' is already running. Exiting...\n')
+
     if MY_OS == 'win':
-        # This allows only one instance in Windows.
-        winstance = Instances.OneWinstance()
-        winstance.exit_twinstance(_exit_msg)
+        # Can restrict execution to only one instance if
+        #   "with sentinel:..." is not used.
+        # winstance = Instances.OneWinstance()
+        # instance.exit_twinstance(_exit_msg)
+
+        # A sentinel file allows multiple instances to run from different
+        #   directories. LOGFILE is in the current working directory,
+        #   except PyInstaller standalone app has LOGFILE in the Home
+        #   folder. Therefore, multiple standalone apps cannot be run.
+        sentinel, sentinel_count = Instances.track_sentinel(Logs.LOGFILE)
+
+        with sentinel:
+            if sentinel_count > 1:
+                print(_exit_msg)
+                sleep(5)
+                sys.exit(0)
+            try:
+                print(f'{__program_name__} now running...')
+                app = CountController()
+                app.title(f'Counting BOINC tasks on {gethostname()}')
+
+                # Need absolute path when running stand-alone app from PyInstaller.
+                img = tk.PhotoImage(
+                    file=Utils.absolute_path_to('images/count_icon_512.png'))
+                app.iconphoto(True, img)
+
+                app.mainloop()
+
+            except KeyboardInterrupt:
+                _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                        " *** Keyboard interrupt by user ***\n"
+                        f"This instance's temporary file, {sentinel.name},"
+                        " has been deleted.\n")
+                print(_msg)
+                logging.info(msg=_msg)
+            except Exception as unknown:
+                print(f'An unexpected error: {unknown}\n'
+                      f"This instance's temporary file, {sentinel.name},"
+                      " has been deleted.\n")
+
     else:
         # For Linux and macOS: In Class Logs, path constants are different
         #   for stand-alone and Terminal executions, so both program types
@@ -2270,27 +2321,30 @@ if __name__ == "__main__":
         lockfile_path = Path(Path.cwd(),
                              f'.{__program_name__}_lockfile').resolve()
 
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
             lockfile_path = Path(Path.home(),
                                  f'.{__program_name__}_lockfile').resolve()
 
-        _file_handle = open(lockfile_path, 'w')
-        Instances.lock_or_exit(_file_handle, _exit_msg)
+        fd = open(lockfile_path, 'w')
+        Instances.lock_or_exit(fd, _exit_msg)
 
-    # Now get things running....
-    try:
-        print(f'{__program_name__} now running...')
-        app = CountController()
-        app.title(f'Counting BOINC tasks on {gethostname()}')
-        # Need absolute path when running stand-alone app from PyInstaller.
-        img = tk.PhotoImage(
-            file=Utils.absolute_path_to('images/count_icon_512.png'))
-        app.iconphoto(True, img)
-        app.mainloop()
-    except KeyboardInterrupt:
-        _interrupt_msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
-                          " *** Keyboard interrupt by user ***\n")
-        print(_interrupt_msg)
-        logging.info(msg=_interrupt_msg)
-    except Exception as unknown:
-        print(f'\nAn unexpected error: {unknown}\n')
+        try:
+            print(f'{__program_name__} now running...')
+            app = CountController()
+            app.title(f'Counting BOINC tasks on {gethostname()}')
+
+            # Need absolute path when running stand-alone app from PyInstaller.
+            img = tk.PhotoImage(
+                file=Utils.absolute_path_to('images/count_icon_512.png'))
+            app.iconphoto(True, img)
+
+            app.mainloop()
+
+        except KeyboardInterrupt:
+            _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                    " *** Keyboard interrupt by user ***\n")
+            print(_msg)
+            logging.info(msg=_msg)
+        except Exception as unknown:
+            print(f'\nAn unexpected error: {unknown}\n')
+
