@@ -47,6 +47,7 @@ if sys.platform[:3] == 'win':
 else:
     import fcntl
 
+from COUNTmodules import binds
 
 def program_name() -> str:
     """
@@ -128,12 +129,20 @@ def lock_or_exit(_fd: TextIO, message: str) -> None:
     except OSError:
         popup = tk.Tk()
         popup.title('Close window to exit')
-        label = tk.Label(text=message,
-                         font=('TkHeadingFont', 12),
-                         background='SteelBlue4',
-                         foreground='white',
-                         pady=5, padx=5)
-        label.pack(anchor='center')
+        popup.minsize(350, 60)
+        popup.configure(background='SteelBlue4')
+        pos_x = popup.winfo_screenwidth() // 6
+        pox_y = popup.winfo_screenheight() // 2
+        popup.geometry(f'+{pos_x}+{pox_y}')
+
+        binds.keyboard('close', popup, popup)
+
+        tk.Label(text=message,
+                 font=('TkTextFont', 12),
+                 background='SteelBlue4',
+                 foreground='white',
+                 pady=5, padx=5).grid(ipadx=10)
+
         popup.mainloop()
         sys.exit(0)
 
