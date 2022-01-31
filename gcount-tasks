@@ -412,7 +412,7 @@ class Logs:
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
         Binds.click('right', analysistxt, app)
         Binds.keyboard('close', analysiswin, app)
-        Binds.keyboard('append', analysiswin, app, cls.ANALYSISFILE, insert_txt)
+        Binds.keyboard('append', analysiswin, None, cls.ANALYSISFILE, insert_txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE))
 
@@ -994,7 +994,7 @@ class CountModeler:
                 sumry_intvl_counts.append(task_count_new)
                 sumry_intvl_ttavgs.append(self.share.data['tt_avg'].get())
 
-                # SUMMARY DATA ####################################################
+                # SUMMARY DATA #########################################
                 # NOTE: Starting data are not included in summary tabulations.
                 summary_m = T.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
@@ -2179,11 +2179,11 @@ class CountViewer(tk.Frame):
         return focus_event
 
 
-# ################## MVC Controller; is app mainloop ##################
+# ################## MVC Controller; is app mainloop ###################
 class CountController(tk.Tk):
     """
     The Controller through which other MVC Count Classes can interact
-    through the 'share' parameter.
+    with the 'share' parameter.
     Based on https://stackoverflow.com/questions/32864610/.
     """
 
@@ -2192,7 +2192,8 @@ class CountController(tk.Tk):
 
         # Need window sizes to make room for multi-line notices,
         #    but not get minimized enough to exclude notices row.
-        # Need OS-specific master window sizes b/c of different default font widths.
+        # app window sizes are OS-specific b/c of different default
+        #    OS font widths.
         if MY_OS == 'lin':
             self.minsize(580, 370)
             self.maxsize(780, 400)
