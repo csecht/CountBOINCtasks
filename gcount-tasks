@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.6'
+__version__ = '0.9.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2267,7 +2267,12 @@ class CountController(tk.Tk):
 if __name__ == "__main__":
     parse_args()
 
-    # Need to set up conditions to control multiple instances.
+    # Need to set up conditions to control multiple instances. Must not
+    #   allow multiple instances from writing to the same log file.
+    # In Class Logs, LOGFILE path constants are different
+    #   for stand-alone and Terminal executions.
+    # Multiple instances of command line executions can run when from
+    #   different directories.
     _exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                  f' {Path.cwd()}. Exiting...\n')
 
@@ -2281,11 +2286,7 @@ if __name__ == "__main__":
         # winstance = Instances.OneWinstance()
         # instance.exit_twinstance(_exit_msg)
 
-        # A sentinel file allows multiple instances to run from different
-        #   directories. LOGFILE is in the current working directory,
-        #   except PyInstaller standalone app has LOGFILE in the Home
-        #   folder. Therefore, multiple standalone apps cannot be run.
-        sentinel, sentinel_count = Instances.track_sentinel(Logs.LOGFILE)
+        sentinel, sentinel_count = Instances.track_sentinel(Logs.LOGFILE.parent)
 
         with sentinel:
             if sentinel_count > 1:
@@ -2323,12 +2324,8 @@ if __name__ == "__main__":
         #   can log data because they have different log file paths.
         #   Also, multiple instances of command line execution can run if
         #   from different directories.
-        lockfile_path = Path(Path.cwd(),
-                             f'.{__program_name__}_lockfile').resolve()
-
-        if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-            lockfile_path = Path(Path.home(),
-                                 f'.{__program_name__}_lockfile').resolve()
+        lockfile_path = Path(Logs.LOGFILE.parent,
+                             f'.{__program_name__}_lockfile')
 
         # NOTE: fcntl.lockf in Instances.lock_or_exit() does not work
         #   when file descriptor _fd is defined as "with open()...".
