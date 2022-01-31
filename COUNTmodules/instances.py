@@ -27,13 +27,14 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.7'
+__module_ver__ = '0.1.8'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 import sys
+import tkinter as tk
 from pathlib import Path
 from time import sleep
 from typing import TextIO
@@ -43,7 +44,7 @@ if sys.platform[:3] == 'win':
     from win32event import CreateMutex
     from win32api import CloseHandle, GetLastError
     from winerror import ERROR_ALREADY_EXISTS
-elif sys.platform[:3] in 'lin, dar':
+else:
     import fcntl
 
 
@@ -113,21 +114,27 @@ def lock_or_exit(_fd: TextIO, message: str) -> None:
     Example USAGE: Put this at top of if __name__ == "__main__":
         message = 'Program is already running. Exiting...'
         lock_file = f'.{program_name}_lockfile'
-        filehandle = open(lock_file, 'w')
-        instances.lock_or_exit(filehandle, message)
+        fd = open(lock_file, 'w')
+        instances.lock_or_exit(fd, message)
 
     :param _fd: The open() text file descriptor for the lock file.
-    :param message: The Terminal message to display on exit when another
-        instance is running.
+    :param message: The message to display upon exit when another
+        instance is running with the same *_fd* file descriptor.
     """
     # Inspired by https://stackoverflow.com/questions/380870/
     #   make-sure-only-a-single-instance-of-a-program-is-running
     try:
         fcntl.lockf(_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
-        # Linux PyInstaller stand-alone app doesn't display Terminal?
-        print(message)
-        sleep(5)
+        popup = tk.Tk()
+        popup.title('Close window to exit')
+        label = tk.Label(text=message,
+                         font=('TkHeadingFont', 12),
+                         background='SteelBlue4',
+                         foreground='white',
+                         pady=5, padx=5)
+        label.pack(anchor='center')
+        popup.mainloop()
         sys.exit(0)
 
 
