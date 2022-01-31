@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.8'
+__module_ver__ = '0.1.9'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -148,7 +148,7 @@ def lock_or_exit(_fd: TextIO, message: str) -> None:
         sys.exit(0)
 
 
-def track_sentinel(log_path: Path) -> tuple:
+def track_sentinel(working_dir: Path) -> tuple:
     """
     Create a temporary file to serve as an instance sentinel. When the
     app closes, the sentinel is deleted by the system. May need to
@@ -164,8 +164,8 @@ def track_sentinel(log_path: Path) -> tuple:
                      f"This instance's temporary file, {sentinel.name},"
                      ' has been deleted.\n')
 
-    :param log_path: The Path object defined by Logs.LOGFILE in the
-        main script.
+    :param working_dir: The Path object defined by Logs.LOGFILE.parent
+        in the main script.
     :return: tuple of (current sentinel's TemporaryFileWrapper object,
         integer count of sentinel files with a matching prefix in the
         system's temporary file folder)
@@ -175,12 +175,12 @@ def track_sentinel(log_path: Path) -> tuple:
     #   active to use as ID for this instance's sentinel file.
     #   This allows multiple instances to run from different
     #   directories without corrupting log file data for analysis.
-    logpath_name = str(log_path.resolve())
+    workdir = str(working_dir.resolve())
 
     # Need to remove invalid characters from sentinel file name.
-    trans_table = logpath_name.maketrans('\\/:', '___')
-    logpath_id = logpath_name.translate(trans_table)
-    sentinel_prefix = f'sentinel_{logpath_id}_{program_name()}_'
+    trans_table = workdir.maketrans('\\/:', '___')
+    workdir_id = workdir.translate(trans_table)
+    sentinel_prefix = f'sentinel_{workdir_id}_{program_name()}_'
 
     sentinel = NamedTemporaryFile(mode='rb', prefix=sentinel_prefix)
     temp_dir = gettempdir()
