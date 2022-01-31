@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -710,7 +710,7 @@ class CountFyi:
         # Need to add OS-specific instance management path
         if MY_OS in 'lin, dar':
             insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
-                          f'   {lockfile_path}\n')
+                          f'   {lockfile_fullpath}\n')
         else:
             insert_txt = (f'{insert_txt}\nSentinel file for this instance'
                           f' (is deleted on exit)\n'
@@ -2267,11 +2267,11 @@ class CountController(tk.Tk):
 if __name__ == "__main__":
     parse_args()
 
-    # Need to set up conditions to control multiple instances. Must not
-    #   allow multiple instances from writing to the same log file.
+    # Need to set up conditions to control multiple instances.
+    # Must not allow multiple instances to write to the same log file.
     # In Class Logs, LOGFILE path constants are different
     #   for stand-alone and Terminal executions.
-    # Multiple instances of command line executions can run when from
+    # Multiple instances of Terminal executions can run when from
     #   different directories.
     _exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                  f' {Path.cwd()}. Exiting...\n')
@@ -2282,13 +2282,14 @@ if __name__ == "__main__":
 
     if MY_OS == 'win':
         # Can restrict execution to only one instance if
-        #   "with sentinel:..." is not used.
+        #   "with sentinel: if..." is replaced with this mutex method.
         # winstance = Instances.OneWinstance()
         # instance.exit_twinstance(_exit_msg)
 
         sentinel, sentinel_count = Instances.track_sentinel(Logs.LOGFILE.parent)
 
         with sentinel:
+            # Exit if another instance is running from the log file dir.
             if sentinel_count > 1:
                 print(_exit_msg)
                 sleep(5)
@@ -2319,18 +2320,13 @@ if __name__ == "__main__":
                       " has been deleted.\n")
 
     else:
-        # For Linux and macOS: In Class Logs, path constants are different
-        #   for stand-alone and Terminal executions, so both program types
-        #   can log data because they have different log file paths.
-        #   Also, multiple instances of command line execution can run if
-        #   from different directories.
-        lockfile_path = Path(Logs.LOGFILE.parent,
-                             f'.{__program_name__}_lockfile')
+        # Exit if another instance is running from the log file directory.
+        lockfile_fullpath = Path(Logs.LOGFILE.parent,
+                                 f'.{__program_name__}_lockfile')
 
         # NOTE: fcntl.lockf in Instances.lock_or_exit() does not work
         #   when file descriptor _fd is defined as "with open()...".
-        # Exit if another instance is running from the cwd.
-        _fd = open(lockfile_path, 'w')
+        _fd = open(lockfile_fullpath, 'w')
         Instances.lock_or_exit(_fd, _exit_msg)
 
         try:
