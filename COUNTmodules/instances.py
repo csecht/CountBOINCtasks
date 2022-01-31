@@ -36,9 +36,11 @@ __status__ = 'Development Status :: 4 - Beta'
 import sys
 import tkinter as tk
 from pathlib import Path
+from tempfile import gettempdir, NamedTemporaryFile
 from time import sleep
 from typing import TextIO
-from tempfile import gettempdir, NamedTemporaryFile
+
+from COUNTmodules import binds
 
 if sys.platform[:3] == 'win':
     from win32event import CreateMutex
@@ -47,7 +49,6 @@ if sys.platform[:3] == 'win':
 else:
     import fcntl
 
-from COUNTmodules import binds
 
 def program_name() -> str:
     """
