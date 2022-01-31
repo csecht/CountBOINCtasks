@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.6'
+__module_ver__ = '0.1.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -94,7 +94,8 @@ def click(click_type, click_widget, mainwin) -> None:
             click_widget.bind('<Button-2>', popup_menu)
 
 
-def keyboard(func: str, toplevel, mainwin=None, filepath=None, text=None) -> None:
+def keyboard(func: str, toplevel,
+             mainloop=None, filepath=None, text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
     add standard keyboard actions or to provide keybinding equivalents
@@ -109,10 +110,9 @@ def keyboard(func: str, toplevel, mainwin=None, filepath=None, text=None) -> Non
                  For 'close', the key is 'w' with OS-specific modifier.
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
-    :param toplevel: Name of tk.Toplevel() object.
-    :param mainwin: The main window object of the tk() mainloop, e.g.,
-                    root', 'main', or 'app'. Used only as a pass-through
-                    parameter when calling utils.get_toplevel().
+    :param toplevel: Name of tk.Toplevel() window object.
+    :param mainloop: The tk() mainloop object ('root', 'main', etc.);
+                use with the *func* 'close' option.
     :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -126,7 +126,7 @@ def keyboard(func: str, toplevel, mainwin=None, filepath=None, text=None) -> Non
     if func == 'close':
         toplevel.bind(
             f'<{f"{cmd_key}"}-w>',
-            lambda _: utils.get_toplevel('winpath', mainwin).destroy())
+            lambda _: utils.get_toplevel('winpath', mainloop).destroy())
 
     if func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
