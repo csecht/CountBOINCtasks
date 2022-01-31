@@ -2291,6 +2291,7 @@ if __name__ == "__main__":
                 print(_exit_msg)
                 sleep(5)
                 sys.exit(0)
+
             try:
                 print(f'{__program_name__} now running...')
                 app = CountController()
@@ -2329,7 +2330,8 @@ if __name__ == "__main__":
                                  f'.{__program_name__}_lockfile').resolve()
 
         # NOTE: fcntl.lockf in Instances.lock_or_exit() does not work
-        #   when file descriptor _fd is defined as [with open()...].
+        #   when file descriptor _fd is defined as "with open()...".
+        # Exit if another instance is running from the cwd.
         _fd = open(lockfile_path, 'w')
         Instances.lock_or_exit(_fd, _exit_msg)
 
