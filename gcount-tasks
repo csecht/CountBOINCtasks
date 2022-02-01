@@ -2300,11 +2300,11 @@ if __name__ == "__main__":
     # Multiple instances of Terminal executions can run when from
     #   different directories.
     exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
-                 f' {Path.cwd()}. Exiting...\n')
+                f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
         exit_msg = (f'\nNOTICE: {__program_name__}'
-                     ' is already running. Exiting...\n')
+                    ' is already running. Exiting...\n')
 
     if MY_OS == 'win':
 
