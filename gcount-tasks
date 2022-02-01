@@ -254,6 +254,7 @@ class Logs:
             sumry_counts = list(map(int, sumry_cnts))
             sumry_cnt_avg = round(sum(sumry_counts) / len(sumry_counts), 1)
             sumry_cnt_range = f'[{min(sumry_counts)} -- {max(sumry_counts)}]'
+
         if found_intvls:
             intvl_dates, intvl_vals, intvl_cnts = zip(*found_intvls)
             num_intvl_vals = len(set(intvl_vals))
@@ -304,6 +305,7 @@ class Logs:
                 '   There are not enough data to analyze.\n'
                 '   Need at least one summary or one\n'
                 '   interval count in the log file.\n')
+
         if not found_sumrys and found_intvls:
             summary_text = '\nNo summary counts are logged yet.\n\n'
             if num_intvl_vals == 1:
@@ -320,6 +322,7 @@ class Logs:
                     f'logged, {set(intvl_vals)},\n'
                     'so interpret results with caution.\n\n'
                 )
+
         if found_sumrys:
             if num_sumry_intvl_vals == 1:
                 summary_text = (
@@ -394,35 +397,39 @@ class Logs:
         analysiswin.minsize(520, 320)
 
         insert_txt = summary_text + recent_interval_text
+
         max_line = len(max([line for line in insert_txt.splitlines()], key=len))
+
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         # print(ord("─")) -> 9472
         #   unicodedata.name(chr(9472)) -> 'BOX DRAWINGS LIGHT HORIZONTAL'.
         # print(ord("═")) -> 9552
         #   unicodedata.name(chr(9552)) -> 'BOX DRAWINGS DOUBLE HORIZONTAL'.
         sep = f'\n{"─" * max_line}\n'
+
         insert_txt = insert_txt + sep
 
         num_lines = insert_txt.count('\n')
+
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
                               width=max_line, height=num_lines,
                               bg='grey100', fg='grey5',
                               relief='groove', bd=4, padx=15, pady=10)
         analysistxt.insert(1.0, insert_txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-        Binds.click('right', analysistxt, app)
-        Binds.keyboard('close', analysiswin, app)
-        Binds.keyboard('append', analysiswin, None, cls.ANALYSISFILE, insert_txt)
-        analysiswin.bind('<Shift-Control-A>',
-                         lambda _: cls.view(cls.ANALYSISFILE))
 
         # Need to allow user to save annotated analysis text.
         def new_text():
             new_txt = analysistxt.get(1.0, tk.END)
             Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
-
         ttk.Button(analysiswin, text='Save analysis', command=new_text,
                    takefocus=False).pack(padx=4)
+
+        Binds.click('right', analysistxt, app)
+        Binds.keyboard('close', analysiswin, app)
+        Binds.keyboard('append', analysiswin, None, cls.ANALYSISFILE, insert_txt)
+        analysiswin.bind('<Shift-Control-A>',
+                         lambda _: cls.view(cls.ANALYSISFILE))
 
     @classmethod
     def uptime(cls, logtext: str) -> str:
@@ -602,6 +609,7 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title(f'About {__program_name__}')
         aboutwin.focus_set()
+
         insert_txt = (f'{__doc__}\n'
                       f'{"Author:".ljust(13)}{__author__}\n'
                       f'{"Credits:".ljust(13)}{__credits__}\n'
@@ -613,7 +621,9 @@ class CountFyi:
                       f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
                       f'{"Status:".ljust(13)}{__status__}\n'
                       )
+
         max_line = len(max([line for line in insert_txt.splitlines()], key=len))
+
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
                            width=max_line, height=insert_txt.count('\n') + 2,
                            relief='groove', borderwidth=5, padx=25)
@@ -622,6 +632,7 @@ class CountFyi:
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
+
         Binds.keyboard('close', aboutwin, app)
         Binds.click('right', abouttxt, app)
 
@@ -686,18 +697,19 @@ class CountFyi:
         """
         Toplevel display of full paths for program-generated files.
         Called from Viewer.master_widgets() Help menu bar.
-
-        :return: None
         """
+
         # Have highlightcolor match self.master_bg of the app main window.
         pathswin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
+
         # Need to position window over the window from which it is called.
         pathswin.geometry(Utils.get_toplevel('position', app))
         pathswin.resizable(False, False)
         pathswin.title(f'Program-generated files on {gethostname()}')
         pathswin.focus_set()
+
         insert_txt = (
             f'Full file paths created by {__program_name__}\n\n'
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
@@ -708,25 +720,28 @@ class CountFyi:
         )
 
         # Need to add OS-specific instance management path
-        if MY_OS in 'lin, dar':
-            insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
-                          f'   {lockfile_fullpath}\n')
-        else:
+        if MY_OS == 'win':
             insert_txt = (f'{insert_txt}\nSentinel file for this instance'
                           f' (is deleted on exit)\n'
                           f'   {sentinel.name}\n')
+        else:
+            insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
+                          f'   {lockfile_fullpath}\n')
 
         max_line = len(max([line for line in insert_txt.splitlines()], key=len))
+
         pathstxt = tk.Text(pathswin, font='TkFixedFont',
                            height=insert_txt.count('\n') + 1,
                            width=max_line,
                            relief='groove', borderwidth=5,
                            padx=10, pady=10)
         pathstxt.insert(1.0, insert_txt)
+
         # Need to center the header lines.
         pathstxt.tag_configure("header", justify='center')
         pathstxt.tag_add("header", "1.0", "3.0")
         pathstxt.pack()
+
         Binds.keyboard('close', pathswin, app)
         Binds.click('right', pathstxt, app)
 
@@ -738,6 +753,7 @@ class CountFyi:
 
         :return: None
         """
+
         # Have highlightcolor match self.master_bg of the app main window.
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
@@ -746,6 +762,7 @@ class CountFyi:
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
+
         insert_txt = ("""
         - Counting begins once "Count now" is clicked in settings window.\n
         - Interval and Summary data buttons switch visual emphasis;
@@ -775,14 +792,17 @@ class CountFyi:
             os_width = 64
         elif MY_OS == 'dar':
             os_width = 56
+
         infotxt = tk.Text(infowin, font='TkTextFont',
                           width=os_width, height=insert_txt.count('\n') + 2,
                           relief='groove', padx=15)
         infotxt.insert(1.0, insert_txt)
         infotxt.pack()
+
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
+
         Binds.keyboard('close', infowin, app)
         Binds.click('right', infotxt, app)
 
