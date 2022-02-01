@@ -163,31 +163,33 @@ def track_sentinel(working_dir: Path, message=None) -> tuple:
     """
     Create a temporary file to serve as an instance sentinel. When the
     app closes, the sentinel is deleted by the system. May need to
-    explicitly sentinel.close() for certain Exceptions.
+    explicitly use sentinel.close() for certain Exceptions. Use of
+    *message* triggers automatic exit if sentinel conditions are met.
+
     Works best on Windows systems. On Linux/macOS systems, the temp file
     may persist when the app is killed by closing the Terminal session.
-    The use of the log file's dir name allows multiple instances to
-    run from different directories.
-    Example USAGE:
-        sentinel, sentinel_count = instances.track_sentinel(log_path)
-        if sentinel_count > 1:
-            sys.exit(f'Program is already running. Exiting...\n'
-                     f"This instance's temporary file, {sentinel.name},"
-                     ' has been deleted.\n')
+
+    The use of the active log file's directory path as *working_dir*
+    allows instances to run from different working directories without
+    corrupting log data used for analysis.
+
+    Example USAGE to prevent duplicate instances:
+        sentinel, sentinel_count = instances.track_sentinel(log_path, msg)
+    Example USAGE to notify about multiple instances:
+        sentinel, s_count = instances.track_sentinel(log_path)
+        if s_count > 1:
+            print(f'{s_count} instances are running from {log_path}')
+            print(f'The current instance sentinel file is {sentinel.name}')
 
     :param working_dir: The Path object defined by Logs.LOGFILE.parent
         in the main script.
-    :param message: The message to display upon exit when another
-        instance is running with the same *working_dir*.
+    :param message: Display *message* and exit when another instance is
+        running from the *working_dir*.
     :return: tuple of (current sentinel's TemporaryFileWrapper object,
         integer count of sentinel files with a matching prefix in the
         system's temporary file folder)
     """
 
-    # Get the directory path where the log file is currently
-    #   active to use as ID for this instance's sentinel file.
-    #   This allows multiple instances to run from different
-    #   directories without corrupting log file data for analysis.
     workdir = str(working_dir.resolve())
 
     # Need to remove problematic characters from sentinel file name.
