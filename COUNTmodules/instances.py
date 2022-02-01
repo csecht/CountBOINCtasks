@@ -192,13 +192,13 @@ def track_sentinel(working_dir: Path, message=None) -> tuple:
 
     workdir = str(working_dir.resolve())
 
-    # Need to remove problematic characters from sentinel file name.
+    # Need to remove problematic path characters from sentinel file name.
     trans_table = workdir.maketrans('\\/: ', '____')
     workdir_id = workdir.translate(trans_table)
     sentinel_prefix = f'sentinel_{workdir_id}_{program_name()}_'
+    temp_dir = gettempdir()
 
     sentinel = NamedTemporaryFile(mode='rb', prefix=sentinel_prefix)
-    temp_dir = gettempdir()
 
     sentinel_count = len(
         tuple(Path(temp_dir).glob(f'{sentinel_prefix}*')))
