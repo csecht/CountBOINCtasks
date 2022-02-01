@@ -5,6 +5,7 @@ Functions to determine whether another program instance is running.
 
 Class OneWinstance(): Windows only; uses CreateMutex.
 program_name(): sets the program name depending on app
+exit_popup(): Create a toplevel window to announce program exit.
 lock_or_exit(): Linux and macOS only; uses fcntl.lockf()
 track_sentinel(): Cross-platform; uses Temporary sentinel files.
 
@@ -27,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.1.9'
+__module_ver__ = '0.2.0'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -108,6 +109,33 @@ class OneWinstance:
             CloseHandle(self.mutex)
 
 
+def exit_popup(message: str) -> None:
+    """
+    Create a tk toplevel window announcing exit from the program.
+    Exit occurs when the user closes the window.
+
+    :param message: The message to display in the exit window.
+    """
+    popup = tk.Tk()
+    popup.title('Close window to exit')
+    popup.minsize(350, 60)
+    popup.configure(background='SteelBlue4')
+    pos_x = popup.winfo_screenwidth() // 6
+    pox_y = popup.winfo_screenheight() // 2
+    popup.geometry(f'+{pos_x}+{pox_y}')
+
+    binds.keyboard('close', popup, popup)
+
+    tk.Label(text=message,
+             font=('TkTextFont', 12),
+             background='SteelBlue4',
+             foreground='white',
+             pady=5, padx=5).grid(ipadx=10)
+
+    popup.mainloop()
+    sys.exit(0)
+
+
 def lock_or_exit(_fd: TextIO, message: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
@@ -128,27 +156,10 @@ def lock_or_exit(_fd: TextIO, message: str) -> None:
     try:
         fcntl.lockf(_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
-        popup = tk.Tk()
-        popup.title('Close window to exit')
-        popup.minsize(350, 60)
-        popup.configure(background='SteelBlue4')
-        pos_x = popup.winfo_screenwidth() // 6
-        pox_y = popup.winfo_screenheight() // 2
-        popup.geometry(f'+{pos_x}+{pox_y}')
-
-        binds.keyboard('close', popup, popup)
-
-        tk.Label(text=message,
-                 font=('TkTextFont', 12),
-                 background='SteelBlue4',
-                 foreground='white',
-                 pady=5, padx=5).grid(ipadx=10)
-
-        popup.mainloop()
-        sys.exit(0)
+        exit_popup(message)
 
 
-def track_sentinel(working_dir: Path) -> tuple:
+def track_sentinel(working_dir: Path, message=None) -> tuple:
     """
     Create a temporary file to serve as an instance sentinel. When the
     app closes, the sentinel is deleted by the system. May need to
@@ -166,6 +177,8 @@ def track_sentinel(working_dir: Path) -> tuple:
 
     :param working_dir: The Path object defined by Logs.LOGFILE.parent
         in the main script.
+    :param message: The message to display upon exit when another
+        instance is running with the same *working_dir*.
     :return: tuple of (current sentinel's TemporaryFileWrapper object,
         integer count of sentinel files with a matching prefix in the
         system's temporary file folder)
@@ -177,8 +190,8 @@ def track_sentinel(working_dir: Path) -> tuple:
     #   directories without corrupting log file data for analysis.
     workdir = str(working_dir.resolve())
 
-    # Need to remove invalid characters from sentinel file name.
-    trans_table = workdir.maketrans('\\/:', '___')
+    # Need to remove problematic characters from sentinel file name.
+    trans_table = workdir.maketrans('\\/: ', '____')
     workdir_id = workdir.translate(trans_table)
     sentinel_prefix = f'sentinel_{workdir_id}_{program_name()}_'
 
@@ -187,6 +200,14 @@ def track_sentinel(working_dir: Path) -> tuple:
 
     sentinel_count = len(
         tuple(Path(temp_dir).glob(f'{sentinel_prefix}*')))
+
+    # The first instance from a logfile dir will return variables
+    #   to the main script. Subsequent instances, when this function
+    #   is called with a *message*, will exit here via popup window.
+    #   If not called with a *message*, then the main script can handle
+    #   the returned sentinel variables as needed.
+    if sentinel_count > 1 and message:
+        exit_popup(message)
 
     return sentinel, sentinel_count
 
