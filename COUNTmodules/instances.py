@@ -7,7 +7,7 @@ Class OneWinstance(): Windows only; uses CreateMutex.
 program_name(): sets the program name depending on app
 exit_popup(): Create a toplevel window to announce program exit.
 lock_or_exit(): Linux and macOS only; uses fcntl.lockf()
-track_sentinel(): Cross-platform; uses Temporary sentinel files.
+sentinel_or_exit(): Cross-platform; uses Temporary sentinel files.
 
     Copyright (C) 2020-2021  C. Echt
 
@@ -136,7 +136,7 @@ def exit_popup(message: str) -> None:
     sys.exit(0)
 
 
-def lock_or_exit(_fd: TextIO, message: str) -> None:
+def lock_or_exit(_fd: TextIO, exit_msg: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
     Linux and macOS platforms. Exit program if the file is locked.
@@ -148,7 +148,7 @@ def lock_or_exit(_fd: TextIO, message: str) -> None:
         instances.lock_or_exit(fd, message)
 
     :param _fd: The open() text file descriptor for the lock file.
-    :param message: The message to display upon exit when another
+    :param exit_msg: The message to display upon exit when another
         instance is running with the same *_fd* file descriptor.
     """
     # Inspired by https://stackoverflow.com/questions/380870/
@@ -156,15 +156,17 @@ def lock_or_exit(_fd: TextIO, message: str) -> None:
     try:
         fcntl.lockf(_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
-        exit_popup(message)
+        exit_popup(exit_msg)
 
 
-def track_sentinel(working_dir: Path, message=None) -> tuple:
+def sentinel_or_exit(working_dir: Path, exit_msg=None) -> tuple:
     """
-    Create a temporary file to serve as an instance sentinel. When the
-    app closes, the sentinel is deleted by the system. May need to
-    explicitly use sentinel.close() for certain Exceptions. Use of
-    *message* triggers automatic exit if sentinel conditions are met.
+    Create a temporary empty binary file to serve as an instance
+    sentinel. When the program exits, the sentinel is deleted by
+    the system. May need to explicitly use sentinel.close() for
+    certain Exceptions.
+    Use of *message* parameter triggers automatic exit when sentinel
+    count condition is met.
 
     Works best on Windows systems. On Linux/macOS systems, the temp file
     may persist when the app is killed by closing the Terminal session.
@@ -174,16 +176,16 @@ def track_sentinel(working_dir: Path, message=None) -> tuple:
     corrupting log data used for analysis.
 
     Example USAGE to prevent duplicate instances:
-        sentinel, sentinel_count = instances.track_sentinel(log_path, msg)
+        sentinel, sentinel_count = instances.sentinel_or_exit(log_path, msg)
     Example USAGE to notify about multiple instances:
-        sentinel, s_count = instances.track_sentinel(log_path)
+        sentinel, s_count = instances.sentinel_or_exit(log_path)
         if s_count > 1:
             print(f'{s_count} instances are running from {log_path}')
             print(f'The current instance sentinel file is {sentinel.name}')
 
     :param working_dir: The Path object defined by Logs.LOGFILE.parent
         in the main script.
-    :param message: Display *message* and exit when another instance is
+    :param exit_msg: Display *message* and exit when another instance is
         running from the *working_dir*.
     :return: tuple of (current sentinel's TemporaryFileWrapper object,
         integer count of sentinel files with a matching prefix in the
@@ -208,8 +210,8 @@ def track_sentinel(working_dir: Path, message=None) -> tuple:
     #   is called with a *message*, will exit here via popup window.
     #   If not called with a *message*, then the main script can handle
     #   the returned sentinel variables as needed.
-    if sentinel_count > 1 and message:
-        exit_popup(message)
+    if sentinel_count > 1 and exit_msg:
+        exit_popup(exit_msg)
 
     return sentinel, sentinel_count
 

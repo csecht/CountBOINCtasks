@@ -2299,11 +2299,11 @@ if __name__ == "__main__":
     #   for stand-alone and Terminal executions.
     # Multiple instances of Terminal executions can run when from
     #   different directories.
-    _exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
+    exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                  f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-        _exit_msg = (f'\nNOTICE: {__program_name__}'
+        exit_msg = (f'\nNOTICE: {__program_name__}'
                      ' is already running. Exiting...\n')
 
     if MY_OS == 'win':
@@ -2313,14 +2313,14 @@ if __name__ == "__main__":
         # winstance = Instances.OneWinstance()
         # instance.exit_twinstance(_exit_msg)
 
-        # Use of _exit_msg in this call will exit program here if
+        # Using _exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
-        sentinel, sentinel_count = Instances.track_sentinel(
-            Logs.LOGFILE.parent, _exit_msg)
+        sentinel, sentinel_count = Instances.sentinel_or_exit(
+            Logs.LOGFILE.parent, exit_msg)
 
         with sentinel:
             if sentinel_count > 1:
-                print(_exit_msg)
+                print(exit_msg)
                 sleep(5)
                 sys.exit(0)
 
@@ -2337,12 +2337,12 @@ if __name__ == "__main__":
                 app.mainloop()
 
             except KeyboardInterrupt:
-                _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                msg_ = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
                         " *** Keyboard interrupt by user ***\n"
                         f"This instance's temporary file, {sentinel.name},"
                         " has been deleted.\n")
-                print(_msg)
-                logging.info(msg=_msg)
+                print(msg_)
+                logging.info(msg=msg_)
             except Exception as unknown:
                 print(f'An unexpected error: {unknown}\n'
                       f"This instance's temporary file, {sentinel.name},"
@@ -2355,7 +2355,7 @@ if __name__ == "__main__":
         # NOTE: fcntl.lockf in Instances.lock_or_exit() does not work
         #   when file descriptor _fd is defined as "with open()...".
         _fd = open(lockfile_fullpath, 'w')
-        Instances.lock_or_exit(_fd, _exit_msg)
+        Instances.lock_or_exit(_fd, exit_msg)
 
         try:
             print(f'{__program_name__} now running...')
@@ -2370,9 +2370,9 @@ if __name__ == "__main__":
             app.mainloop()
 
         except KeyboardInterrupt:
-            _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+            msg_ = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
                     " *** Keyboard interrupt by user ***\n")
-            print(_msg)
-            logging.info(msg=_msg)
+            print(msg_)
+            logging.info(msg=msg_)
         except Exception as unknown:
             print(f'\nAn unexpected error: {unknown}\n')
