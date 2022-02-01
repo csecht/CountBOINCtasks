@@ -792,10 +792,12 @@ class CountFyi:
 class CountModeler:
     """
     Counting, statistical analysis, and formatting of BOINC task data.
+    Communication with the Viewer Class for data display occurs via
+    the 'share' parameter.
     """
     # Need to have these vars as Class attributes, so they will not be
-    # reset when interval_data() is called. ttimes_smry would be okay
-    # in __init__, but is here for clarity.
+    # reset when interval_data() is called.
+    # ttimes_smry would be fine in __init__, but is here for clarity.
     ttimes_used = set()
     ttimes_smry = set()
 
@@ -1322,8 +1324,10 @@ class CountModeler:
 # MVC Viewer, the tkinter GUI engine; runs in main thread.
 class CountViewer(tk.Frame):
     """
-    The Viewer communicates with Modeler via 'share' objects handled
-    through the Controller class. All GUI widgets go here.
+    The MVC Viewer represents the master Frame for the main window.
+    All main window GUI and data widgets are defined here. Communication
+    with the Modeler Class for data manipulation occurs via the 'share'
+    parameter.
     """
 
     def __init__(self, share):
@@ -1331,7 +1335,7 @@ class CountViewer(tk.Frame):
         self.share = share
         # Note that self.master is an internal attribute and refers to the
         #   CountController() Tk top window. Outside of CountViewer(),
-        #   use app. to refer to the CountController() Tk object.
+        #   use 'app' to refer to the CountController() toplevel object.
         self.dataframe = tk.Frame()
         self.menubar = tk.Menu()
 
@@ -2182,9 +2186,10 @@ class CountViewer(tk.Frame):
 # ################## MVC Controller; is app mainloop ###################
 class CountController(tk.Tk):
     """
-    The Controller through which other MVC Count Classes can interact
-    with the 'share' parameter.
-    Based on https://stackoverflow.com/questions/32864610/.
+    The MVC controller represents the tkinter toplevel main window.
+    Other MVC Classes can interact through the Controller via the
+    'share' parameter.
+    Architecture based on https://stackoverflow.com/questions/32864610/.
     """
 
     def __init__(self):
@@ -2204,7 +2209,7 @@ class CountController(tk.Tk):
             self.minsize(600, 390)
             self.maxsize(780, 425)
 
-        self.winfo_toplevel()
+        # self.winfo_toplevel()
         CountViewer(share=self)
 
     def defaultsettings(self) -> None:
@@ -2268,11 +2273,12 @@ if __name__ == "__main__":
     parse_args()
 
     # Need to set up conditions to control multiple instances.
-    # Must not allow multiple instances to write to the same log file.
-    # In Class Logs, LOGFILE path constants are different
-    #   for stand-alone and Terminal executions.
-    # Multiple instances of Terminal executions can run when from
-    #   different directories.
+    # Must not allow multiple instances to write to the same log file,
+    #   so exit if another instance tries to run from the same directory.
+    # In Class Logs, LOGFILE paths are different for stand-alone and
+    #   Terminal executions.
+    # Multiple instances of Terminal executions can run when they are
+    #   from different directories; only single stand-alone apps can run.
     _exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
                  f' {Path.cwd()}. Exiting...\n')
 
@@ -2289,7 +2295,6 @@ if __name__ == "__main__":
         sentinel, sentinel_count = Instances.track_sentinel(Logs.LOGFILE.parent)
 
         with sentinel:
-            # Exit if another instance is running from the log file dir.
             if sentinel_count > 1:
                 print(_exit_msg)
                 sleep(5)
@@ -2320,7 +2325,6 @@ if __name__ == "__main__":
                       " has been deleted.\n")
 
     else:
-        # Exit if another instance is running from the log file directory.
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
                                  f'.{__program_name__}_lockfile')
 
