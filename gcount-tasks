@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.9.8'
+__version__ = '0.9.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -2268,7 +2268,8 @@ if __name__ == "__main__":
     parse_args()
 
     # Need to set up conditions to control multiple instances.
-    # Must not allow multiple instances to write to the same log file.
+    # Must not allow multiple instances to write to the same log file,
+    #   so best to exit program to prevent that.
     # In Class Logs, LOGFILE path constants are different
     #   for stand-alone and Terminal executions.
     # Multiple instances of Terminal executions can run when from
@@ -2281,15 +2282,18 @@ if __name__ == "__main__":
                      ' is already running. Exiting...\n')
 
     if MY_OS == 'win':
-        # Can restrict execution to only one instance if
-        #   "with sentinel: if..." is replaced with this mutex method.
+
+        # Can restrict all executions to only one instance if
+        #   "with sentinel: if..." is replaced with this mutex module.
         # winstance = Instances.OneWinstance()
         # instance.exit_twinstance(_exit_msg)
 
-        sentinel, sentinel_count = Instances.track_sentinel(Logs.LOGFILE.parent)
+        # Use of _exit_msg in this call will exit program here if
+        #   another instance is running from the LOGFILE directory.
+        sentinel, sentinel_count = Instances.track_sentinel(
+            Logs.LOGFILE.parent, _exit_msg)
 
         with sentinel:
-            # Exit if another instance is running from the log file dir.
             if sentinel_count > 1:
                 print(_exit_msg)
                 sleep(5)
@@ -2320,7 +2324,6 @@ if __name__ == "__main__":
                       " has been deleted.\n")
 
     else:
-        # Exit if another instance is running from the log file directory.
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
                                  f'.{__program_name__}_lockfile')
 
