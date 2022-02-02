@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'instances.py'
-__module_ver__ = '0.2.0'
+__module_ver__ = '0.2.1'
 __dev_environment__ = 'Python 3.8 - 3.9'
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -58,12 +58,11 @@ def program_name() -> str:
 
     :return: Context-specific name of the main program, as string.
     """
-    # Use the PyInstaller stand-alone executable name as needed.
     if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-        # Need the PyInstaller spec file EXE name= to match this program name.
-        _program_name = 'GcountTasks'
+        _program_name = Path(sys.executable).stem
     else:
         _program_name = Path(sys.modules['__main__'].__file__).stem
+
     return _program_name
 
 
