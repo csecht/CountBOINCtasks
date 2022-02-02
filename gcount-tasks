@@ -550,10 +550,6 @@ class Logs:
         filetext.see(tk.END)
         filetext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
-        Binds.click('right', filewin, app)
-        Binds.keyboard('close', filewin, app)
-        Binds.keyboard('saveas', filewin, None, filepath)
-
         ttk.Button(
             filewin, text='Update',
             command=lambda: Files.update(filetext, filepath, filewin),
@@ -582,6 +578,10 @@ class Logs:
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis())
+
+        Binds.click('right', filewin, app)
+        Binds.keyboard('close', filewin, app)
+        Binds.keyboard('saveas', filewin, None, filepath)
 
 
 # ############ A MVC add-on; independent of data functions #############
@@ -2309,7 +2309,7 @@ if __name__ == "__main__":
     if MY_OS == 'win':
 
         # Can restrict all executions to only one instance if
-        #   "with sentinel: if..." is replaced with this mutex module.
+        #   "with sentinel:..." is replaced with this mutex module.
         # winstance = Instances.OneWinstance()
         # instance.exit_twinstance(_exit_msg)
 
@@ -2319,11 +2319,6 @@ if __name__ == "__main__":
             Logs.LOGFILE.parent, exit_msg)
 
         with sentinel:
-            if sentinel_count > 1:
-                print(exit_msg)
-                sleep(5)
-                sys.exit(0)
-
             try:
                 print(f'{__program_name__} now running...')
                 app = CountController()
@@ -2352,10 +2347,9 @@ if __name__ == "__main__":
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
                                  f'.{__program_name__}_lockfile')
 
-        # NOTE: fcntl.lockf in Instances.lock_or_exit() does not work
-        #   when file descriptor _fd is defined as "with open()...".
-        _fd = open(lockfile_fullpath, 'w')
-        Instances.lock_or_exit(_fd, exit_msg)
+        # pylint: disable=consider-using-with
+        lockfile = open(lockfile_fullpath, 'w')
+        Instances.lock_or_exit(lockfile, exit_msg)
 
         try:
             print(f'{__program_name__} now running...')
