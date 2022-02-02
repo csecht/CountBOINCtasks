@@ -2311,10 +2311,12 @@ if __name__ == "__main__":
         # Can restrict all executions to only one instance if
         #   "with sentinel:..." is replaced with this mutex module.
         # winstance = Instances.OneWinstance()
-        # instance.exit_twinstance(_exit_msg)
+        # instance.exit_twinstance(exit_msg)
 
-        # Using _exit_msg in this call will exit program here if
+        # Using exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
+        # Note: sentinel_count not currently used in main script b/c
+        #    instance management is handled through instances module.
         sentinel, sentinel_count = Instances.sentinel_or_exit(
             Logs.LOGFILE.parent, exit_msg)
 
@@ -2324,7 +2326,7 @@ if __name__ == "__main__":
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
 
-                # Need absolute path when running stand-alone app from PyInstaller.
+                # Need absolute path for stand-alone app from PyInstaller.
                 img = tk.PhotoImage(
                     file=Utils.absolute_path_to('images/count_icon_512.png'))
                 app.iconphoto(True, img)
@@ -2356,7 +2358,7 @@ if __name__ == "__main__":
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
 
-            # Need absolute path when running stand-alone app from PyInstaller.
+            # Need absolute path for stand-alone app from PyInstaller.
             img = tk.PhotoImage(
                 file=Utils.absolute_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
