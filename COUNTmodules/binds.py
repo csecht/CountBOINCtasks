@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.7'
+__module_ver__ = '0.1.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -47,6 +47,7 @@ def click(click_type, click_widget, mainwin) -> None:
 
     :param click_type: Example mouse button or button modifiers;
         left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
+        'right': popup menu of text edit and window commands.
     :param click_widget: Name of the widget in which click commands are
         to be active.
     :param mainwin: The main window of the tk() mainloop, e.g.,
@@ -66,26 +67,26 @@ def click(click_type, click_widget, mainwin) -> None:
 
     # Based on: https://stackoverflow.com/questions/57701023/
     def popup_menu(event):
-        right_click_menu = Menu(None, tearoff=0, takefocus=0)
+        popup = Menu(None, tearoff=0, takefocus=0)
 
-        right_click_menu.add_command(
+        popup.add_command(
             label='Select all',
             command=lambda: on_click(event, 'SelectAll'))
-        right_click_menu.add_command(
+        popup.add_command(
             label='Copy',
             command=lambda: on_click(event, 'Copy'))
-        right_click_menu.add_command(
+        popup.add_command(
             label='Paste',
             command=lambda: on_click(event, 'Paste'))
-        right_click_menu.add_command(
+        popup.add_command(
             label='Cut',
             command=lambda: on_click(event, 'Cut'))
-        right_click_menu.add(constants.SEPARATOR)
-        right_click_menu.add_command(
+        popup.add(constants.SEPARATOR)
+        popup.add_command(
             label='Close window',
             command=lambda: utils.get_toplevel('winpath', mainwin).destroy())
 
-        right_click_menu.tk_popup(event.x_root + 10, event.y_root + 15)
+        popup.tk_popup(event.x_root + 10, event.y_root + 15)
 
     if click_type == 'right':
         if MY_OS in 'lin, win':
