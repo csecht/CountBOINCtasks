@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.0'
+__module_ver__ = '0.1.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -289,7 +289,7 @@ class Logs:
 
         insert_txt = summary_text + recent_interval_text
 
-        max_line = len(max(list(insert_txt.splitlines()), key=len))
+        max_line = len(max(insert_txt.splitlines(), key=len))
 
         # Separator dash from https://coolsymbol.com/line-symbols.html.
         # print(ord("─")) -> 9472
@@ -336,7 +336,7 @@ class Logs:
         start2intvls = []
         intvl_duration = []
 
-        # *_dt vars are datetime.timedelta objects, so initialize with
+        # start_dt is a datetime.timedelta object, so initialize with
         #    formatted Epoch origin time.
         start_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
 
@@ -431,7 +431,8 @@ class Logs:
         filewin.focus_set()
 
         insert_txt = Path(filepath).read_text()
-        max_line = len(max(list(insert_txt.splitlines()), key=len))
+
+        max_line = len(max(insert_txt.splitlines(), key=len))
 
         # Use a "dark" background/foreground theme for file text.
         filetext = ScrolledText(filewin, font='TkFixedFont',
