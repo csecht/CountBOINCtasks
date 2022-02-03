@@ -87,6 +87,8 @@ class OneWinstance:
         No errors (ERROR_ALREADY_EXISTS == 0) when a mutex
         is first created; an error value (True) when another
         instance is created with the same mutex name.
+
+        :return: True if another instance is running, False if not.
         """
         return self.lasterror == ERROR_ALREADY_EXISTS
 

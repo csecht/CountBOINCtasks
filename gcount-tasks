@@ -1911,7 +1911,7 @@ if __name__ == "__main__":
         # Can restrict all executions to only one instance if
         #   "with sentinel:..." is replaced with this mutex module.
         # winstance = Instances.OneWinstance()
-        # instance.exit_twinstance(exit_msg)
+        # winstance.exit_twinstance(exit_msg)
 
         # Using exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
