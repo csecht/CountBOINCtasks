@@ -892,6 +892,7 @@ class CountModeler:
                     f"{bigindent}stdev {self.share.data['tt_sd_sumry'].get()},"
                     f" total {self.share.data['tt_total_sumry'].get()}")
                 logging.info(report)
+
                 # Need to reset flag to toggle summary logging.
                 self.share.data['log_summary'].set(False)
 
@@ -936,6 +937,7 @@ class CountViewer(tk.Frame):
         self.share = share
         self.dataframe = tk.Frame()
         self.menubar = tk.Menu()
+        # self.master is an implicit internal attribute.
 
         # Set colors for row labels and data display.
         # These colors are compatible with red-green color-blindness.
@@ -1119,6 +1121,7 @@ class CountViewer(tk.Frame):
         #   outside CountViewer, must use 'app' to reference mainloop.
 
         self.master.config(menu=self.menubar)
+
         # Add pull-down menus
         file = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='File', menu=file)
@@ -1132,6 +1135,7 @@ class CountViewer(tk.Frame):
         file.add_command(label='Quit', command=quit_gui,
                          accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
+
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='View', menu=view)
         view.add_command(label='Log file',
@@ -1144,6 +1148,7 @@ class CountViewer(tk.Frame):
         view.add_command(label='Saved Analyses',
                          command=lambda: Logs.view(Logs.ANALYSISFILE, app),
                          accelerator='Ctrl+Shift+A')
+
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(label='Information', command=self.share.info)
@@ -1239,6 +1244,7 @@ class CountViewer(tk.Frame):
         tk.Label(
             text='Counting since', bg=self.master_bg, fg=self.share.row_fg
         ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
+
         row_header = {
             #'Counting since': 2,
             'Count interval, t': 3,
@@ -1252,6 +1258,7 @@ class CountViewer(tk.Frame):
             'Tasks in queue:': 12,
             'Notices:': 13
         }
+
         for header, rownum in row_header.items():
             tk.Label(
                 text=f'{header}', bg=self.master_bg, fg=self.share.row_fg
@@ -1319,6 +1326,7 @@ class CountViewer(tk.Frame):
             row=11, column=1, padx=3, sticky=tk.W)
         self.num_tasks_all_l.grid(
             row=12, column=1, padx=3, sticky=tk.W)
+
         # Place cycles_remain value in same cell as its header, but shifted right.
         if MY_OS in 'lin, dar':
             self.cycles_remain_l.grid(
@@ -1326,6 +1334,7 @@ class CountViewer(tk.Frame):
         elif MY_OS == 'win':
             self.cycles_remain_l.grid(
                 row=12, column=2, padx=(110, 0), sticky=tk.W)
+
         #   Need pady for alignment with the row header.
         self.share.notice_l.grid(
             row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0),
@@ -1560,11 +1569,13 @@ class CountViewer(tk.Frame):
         #    are set in settings() or in Modeler.default_settings().
         if not self.share.setting['interval_t'].get():
             self.share.defaultsettings()
+
         if self.share.setting['interval_t'].get() != '1h':
             interval_m = int(self.share.setting['interval_t'].get()[:-1])
         else:
             # Need to convert 1h to minutes for comparisons.
             interval_m = 60
+
         self.share.setting['interval_m'].set(interval_m)
 
         if not self.share.setting['sumry_t_value'].get():
@@ -1572,14 +1583,17 @@ class CountViewer(tk.Frame):
             messagebox.showerror(title='Invalid entry', detail=msg,
                                  parent=self.settings_win)
             self.share.setting['sumry_t_value'].set(1)
-        sumry_value = self.share.setting['sumry_t_value'].get()
+
         # If sumry_value = 0, it will be caught by interval_m comparison below.
+        sumry_value = self.share.setting['sumry_t_value'].get()
 
         # Need to set summary_t here as concat of the two sumry_t element strings,
         #   then convert it to minutes for use in comparisons.
         summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
+
         summary_m = T.string_to_min(summary_t)
+
         if interval_m >= summary_m or summary_m % interval_m != 0:
             info = "Summary time must be greater than, and a multiple of, interval time"
             messagebox.showerror(title='Invalid entry', detail=info,
@@ -1904,7 +1918,7 @@ if __name__ == "__main__":
         # Using exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
         # Note: sentinel_count not currently used in main script b/c
-        #    instance management is handled through instances module.
+        #    instance management is handled through Instances module.
         sentinel, sentinel_count = Instances.sentinel_or_exit(
             Logs.LOGFILE.parent, exit_msg)
 
