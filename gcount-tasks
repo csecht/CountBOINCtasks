@@ -1161,8 +1161,7 @@ class CountViewer(tk.Frame):
         # Inner functions for window and selection control and user FYI:
 
         # Need to disable default window Exit; only allow exit from active
-        #   Confirm button. https://stackoverflow.com/questions/22738412/
-        #   a-suitable-do-nothing-lambda-expression-in-python
+        #   Confirm button.
         def no_exit_on_x():
             messagebox.showinfo(
                 parent=self.settings_win,
@@ -1260,7 +1259,7 @@ class CountViewer(tk.Frame):
         self.countnow_button.grid(
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
 
-        # Add tooltips to explain entries and selections.
+        # Add tooltips that explain entries and selections.
         self.settings_tooltips()
 
     def settings_tooltips(self) -> None:
