@@ -2,10 +2,19 @@
 """
 Executes BOINC commands and parsing task data through boinccmd.
 Not all boinc-client commands are supported.
-Methods: set_boinc_path(),
-run_boinc(), get_version(), check_boinc(), get_reported(), get_tasks(),
-get_runningtasks(), project_url(), get_project_url(), project_action(),
-no_new_tasks().
+Methods:
+set_boinc_path() - Return OS-specific path for BOINC's boinccmd binary.
+run_boinc() - Execute a boinc-client command line; returns output.
+get_version() - Get version number of boinc client; return list of one.
+check_boinc() - Check whether BOINC client is running; exit if not.
+get_reported() - Get data for reported boinc-client tasks.
+get_tasks() - Get data for current boinc-client tasks.
+get_runningtasks() - Get names of running boinc-client tasks for a
+    specified app.
+project_url() - Return dictionary of BOINC project NAMES and server urls.
+get_project_url() - Return current local host boinc-client Project URLs.
+project_action() - Execute a boinc-client action for a specified Project.
+no_new_tasks() - Get Project status for "Don't request more work".
 
     Copyright (C) 2020-2021  C. Echt
 
@@ -193,8 +202,7 @@ def get_version(cmd=' --client_version') -> list:
 
 def check_boinc():
     """
-    Check whether BOINC client is running before proceeding to implement
-    settings and begin counting.
+    Check whether BOINC client is running; exit if not.
     """
 
     # Note: Any BC boinccmd will return this string (as a list)
@@ -392,7 +400,7 @@ def project_action(project: str, action: str):
 
 def no_new_tasks(cmd=' --get_project_status') -> bool:
     """
-    Get data from current boinc-client tasks.
+    Get Project status for "Don't request more work".
 
     :param cmd: The boinccmd command to get Project information.
     :return: True or False indicating status of "No new tasks"

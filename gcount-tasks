@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.4'
+__version__ = '0.10.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -105,10 +105,11 @@ def parse_args() -> None:
         sys.exit(0)
 
 
-def check_boinc() -> None:
+def check_boinc_tk() -> None:
     """
-    Check whether BOINC client is running. Called before proceeding to
-    implement settings and begin counting and at each notice interval.
+    Check whether BOINC client is running; quit app if not.
+    Called before proceeding to implement settings and begin counting,
+    and at each notice interval.
     """
     # Note: Any BC boinccmd will return this string (in a list)
     #   if boinc-client is not running. BC.get_version() is used b/c it
@@ -438,7 +439,7 @@ class CountModeler:
             sleep(NOTICE_INTERVAL)
             with self.thread_lock:
                 # Need to quit app if boinc-client is no longer running.
-                check_boinc()
+                check_boinc_tk()
 
                 self.task_states()
                 num_running = self.share.note['num_running'].get()
@@ -882,7 +883,7 @@ class CountViewer(tk.Frame):
         #   emphasize_start_data(), starting_tooltips(),
         #   CountModeler.start_data(). Of course none of that sequence
         #   matters if BOINC client is not running, so...
-        check_boinc()
+        check_boinc_tk()
 
     def master_widgets(self) -> None:
         """
