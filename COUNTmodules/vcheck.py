@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Simple check of current Python version required for main script.
+Simple check of current Python version.
+Functions:
+minversion() - Exit program if not minimum required version.
 
     Copyright (C) 2020  C. Echt
 
