@@ -35,7 +35,8 @@ def isversion(req_version: str) -> None:
     Check current Python version against version required. Exit program
     if current version is less than required.
 
-    :param req_version: The required version, example, '3.6'.
+    :param req_version: The required major and minor version;
+        example, '3.6'.
     """
     ver = tuple(map(int, req_version.split('.')))
     if version_info < ver:
