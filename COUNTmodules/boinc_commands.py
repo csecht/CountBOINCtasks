@@ -2,7 +2,7 @@
 """
 Executes BOINC commands and parsing task data through boinccmd.
 Not all boinc-client commands are supported.
-Methods:
+Functions:
 set_boinc_path() - Return OS-specific path for BOINC's boinccmd binary.
 run_boinc() - Execute a boinc-client command line; returns output.
 get_version() - Get version number of boinc client; return list of one.
@@ -31,48 +31,48 @@ no_new_tasks() - Get Project status for "Don't request more work".
     You should have received a copy of the GNU General Public License
     along with this program. If not, see https://www.gnu.org/licenses/.
 """
-
-import shlex
-from pathlib import Path
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
-from sys import platform, exit as sysexit
-
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.1'
+__module_ver__ = '0.5.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
+import shlex
+from pathlib import Path
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from sys import platform, exit as sysexit
+
 CFGFILE = Path('countCFG.txt')
 
-# Tuples that may be used in BoincCommand class:
+# Tuples that may be used in various functions:
 tasktags = ('name', 'WU name', 'project URL', 'received',
             'report deadline', 'ready to report', 'state',
             'scheduler state', 'active_task_state',
             'app version num', 'resources', 'final CPU time',
             'final elapsed time', 'final elapsed time',
-            'exit status', 'signal', 'estimated CPU time '
-                                     'remaining', 'slot', 'PID', 'current CPU time',
+            'exit status', 'signal', 'estimated CPU time remaining',
+            'slot', 'PID', 'current CPU time',
             'CPU time at time_now checkpoint', 'fraction done',
-            'swap size', 'working set size', 'master URL')
+            'swap size', 'working set size', 'master URL'
+            )
 
 projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
               'nomorework', 'allowmorework', 'detach_when_done',
-              'dont_detach_when_done')
-
+              'dont_detach_when_done'
+              )
 
 # reportedtags = ('task', 'project URL', 'app name', 'exit status',
-#                 'elapsed time', 'completed time',
-#                 'get_reported time')
+#                 'elapsed time', 'completed time', 'get_reported time')
 #
-# gettasktags = ('name', 'state', 'scheduler state',
-#                'fraction done', 'active_task_state')
+# gettasktags = ('name', 'state', 'scheduler state',  'fraction done',
+#                'active_task_state')
+
 
 
 def set_boincpath() -> str:
