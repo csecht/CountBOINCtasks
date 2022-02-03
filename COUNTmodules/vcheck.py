@@ -30,10 +30,10 @@ __status__ = 'Development Status :: 4 - Beta'
 from sys import version_info, exit as sysexit
 
 
-def isversion(req_version: str) -> None:
+def minversion(req_version: str) -> None:
     """
-    Check current Python version against version required. Exit program
-    if current version is less than required.
+    Check current Python version against minimum version required.
+    Exit program if current version is less than required.
 
     :param req_version: The required major and minor version;
         example, '3.6'.

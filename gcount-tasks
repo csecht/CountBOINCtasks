@@ -48,7 +48,7 @@ from COUNTmodules \
     import binds, boinc_commands, files, instances, logs, times, utils, vcheck
 
 # Need to check that Python interpreter is at least the required version.
-vcheck.isversion('3.6')
+vcheck.minversion('3.6')
 
 try:
     import tkinter as tk
