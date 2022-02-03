@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.1'
+__version__ = '0.10.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -44,7 +44,8 @@ from random import choice
 from socket import gethostname
 from time import sleep, time
 
-from COUNTmodules import binds, boinc_commands, files, instances, logs, times, utils
+from COUNTmodules \
+    import binds, boinc_commands, files, instances, logs, times, utils, vcheck
 
 try:
     import tkinter as tk
@@ -57,13 +58,6 @@ except (ImportError, ModuleNotFoundError) as error:
           '\nOn Linux, you may also need: $ sudo apt-get install python3-tk\n'
           f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
 
-if sys.version_info < (3, 6):
-    print(f'Sorry, but this program requires Python 3.6 or later.\n'
-          'Current Python version: '
-          f'{sys.version_info.major}.{sys.version_info.minor}\n'
-          'Python downloads are available from https://docs.python.org/')
-    sys.exit(0)
-
 Binds = binds
 BC = boinc_commands
 Files = files
@@ -72,6 +66,9 @@ Logs = logs.Logs()
 T = times
 Utils = utils
 Tooltip = utils.Tooltip
+
+# Need to check that Python interpreter is at least the required version.
+vcheck.isversion('3.6')
 
 __program_name__ = Instances.program_name()
 
