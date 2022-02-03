@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.0'
+__version__ = '0.10.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -163,228 +163,6 @@ def quit_gui(keybind=None) -> None:
         sys.exit('Program exit with unexpected condition.')
 
     return keybind
-
-
-class CountFyi:
-    """
-    Methods to provide user with information and help.
-    """
-
-    def __init__(self, share):
-        self.share = share
-
-    @staticmethod
-    def about() -> None:
-        """
-        Toplevel display of program metadata.
-        Called from Viewer.master_widgets() Help menu bar.
-
-        :return: None
-        """
-        # Have highlightcolor match self.master_bg of the app main window.
-        aboutwin = tk.Toplevel(highlightthickness=5,
-                               highlightcolor='SteelBlue4',
-                               highlightbackground='grey75')
-        aboutwin.geometry(Utils.position_wrt_window(app, 30, 20))
-        aboutwin.resizable(False, False)
-        aboutwin.title(f'About {__program_name__}')
-        aboutwin.focus_set()
-
-        insert_txt = (f'{__doc__}\n'
-                      f'{"Author:".ljust(13)}{__author__}\n'
-                      f'{"Credits:".ljust(13)}{__credits__}\n'
-                      f'{"License:".ljust(13)}{__license__}\n'
-                      f'{"Program:".ljust(13)}{__program_name__}\n'
-                      f'{"Version:".ljust(13)}{__version__}\n'
-                      f'{"Dev. Env.:".ljust(13)}{__dev_environment__}\n'
-                      f'{"URL:".ljust(13)}{__project_url__}\n'
-                      f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
-                      f'{"Status:".ljust(13)}{__status__}\n'
-                      )
-
-        max_line = len(max([line for line in insert_txt.splitlines()], key=len))
-
-        abouttxt = tk.Text(aboutwin, font='TkFixedFont',
-                           width=max_line, height=insert_txt.count('\n') + 2,
-                           relief='groove', borderwidth=5, padx=25)
-        abouttxt.insert(1.0, insert_txt)
-        abouttxt.pack()
-        # Need to not have cursor appear in Text, but allow
-        #   rt-click edit commands to work if needed.
-        abouttxt.configure(state=tk.DISABLED)
-
-        Binds.keyboard('close', aboutwin, app)
-        Binds.click('right', abouttxt, app)
-
-    def compliment_me(self) -> None:
-        """A silly diversion; called from Help menu bar and keybinding.
-        """
-        compliments = [
-            "Hey there good lookin'!", 'I wish we had met sooner.',
-            'You are the smartest person I know.', 'I like your hair.',
-            'You have such a nice smile.', 'Smart move!',
-            'Blue is your color.', 'Good choice!',
-            "That's very kind of you.", "Stop! You're making me blush.",
-            'I just love what you did.', 'How witty you are!', 'Awesome!',
-            'Your tastes are impeccable.', "You're incredible!",
-            'You are so talented!', "I wish I'd thought of that.",
-            'This is fun!', 'Get back to work.', 'Nice!', 'You saved me.',
-            'You are an inspiration to us all.', "That's so funny!",
-            'Show me how you do that.', "I've always looked up to you.",
-            'You sound great!', 'You smell nice.', 'Great job!',
-            'You are a role model.', 'I wish more people were like you.',
-            'We appreciate what you did.', 'I hear people look up to you.',
-            'You are a really good dancer.', 'What makes you so successful?',
-            'When you speak, people listen.', 'You are a superb person.',
-            'You rock!', 'You nailed it!', 'That was really well done.',
-            'You are amazing!', 'We need more folks like you around here.',
-            'Excuse me, are you a model?', 'What a lovely laugh you have.',
-            "I'm jealous of your ability.", "You're the stuff of legends.",
-            'This would not be possible without you.', 'Way to go! Yay!',
-            'Did you make that? I love it!', 'You are the best!',
-            'I like what you did.', 'Whoa. Have you been working out?',
-            "We can't thank you enough.", 'No, really, you have done enough.',
-            "That's a good look for you.", 'I could not have done it better.',
-            'Congratulations!', 'Try not. Do or do not. There is no try.',
-            "Well, THAT's impressive.", 'I hear that you are the one.',
-            'You excel at everything.', 'Your voice is very soothing.',
-            'Is it true what people say?', 'The word is, you got it!',
-            'The Nobel Committee has been trying to reach you.',
-            'The Academy is asking for your CV.', 'You look great!',
-            'The President seeks your council.', 'Thank you so much!',
-            'The Prime Minister seeks your council.', 'Crunchers rule!',
-            'Crunchers are the best sort of people.',
-            "I can't think of anything to say. Sorry.",
-        ]
-        praise = choice(compliments)
-        self.share.compliment_l.config(text=praise)
-        self.share.notice_l.grid_remove()
-        # Need to re-grid initial master_widgets() grids b/c its grid may
-        #   have been removed by a notice_l call. Original grid coordinates
-        #   are set in master_widgets().
-        self.share.compliment_l.grid()
-
-        def refresh():
-            self.share.compliment_l.grid_remove()
-            # Re-grid notice to return to current Notice text.
-            self.share.notice_l.grid()
-            app.update_idletasks()
-
-        self.share.compliment_l.after(3333, refresh)
-
-    @staticmethod
-    def file_paths() -> None:
-        """
-        Toplevel display of full paths for program-generated files.
-        Called from Viewer.master_widgets() Help menu bar.
-        """
-
-        # Have highlightcolor match self.master_bg of the app main window.
-        pathswin = tk.Toplevel(highlightthickness=5,
-                               highlightcolor='SteelBlue4',
-                               highlightbackground='grey75')
-
-        # Need to position window over the window from which it is called.
-        pathswin.geometry(Utils.get_toplevel('position', app))
-        pathswin.resizable(False, False)
-        pathswin.title(f'Program-generated files on {gethostname()}')
-        pathswin.focus_set()
-
-        insert_txt = (
-            f'Full file paths created by {__program_name__}\n\n'
-            f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
-            f'   ...do not alter this file while program is running\n'
-            f'   {Logs.LOGFILE}\n\n'
-            f'Saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
-            f'   {Logs.ANALYSISFILE}\n'
-        )
-
-        # Need to add OS-specific instance management path
-        if MY_OS == 'win':
-            insert_txt = (f'{insert_txt}\nSentinel file for this instance'
-                          f' (is deleted on exit)\n'
-                          f'   {sentinel.name}\n')
-        else:
-            insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
-                          f'   {lockfile_fullpath}\n')
-
-        max_line = len(max([line for line in insert_txt.splitlines()], key=len))
-
-        pathstxt = tk.Text(pathswin, font='TkFixedFont',
-                           height=insert_txt.count('\n') + 1,
-                           width=max_line,
-                           relief='groove', borderwidth=5,
-                           padx=10, pady=10)
-        pathstxt.insert(1.0, insert_txt)
-
-        # Need to center the header lines.
-        pathstxt.tag_configure("header", justify='center')
-        pathstxt.tag_add("header", "1.0", "3.0")
-        pathstxt.pack()
-
-        Binds.keyboard('close', pathswin, app)
-        Binds.click('right', pathstxt, app)
-
-    @staticmethod
-    def information() -> None:
-        """
-        Toplevel display of basic information for usage and actions.
-        Called from Viewer.master_widgets() Help menu bar.
-
-        :return: None
-        """
-
-        # Have highlightcolor match self.master_bg of the app main window.
-        infowin = tk.Toplevel(highlightthickness=5,
-                              highlightcolor='SteelBlue4',
-                              highlightbackground='grey75')
-        infowin.geometry(Utils.position_wrt_window(app, 30, 20))
-        infowin.resizable(False, False)
-        infowin.title('Usage information')
-        infowin.focus_set()
-
-        insert_txt = ("""
-        - Counting begins once "Count now" is clicked in settings window.\n
-        - Interval and Summary data buttons switch visual emphasis;
-                ...those buttons activate once their data post.
-                The Summary task time "avg" is the weighted mean.\n
-        - At start, '# tasks reported' and 'Interval time' are from
-                the most recent hourly BOINC report.\n
-        - Number of tasks in queue and Notices update every"""
-                      f' {NOTICE_INTERVAL} seconds.\n'
-                      """
-        - Displayed countdown clock time is approximate.\n
-        - Counts and Notices histories are in the log file.\n
-        - While not recommended, multiple program instances can be run
-                from separate directories with command line execution.
-                Only one stand-alone app instance is allowed.\n
-        - When analysis of logged hours is "cannot determine"...
-                Quick fix: backup then delete log file, restart program.\n
-        - Right-click actions only affect on-screen text, not file content,
-                except edits in the log analysis window, such as notations,
-                can be saved to the log analysis file.\n
-        - Most common key commands work as expected.
-        """)
-
-        # OS-specific Text widths were empirically determined for TkTextFont.
-        os_width = 0
-        if MY_OS in 'lin, win':
-            os_width = 64
-        elif MY_OS == 'dar':
-            os_width = 56
-
-        infotxt = tk.Text(infowin, font='TkTextFont',
-                          width=os_width, height=insert_txt.count('\n') + 2,
-                          relief='groove', padx=15)
-        infotxt.insert(1.0, insert_txt)
-        infotxt.pack()
-
-        # Need to not have cursor appear in Text, but allow
-        #   rt-click edit commands to work if needed.
-        infotxt.configure(state=tk.DISABLED)
-
-        Binds.keyboard('close', infowin, app)
-        Binds.click('right', infotxt, app)
 
 
 # ############################ MVC Classes #############################
@@ -923,7 +701,7 @@ class CountModeler:
         sleep(70)
 
 
-# MVC Viewer, the tkinter GUI engine; runs in main thread.
+# ###### MVC Viewer: the tkinter GUI engine; runs in main thread. ######
 class CountViewer(tk.Frame):
     """
     The MVC Viewer represents the master Frame for the main window.
@@ -1240,11 +1018,6 @@ class CountViewer(tk.Frame):
         self.dataframe.columnconfigure(2, weight=1)
 
         # Fill in headers for all data rows.
-        # Pady first row to better align headers with data in dataframe.
-        tk.Label(
-            text='Counting since', bg=self.master_bg, fg=self.share.row_fg
-        ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
-
         row_header = {
             #'Counting since': 2,
             'Count interval, t': 3,
@@ -1266,6 +1039,12 @@ class CountViewer(tk.Frame):
             # ^^ Grid to N or NE to prevent Notices label from shifting down
             #    when more than one row of notice_it() text appears.
             #    For all Label constructors, self.master parent is implicit.
+
+        # Pady first row to better align headers with data in dataframe.
+        tk.Label(
+            text='Counting since', bg=self.master_bg, fg=self.share.row_fg
+        ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
+
         # Need to accommodate cases of two headers in same row.
         tk.Label(text='Summary time:',
                  bg=self.master_bg, fg=self.share.row_fg
@@ -1378,7 +1157,7 @@ class CountViewer(tk.Frame):
                                  foreground=self.share.row_fg)
 
         # Need text in master window to prompt user to enter settings.
-        #   The message text is covered by the settings_win, but is
+        #   The message text may be covered by the settings_win, but is
         #   seen if user drags settings_win away.
         self.time_start_l.configure(text='Waiting for run settings...')
 
@@ -1803,6 +1582,229 @@ class CountViewer(tk.Frame):
         self.view_button_style.configure('View.TButton', foreground='grey')
         self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
         return focus_event
+
+
+# ##################### User information methods #######################
+class CountFyi:
+    """
+    Methods to provide user with information and help.
+    """
+
+    def __init__(self, share):
+        self.share = share
+
+    @staticmethod
+    def about() -> None:
+        """
+        Toplevel display of program metadata.
+        Called from Viewer.master_widgets() Help menu bar.
+
+        :return: None
+        """
+        # Have highlightcolor match self.master_bg of the app main window.
+        aboutwin = tk.Toplevel(highlightthickness=5,
+                               highlightcolor='SteelBlue4',
+                               highlightbackground='grey75')
+        aboutwin.geometry(Utils.position_wrt_window(app, 30, 20))
+        aboutwin.resizable(False, False)
+        aboutwin.title(f'About {__program_name__}')
+        aboutwin.focus_set()
+
+        insert_txt = (f'{__doc__}\n'
+                      f'{"Author:".ljust(13)}{__author__}\n'
+                      f'{"Credits:".ljust(13)}{__credits__}\n'
+                      f'{"License:".ljust(13)}{__license__}\n'
+                      f'{"Program:".ljust(13)}{__program_name__}\n'
+                      f'{"Version:".ljust(13)}{__version__}\n'
+                      f'{"Dev. Env.:".ljust(13)}{__dev_environment__}\n'
+                      f'{"URL:".ljust(13)}{__project_url__}\n'
+                      f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
+                      f'{"Status:".ljust(13)}{__status__}\n'
+                      )
+
+        max_line = len(max([line for line in insert_txt.splitlines()], key=len))
+
+        abouttxt = tk.Text(aboutwin, font='TkFixedFont',
+                           width=max_line, height=insert_txt.count('\n') + 2,
+                           relief='groove', borderwidth=5, padx=25)
+        abouttxt.insert(1.0, insert_txt)
+        abouttxt.pack()
+        # Need to not have cursor appear in Text, but allow
+        #   rt-click edit commands to work if needed.
+        abouttxt.configure(state=tk.DISABLED)
+
+        Binds.keyboard('close', aboutwin, app)
+        Binds.click('right', abouttxt, app)
+
+    def compliment_me(self) -> None:
+        """A silly diversion; called from Help menu bar and keybinding.
+        """
+        compliments = [
+            "Hey there good lookin'!", 'I wish we had met sooner.',
+            'You are the smartest person I know.', 'I like your hair.',
+            'You have such a nice smile.', 'Smart move!',
+            'Blue is your color.', 'Good choice!',
+            "That's very kind of you.", "Stop! You're making me blush.",
+            'I just love what you did.', 'How witty you are!', 'Awesome!',
+            'Your tastes are impeccable.', "You're incredible!",
+            'You are so talented!', "I wish I'd thought of that.",
+            'This is fun!', 'Get back to work.', 'Nice!', 'You saved me.',
+            'You are an inspiration to us all.', "That's so funny!",
+            'Show me how you do that.', "I've always looked up to you.",
+            'You sound great!', 'You smell nice.', 'Great job!',
+            'You are a role model.', 'I wish more people were like you.',
+            'We appreciate what you did.', 'I hear people look up to you.',
+            'You are a really good dancer.', 'What makes you so successful?',
+            'When you speak, people listen.', 'You are a superb person.',
+            'You rock!', 'You nailed it!', 'That was really well done.',
+            'You are amazing!', 'We need more folks like you around here.',
+            'Excuse me, are you a model?', 'What a lovely laugh you have.',
+            "I'm jealous of your ability.", "You're the stuff of legends.",
+            'This would not be possible without you.', 'Way to go! Yay!',
+            'Did you make that? I love it!', 'You are the best!',
+            'I like what you did.', 'Whoa. Have you been working out?',
+            "We can't thank you enough.", 'No, really, you have done enough.',
+            "That's a good look for you.", 'I could not have done it better.',
+            'Congratulations!', 'Try not. Do or do not. There is no try.',
+            "Well, THAT's impressive.", 'I hear that you are the one.',
+            'You excel at everything.', 'Your voice is very soothing.',
+            'Is it true what people say?', 'The word is, you got it!',
+            'The Nobel Committee has been trying to reach you.',
+            'The Academy is asking for your CV.', 'You look great!',
+            'The President seeks your council.', 'Thank you so much!',
+            'The Prime Minister seeks your council.', 'Crunchers rule!',
+            'Crunchers are the best sort of people.',
+            "I can't think of anything to say. Sorry.",
+        ]
+        praise = choice(compliments)
+        self.share.compliment_l.config(text=praise)
+        self.share.notice_l.grid_remove()
+        # Need to re-grid initial master_widgets() grids b/c its grid may
+        #   have been removed by a notice_l call. Original grid coordinates
+        #   are set in master_widgets().
+        self.share.compliment_l.grid()
+
+        def refresh():
+            self.share.compliment_l.grid_remove()
+            # Re-grid notice to return to current Notice text.
+            self.share.notice_l.grid()
+            app.update_idletasks()
+
+        self.share.compliment_l.after(3333, refresh)
+
+    @staticmethod
+    def file_paths() -> None:
+        """
+        Toplevel display of full paths for program-generated files.
+        Called from Viewer.master_widgets() Help menu bar.
+        """
+
+        # Have highlightcolor match self.master_bg of the app main window.
+        pathswin = tk.Toplevel(highlightthickness=5,
+                               highlightcolor='SteelBlue4',
+                               highlightbackground='grey75')
+
+        # Need to position window over the window from which it is called.
+        pathswin.geometry(Utils.get_toplevel('position', app))
+        pathswin.resizable(False, False)
+        pathswin.title(f'Program-generated files on {gethostname()}')
+        pathswin.focus_set()
+
+        insert_txt = (
+            f'Full file paths created by {__program_name__}\n\n'
+            f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
+            f'   ...do not alter this file while program is running\n'
+            f'   {Logs.LOGFILE}\n\n'
+            f'Saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
+            f'   {Logs.ANALYSISFILE}\n'
+        )
+
+        # Need to add OS-specific instance management path
+        if MY_OS == 'win':
+            insert_txt = (f'{insert_txt}\nSentinel file for this instance'
+                          f' (is deleted on exit)\n'
+                          f'   {sentinel.name}\n')
+        else:
+            insert_txt = (f'{insert_txt}\nLockfile (hidden):\n'
+                          f'   {lockfile_fullpath}\n')
+
+        max_line = len(max([line for line in insert_txt.splitlines()], key=len))
+
+        pathstxt = tk.Text(pathswin, font='TkFixedFont',
+                           height=insert_txt.count('\n') + 1,
+                           width=max_line,
+                           relief='groove', borderwidth=5,
+                           padx=10, pady=10)
+        pathstxt.insert(1.0, insert_txt)
+
+        # Need to center the header lines.
+        pathstxt.tag_configure("header", justify='center')
+        pathstxt.tag_add("header", "1.0", "3.0")
+        pathstxt.pack()
+
+        Binds.keyboard('close', pathswin, app)
+        Binds.click('right', pathstxt, app)
+
+    @staticmethod
+    def information() -> None:
+        """
+        Toplevel display of basic information for usage and actions.
+        Called from Viewer.master_widgets() Help menu bar.
+
+        :return: None
+        """
+
+        # Have highlightcolor match self.master_bg of the app main window.
+        infowin = tk.Toplevel(highlightthickness=5,
+                              highlightcolor='SteelBlue4',
+                              highlightbackground='grey75')
+        infowin.geometry(Utils.position_wrt_window(app, 30, 20))
+        infowin.resizable(False, False)
+        infowin.title('Usage information')
+        infowin.focus_set()
+
+        insert_txt = ("""
+        - Counting begins once "Count now" is clicked in settings window.\n
+        - Interval and Summary data buttons switch visual emphasis;
+                ...those buttons activate once their data post.
+                The Summary task time "avg" is the weighted mean.\n
+        - At start, '# tasks reported' and 'Interval time' are from
+                the most recent hourly BOINC report.\n
+        - Number of tasks in queue and Notices update every"""
+                      f' {NOTICE_INTERVAL} seconds.\n'
+                      """
+        - Displayed countdown clock time is approximate.\n
+        - Counts and Notices histories are in the log file.\n
+        - While not recommended, multiple program instances can be run
+                from separate directories with command line execution.
+                Only one stand-alone app instance is allowed.\n
+        - When analysis of logged hours is "cannot determine"...
+                Quick fix: backup then delete log file, restart program.\n
+        - Right-click actions only affect on-screen text, not file content,
+                except edits in the log analysis window, such as notations,
+                can be saved to the log analysis file.\n
+        - Most common key commands work as expected.
+        """)
+
+        # OS-specific Text widths were empirically determined for TkTextFont.
+        os_width = 0
+        if MY_OS in 'lin, win':
+            os_width = 64
+        elif MY_OS == 'dar':
+            os_width = 56
+
+        infotxt = tk.Text(infowin, font='TkTextFont',
+                          width=os_width, height=insert_txt.count('\n') + 2,
+                          relief='groove', padx=15)
+        infotxt.insert(1.0, insert_txt)
+        infotxt.pack()
+
+        # Need to not have cursor appear in Text, but allow
+        #   rt-click edit commands to work if needed.
+        infotxt.configure(state=tk.DISABLED)
+
+        Binds.keyboard('close', infowin, app)
+        Binds.click('right', infotxt, app)
 
 
 # ################## MVC Controller; is app mainloop ###################
