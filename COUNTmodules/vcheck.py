@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'vcheck.py'
-__module_ver__ = '0.1.0'
+__module_ver__ = '0.1.1'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -35,16 +35,15 @@ def minversion(req_version: str) -> None:
     Check current Python version against minimum version required.
     Exit program if current version is less than required.
 
-    :param req_version: The required major and minor version;
+    :param req_version: The required minimum major and minor version;
         example, '3.6'.
     """
     ver = tuple(map(int, req_version.split('.')))
     if version_info < ver:
         print(f'Sorry, but this program requires Python {req_version} or later.\n'
-              'Current Python version: '
-              f'{version_info.major}.{version_info.minor}\n'
+              f'Current Python version: {version_info.major}.{version_info.minor}\n'
               'Python downloads are available from https://docs.python.org/')
-    sysexit(0)
+        sysexit(0)
 
 
 def about() -> None:
