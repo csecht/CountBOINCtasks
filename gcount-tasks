@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.5'
+__version__ = '0.10.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -227,7 +227,7 @@ class CountModeler:
         self.share.data['time_prev_cnt'].set('Last hourly BOINC report.')
 
         if self.share.setting['do_log'].get():
-            self.share.logit('start')
+            self.log_it('start')
 
     def task_states(self) -> None:
         """
@@ -242,7 +242,8 @@ class CountModeler:
 
         # Need the literal task data tags as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
-        #   Use tuple index to populate the list expressions.
+        # Use tuple index to populate the list expressions instead of
+        #   calling BC.get_tasks() for each tag.
         tags = ('   name: ',
                 '   active_task_state: ',
                 '   state: ')
@@ -251,12 +252,14 @@ class CountModeler:
                         if tags[1] in elem]
         task_states = [elem.replace(tags[2], '') for elem in tasks_all
                        if tags[2] in elem]
+
         # When communication to server is stalled, all tasks will be
         #  "Ready to report" with a state of 'uploaded', so a forced
         #   Project update in notice_it() may prompt finalizing
         #   the task upload.
         if 'uploaded' in task_states and 'downloaded' not in task_states:
             self.share.note['proj_stalled'].set(True)
+
         num_running = len(
             [task for task in tasks_active if 'EXECUTING' in task])
         num_suspended_by_boinc = len(
@@ -303,7 +306,7 @@ class CountModeler:
             #   drift by more than 1 second during count_max cycles.
             # Without this time limit, each 1h interval would gain ~4s.
             interval_sec = interval_m*60
-            target_elapsed_time = reference_time + (interval_sec * (cycle+1))
+            target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
                     break
@@ -411,7 +414,7 @@ class CountModeler:
                     sumry_intvl_counts.clear()
                     sumry_intvl_ttavgs.clear()
 
-                if (cycle + 1) % (summary_m // interval_m) == 0 and num_running == 0:
+                elif (cycle + 1) % (summary_m // interval_m) == 0 and num_running == 0:
                     self.share.data['log_summary'].set(True)
                     Tooltip(self.share.sumry_b, '', 'disabled')
                     self.share.sumry_b.config(state=tk.NORMAL)
@@ -426,14 +429,14 @@ class CountModeler:
             # Call to log_it() needs to be outside the thread lock.
             app.update_idletasks()
             if self.share.setting['do_log'].get():
-                self.share.logit('interval')
+                self.log_it('interval')
 
     def notice_it(self) -> None:
         """
         Notices for BOINC task state information should run on short
         time intervals. A NOTICE_INTERVAL of 15 works well.
         Is threaded as notice_thread; started in Viewer.start_threads().
-        Calls to: task_states() and log_it().
+        Calls to: check_boinc_tk(), task_states(), and log_it().
         """
         while self.share.data['cycles_remain'].get() > 0:
             sleep(NOTICE_INTERVAL)
@@ -525,7 +528,7 @@ class CountModeler:
             app.update_idletasks()
             # Call to log_it() here needs to be outside the thread lock.
             if self.share.setting['do_log'].get():
-                self.share.logit('notice')
+                self.log_it('notice')
 
     def log_it(self, called_from) -> None:
         """
@@ -691,8 +694,9 @@ class CountModeler:
         self.share.note['notice_txt'].set(
             'Project auto-update in progress for'
             f' {self.share.first_project}...')
+
         if self.share.setting['do_log'].get():
-            self.share.logit('notice')
+            self.log_it('notice')
         # Need to provide time for BOINC Project server to respond before
         #   continuing with notice_it() thread.
         sleep(70)
@@ -1023,7 +1027,7 @@ class CountViewer(tk.Frame):
             'stdev': 6,
             'range': 7,
             'total': 8,
-            'Interval time:': 10,
+            'Datetime, interval:': 10,
             'Next count in:': 11,
             'Tasks in queue:': 12,
             'Notices:': 13
@@ -1043,7 +1047,7 @@ class CountViewer(tk.Frame):
         ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
 
         # Need to accommodate cases of two headers in same row.
-        tk.Label(text='Summary time:',
+        tk.Label(text='summary:',
                  bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(text='Counts until exit:',
@@ -1097,7 +1101,7 @@ class CountViewer(tk.Frame):
         self.time_prev_cnt_l.grid(
             row=10, column=1, columnspan=2, padx=3, sticky=tk.W)
         self.time_prev_sumry_l.grid(
-            row=10, column=2, padx=(108, 0), sticky=tk.W)
+            row=10, column=2, padx=(73, 0), sticky=tk.W)
         self.time_next_cnt_l.grid(
             row=11, column=1, padx=3, sticky=tk.W)
         self.num_tasks_all_l.grid(
@@ -1820,13 +1824,13 @@ class CountController(tk.Tk):
         # app window sizes are OS-specific b/c of different default
         #    OS font widths.
         if MY_OS == 'lin':
-            self.minsize(580, 370)
+            self.minsize(594, 370)
             self.maxsize(780, 400)
         elif MY_OS == 'win':
-            self.minsize(532, 380)
+            self.minsize(544, 380)
             self.maxsize(720, 400)
         elif MY_OS == 'dar':
-            self.minsize(600, 390)
+            self.minsize(615, 390)
             self.maxsize(780, 425)
 
         # self.winfo_toplevel()
