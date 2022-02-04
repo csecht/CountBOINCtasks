@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.1'
+__module_ver__ = '0.1.2'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -170,20 +170,31 @@ class Logs:
         #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, then flag and move on.
         if found_sumrys and found_intvls:
-            # When there are no intervals after last summary,
-            #   the last intvl date is last summary date.
-            if intvl_dates[-1] == sumry_dates[-1]:
-                recent_intervals = False
-            else:
-                index = [
-                    i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
-                index_recent = index[0] + 1  # <- The interval after the last summary.
-                recent_dates, recent_intvl_vals, recent_cnts = zip(*found_intvls[index_recent:])
-                num_recent_intvl_vals = len(set(recent_intvl_vals))
-                recent_counts = list(map(int, recent_cnts))
-                num_recent_tasks = sum(recent_counts)
-                recent_t_wtmean = T.logtimes_stat(
-                    found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
+            try:
+                # When something is off in the log file, the 'index'
+                #   statement will throw a "list index out of range" exception.
+
+                # When there are no intervals after last summary,
+                #   the last intvl date is last summary date.
+                if intvl_dates[-1] == sumry_dates[-1]:
+                    recent_intervals = False
+                else:
+                    index = [
+                        i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
+                    index_recent = index[0] + 1  # <- The interval after the last summary.
+                    recent_dates, recent_intvl_vals, recent_cnts = zip(*found_intvls[index_recent:])
+                    num_recent_intvl_vals = len(set(recent_intvl_vals))
+                    recent_counts = list(map(int, recent_cnts))
+                    num_recent_tasks = sum(recent_counts)
+                    recent_t_wtmean = T.logtimes_stat(
+                        found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
+            except IndexError:
+                summary_text = 'An error occurred. Cannot analyse log data.\n'
+                recent_interval_text = (
+                    'Quick fix: backup then delete the log file; restart program.\n'
+                    'See menu bar Help > "File paths" log file location.\n'
+                )
+                return summary_text, recent_interval_text
 
         # Need to tailor report texts for various counting conditions.
         if not found_sumrys and not found_intvls:
