@@ -160,8 +160,8 @@ def run_boinc(cmd_str: str) -> list:
         cmd = shlex.split(cmd_str)
 
     try:
-        output = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True)
-        text = output.communicate()[0].split('\n')
+        with Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True) as output:
+            text = output.communicate()[0].split('\n')
 
         # When boinc-client is running, the specified cmd option from a get_ method
         #   will fill the first element of the text list with its output. When not
@@ -253,7 +253,7 @@ def get_tasks(tag: str, cmd=' --get_tasks') -> list:
 
     :param tag: Examples: 'name', 'state', 'scheduler
                 state', 'fraction done', 'active_task_state'
-                Use 'all' to get full output from cmd
+                Use 'all' to get full output from *cmd*.
     :param cmd: The boinccmd command to get queued tasks information.
     :return: List of tagged data parsed from cmd output.
     """
