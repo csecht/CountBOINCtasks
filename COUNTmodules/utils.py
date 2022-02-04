@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.7'
+__module_ver__ = '0.1.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -93,7 +93,7 @@ class Tooltip:
         self.tt_text = tt_text
         self.wait_time = wait_time
         self.wrap_len = wrap_len
-        self.bg = 'LightYellow1'
+        self._bg = 'LightYellow1'
 
         if state == 'disabled':
             self.widget.bind("<Enter>", lambda _: None)
@@ -105,7 +105,7 @@ class Tooltip:
             self.widget.bind("<Leave>", self.on_leave)
             self.widget.bind("<ButtonPress>", self.close_now)
 
-        self.id = None
+        self._id = None
         self.tt_win = None
 
     def on_enter(self, *event):
@@ -116,7 +116,7 @@ class Tooltip:
         :return: The bound event action.
         """
         self.cancel_wait()
-        self.id = self.widget.after(self.wait_time, self.show)
+        self._id = self.widget.after(self.wait_time, self.show)
         return event
 
     def on_leave(self, *event):
@@ -154,8 +154,8 @@ class Tooltip:
         """
         Cancel *wait_time* to immediately close the tooltip.
         """
-        id_ = self.id
-        self.id = None
+        id_ = self._id
+        self._id = None
         if id_:
             self.widget.after_cancel(id_)
 
@@ -171,42 +171,41 @@ class Tooltip:
             relative to mouse position (default (10, 5))
         :return: Tuple of pixel (x, y) used to set tooltip geometry().
         """
-        w = widget
+        wgt = widget
 
-        s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
+        s_width, s_height = wgt.winfo_screenwidth(), wgt.winfo_screenheight()
 
         width, height = (label.winfo_reqwidth() + 10,
                          label.winfo_reqheight() + 6)
 
-        mouse_x, mouse_y = w.winfo_pointerxy()
+        mouse_x, mouse_y = wgt.winfo_pointerxy()
 
-        x1, y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
-        x2, y2 = x1 + width, y1 + height
+        _x1, _y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
+        _x2, _y2 = _x1 + width, _y1 + height
 
-        x_delta = x2 - s_width
-        if x_delta < 0:
-            x_delta = 0
-        y_delta = y2 - s_height
-        if y_delta < 0:
-            y_delta = 0
+        x_delta = _x2 - s_width
+        x_delta = max(x_delta, 0)
+
+        y_delta = _y2 - s_height
+        y_delta = max(y_delta, 0)
 
         offscreen = (x_delta, y_delta) != (0, 0)
 
         if offscreen:
 
             if x_delta:
-                x1 = mouse_x - tip_delta[0] - width
+                _x1 = mouse_x - tip_delta[0] - width
 
             if y_delta:
-                y1 = mouse_y - tip_delta[1] - height
+                _y1 = mouse_y - tip_delta[1] - height
 
-        offscreen_again = y1 < 0  # out on the top
+        offscreen_again = _y1 < 0  # out on the top
 
         if offscreen_again:
             # No further checks will be done.
-            y1 = 0
+            _y1 = 0
 
-        return x1, y1
+        return _x1, _y1
 
     def show(self) -> None:
         """
@@ -223,22 +222,22 @@ class Tooltip:
         self.tt_win.wm_attributes('-topmost', True)
 
         tt_frame = tk.Frame(self.tt_win,
-                            background=self.bg,
+                            background=self._bg,
                             borderwidth=0)
         tt_label = tk.Label(
             tt_frame,
             text=self.tt_text,
             font='TkTooltipFont',
             justify=tk.LEFT,
-            background=self.bg,
+            background=self._bg,
             relief=tk.SOLID,
             borderwidth=0,
             wraplength=self.wrap_len)
         tt_frame.grid()
         tt_label.grid(padx=10, pady=6, sticky=tk.NSEW)
 
-        x, y = self.tip_pos_calculator(self.widget, tt_label)
-        self.tt_win.wm_geometry(f'+{x}+{y}')
+        _x, _y = self.tip_pos_calculator(self.widget, tt_label)
+        self.tt_win.wm_geometry(f'+{_x}+{_y}')
 
         self.tt_win.wm_deiconify()
 
@@ -320,25 +319,29 @@ def get_toplevel(action: str, mainwin) -> Union[str, Any]:
     if action == 'position':
         coordinates = None
         for child in reversed(mainwin.winfo_children()):
-            if child == child.focus_get():
-                coordinates = position_wrt_window(child, 30, 20)
-            elif '.!text' in str(child.focus_get()):
+            if '.!text' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-6]
                 if parent in str(child):
                     coordinates = position_wrt_window(child, 30, 20)
             elif '.!frame' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-7]
+                if parent in str(child):
+                    coordinates = position_wrt_window(child, 30, 20)
+            elif '.!menu' in str(child.focus_get()):
+                parent = str(child.focus_get())[:-6]
                 if parent in str(child):
                     coordinates = position_wrt_window(child, 30, 20)
             elif str(child.focus_get()) == '.':
                 coordinates =  position_wrt_window(mainwin, 30, 20)
+            elif child == child.focus_get():
+                coordinates = position_wrt_window(child, 30, 20)
+
         return coordinates
+
     if action == 'winpath':
         relative_path = mainwin.winfo_children()[-1]
         for child in reversed(mainwin.winfo_children()):
-            if child == child.focus_get():
-                relative_path = child
-            elif '.!text' in str(child.focus_get()):
+            if '.!text' in str(child.focus_get()):
                 parent = str(child.focus_get())[:-6]
                 if parent in str(child):
                     relative_path = child
@@ -346,9 +349,17 @@ def get_toplevel(action: str, mainwin) -> Union[str, Any]:
                 parent = str(child.focus_get())[:-7]
                 if parent in str(child):
                     relative_path = child
+            elif '.!menu' in str(child.focus_get()):
+                parent = str(child.focus_get())[:-6]
+                if parent in str(child):
+                    relative_path = child
             elif str(child.focus_get()) == '.':
                 relative_path = mainwin
+            elif child == child.focus_get():
+                relative_path = child
+
         return relative_path
+
     return None
 
 
