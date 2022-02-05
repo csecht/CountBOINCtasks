@@ -29,7 +29,7 @@ __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
-from sys import version_info, exit as sysexit
+import sys
 
 
 def minversion(req_version: str) -> None:
@@ -41,11 +41,12 @@ def minversion(req_version: str) -> None:
         example, '3.6'.
     """
     ver = tuple(map(int, req_version.split('.')))
-    if version_info < ver:
+    if sys.version_info < ver:
         print(f'Sorry, but this program requires Python {req_version} or later.\n'
-              f'Current Python version: {version_info.major}.{version_info.minor}\n'
+              'Current Python version:'
+              f' {sys.version_info.major}.{sys.version_info.minor}\n'
               'Python downloads are available from https://docs.python.org/')
-        sysexit(0)
+        sys.exit(0)
 
 
 def about() -> None:
@@ -62,7 +63,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sysexit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
