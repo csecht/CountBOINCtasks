@@ -24,21 +24,24 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.8'
+__module_ver__ = '0.1.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
-from sys import platform, exit as sysexit
+import sys
+import tkinter
 from tkinter import constants, Menu
 
 from COUNTmodules import files, utils
 
-MY_OS = platform[:3]
+MY_OS = sys.platform[:3]
 
 
-def click(click_type, click_widget, mainwin) -> None:
+def click(click_type: str,
+          click_widget: tkinter,
+          mainwin: tkinter.Toplevel) -> None:
     """
     Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
@@ -95,8 +98,11 @@ def click(click_type, click_widget, mainwin) -> None:
             click_widget.bind('<Button-2>', popup_menu)
 
 
-def keyboard(func: str, toplevel,
-             mainloop=None, filepath=None, text=None) -> None:
+def keyboard(func: str,
+             toplevel: tkinter.Toplevel,
+             mainloop=None,
+             filepath=None,
+             text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
     add standard keyboard actions or to provide keybinding equivalents
@@ -152,7 +158,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sysexit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
