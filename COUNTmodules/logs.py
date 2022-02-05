@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.2'
+__module_ver__ = '0.1.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -112,6 +112,7 @@ class Logs:
                     'Was the settings "log results" option used?\n'
                     'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
+
             return summary_text, recent_interval_text  # <- Empty strings.
 
         # Regex is based on this structure used in CountModeler.log_it():
@@ -194,6 +195,7 @@ class Logs:
                     'Quick fix: backup then delete the log file; restart program.\n'
                     'See menu bar Help > "File paths" log file location.\n'
                 )
+
                 return summary_text, recent_interval_text
 
         # Need to tailor report texts for various counting conditions.
@@ -273,7 +275,7 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, mainwin) -> None:
+    def show_analysis(cls, mainwin: tk) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
@@ -388,7 +390,7 @@ class Logs:
         return str(round(sum(intvl_duration), 1))
 
     @classmethod
-    def view(cls, filepath: Path, mainwin) -> None:
+    def view(cls, filepath: Path, mainwin: tk) -> None:
         """
         Create a separate window to view a text file as scrolled text.
         Called from View menu bar or keybinding.
@@ -416,7 +418,7 @@ class Logs:
                 minsize_w = 675
             fnf_query = 'Was the log option ticked in settings?'
 
-        if filepath == cls.ANALYSISFILE:
+        elif filepath == cls.ANALYSISFILE:
             minsize_w = 510
             minsize_h = 150
             if MY_OS == 'win':
@@ -477,7 +479,7 @@ class Logs:
             filewin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, mainwin))
 
-        if filepath == cls.ANALYSISFILE:
+        elif filepath == cls.ANALYSISFILE:
             filewin.geometry(Utils.get_toplevel('position', mainwin))
             ttk.Button(
                 filewin, text='Erase',
