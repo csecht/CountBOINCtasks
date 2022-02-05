@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.2'
+__module_ver__ = '0.1.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -106,7 +106,7 @@ class Logs:
         recent_interval_text = ''
 
         try:
-            logtext = Path(cls.LOGFILE).read_text()
+            logtext = Path(cls.LOGFILE).read_text(encoding='utf-8')
         except FileNotFoundError:
             info = (f'On {gethostname()}, missing necessary file:\n{cls.LOGFILE}\n'
                     'Was the settings "log results" option used?\n'
@@ -441,7 +441,7 @@ class Logs:
         filewin.minsize(minsize_w, minsize_h)
         filewin.focus_set()
 
-        insert_txt = Path(filepath).read_text()
+        insert_txt = Path(filepath).read_text(encoding='utf-8')
 
         max_line = len(max(insert_txt.splitlines(), key=len))
 
