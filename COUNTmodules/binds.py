@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.8'
+__module_ver__ = '0.1.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -33,12 +33,12 @@ __status__ = 'Development Status :: 4 - Beta'
 from sys import platform, exit as sysexit
 from tkinter import constants, Menu
 
-from COUNTmodules import files, utils
+from COUNTmodules import files
 
 MY_OS = platform[:3]
 
 
-def click(click_type, click_widget, mainwin) -> None:
+def click(click_type, click_widget) -> None:
     """
     Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
@@ -50,9 +50,6 @@ def click(click_type, click_widget, mainwin) -> None:
         'right': popup menu of text edit and window commands.
     :param click_widget: Name of the widget in which click commands are
         to be active.
-    :param mainwin: The main window of the tk() mainloop, e.g.,
-        'root', 'main', 'app', etc., from which to identify its
-        tk.Toplevel child that has focus.
     """
 
     def on_click(event, command):
@@ -84,7 +81,7 @@ def click(click_type, click_widget, mainwin) -> None:
         popup.add(constants.SEPARATOR)
         popup.add_command(
             label='Close window',
-            command=lambda: utils.get_toplevel('winpath', mainwin).destroy())
+            command=lambda: click_widget.winfo_toplevel().destroy())
 
         popup.tk_popup(event.x_root + 10, event.y_root + 15)
 
@@ -95,8 +92,10 @@ def click(click_type, click_widget, mainwin) -> None:
             click_widget.bind('<Button-2>', popup_menu)
 
 
-def keyboard(func: str, toplevel,
-             mainloop=None, filepath=None, text=None) -> None:
+def keyboard(func: str,
+             toplevel,
+             filepath=None,
+             text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
     add standard keyboard actions or to provide keybinding equivalents
@@ -112,8 +111,6 @@ def keyboard(func: str, toplevel,
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
     :param toplevel: Name of tk.Toplevel() window object.
-    :param mainloop: The tk() mainloop object ('root', 'main', etc.);
-                use with the *func* 'close' option.
     :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -127,13 +124,13 @@ def keyboard(func: str, toplevel,
     if func == 'close':
         toplevel.bind(
             f'<{f"{cmd_key}"}-w>',
-            lambda _: utils.get_toplevel('winpath', mainloop).destroy())
+            lambda _: toplevel.winfo_toplevel().destroy())
 
-    if func == 'append':
+    elif func == 'append':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
                       lambda _: files.append_txt(filepath, text, True, toplevel))
 
-    if func == 'saveas':
+    elif func == 'saveas':
         toplevel.bind(f'<{f"{cmd_key}"}-s>',
                       lambda _: files.save_as(filepath, toplevel))
 
