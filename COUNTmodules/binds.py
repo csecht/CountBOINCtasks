@@ -41,7 +41,7 @@ MY_OS = sys.platform[:3]
 
 def click(click_type: str,
           click_widget: tkinter,
-          mainwin: tkinter.Toplevel) -> None:
+          mainwin: tkinter) -> None:
     """
     Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
@@ -53,7 +53,7 @@ def click(click_type: str,
         'right': popup menu of text edit and window commands.
     :param click_widget: Name of the widget in which click commands are
         to be active.
-    :param mainwin: The main window of the tk() mainloop, e.g.,
+    :param mainwin: The tk window object of the mainloop, e.g.,
         'root', 'main', 'app', etc., from which to identify its
         tk.Toplevel child that has focus.
     """

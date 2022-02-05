@@ -160,7 +160,9 @@ class Tooltip:
             self.widget.after_cancel(id_)
 
     @staticmethod
-    def tip_pos_calculator(widget, label, tip_delta=(10, 5)) -> tuple:
+    def tip_pos_calculator(widget: tk,
+                           label: tk.Label,
+                           tip_delta=(10, 5)) -> tuple:
         """
         Set screen position of the tooltip Toplevel so that it remains
         on screen with proper padding.
@@ -266,11 +268,15 @@ def absolute_path_to(relative_path: str) -> Path:
     #    bundling-data-files-with -pyinstaller-onefile and PyInstaller manual.
     if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
         base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
+
         return Path(base_path) / relative_path
+
     return Path(relative_path).resolve()
 
 
-def position_wrt_window(window: tk.Toplevel, offset_x=0, offset_y=0) -> str:
+def position_wrt_window(window: tk,
+                        offset_x=0,
+                        offset_y=0) -> str:
     """
     Get screen position of a tkinter Toplevel object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
@@ -280,9 +286,9 @@ def position_wrt_window(window: tk.Toplevel, offset_x=0, offset_y=0) -> str:
     When used with get_toplevel(), it is expected that all the parent's
     Toplevel Button() widgets are configured for 'takefocus=False'.
 
-    :param window: The main window object (e.g., 'root', 'app',
-                   '.!toplevel2') of the tk() mainloop for which to get
-                   its screen pixel coordinates.
+    :param window: The tk window object (e.g., 'root', 'app',
+                   '.!toplevel2') of mainloop for which to get its
+                   screen pixel coordinates.
     :param offset_x: optional pixels to add/subtract to x coordinate of
                      *window*.
     :param offset_y: optional pixels to add/subtract to x coordinate of
@@ -291,10 +297,11 @@ def position_wrt_window(window: tk.Toplevel, offset_x=0, offset_y=0) -> str:
     """
     coord_x = window.winfo_x() + offset_x
     coord_y = window.winfo_y() + offset_y
+
     return f'+{coord_x}+{coord_y}'
 
 
-def get_toplevel(action: str, mainwin: tk.Toplevel) -> Union[str, Any]:
+def get_toplevel(action: str, mainwin: tk) -> Union[str, Any]:
     """
     Identify the parent tkinter.Toplevel() window when it, or its
     child widget, has focus.
@@ -303,7 +310,7 @@ def get_toplevel(action: str, mainwin: tk.Toplevel) -> Union[str, Any]:
 
     :param action: The action needed for the parent; e.g.,
                    'position', 'winpath'.
-    :param mainwin: The main window object of the tk() mainloop, e.g.,
+    :param mainwin: The object of the tk() mainloop, e.g.,
                     'root', 'main', or 'app', etc.
     :return: For *action* 'position', returns string of screen
              coordinates for the parent toplevel window.
