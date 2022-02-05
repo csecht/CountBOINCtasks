@@ -28,15 +28,15 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'times.py'
-__module_ver__ = '0.2.4'
+__module_ver__ = '0.2.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 import statistics
+import sys
 from datetime import datetime, timedelta
-from sys import exit as sysexit
 from typing import Union
 
 
@@ -268,7 +268,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sysexit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
