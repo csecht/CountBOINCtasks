@@ -275,7 +275,7 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, mainwin: tk.Toplevel) -> None:
+    def show_analysis(cls, mainwin: tk) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
