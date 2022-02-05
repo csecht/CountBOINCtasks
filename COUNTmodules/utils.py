@@ -270,7 +270,7 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
+def position_wrt_window(window: tk.Toplevel, offset_x=0, offset_y=0) -> str:
     """
     Get screen position of a tkinter Toplevel object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
@@ -294,7 +294,7 @@ def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
     return f'+{coord_x}+{coord_y}'
 
 
-def get_toplevel(action: str, mainwin: tk) -> Union[str, Any]:
+def get_toplevel(action: str, mainwin: tk.Toplevel) -> Union[str, Any]:
     """
     Identify the parent tkinter.Toplevel() window when it, or its
     child widget, has focus.
