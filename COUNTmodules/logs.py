@@ -106,7 +106,7 @@ class Logs:
         recent_interval_text = ''
 
         try:
-            logtext = Path(cls.LOGFILE).read_text()
+            logtext = Path(cls.LOGFILE).read_text(encoding='utf-8')
         except FileNotFoundError:
             info = (f'On {gethostname()}, missing necessary file:\n{cls.LOGFILE}\n'
                     'Was the settings "log results" option used?\n'
@@ -443,7 +443,7 @@ class Logs:
         filewin.minsize(minsize_w, minsize_h)
         filewin.focus_set()
 
-        insert_txt = Path(filepath).read_text()
+        insert_txt = Path(filepath).read_text(encoding='utf-8')
 
         max_line = len(max(insert_txt.splitlines(), key=len))
 
