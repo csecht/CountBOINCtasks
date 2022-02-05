@@ -275,7 +275,7 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, mainwin: tk) -> None:
+    def show_analysis(cls, mainwin: tk.Toplevel) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
@@ -397,8 +397,8 @@ class Logs:
 
         :param filepath: A Path object of the file to view.
         :param mainwin: The main window of the tk() mainloop, e.g.,
-            'root', 'main', 'app', 'self.master', etc., from which to
-            identify the tk.Toplevel child that has focus.
+            'root', 'main', 'app', or 'self.master', etc., from which to
+            identify the child window that has focus.
         """
         # Need to set messages and sizes specific to OS and files.
         text_height = 30
