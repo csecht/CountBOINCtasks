@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.8'
+__module_ver__ = '0.1.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -270,7 +270,7 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def position_wrt_window(window, offset_x=0, offset_y=0) -> str:
+def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
     """
     Get screen position of a tkinter Toplevel object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
@@ -294,7 +294,7 @@ def position_wrt_window(window, offset_x=0, offset_y=0) -> str:
     return f'+{coord_x}+{coord_y}'
 
 
-def get_toplevel(action: str, mainwin) -> Union[str, Any]:
+def get_toplevel(action: str, mainwin: tk) -> Union[str, Any]:
     """
     Identify the parent tkinter.Toplevel() window when it, or its
     child widget, has focus.
@@ -363,7 +363,7 @@ def get_toplevel(action: str, mainwin) -> Union[str, Any]:
     return None
 
 
-def enter_only_digits(entry_string, action_type) -> bool:
+def enter_only_digits(entry: str, action_type: str) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
     Used with register() to configure Entry kw validatecommand. Example:
@@ -372,7 +372,7 @@ def enter_only_digits(entry_string, action_type) -> bool:
         validatecommand=(myentry.register(enter_only_digits), '%P', '%d')
         )
 
-    :param entry_string: value entered into an Entry() widget (%P).
+    :param entry: value entered into an Entry() widget (%P).
     :param action_type: edit action code (%d).
     :return: True or False
     """
@@ -382,7 +382,7 @@ def enter_only_digits(entry_string, action_type) -> bool:
     # source: https://stackoverflow.com/questions/4140437/
     # %P = value of the entry if the edit is allowed
     # Desired action type 1 is "insert", %d.
-    if action_type == '1' and not entry_string.isdigit():
+    if action_type == '1' and not entry.isdigit():
         return False
     return True
 
