@@ -32,12 +32,12 @@ __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
+import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from platform import node
 from shutil import copy2
-from sys import platform, exit as sysexit
 from tkinter import messagebox, filedialog
 
 
@@ -147,7 +147,7 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
             parent.focus_set()
         return
 
-    if platform[:3] == 'dar':
+    if sys.platform[:3] == 'dar':
         msgdetail = (f"'Enter/Return' will also delete "
                      f"content of file {file}.")
     else:
@@ -213,7 +213,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sysexit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
