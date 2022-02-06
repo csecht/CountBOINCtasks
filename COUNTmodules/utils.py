@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.8'
+__module_ver__ = '0.1.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -92,7 +92,7 @@ class Tooltip:
         self.tt_text = tt_text
         self.wait_time = wait_time
         self.wrap_len = wrap_len
-        self._bg = 'LightYellow1'
+        self.tt_bg = 'LightYellow1'
 
         if state == 'disabled':
             self.widget.bind("<Enter>", lambda _: None)
@@ -104,10 +104,19 @@ class Tooltip:
             self.widget.bind("<Leave>", self.on_leave)
             self.widget.bind("<ButtonPress>", self.close_now)
 
-        self._id = None
+        self.waiting = None
         self.tt_win = None
 
-    def on_enter(self, *event):
+    def cancel_wait(self) -> None:
+        """
+        Cancel *wait_time* to immediately close the tooltip.
+        """
+        waiting = self.waiting
+        self.waiting = None
+        if waiting:
+            self.widget.after_cancel(waiting)
+
+    def on_enter(self, event=None):
         """
         Trigger display of the tooltip when cursor rests on the widget.
 
@@ -115,10 +124,11 @@ class Tooltip:
         :return: The bound event action.
         """
         self.cancel_wait()
-        self._id = self.widget.after(self.wait_time, self.show)
+        self.waiting = self.widget.after(self.wait_time, self.show_tt)
+
         return event
 
-    def on_leave(self, *event):
+    def on_leave(self, event=None):
         """
         Remove display of the tooltip when cursor leaves the widget.
 
@@ -132,9 +142,10 @@ class Tooltip:
         if self.tt_win:
             self.tt_win.after(self.wait_time // 2, self.tt_win.destroy)
         self.tt_win = None
+
         return event
 
-    def close_now(self, *event):
+    def close_now(self, event=None):
         """
         Remove display of the tooltip when widget is clicked.
 
@@ -147,16 +158,8 @@ class Tooltip:
         if self.tt_win:
             self.tt_win.destroy()
         self.tt_win = None
-        return event
 
-    def cancel_wait(self) -> None:
-        """
-        Cancel *wait_time* to immediately close the tooltip.
-        """
-        id_ = self._id
-        self._id = None
-        if id_:
-            self.widget.after_cancel(id_)
+        return event
 
     @staticmethod
     def tip_pos_calculator(widget: tk,
@@ -208,7 +211,7 @@ class Tooltip:
 
         return _x1, _y1
 
-    def show(self) -> None:
+    def show_tt(self) -> None:
         """
         Create the tooltip as Toplevel. The order of statements is
         optimized for best performance on Linux, Windows, and macOS.
@@ -223,14 +226,14 @@ class Tooltip:
         self.tt_win.wm_attributes('-topmost', True)
 
         tt_frame = tk.Frame(self.tt_win,
-                            background=self._bg,
+                            background=self.tt_bg,
                             borderwidth=0)
         tt_label = tk.Label(
             tt_frame,
             text=self.tt_text,
             font='TkTooltipFont',
             justify=tk.LEFT,
-            background=self._bg,
+            background=self.tt_bg,
             relief=tk.SOLID,
             borderwidth=0,
             wraplength=self.wrap_len)
