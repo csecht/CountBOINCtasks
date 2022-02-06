@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.9'
+__module_ver__ = '0.1.10'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -92,7 +92,6 @@ class Tooltip:
         self.tt_text = tt_text
         self.wait_time = wait_time
         self.wrap_len = wrap_len
-        self.tt_bg = 'LightYellow1'
 
         if state == 'disabled':
             self.widget.bind("<Enter>", lambda _: None)
@@ -118,7 +117,7 @@ class Tooltip:
         if waiting:
             self.widget.after_cancel(waiting)
 
-    def on_enter(self, event=None):
+    def on_enter(self, event=None) -> None:
         """
         Trigger display of the tooltip when cursor rests on the widget.
 
@@ -130,7 +129,7 @@ class Tooltip:
 
         return event
 
-    def on_leave(self, event=None):
+    def on_leave(self, event=None) -> None:
         """
         Remove display of the tooltip when cursor leaves the widget.
 
@@ -147,7 +146,7 @@ class Tooltip:
 
         return event
 
-    def close_now(self, event=None):
+    def close_now(self, event=None) -> None:
         """
         Remove display of the tooltip when widget is clicked.
 
@@ -218,6 +217,9 @@ class Tooltip:
         Create the tooltip as Toplevel. The order of statements is
         optimized for best performance on Linux, Windows, and macOS.
         """
+
+        tt_background = 'LightYellow1'
+
         # Minimize the window until everything is loaded to prevent
         #   annoying re-draw on some systems.
         # Bring new window to the top to prevent it hiding behind
@@ -228,14 +230,14 @@ class Tooltip:
         self.tt_win.wm_attributes('-topmost', True)
 
         tt_frame = tk.Frame(self.tt_win,
-                            background=self.tt_bg,
+                            background=tt_background,
                             borderwidth=0)
         tt_label = tk.Label(
             tt_frame,
             text=self.tt_text,
             font='TkTooltipFont',
             justify=tk.LEFT,
-            background=self.tt_bg,
+            background=tt_background,
             relief=tk.SOLID,
             borderwidth=0,
             wraplength=self.wrap_len)
