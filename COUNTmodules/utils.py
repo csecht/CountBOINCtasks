@@ -27,7 +27,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.9'
+__module_ver__ = '0.1.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -36,7 +36,6 @@ __status__ = 'Development Status :: 4 - Beta'
 import sys
 import tkinter as tk
 from pathlib import Path
-from typing import Union, Any
 
 
 class Tooltip:
@@ -274,9 +273,7 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def position_wrt_window(window: tk,
-                        offset_x=0,
-                        offset_y=0) -> str:
+def position_wrt_window(window, offset_x=0, offset_y=0) -> str:
     """
     Get screen position of a tkinter Toplevel object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
@@ -301,76 +298,7 @@ def position_wrt_window(window: tk,
     return f'+{coord_x}+{coord_y}'
 
 
-def get_toplevel(action: str, mainwin: tk) -> Union[str, Any]:
-    """
-    Identify the parent tkinter.Toplevel() window when it, or its
-    child widget, has focus.
-    Works as intended when Button widgets in parent toplevel or
-    *mainwin* do not retain focus, i.e., 'takefocus=False'.
-
-    :param action: The action needed for the parent; e.g.,
-                   'position', 'winpath'.
-    :param mainwin: The object of the tk() mainloop, e.g.,
-                    'root', 'main', or 'app', etc.
-    :return: For *action* 'position', returns string of screen
-             coordinates for the parent toplevel window.
-             For *action* 'winpath', returns the tk window path
-             name for the parent toplevel window.
-    """
-    # Based on https://stackoverflow.com/questions/66384144/
-    # Need to cover all cases when the focus is on any toplevel window,
-    #  or on a child of that window path, i.e. '.!text' or '.!frame'.
-    # There may be many children in *mainwin* and any target toplevel
-    #   window will likely be listed at or toward the end, so read
-    #   children list in reverse.
-    if action == 'position':
-        coordinates = None
-        for child in reversed(mainwin.winfo_children()):
-            if '.!text' in str(child.focus_get()):
-                parent = str(child.focus_get())[:-6]
-                if parent in str(child):
-                    coordinates = position_wrt_window(child, 30, 20)
-            elif '.!frame' in str(child.focus_get()):
-                parent = str(child.focus_get())[:-7]
-                if parent in str(child):
-                    coordinates = position_wrt_window(child, 30, 20)
-            elif '.!menu' in str(child.focus_get()):
-                parent = str(child.focus_get())[:-6]
-                if parent in str(child):
-                    coordinates = position_wrt_window(child, 30, 20)
-            elif str(child.focus_get()) == '.':
-                coordinates =  position_wrt_window(mainwin, 30, 20)
-            elif child == child.focus_get():
-                coordinates = position_wrt_window(child, 30, 20)
-
-        return coordinates
-
-    if action == 'winpath':
-        relative_path = mainwin.winfo_children()[-1]
-        for child in reversed(mainwin.winfo_children()):
-            if '.!text' in str(child.focus_get()):
-                parent = str(child.focus_get())[:-6]
-                if parent in str(child):
-                    relative_path = child
-            elif '.!frame' in str(child.focus_get()):
-                parent = str(child.focus_get())[:-7]
-                if parent in str(child):
-                    relative_path = child
-            elif '.!menu' in str(child.focus_get()):
-                parent = str(child.focus_get())[:-6]
-                if parent in str(child):
-                    relative_path = child
-            elif str(child.focus_get()) == '.':
-                relative_path = mainwin
-            elif child == child.focus_get():
-                relative_path = child
-
-        return relative_path
-
-    return None
-
-
-def enter_only_digits(entry: str, action_type: str) -> bool:
+def enter_only_digits(entry, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
     Used with register() to configure Entry kw validatecommand. Example:
@@ -391,6 +319,7 @@ def enter_only_digits(entry: str, action_type: str) -> bool:
     # Desired action type 1 is "insert", %d.
     if action_type == '1' and not entry.isdigit():
         return False
+
     return True
 
 

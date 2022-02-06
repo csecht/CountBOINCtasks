@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.6'
+__version__ = '0.10.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1633,8 +1633,8 @@ class CountFyi:
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
 
-        Binds.keyboard('close', aboutwin, app)
-        Binds.click('right', abouttxt, app)
+        Binds.keyboard('close', aboutwin)
+        Binds.click('right', abouttxt)
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -1705,7 +1705,7 @@ class CountFyi:
                                highlightbackground='grey75')
 
         # Need to position window over the window from which it is called.
-        pathswin.geometry(Utils.get_toplevel('position', app))
+        pathswin.geometry(Utils.position_wrt_window(app, 30, 20))
         pathswin.resizable(False, False)
         pathswin.title(f'Program-generated files on {gethostname()}')
         pathswin.focus_set()
@@ -1742,8 +1742,8 @@ class CountFyi:
         pathstxt.tag_add("header", "1.0", "3.0")
         pathstxt.pack()
 
-        Binds.keyboard('close', pathswin, app)
-        Binds.click('right', pathstxt, app)
+        Binds.keyboard('close', pathswin)
+        Binds.click('right', pathstxt)
 
     @staticmethod
     def information() -> None:
@@ -1803,8 +1803,8 @@ class CountFyi:
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
 
-        Binds.keyboard('close', infowin, app)
-        Binds.click('right', infotxt, app)
+        Binds.keyboard('close', infowin)
+        Binds.click('right', infotxt)
 
 
 # ################## MVC Controller; is app mainloop ###################

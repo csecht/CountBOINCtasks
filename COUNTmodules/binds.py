@@ -31,17 +31,14 @@ __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 import sys
-import tkinter
 from tkinter import constants, Menu
 
-from COUNTmodules import files, utils
+from COUNTmodules import files
 
 MY_OS = sys.platform[:3]
 
 
-def click(click_type: str,
-          click_widget: tkinter,
-          mainwin: tkinter) -> None:
+def click(click_type, click_widget) -> None:
     """
     Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
@@ -53,9 +50,6 @@ def click(click_type: str,
         'right': popup menu of text edit and window commands.
     :param click_widget: Name of the widget in which click commands are
         to be active.
-    :param mainwin: The tk window object of the mainloop, e.g.,
-        'root', 'main', 'app', etc., from which to identify its
-        tk.Toplevel child that has focus.
     """
 
     def on_click(event, command):
@@ -87,7 +81,7 @@ def click(click_type: str,
         popup.add(constants.SEPARATOR)
         popup.add_command(
             label='Close window',
-            command=lambda: utils.get_toplevel('winpath', mainwin).destroy())
+            command=lambda: click_widget.winfo_toplevel().destroy())
 
         popup.tk_popup(event.x_root + 10, event.y_root + 15)
 
@@ -99,8 +93,7 @@ def click(click_type: str,
 
 
 def keyboard(func: str,
-             toplevel: tkinter.Toplevel,
-             mainloop=None,
+             toplevel,
              filepath=None,
              text=None) -> None:
     """
@@ -118,8 +111,6 @@ def keyboard(func: str,
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
     :param toplevel: Name of tk.Toplevel() window object.
-    :param mainloop: The tk() mainloop object ('root', 'main', etc.);
-                use with the *func* 'close' option.
     :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -133,15 +124,17 @@ def keyboard(func: str,
     if func == 'close':
         toplevel.bind(
             f'<{f"{cmd_key}"}-w>',
-            lambda _: utils.get_toplevel('winpath', mainloop).destroy())
+            lambda _: toplevel.winfo_toplevel().destroy())
 
-    if func == 'append':
-        toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda _: files.append_txt(filepath, text, True, toplevel))
+    elif func == 'append':
+        toplevel.bind(
+            f'<{f"{cmd_key}"}-s>',
+            lambda _: files.append_txt(filepath, text, True, toplevel))
 
-    if func == 'saveas':
-        toplevel.bind(f'<{f"{cmd_key}"}-s>',
-                      lambda _: files.save_as(filepath, toplevel))
+    elif func == 'saveas':
+        toplevel.bind(
+            f'<{f"{cmd_key}"}-s>',
+            lambda _: files.save_as(filepath, toplevel))
 
 
 def about() -> None:

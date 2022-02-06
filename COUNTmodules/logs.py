@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.3'
+__module_ver__ = '0.1.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -297,7 +297,7 @@ class Logs:
         analysiswin = tk.Toplevel(bg='SteelBlue4')
         analysiswin.title('Analysis of logged data')
         # Need to position window over the window from which it is called.
-        analysiswin.geometry(Utils.get_toplevel('position', mainwin))
+        analysiswin.geometry(Utils.position_wrt_window(mainwin, 30, 20))
         analysiswin.minsize(520, 320)
 
         insert_txt = summary_text + recent_interval_text
@@ -329,9 +329,9 @@ class Logs:
         ttk.Button(analysiswin, text='Save analysis', command=new_text,
                    takefocus=False).pack(padx=4)
 
-        Binds.click('right', analysistxt, mainwin)
-        Binds.keyboard('close', analysiswin, mainwin)
-        Binds.keyboard('append', analysiswin, None, cls.ANALYSISFILE, insert_txt)
+        Binds.click('right', analysistxt)
+        Binds.keyboard('close', analysiswin)
+        Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, mainwin))
 
@@ -397,8 +397,8 @@ class Logs:
 
         :param filepath: A Path object of the file to view.
         :param mainwin: The main window of the tk() mainloop, e.g.,
-            'root', 'main', 'app', or 'self.master', etc., from which to
-            identify the child window that has focus.
+            'root', 'main', 'app', 'self.master', etc., from which to
+            identify the tk.Toplevel child that has focus.
         """
         # Need to set messages and sizes specific to OS and files.
         text_height = 30
@@ -473,22 +473,23 @@ class Logs:
 
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
-                       command=lambda: cls.show_analysis(mainwin),
+                       command=lambda: cls.show_analysis(filewin),
                        takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(mainwin))
+            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(filewin))
+
             filewin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, mainwin))
 
         elif filepath == cls.ANALYSISFILE:
-            filewin.geometry(Utils.get_toplevel('position', mainwin))
+            filewin.geometry(Utils.position_wrt_window(mainwin, 30, 20))
             ttk.Button(
                 filewin, text='Erase',
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(mainwin))
 
-        Binds.click('right', filewin, mainwin)
-        Binds.keyboard('close', filewin, mainwin)
+        Binds.click('right', filewin)
+        Binds.keyboard('close', filewin)
         Binds.keyboard('saveas', filewin, None, filepath)
 
 
