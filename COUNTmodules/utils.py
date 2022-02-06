@@ -112,6 +112,8 @@ class Tooltip:
         Cancel *wait_time* to immediately close the tooltip.
         """
         waiting = self.waiting
+
+        # self.waiting is defined in on_enter() as an after() delay.
         self.waiting = None
         if waiting:
             self.widget.after_cancel(waiting)
