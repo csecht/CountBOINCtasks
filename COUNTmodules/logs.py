@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.4'
+__module_ver__ = '0.1.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -468,7 +468,7 @@ class Logs:
             takefocus=False).pack(padx=4)
         ttk.Button(
             filewin, text='File path',
-            command=mainwin.filepaths,
+            command=lambda: mainwin.filepaths(filewin),
             takefocus=False).pack(padx=4)
 
         if filepath == cls.LOGFILE:

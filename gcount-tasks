@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.7'
+__version__ = '0.10.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -935,7 +935,7 @@ class CountViewer(tk.Frame):
                               command=self.share.compliment,
                               accelerator='Ctrl+Shift+C')
         help_menu.add_command(label='File paths',
-                              command=self.share.filepaths)
+                              command=lambda: self.share.filepaths(app))
         help_menu.add_command(label='About', command=self.share.about)
 
         # For Button constructors, self.master is implicit as the parent.
@@ -1693,10 +1693,11 @@ class CountFyi:
         self.share.compliment_l.after(3333, refresh)
 
     @staticmethod
-    def file_paths() -> None:
+    def file_paths(window: tk.Toplevel) -> None:
         """
         Toplevel display of full paths for program-generated files.
-        Called from Viewer.master_widgets() Help menu bar.
+
+        :param window: The toplevel window object over which to appear.
         """
 
         # Have highlightcolor match self.master_bg of the app main window.
@@ -1705,7 +1706,7 @@ class CountFyi:
                                highlightbackground='grey75')
 
         # Need to position window over the window from which it is called.
-        pathswin.geometry(Utils.position_wrt_window(app, 30, 20))
+        pathswin.geometry(Utils.position_wrt_window(window, 30, 20))
         pathswin.resizable(False, False)
         pathswin.title(f'Program-generated files on {gethostname()}')
         pathswin.focus_set()
@@ -1886,11 +1887,11 @@ class CountController(tk.Tk):
         """
         CountFyi(share=self).about()
 
-    def filepaths(self) -> None:
+    def filepaths(self, window) -> None:
         """Is called from Viewer.master_widgets(), Help menu bar.
         Toplevel window of full paths for program-generated files.
         """
-        CountFyi(share=self).file_paths()
+        CountFyi(share=self).file_paths(window)
 
 
 if __name__ == "__main__":
