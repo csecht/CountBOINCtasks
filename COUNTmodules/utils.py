@@ -166,10 +166,10 @@ class Tooltip:
         Set screen position of the tooltip Toplevel so that it remains
         on screen with proper padding.
 
-        :param widget: the tk.widget from the call
-        :param label: The tk.Label to display the tt_text.
-        :param tip_delta: Pixel (x, y) buffer to for "off-screen"
-            relative to mouse position (default (10, 5))
+        :param widget: The tk.widget of the tooltip call.
+        :param label: The tk.Label to display the *tt_text*.
+        :param tip_delta: Pixel (x, y) buffer for "offscreen" toplevel
+            position relative to mouse position (default (10, 5)).
         :return: Tuple of pixel (x, y) used to set tooltip geometry().
         """
         wgt = widget
