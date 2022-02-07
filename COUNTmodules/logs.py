@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.5'
+__module_ver__ = '0.1.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -275,16 +275,15 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, mainwin: tk) -> None:
+    def show_analysis(cls, window: tk) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
         Button appends displayed results to an analysis log file.
-        Called from a Logs.view() button or a master keybinding.
+        Called from a cls.view() button or a master keybinding.
 
-        :param mainwin: The main window of the tk() mainloop, e.g.,
-            'root', 'main', 'app', 'self.master', etc., from which to
-            identify the tk.Toplevel child that has focus.
+        :param window: The tk window object over which to display the
+            Toplevel.
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
@@ -297,7 +296,7 @@ class Logs:
         analysiswin = tk.Toplevel(bg='SteelBlue4')
         analysiswin.title('Analysis of logged data')
         # Need to position window over the window from which it is called.
-        analysiswin.geometry(Utils.position_wrt_window(mainwin, 30, 20))
+        analysiswin.geometry(Utils.position_wrt_window(window, 30, 20))
         analysiswin.minsize(520, 320)
 
         insert_txt = summary_text + recent_interval_text
@@ -333,10 +332,10 @@ class Logs:
         Binds.keyboard('close', analysiswin)
         Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
         analysiswin.bind('<Shift-Control-A>',
-                         lambda _: cls.view(cls.ANALYSISFILE, mainwin))
+                         lambda _: cls.view(cls.ANALYSISFILE, window))
 
-    @classmethod
-    def uptime(cls, logtext: str) -> str:
+    @staticmethod
+    def uptime(logtext: str) -> str:
         """
         Sum of hours spent counting tasks. Does not include time
         segments with no reported tasks counts.
@@ -390,15 +389,16 @@ class Logs:
         return str(round(sum(intvl_duration), 1))
 
     @classmethod
-    def view(cls, filepath: Path, mainwin: tk) -> None:
+    def view(cls,
+             filepath: Path,
+             window: tk) -> None:
         """
-        Create a separate window to view a text file as scrolled text.
-        Called from View menu bar or keybinding.
+        Create a separate Toplevel window to view a text file as
+        scrolled text.
 
         :param filepath: A Path object of the file to view.
-        :param mainwin: The main window of the tk() mainloop, e.g.,
-            'root', 'main', 'app', 'self.master', etc., from which to
-            identify the tk.Toplevel child that has focus.
+        :param window: The tk window object over which to display the
+            Toplevel.
         """
         # Need to set messages and sizes specific to OS and files.
         text_height = 30
@@ -466,10 +466,15 @@ class Logs:
             filewin, text='Backup',
             command=lambda: Files.save_as(filepath, filewin),
             takefocus=False).pack(padx=4)
-        ttk.Button(
-            filewin, text='File path',
-            command=lambda: mainwin.filepaths(filewin),
-            takefocus=False).pack(padx=4)
+
+        # NOTE: To call filepaths() in the main script, *window* must be
+        #   passed as 'app', which is the tk object for CountController(),
+        #   the mainloop master from the main script.
+        if str(window.winfo_toplevel()) == '.':
+            ttk.Button(
+                filewin, text='File path',
+                command=lambda: window.filepaths(filewin),
+                takefocus=False).pack(padx=4)
 
         if filepath == cls.LOGFILE:
             ttk.Button(filewin, text='Analysis',
@@ -478,15 +483,15 @@ class Logs:
             filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(filewin))
 
             filewin.bind('<Shift-Control-A>',
-                         lambda _: cls.view(cls.ANALYSISFILE, mainwin))
+                         lambda _: cls.view(cls.ANALYSISFILE, window))
 
         elif filepath == cls.ANALYSISFILE:
-            filewin.geometry(Utils.position_wrt_window(mainwin, 30, 20))
+            filewin.geometry(Utils.position_wrt_window(window, 30, 20))
             ttk.Button(
                 filewin, text='Erase',
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(mainwin))
+            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(window))
 
         Binds.click('right', filewin)
         Binds.keyboard('close', filewin)
