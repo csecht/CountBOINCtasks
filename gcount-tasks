@@ -302,9 +302,9 @@ class CountModeler:
             # Need to sleep between counts while displaying a countdown timer.
             # Need to limit total time of interval to target_elapsed_time,
             #   in Epoch seconds, b/c each interval sleep cycle will run longer
-            #   than the intended interval. Realized interval time should not
-            #   drift by more than 1 second during count_max cycles.
-            # Without this time limit, each 1h interval would gain ~4s.
+            #   than the intended interval. Realized interval time should thus
+            #   not drift by more than 1 second during count_max cycles.
+            #   Without this time limit, each 1h interval would gain ~4s.
             interval_sec = interval_m*60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
@@ -1812,7 +1812,7 @@ class CountFyi:
 # ################## MVC Controller; is app mainloop ###################
 class CountController(tk.Tk):
     """
-    The MVC controller represents the tkinter toplevel main window.
+    The MVC controller represents the tkinter main window and main thread.
     Other MVC Classes can interact through the Controller via the
     'share' parameter.
     Architecture based on https://stackoverflow.com/questions/32864610/.
@@ -1821,10 +1821,10 @@ class CountController(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # Need window sizes to make room for multi-line notices,
+        # Need window sizes to provide room for multi-line notices,
         #    but not get minimized enough to exclude notices row.
-        # app window sizes are OS-specific b/c of different default
-        #    OS font widths.
+        # Main window sizes need to be OS-specific b/c of different
+        #    default OS text font widths.
         if MY_OS == 'lin':
             self.minsize(594, 370)
             self.maxsize(780, 400)
@@ -1835,7 +1835,6 @@ class CountController(tk.Tk):
             self.minsize(615, 390)
             self.maxsize(780, 425)
 
-        # self.winfo_toplevel()
         CountViewer(share=self)
 
     def defaultsettings(self) -> None:
@@ -1872,10 +1871,10 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).log_it(called_from)
 
-    def info(self) -> None:
+    def about(self) -> None:
         """Is called from Viewer.master_widgets(), Help menu bar.
         """
-        CountFyi(share=self).information()
+        CountFyi(share=self).about()
 
     def compliment(self) -> None:
         """Is called from Viewer.master_widgets(), Help menu bar and
@@ -1883,16 +1882,16 @@ class CountController(tk.Tk):
         """
         CountFyi(share=self).compliment_me()
 
-    def about(self) -> None:
-        """Is called from Viewer.master_widgets(), Help menu bar.
-        """
-        CountFyi(share=self).about()
-
     def filepaths(self, window) -> None:
         """Is called from Viewer.master_widgets(), Help menu bar.
         Toplevel window of full paths for program-generated files.
         """
         CountFyi(share=self).file_paths(window)
+
+    def info(self) -> None:
+        """Is called from Viewer.master_widgets(), Help menu bar.
+        """
+        CountFyi(share=self).information()
 
 
 if __name__ == "__main__":
@@ -1915,7 +1914,7 @@ if __name__ == "__main__":
     if MY_OS == 'win':
 
         # Can restrict all executions to only one instance if
-        #   "with sentinel:..." is replaced with this mutex module.
+        #   "with sentinel:" is replaced with these mutex module calls.
         # winstance = Instances.OneWinstance()
         # winstance.exit_twinstance(exit_msg)
 
