@@ -275,15 +275,15 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, window: tk) -> None:
+    def show_analysis(cls, tk_obj: tk) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
         Button appends displayed results to an analysis log file.
         Called from a cls.view() button or a master keybinding.
 
-        :param window: The tk window object over which to display the
-            Toplevel.
+        :param tk_obj: The tk object over which to display the Toplevel,
+            usually a window object.
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
@@ -296,7 +296,7 @@ class Logs:
         analysiswin = tk.Toplevel(bg='SteelBlue4')
         analysiswin.title('Analysis of logged data')
         # Need to position window over the window from which it is called.
-        analysiswin.geometry(Utils.position_wrt_window(window, 30, 20))
+        analysiswin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
         analysiswin.minsize(520, 320)
 
         insert_txt = summary_text + recent_interval_text
@@ -332,7 +332,7 @@ class Logs:
         Binds.keyboard('close', analysiswin)
         Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
         analysiswin.bind('<Shift-Control-A>',
-                         lambda _: cls.view(cls.ANALYSISFILE, window))
+                         lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
     @staticmethod
     def uptime(logtext: str) -> str:
@@ -391,14 +391,14 @@ class Logs:
     @classmethod
     def view(cls,
              filepath: Path,
-             window: tk) -> None:
+             tk_obj: tk) -> None:
         """
         Create a separate Toplevel window to view a text file as
         scrolled text.
 
         :param filepath: A Path object of the file to view.
-        :param window: The tk window object over which to display the
-            Toplevel.
+        :param tk_obj: The tk object over which to display the Toplevel,
+            usually a window object.
         """
         # Need to set messages and sizes specific to OS and files.
         text_height = 30
@@ -470,10 +470,10 @@ class Logs:
         # NOTE: To call filepaths() in the main script, *window* must be
         #   passed as 'app', which is the tk object for CountController(),
         #   the mainloop master from the main script.
-        if str(window.winfo_toplevel()) == '.':
+        if str(tk_obj) == '.':
             ttk.Button(
                 filewin, text='File path',
-                command=lambda: window.filepaths(filewin),
+                command=lambda: tk_obj.filepaths(filewin),
                 takefocus=False).pack(padx=4)
 
         if filepath == cls.LOGFILE:
@@ -483,15 +483,15 @@ class Logs:
             filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(filewin))
 
             filewin.bind('<Shift-Control-A>',
-                         lambda _: cls.view(cls.ANALYSISFILE, window))
+                         lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
         elif filepath == cls.ANALYSISFILE:
-            filewin.geometry(Utils.position_wrt_window(window, 30, 20))
+            filewin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
             ttk.Button(
                 filewin, text='Erase',
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(window))
+            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(tk_obj))
 
         Binds.click('right', filewin)
         Binds.keyboard('close', filewin)
