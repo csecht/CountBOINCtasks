@@ -467,10 +467,11 @@ class Logs:
             command=lambda: Files.save_as(filepath, filewin),
             takefocus=False).pack(padx=4)
 
-        # NOTE: To call filepaths() in the main script, *window* must be
-        #   passed as 'app', which is the tk object for CountController(),
-        #   the mainloop master from the main script.
-        if str(tk_obj) == '.':
+        # NOTE: To call filepaths() in the main script, *tk_obj* must be
+        #   passed as 'app', which is the main (root) object,
+        #   CountController(), in the main script. This seems awkward.
+        # if str(tk_obj) == '.':  # <- the root (app) window's path name.
+        if tk_obj.winfo_parent() == '':
             ttk.Button(
                 filewin, text='File path',
                 command=lambda: tk_obj.filepaths(filewin),

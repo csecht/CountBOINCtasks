@@ -1697,7 +1697,8 @@ class CountFyi:
         """
         Toplevel display of full paths for program-generated files.
 
-        :param window: The toplevel window object over which to appear.
+        :param window: The tk Toplevel window object over which this
+            Toplevel is to appear.
         """
 
         # Have highlightcolor match self.master_bg of the app main window.
@@ -1720,7 +1721,7 @@ class CountFyi:
             f'   {Logs.ANALYSISFILE}\n'
         )
 
-        # Need to add OS-specific instance management path
+        # Need to add OS-specific instance management file path.
         if MY_OS == 'win':
             insert_txt = (f'{insert_txt}\nSentinel file for this instance'
                           f' (is deleted on exit)\n'
