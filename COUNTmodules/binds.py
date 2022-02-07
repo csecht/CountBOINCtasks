@@ -24,7 +24,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'binds.py'
-__module_ver__ = '0.1.9'
+__module_ver__ = '0.1.10'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -93,7 +93,7 @@ def click(click_type, click_widget) -> None:
 
 
 def keyboard(func: str,
-             toplevel,
+             topwin,
              filepath=None,
              text=None) -> None:
     """
@@ -110,7 +110,7 @@ def keyboard(func: str,
                  For 'close', the key is 'w' with OS-specific modifier.
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
-    :param toplevel: Name of tk.Toplevel() window object.
+    :param topwin: Name of tk.Toplevel() window object.
     :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -122,19 +122,19 @@ def keyboard(func: str,
         cmd_key = 'Command'
 
     if func == 'close':
-        toplevel.bind(
+        topwin.bind(
             f'<{f"{cmd_key}"}-w>',
-            lambda _: toplevel.winfo_toplevel().destroy())
+            lambda _: topwin.winfo_toplevel().destroy())
 
     elif func == 'append':
-        toplevel.bind(
+        topwin.bind(
             f'<{f"{cmd_key}"}-s>',
-            lambda _: files.append_txt(filepath, text, True, toplevel))
+            lambda _: files.append_txt(filepath, text, True, topwin))
 
     elif func == 'saveas':
-        toplevel.bind(
+        topwin.bind(
             f'<{f"{cmd_key}"}-s>',
-            lambda _: files.save_as(filepath, toplevel))
+            lambda _: files.save_as(filepath, topwin))
 
 
 def about() -> None:
