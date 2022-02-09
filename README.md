@@ -113,6 +113,7 @@ Added features in the GUI version:
 ![log-analysis](images/gcount-tasks_analysis.png)
 
 ### Stand-alone versions: GcountTasks (no Python installation needed)
+Note that these stand-alone programs will only run with the boinccmd binary in its default install location. If you launch a GcountTasks stand-alone and get an error message, you can still run gcount-tasks from the command line once you set up a valid boinccmd path in the countCFG.txt configuration file.
 #### GcountTasks.exe - Windows
 A **Windows** standalone of gcount-tasks is available. Download and extract the GitHub distribution package as outlined above. Inside the `CountBOINCtasks-master/Standalone_distributables` folder is `GcountTasks_win.zip`. Alternatively, this compressed file can be downloaded directly from  https://github.com/csecht/CountBOINCtasks/blob/master/Standalone_distributables/GcountTasks_win.zip. Select 'Extract All' for the downloaded ZIP file. After extraction, the .exe extension may not show, depending on your system view settings. Double-click `GcountTasks.exe` to launch. Because this project is in the beta phase, along with the program GUI, a Command Prompt window will appear to display possible Python error messages. Closing the Command Prompt window will also close the GUI.
 
