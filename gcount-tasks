@@ -1693,6 +1693,10 @@ class CountFyi:
             Toplevel is to appear.
         """
 
+        # The *window* parameter is used here, but not in other Fyi methods,
+        #   b/c file_paths() is called from toplevels other than just
+        #   the app main window.
+
         # Have highlightcolor match self.master_bg of the app main window.
         pathswin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
