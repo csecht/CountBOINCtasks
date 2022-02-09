@@ -37,7 +37,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.3'
+__module_ver__ = '0.5.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -53,26 +53,26 @@ from COUNTmodules import utils
 CFGFILE = Path('countCFG.txt')
 
 # Tuples that may be used in various functions:
-tasktags = ('name', 'WU name', 'project URL', 'received',
-            'report deadline', 'ready to report', 'state',
-            'scheduler state', 'active_task_state',
-            'app version num', 'resources', 'final CPU time',
-            'final elapsed time', 'final elapsed time',
-            'exit status', 'signal', 'estimated CPU time remaining',
-            'slot', 'PID', 'current CPU time',
-            'CPU time at time_now checkpoint', 'fraction done',
-            'swap size', 'working set size', 'master URL'
-            )
+TASK_TAGS = ('name', 'WU name', 'project URL', 'received',
+             'report deadline', 'ready to report', 'state',
+             'scheduler state', 'active_task_state',
+             'app version num', 'resources', 'final CPU time',
+             'final elapsed time', 'final elapsed time',
+             'exit status', 'signal', 'estimated CPU time remaining',
+             'slot', 'PID', 'current CPU time',
+             'CPU time at time_now checkpoint', 'fraction done',
+             'swap size', 'working set size', 'master URL'
+             )
 
-projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
+PROJECT_CMD = ('reset', 'detach', 'update', 'suspend', 'resume',
               'nomorework', 'allowmorework', 'detach_when_done',
               'dont_detach_when_done'
-              )
+               )
 
-# reportedtags = ('task', 'project URL', 'app name', 'exit status',
+# REPORTED_TAGS = ('task', 'project URL', 'app name', 'exit status',
 #                 'elapsed time', 'completed time', 'get_reported time')
 #
-# gettasktags = ('name', 'state', 'scheduler state',  'fraction done',
+# GETTASKS_TAGS = ('name', 'state', 'scheduler state',  'fraction done',
 #                'active_task_state')
 
 
@@ -252,7 +252,7 @@ def get_tasks(tag: str, cmd=' --get_tasks') -> list:
     tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
 
     # if tag in taskXDFtags:  # Not currently used by count_now-tasks.
-    if tag in tasktags:
+    if tag in TASK_TAGS:
         data = [line.replace(tag_str, '') for line in output if tag_str in line]
         return data
 
@@ -354,7 +354,7 @@ def get_project_url(tag='master URL', cmd=' --get_project_status') -> list:
     data = ['stub_boinc_data']
     tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
 
-    if tag in tasktags:
+    if tag in TASK_TAGS:
         data = [line.replace(tag_str, '') for line in output if tag in line]
 
         return data
@@ -373,13 +373,13 @@ def project_action(project: str, action: str):
     """
 
     # Project commands require the Project URL, others commands don't
-    if action in projectcmd:
+    if action in PROJECT_CMD:
         cmd_str = f'{set_boincpath()} --project {project_url()[project]} {action}'
 
         return run_boinc(cmd_str)
 
     msg = (f'Unrecognized action: {action}. Expecting one of these: '
-           f'{projectcmd}')
+           f'{PROJECT_CMD}')
     return msg
 
 
