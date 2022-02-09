@@ -141,8 +141,8 @@ def lock_or_exit(_fd: TextIO, exit_msg: str) -> None:
     """
     Lock a bespoke hidden file to serve as an instance sentinel for
     Linux and macOS platforms. Lock (or create and lock) the file
-    on first instance from *_fd*; subsequent instances from *_fd* will
-    find the file locked and exit the program.
+    on first instance from *_fd*. Subsequent instances from *_fd* will
+    recognize the file as locked and exit the program.
 
     Example USAGE: Put this at top of if __name__ == "__main__":
         exit_msg = 'Program is already running. Exiting...'
@@ -150,7 +150,8 @@ def lock_or_exit(_fd: TextIO, exit_msg: str) -> None:
         fd = open(lock_file, 'w')
         instances.lock_or_exit(fd, exit_msg)
 
-    :param _fd: The open() text file descriptor for the lock file.
+    :param _fd: The open() text file descriptor for the full path of the
+        lockfile.
     :param exit_msg: The message to display upon exit when another
         instance is running with the same *_fd* file descriptor.
     """
