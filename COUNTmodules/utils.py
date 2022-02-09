@@ -282,8 +282,8 @@ def absolute_path_to(relative_path: str) -> Path:
 
 def boinccmd_not_found(default_path: str) -> None:
     """
-    Display an exit popup message for a bad boinccmd path for a
-    standalone app.
+    Display a popup message for a bad boinccmd path for a
+    standalone app; exits program once user acknowledges.
 
     :param default_path: The expected path for the boinccmd command.
     """

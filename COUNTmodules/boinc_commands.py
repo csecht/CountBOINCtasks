@@ -37,7 +37,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.4'
+__module_ver__ = '0.5.5'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -80,7 +80,8 @@ def set_boincpath() -> str:
     """
     Define an OS-specific path for BOINC's boinccmd executable.
 
-    :return: Correct path string for executing boinccmd commands.
+    :return: Correct path string for executing boinccmd commands;
+        exit if not correct.
     """
     # Need to first check for custom path in the configuration file.
     # Do split to remove the "custom_path" tag, then join to restore the
@@ -112,17 +113,23 @@ def set_boincpath() -> str:
     }
 
     if my_os in default_path:
+
+        # Need to exit program if boinccmd not in default path.
         if not Path.is_file(default_path[my_os]):
             if getattr(sys, 'frozen', False):
+                # Exit PyInstaller standalone app here.
                 utils.boinccmd_not_found(f'{default_path[my_os]}')
+
             badpath_msg = (
                 '\nThe application boinccmd is not in its expected default path: '
                 f'{default_path[my_os]}\n'
                 'You should enter your custom path for boinccmd in the'
                 " the current folder's configuration file, countCFG.txt.")
+
             sys.exit(badpath_msg)
 
-        boinccmd = f'"{default_path[my_os]}"'
+        else:
+            boinccmd = f'"{default_path[my_os]}"'
 
         return boinccmd
 
