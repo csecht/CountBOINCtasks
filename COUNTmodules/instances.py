@@ -168,7 +168,7 @@ def sentinel_or_exit(working_dir: Path, exit_msg=None) -> tuple:
     sentinel. When the program exits, the sentinel is deleted by
     the system. May need to explicitly use sentinel.close() for
     certain Exceptions.
-    Use of *message* parameter triggers automatic exit when sentinel
+    Use of *exit_msg* parameter triggers automatic exit when sentinel
     count condition is met.
 
     Works best on Windows systems. On Linux/macOS systems, the temp file
