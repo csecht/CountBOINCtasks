@@ -18,6 +18,13 @@
 # Windows: \Program Files\BOINC\boinccmd.exe
 # Linux:   /usr/bin/boinccmd
 # Mac OS:  $HOME/Library/Application Support/BOINC/boinccmd
+# Note: On macOS, the Terminal command line would be entered as:
+# /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
-#custom_path $HOME/Library/Application Support/BOINC/boinccmd
+# Be sure to end the path with \\boinccmd.exe or /boinccmd, depending on your system.
+# If you have not yet installed BOINC, read this:
+#    https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
+
+#custom_path <uncomment this line and put your custom path here, without brackets.>
+
 

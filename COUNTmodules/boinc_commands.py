@@ -37,16 +37,18 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.2'
+__module_ver__ = '0.5.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 import shlex
+import sys
 from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
-from sys import platform, exit as sysexit
+
+from COUNTmodules import utils
 
 CFGFILE = Path('countCFG.txt')
 
@@ -74,7 +76,6 @@ projectcmd = ('reset', 'detach', 'update', 'suspend', 'resume',
 #                'active_task_state')
 
 
-
 def set_boincpath() -> str:
     """
     Define an OS-specific path for BOINC's boinccmd executable.
@@ -86,7 +87,7 @@ def set_boincpath() -> str:
     #   path with any spaces it might have.
     if Path.is_file(CFGFILE):
         cfg = Path('countCFG.txt').read_text()
-        for line in cfg:
+        for line in cfg.splitlines():
             if '#' not in line and 'custom_path' in line:
                 parts = line.split()
                 del parts[0]
@@ -96,7 +97,7 @@ def set_boincpath() -> str:
 
     # Need to accommodate win32 and win64? so slice [:3] for all platforms.
     #   Only win, lin, and dar values are accommodated here.
-    my_os = platform[:3]
+    my_os = sys.platform[:3]
 
     win_path = Path('/Program Files/BOINC/boinccmd.exe')
     lin_path = Path('/usr/bin/boinccmd')
@@ -112,38 +113,22 @@ def set_boincpath() -> str:
 
     if my_os in default_path:
         if not Path.is_file(default_path[my_os]):
-            custom_path = input(
-                '\nboinccmd is not in its default path: '
+            if getattr(sys, 'frozen', False):
+                utils.boinccmd_not_found(f'{default_path[my_os]}')
+            badpath_msg = (
+                '\nThe application boinccmd is not in its expected default path: '
                 f'{default_path[my_os]}\n'
-                'You may set your custom path in countCFG.txt, enter your\n'
-                '   custom path here, or just hit enter to move on: ')
+                'You should enter your custom path for boinccmd in the'
+                " the current folder's configuration file, countCFG.txt.")
+            sys.exit(badpath_msg)
 
-            if not Path.is_file(Path(custom_path)):
-                raise OSError(f'Oops. "{custom_path}" will not work.\n'
-                              'Be sure to include \\boinccmd.exe or '
-                              '/boinccmd in the path, depending on your system.\n'
-                              'If you have not yet installed BOINC, read this:\n'
-                              'https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
-                              'Try again. Exiting now...\n')
-
-            cmd_name = Path(custom_path).name
-            print('The boinc command file is:', cmd_name)
-
-            if cmd_name not in ('boinccmd.exe', 'boinccmd'):
-                raise OSError(f'The entered action path, {custom_path},'
-                              ' must end with \\boinccmd.exe or '
-                              '/boinccmd, depending on your system.\n'
-                              'Try again. Exiting now...\n')
-            return custom_path
-
-        # MacOS paths need double-quotes here if folder names have spaces.
         boinccmd = f'"{default_path[my_os]}"'
 
         return boinccmd
 
     print(f"Platform <{my_os}> is not recognized.\n"
           "Expecting win (Win32 or Win64), lin (Linux) or dar (Darwin =>Mac OS).")
-    sysexit(1)
+    sys.exit(1)
 
 
 def run_boinc(cmd_str: str) -> list:
@@ -154,7 +139,7 @@ def run_boinc(cmd_str: str) -> list:
     :return: Data from a boinc-client command specified in cmd_str.
     """
     # source: https://stackoverflow.com/questions/33560364/
-    if platform[:3] == 'win':
+    if sys.platform[:3] == 'win':
         cmd = cmd_str
     else:
         cmd = shlex.split(cmd_str)
@@ -183,7 +168,7 @@ def run_boinc(cmd_str: str) -> list:
                ' boinccmd has a bad command argument.')
         print(f'\n{msg}\n{cpe}')
         # NOTE: exit works in count-tasks, not in gcount-tasks.
-        sysexit(1)
+        sys.exit(1)
 
 
 def get_version(cmd=' --client_version') -> list:
@@ -210,7 +195,7 @@ def check_boinc():
     if "can't connect to local host" in get_version():
         print('BOINC ERROR: BOINC commands cannot be executed.\n'
               'Is the BOINC client running?   Exiting now...')
-        sysexit(1)
+        sys.exit(1)
 
 
 def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
@@ -432,7 +417,7 @@ def about() -> None:
     print(f'{"URL:".ljust(11)}', __project_url__)
     print(f'{"Maintainer:".ljust(11)}', __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
-    sysexit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.8'
+__version__ = '0.10.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -882,12 +882,6 @@ class CountViewer(tk.Frame):
         self.master_layout()
         self.share.defaultsettings()
         self.settings()
-        # Sequence of starting functions after settings() is called:
-        #   confirm_settings(), start_when_confirmed(), start_threads(),
-        #   emphasize_start_data(), starting_tooltips(),
-        #   CountModeler.start_data(). Of course none of that sequence
-        #   matters if BOINC client is not running, so...
-        check_boinc_tk()
 
     def master_widgets(self) -> None:
         """
@@ -1598,8 +1592,6 @@ class CountFyi:
         """
         Toplevel display of program metadata.
         Called from Viewer.master_widgets() Help menu bar.
-
-        :return: None
         """
         # Have highlightcolor match self.master_bg of the app main window.
         aboutwin = tk.Toplevel(highlightthickness=5,
@@ -1896,6 +1888,9 @@ class CountController(tk.Tk):
 
 if __name__ == "__main__":
     parse_args()
+
+    # Need to confirm that the boinccmd path exists.
+    BC.set_boincpath()
 
     # Need to set up conditions to control multiple instances.
     # Must not allow multiple instances to write to the same log file,

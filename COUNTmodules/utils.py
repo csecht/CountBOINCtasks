@@ -3,10 +3,9 @@
 General utility functions in gcount-tasks.
 Functions:
     absolute_path_to() - Get absolute path to files and directories.
+    enter_only_digits() - Constrain tk.Entry() values to digits.
     position_wrt_window() - Set coordinates of a tk.Toplevel relative
         to another window position.
-    get_toplevel - Identify the parent tk.Toplevel with focus.
-    enter_only_digits() - Constrain tk.Entry() values to digits.
 
     Copyright (C) 2020-2021  C. Echt
 
@@ -35,6 +34,7 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import sys
 import tkinter as tk
+from tkinter import messagebox
 from pathlib import Path
 
 
@@ -280,29 +280,23 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
+def boinccmd_not_found(default_path) -> None:
     """
-    Get screen position of a tkinter Toplevel object and apply optional
-    coordinate offsets. Used to set screen position of a child Toplevel
-    with respect to the parent window.
-    Example use with the geometry() method:
-      mytopwin.geometry(utils.position_wrt_window(root, 15, -15))
-    When used with get_toplevel(), it is expected that all the parent's
-    Toplevel Button() widgets are configured for 'takefocus=False'.
-
-    :param window: The tk window object (e.g., 'root', 'app',
-                   '.!toplevel2') of mainloop for which to get its
-                   screen pixel coordinates.
-    :param offset_x: optional pixels to add/subtract to x coordinate of
-                     *window*.
-    :param offset_y: optional pixels to add/subtract to x coordinate of
-                     *window*.
-    :return: x and y screen pixel coordinates as string, f'+{x}+{y}'
+    -
+    :param default_path:
+    :return:
     """
-    coord_x = window.winfo_x() + offset_x
-    coord_y = window.winfo_y() + offset_y
-
-    return f'+{coord_x}+{coord_y}'
+    okay = messagebox.askokcancel(
+        title='BOINC ERROR: bad cmd path',
+        detail='The application boinccmd is not in its expected default path:\n'
+               f'{default_path}\n'
+               'Edit the configuration file, countCFG.txt,\n'
+               'in the CountBOINCtasks-master folder,\n'
+               'then run the gcount-tasks command line from there.')
+    if okay:
+        sys.exit(0)
+    else:
+        sys.exit(0)
 
 
 def enter_only_digits(entry, action_type) -> bool:
@@ -328,6 +322,31 @@ def enter_only_digits(entry, action_type) -> bool:
         return False
 
     return True
+
+
+def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
+    """
+    Get screen position of a tkinter Toplevel object and apply optional
+    coordinate offsets. Used to set screen position of a child Toplevel
+    with respect to the parent window.
+    Example use with the geometry() method:
+      mytopwin.geometry(utils.position_wrt_window(root, 15, -15))
+    When used with get_toplevel(), it is expected that all the parent's
+    Toplevel Button() widgets are configured for 'takefocus=False'.
+
+    :param window: The tk window object (e.g., 'root', 'app',
+                   '.!toplevel2') of mainloop for which to get its
+                   screen pixel coordinates.
+    :param offset_x: optional pixels to add/subtract to x coordinate of
+                     *window*.
+    :param offset_y: optional pixels to add/subtract to x coordinate of
+                     *window*.
+    :return: x and y screen pixel coordinates as string, f'+{x}+{y}'
+    """
+    coord_x = window.winfo_x() + offset_x
+    coord_y = window.winfo_y() + offset_y
+
+    return f'+{coord_x}+{coord_y}'
 
 
 def about() -> None:
