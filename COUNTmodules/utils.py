@@ -280,11 +280,12 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def boinccmd_not_found(default_path) -> None:
+def boinccmd_not_found(default_path: str) -> None:
     """
-    -
-    :param default_path:
-    :return:
+    Display an exit popup message for a bad boinccmd path for a
+    standalone app.
+
+    :param default_path: The expected path for the boinccmd command.
     """
     okay = messagebox.askokcancel(
         title='BOINC ERROR: bad cmd path',
