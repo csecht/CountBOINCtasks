@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.9'
+__version__ = '0.10.10'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -1614,7 +1614,7 @@ class CountFyi:
                       f'{"Status:".ljust(13)}{__status__}\n'
                       )
 
-        max_line = len(max([line for line in insert_txt.splitlines()], key=len))
+        max_line = len(max(insert_txt.splitlines(), key=len))
 
         abouttxt = tk.Text(aboutwin, font='TkFixedFont',
                            width=max_line, height=insert_txt.count('\n') + 2,
@@ -1938,12 +1938,12 @@ if __name__ == "__main__":
                 app.mainloop()
 
             except KeyboardInterrupt:
-                msg_ = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
                         " *** Keyboard interrupt by user ***\n"
                         f"This instance's temporary file, {sentinel.name},"
                         " has been deleted.\n")
-                print(msg_)
-                logging.info(msg=msg_)
+                print(_msg)
+                logging.info(msg=_msg)
             except Exception as unknown:
                 print(f'An unexpected error: {unknown}\n'
                       f"This instance's temporary file, {sentinel.name},"
@@ -1970,9 +1970,9 @@ if __name__ == "__main__":
             app.mainloop()
 
         except KeyboardInterrupt:
-            msg_ = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+            _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
                     " *** Keyboard interrupt by user ***\n")
-            print(msg_)
-            logging.info(msg=msg_)
+            print(_msg)
+            logging.info(msg=_msg)
         except Exception as unknown:
             print(f'\nAn unexpected error: {unknown}\n')
