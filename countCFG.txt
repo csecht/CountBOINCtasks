@@ -1,29 +1,27 @@
-# If you have moved BOINC components from their default install location, you
-# can either enter a custom path for the boinccmd executable on the command
-# line when executing the count-task.py script, or enter your custom path below
-# to make it permanently available to count-tasks.py.
+# If you have not yet installed BOINC, read this:
+#    https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
 
-# To use a custom path here, remove the leading # from the "custom_path" line,
-# and replace the example path with your path. Enter it as you would for a
-# terminal command to execute the boinccmd program (without arguments).
-# Note that in the Mac OS shell, while you would need to escape a
+### Do not rename this file.
+### Keep it, or its alias-symlink, in the CountBOINCtasks-master folder.
+
+# If you have moved BOINC components from their default install location,
+# you can run gcount-tasks by entering your custom BOINC path below.
+
+# To use a custom path, remove the leading # from the "custom_path" line,
+# and write your system path using the examples as template. Generally,
+# you should enter it as you would for in the command line to execute the
+# boinccmd program (without arguments).
+# Note that in the macOS Terminal, while you would need to escape a
 # space in a folder name, e.g. /Application\ Support/, or use double quotes
 # around a path that contained spaces, you do not need escapes or quotes for
 # this custom_path.
 
-### Do not rename this file.
-### Keep this file in the CountBOINCtasks-master folder.
-
 # Path examples (BOINC default paths):
 # Windows: \Program Files\BOINC\boinccmd.exe
 # Linux:   /usr/bin/boinccmd
-# Mac OS:  $HOME/Library/Application Support/BOINC/boinccmd
+# MacOS:  $HOME/Library/Application Support/BOINC/boinccmd
 # Note: On macOS, the Terminal command line would be entered as:
 # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
-
-# Be sure to end the path with \\boinccmd.exe or /boinccmd, depending on your system.
-# If you have not yet installed BOINC, read this:
-#    https://boinc.berkeley.edu/wiki/Installing_BOINC\n'
 
 #custom_path <uncomment this line and put your custom path here, without brackets.>
 

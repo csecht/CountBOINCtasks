@@ -50,7 +50,7 @@ from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
 from COUNTmodules import utils
 
-CFGFILE = Path('countCFG.txt')
+CFGFILE = Path('countCFG.txt').resolve()
 
 # Tuples that may be used in various functions:
 TASK_TAGS = ('name', 'WU name', 'project URL', 'received',
