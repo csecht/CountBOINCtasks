@@ -37,7 +37,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.5'
+__module_ver__ = '0.5.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -65,15 +65,18 @@ TASK_TAGS = ('name', 'WU name', 'project URL', 'received',
              )
 
 PROJECT_CMD = ('reset', 'detach', 'update', 'suspend', 'resume',
-              'nomorework', 'allowmorework', 'detach_when_done',
-              'dont_detach_when_done'
+               'nomorework', 'allowmorework', 'detach_when_done',
+               'dont_detach_when_done'
                )
 
 # REPORTED_TAGS = ('task', 'project URL', 'app name', 'exit status',
 #                 'elapsed time', 'completed time', 'get_reported time')
-#
+
 # GETTASKS_TAGS = ('name', 'state', 'scheduler state',  'fraction done',
 #                'active_task_state')
+
+# Only win, lin, and dar values are accommodated here.
+MY_OS = sys.platform[:3]
 
 
 def set_boincpath() -> str:
@@ -96,44 +99,36 @@ def set_boincpath() -> str:
 
                 return custom_path
 
-    # Need to accommodate win32 and win64? so slice [:3] for all platforms.
-    #   Only win, lin, and dar values are accommodated here.
-    my_os = sys.platform[:3]
-
-    win_path = Path('/Program Files/BOINC/boinccmd.exe')
-    lin_path = Path('/usr/bin/boinccmd')
-    dar_path = Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
+    default_path = {
+        'win': Path('/Program Files/BOINC/boinccmd.exe'),
+        'lin': Path('/usr/bin/boinccmd'),
+        'dar': Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
+    }
     # Note: On macOS, the Terminal command line would be entered as:
     # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
-    default_path = {
-        'win': win_path,
-        'lin': lin_path,
-        'dar': dar_path
-    }
-
-    if my_os in default_path:
+    if MY_OS in default_path:
 
         # Need to exit program if boinccmd not in default path.
-        if not Path.is_file(default_path[my_os]):
+        if not Path.is_file(default_path[MY_OS]):
             if getattr(sys, 'frozen', False):
                 # Exit PyInstaller standalone app here.
-                utils.boinccmd_not_found(f'{default_path[my_os]}')
+                utils.boinccmd_not_found(f'{default_path[MY_OS]}')
 
             badpath_msg = (
                 '\nThe application boinccmd is not in its expected default path: '
-                f'{default_path[my_os]}\n'
+                f'{default_path[MY_OS]}\n'
                 'You should enter your custom path for boinccmd in the'
                 " the current folder's configuration file, countCFG.txt.")
 
             sys.exit(badpath_msg)
 
         else:
-            boinccmd = f'"{default_path[my_os]}"'
+            boinccmd = f'"{default_path[MY_OS]}"'
 
         return boinccmd
 
-    print(f"Platform <{my_os}> is not recognized.\n"
+    print(f"Platform <{MY_OS}> is not recognized.\n"
           "Expecting win (Win32 or Win64), lin (Linux) or dar (Darwin =>Mac OS).")
     sys.exit(1)
 
@@ -146,7 +141,7 @@ def run_boinc(cmd_str: str) -> list:
     :return: Data from a boinc-client command specified in cmd_str.
     """
     # source: https://stackoverflow.com/questions/33560364/
-    if sys.platform[:3] == 'win':
+    if MY_OS == 'win':
         cmd = cmd_str
     else:
         cmd = shlex.split(cmd_str)
@@ -187,9 +182,7 @@ def get_version(cmd=' --client_version') -> list:
     """
 
     # Note: run_boinc() always returns a list.
-    output = run_boinc(set_boincpath() + cmd)
-
-    return output
+    return run_boinc(set_boincpath() + cmd)
 
 
 def check_boinc():
