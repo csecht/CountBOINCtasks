@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.6'
+__module_ver__ = '0.1.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -163,6 +163,7 @@ class Logs:
                 f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
                 f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
                 f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
                 f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n')
