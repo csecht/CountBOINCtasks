@@ -1305,7 +1305,8 @@ class CountViewer(tk.Frame):
             ' with the BOINC server when no tasks are running and'
             ' all tasks in the BOINC Manager are "Ready to report".'
             ' This may have unwanted effects if communication is lost'
-            " because of loss of the host's internet connection.")
+            " because of loss of the host's internet connection."
+            ' Not tested with multiple concurrent Projects.')
 
         Tooltip(intvl_ttip_btn, intvl_ttip_txt)
         Tooltip(cycles_ttip_btn, cycles_ttip_txt)
