@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'files.py'
-__module_ver__ = '0.1.5'
+__module_ver__ = '0.1.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -98,7 +98,7 @@ def save_as(source: Path, parent=None) -> None:
 
     # Offer to use a timestamp for each save_as file saved.
     _ts = datetime.now().strftime("%d%m%Y_%H%M")
-    backupname = f'{source.stem}({_ts}){source.suffix}'
+    backupname = f'{source.stem}_{_ts}_{source.suffix}'
     backupfile = filedialog.asksaveasfilename(
         initialfile=backupname, parent=parent,
         filetypes=[('TEXT', '*.txt'), ],
