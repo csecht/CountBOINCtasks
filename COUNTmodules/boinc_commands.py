@@ -90,8 +90,8 @@ def set_boincpath() -> str:
     # Do split to remove the "custom_path" tag, then join to restore the
     #   path with any spaces it might have.
     if Path.is_file(CFGFILE):
-        cfg = Path('countCFG.txt').read_text()
-        for line in cfg.splitlines():
+        cfg_text = Path('countCFG.txt').read_text()
+        for line in cfg_text.splitlines():
             if '#' not in line and 'custom_path' in line:
                 parts = line.split()
                 del parts[0]
