@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'times.py'
-__module_ver__ = '0.2.5'
+__module_ver__ = '0.2.6'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -150,7 +150,7 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     Used to analyse times extracted from logged task times.
 
     :param distribution: List or tuple of times, as string format
-                         ('00:00:00'), or as seconds (floats or integers).
+        ('00:00:00' or '00:00'), or as seconds (floats or integers).
     :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
                  'wtmean' requires *distribution* and *weights* parameters
                   and *distribution* times are expected to be averages.
@@ -169,6 +169,7 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     #   3-ways-to-compute-a-weighted-average-in-python-4e066de7a719
     # https://stackoverflow.com/questions/10663720/
     #   how-to-convert-a-time-string-to-seconds
+    #   contributors thafritz and Sverrir Sigmundarson
     # https://stackoverflow.com/questions/18470627/
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
 
@@ -189,7 +190,10 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     #    not if distribution times are float or integer seconds.
     if all(isinstance(t, str) for t in distribution):
         dist_sec = [
-            sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
+            # This handles only 00:00:00 format...
+            # sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
+            # This handles either 00:00:00 or 00:00 format...
+            sum(x * int(t) for x, t in zip([1, 60, 3600], reversed(clk_fmt.split(":"))))
             for clk_fmt in distribution]
     else:
         dist_sec = list(distribution)
