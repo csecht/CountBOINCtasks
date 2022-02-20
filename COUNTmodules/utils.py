@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.10'
+__module_ver__ = '0.1.11'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -35,7 +35,11 @@ __status__ = 'Development Status :: 4 - Beta'
 import sys
 import tkinter as tk
 from tkinter import messagebox
+from time import sleep
 from pathlib import Path
+
+if 'win' in sys.platform:
+    import winsound
 
 
 class Tooltip:
@@ -348,6 +352,27 @@ def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
     coord_y = window.winfo_y() + offset_y
 
     return f'+{coord_x}+{coord_y}'
+
+
+def beep(count) -> None:
+    """
+    Play beep sound through the computer's speaker.
+
+    :param count: Number of times to repeat the beep.
+    """
+
+    # Cannot repeat without a sleep interval longer than the sound play duration.
+    for _ in range(1, count):
+        if 'win' in sys.platform:
+            freq = 440
+            dur = 200
+            winsound.Beep(freq, dur)
+
+        else:
+            # Linux/Mac print keyword arguments are needed to avoid inserting newlines.
+            # '\N{BEL}' works from terminal, but not from PyCharm 'Run' interpreter.
+            print('\N{BEL}', end='', flush=True)
+        sleep(0.6)
 
 
 def about() -> None:
