@@ -3,6 +3,9 @@
 General utility functions in gcount-tasks.
 Functions:
     absolute_path_to() - Get absolute path to files and directories.
+    beep() - Play beep on speakers.
+    boinccmd_not_found() - Display message for a bad boinccmd path; use
+        with standalone app.
     enter_only_digits() - Constrain tk.Entry() values to digits.
     position_wrt_window() - Set coordinates of a tk.Toplevel relative
         to another window position.
@@ -284,6 +287,26 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
+def beep(count) -> None:
+    """
+    Play beep sound through the computer's speaker.
+
+    :param count: Number of times to repeat the beep.
+    """
+
+    # Cannot repeat a sleep interval shorter than the sound play duration.
+    for _ in range(count):
+        if 'win' in sys.platform:
+            freq = 500
+            dur = 200
+            winsound.Beep(freq, dur)
+        else:
+            # Linux/Mac print keyword arguments are needed to not insert newlines.
+            # '\N{BEL}' works from terminal, but not from PyCharm 'Run' interpreter.
+            print('\N{BEL}', end='', flush=True)
+        sleep(0.6)
+
+
 def boinccmd_not_found(default_path: str) -> None:
     """
     Display a popup message for a bad boinccmd path for a
@@ -352,26 +375,6 @@ def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
     coord_y = window.winfo_y() + offset_y
 
     return f'+{coord_x}+{coord_y}'
-
-
-def beep(count) -> None:
-    """
-    Play beep sound through the computer's speaker.
-
-    :param count: Number of times to repeat the beep.
-    """
-
-    # Cannot repeat a sleep interval shorter than the sound play duration.
-    for _ in range(count):
-        if 'win' in sys.platform:
-            freq = 500
-            dur = 200
-            winsound.Beep(freq, dur)
-        else:
-            # Linux/Mac print keyword arguments are needed to not insert newlines.
-            # '\N{BEL}' works from terminal, but not from PyCharm 'Run' interpreter.
-            print('\N{BEL}', end='', flush=True)
-        sleep(0.6)
 
 
 def about() -> None:
