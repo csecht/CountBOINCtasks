@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.10'
+__version__ = '0.10.11'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -438,11 +438,15 @@ class CountModeler:
         Is threaded as notice_thread; started in Viewer.start_threads().
         Calls to: check_boinc_tk(), task_states(), and log_it().
         """
+        notice_cycle_number = 0
         while self.share.data['cycles_remain'].get() > 0:
             sleep(NOTICE_INTERVAL)
             with self.thread_lock:
                 # Need to quit app if boinc-client is no longer running.
                 check_boinc_tk()
+
+                # Need to keep track of cycles for regulate Utils.beep() calls.
+                notice_cycle_number += 1
 
                 self.task_states()
                 num_running = self.share.note['num_running'].get()
@@ -505,6 +509,12 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             f'NO TASKS running; {num_suspended_by_user} tasks suspended by user.\n'
                             'You may want to resume them.')
+                        if self.share.setting['sound_beep'].get() and tic_nnt > 1:
+                            # Call beep() every other notice cycle. If
+                            # change the modulo, then also change the
+                            # Settings window Tooltip text for beep timing.
+                            if notice_cycle_number % 2 == 0:
+                                Utils.beep(2)
                     elif num_suspended_by_boinc > 0:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running.\n'
@@ -513,6 +523,12 @@ class CountModeler:
                     else:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running; reason unknown\nCheck BOINC Manager.')
+                        if self.share.setting['sound_beep'].get() and tic_nnt > 1:
+                            # Call beep() every other notice cycle. If
+                            # change the modulo, then also change the
+                            # Settings window Tooltip text for beep timing.
+                            if notice_cycle_number % 2 == 0:
+                                Utils.beep(2)
 
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
@@ -743,6 +759,7 @@ class CountViewer(tk.Frame):
         self.countnow_button = ttk.Button(self.settings_win)
         self.log_choice = tk.Checkbutton(self.settings_win)
         self.update_choice = tk.Checkbutton(self.settings_win)
+        self.beep_choice = tk.Checkbutton(self.settings_win)
 
         # Control variables for basic run parameters/settings passed
         #    between Viewer and Modeler.
@@ -754,7 +771,8 @@ class CountViewer(tk.Frame):
             'summary_t': tk.StringVar(),
             'cycles_max': tk.IntVar(),
             'do_log': tk.BooleanVar(),
-            'proj_update': tk.BooleanVar()
+            'proj_update': tk.BooleanVar(),
+            'sound_beep': tk.BooleanVar()
         }
 
         # Control variables for display in master; data passed between
@@ -1226,14 +1244,23 @@ class CountViewer(tk.Frame):
                 self.cycles_max_entry.register(Utils.enter_only_digits), '%P', '%d'))
 
         # Provide user options for logging results to file and using auto-update.
-        log_label = ttk.Label(self.settings_win, text='Log results to file',
+        log_label = ttk.Label(self.settings_win,
+                              text='Log results to file',
                               style='Set.TLabel')
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
-        update_label = ttk.Label(self.settings_win, text='Use Project auto-update',
+
+        update_label = ttk.Label(self.settings_win,
+                                 text='Use Project auto-update',
                                  style='Set.TLabel')
         self.update_choice.configure(variable=self.share.setting['proj_update'],
                                      bg=self.master_bg, borderwidth=0)
+
+        beep_label = ttk.Label(self.settings_win,
+                               text='No tasks running alarm',
+                               style='Set.TLabel')
+        self.beep_choice.configure(variable=self.share.setting['sound_beep'],
+                                   bg=self.master_bg, borderwidth=0)
 
         default_button = ttk.Button(self.settings_win, text='Use defaults',
                                     command=self.share.defaultsettings)
@@ -1254,6 +1281,8 @@ class CountViewer(tk.Frame):
         self.log_choice.grid(row=3, column=1, padx=0, pady=5, sticky=tk.W)
         update_label.grid(row=4, column=0, padx=5, pady=0, sticky=tk.E)
         self.update_choice.grid(row=4, column=1, padx=0, pady=0, sticky=tk.W)
+        beep_label.grid(row=5, column=0, padx=5, pady=0, sticky=tk.E)
+        self.beep_choice.grid(row=5, column=1, padx=0, pady=0, sticky=tk.W)
         self.countnow_button.grid(
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
 
@@ -1284,23 +1313,24 @@ class CountViewer(tk.Frame):
                relief=[('pressed', tk.FLAT),
                        ('!pressed', tk.FLAT)]
                )
+        intvl_tip_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
+        cycles_tip_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
+        update_tip_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
+        beep_tip_btn = ttk.Button(
+            self.settings_win, style='Tooltip.TButton', takefocus=False)
 
-        intvl_ttip_btn = ttk.Button(
-            self.settings_win, style='Tooltip.TButton', takefocus=False)
-        cycles_ttip_btn = ttk.Button(
-            self.settings_win, style='Tooltip.TButton', takefocus=False)
-        update_ttip_btn = ttk.Button(
-            self.settings_win, style='Tooltip.TButton', takefocus=False)
-
-        intvl_ttip_txt = (
+        intvl_tip_txt = (
             'If the desired pull-down time values do not appear, then'
             ' either select a different summary time (or a different'
             ' interval time if do not see a desired summary time unit)'
             ' or click "Use defaults" and try again.')
-        cycles_ttip_txt = (
+        cycles_tip_txt = (
             'Interval counting stops after entered number of'
             ' cycles. Enter 0 (zero) for a one-off status report.')
-        update_ttip_txt = (
+        update_tip_txt = (
             'Allows an automatic Project update to re-establish communication'
             ' with the BOINC server when no tasks are running and'
             ' all tasks in the BOINC Manager are "Ready to report".'
@@ -1308,23 +1338,35 @@ class CountViewer(tk.Frame):
             " because of loss of the host's internet connection."
             ' Not tested with multiple concurrent Projects.')
 
-        Tooltip(intvl_ttip_btn, intvl_ttip_txt)
-        Tooltip(cycles_ttip_btn, cycles_ttip_txt)
-        Tooltip(update_ttip_btn, update_ttip_txt)
+        beep_interval = NOTICE_INTERVAL * 2
+        beep_tip_txt = (
+            f'Provide an audible notification when no tasks are running'
+            ' because tasks or Project are suspended by user or because'
+            ' of an unexpected event. Occurs after the first full' 
+            ' interval cycle elapses with no tasks running; beeps then'
+            f' occur every {beep_interval} seconds.')
+
+        Tooltip(intvl_tip_btn, intvl_tip_txt)
+        Tooltip(cycles_tip_btn, cycles_tip_txt)
+        Tooltip(update_tip_btn, update_tip_txt)
+        Tooltip(beep_tip_btn, beep_tip_txt)
 
         # Need OS-specific grids for proper padding and alignments:
         if MY_OS == 'lin':
-            intvl_ttip_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
-            cycles_ttip_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
-            update_ttip_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+            intvl_tip_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
+            cycles_tip_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
+            update_tip_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
+            beep_tip_btn.grid(row=5, column=0, padx=(15, 0), sticky=tk.W)
         elif MY_OS == 'win':
-            intvl_ttip_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
-            cycles_ttip_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
-            update_ttip_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
+            intvl_tip_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
+            cycles_tip_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
+            update_tip_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
+            beep_tip_btn.grid(row=5, column=0, padx=(5, 0), sticky=tk.W)
         elif MY_OS == 'dar':
-            intvl_ttip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
-            cycles_ttip_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
-            update_ttip_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
+            intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
+            cycles_tip_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
+            update_tip_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
+            beep_tip_btn.grid(row=5, column=0, padx=(8, 0), sticky=tk.W)
 
     def confirm_settings(self) -> bool:
         """
@@ -1490,21 +1532,21 @@ class CountViewer(tk.Frame):
         Tips will not be active once the first interval posts.
         """
 
-        starting_ttip_txt = (
+        starting_tip_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
             f' {__program_name__} started. Once the first count'
             ' interval time has elapsed, data for that interval will'
             ' display and this button will become "Interval data".'
         )
-        Tooltip(self.share.starting_b, starting_ttip_txt)
+        Tooltip(self.share.starting_b, starting_tip_txt)
 
-        summary_ttip_txt = (
+        summary_tip_txt = (
             'This button will activate and allow switching of visual'
             ' emphasis between interval and summary data columns'
             ' once the first summary count interval time has elapsed.'
         )
-        Tooltip(self.share.sumry_b, summary_ttip_txt)
+        Tooltip(self.share.sumry_b, summary_tip_txt)
 
     def emphasize_intvl_data(self) -> None:
         """
@@ -1749,8 +1791,6 @@ class CountFyi:
         """
         Toplevel display of basic information for usage and actions.
         Called from Viewer.master_widgets() Help menu bar.
-
-        :return: None
         """
 
         # Have highlightcolor match self.master_bg of the app main window.
