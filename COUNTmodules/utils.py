@@ -362,17 +362,16 @@ def beep(count) -> None:
     """
 
     # Cannot repeat a sleep interval shorter than the sound play duration.
-    for _ in range(1, count):
+    for _ in range(count):
         if 'win' in sys.platform:
             freq = 500
             dur = 200
             winsound.Beep(freq, dur)
-
         else:
-            # Linux/Mac print keyword arguments are needed to avoid inserting newlines.
+            # Linux/Mac print keyword arguments are needed to not insert newlines.
             # '\N{BEL}' works from terminal, but not from PyCharm 'Run' interpreter.
             print('\N{BEL}', end='', flush=True)
-        sleep(0.4)
+        sleep(0.6)
 
 
 def about() -> None:
