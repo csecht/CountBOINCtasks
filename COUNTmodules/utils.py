@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.11 '
+__module_ver__ = '0.1.12 '
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -225,7 +225,8 @@ class Tooltip:
         optimized for best performance on Linux, Windows, and macOS.
         """
 
-        tt_background = 'LightYellow1'
+        tt_bg = 'LightYellow1'
+        tt_fg = 'gray10'
 
         # Minimize the window until everything is loaded to prevent
         #   annoying re-draw on some systems.
@@ -237,19 +238,20 @@ class Tooltip:
         self.tt_win.wm_attributes('-topmost', True)
 
         tt_frame = tk.Frame(self.tt_win,
-                            background=tt_background,
+                            background=tt_bg,
                             borderwidth=0)
         tt_label = tk.Label(
             tt_frame,
             text=self.tt_text,
             font='TkTooltipFont',
             justify=tk.LEFT,
-            background=tt_background,
+            background=tt_bg,
+            foreground=tt_fg,
             relief=tk.SOLID,
             borderwidth=0,
             wraplength=self.wrap_len)
         tt_frame.grid()
-        tt_label.grid(padx=10, pady=6, sticky=tk.NSEW)
+        tt_label.grid(padx=16, pady=16, sticky=tk.NSEW)
 
         _x, _y = self.tip_pos_calculator(self.widget, tt_label)
         self.tt_win.wm_geometry(f'+{_x}+{_y}')

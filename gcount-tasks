@@ -1328,15 +1328,15 @@ class CountViewer(tk.Frame):
             ' interval time if do not see a desired summary time unit)'
             ' or click "Use defaults" and try again.')
         cycles_tip_txt = (
-            'Interval counting stops after entered number of'
-            ' cycles. Enter 0 (zero) for a one-off status report.')
+            'Interval counting stops after number of cycles'
+            ' entered. Enter 0 (zero) for a one-off status report.')
         update_tip_txt = (
             'Allows an automatic Project update to re-establish communication'
             ' with the BOINC server when no tasks are running and'
             ' all tasks in the BOINC Manager are "Ready to report".'
             ' This may have unwanted effects if communication is lost'
             " because of loss of the host's internet connection."
-            ' Not tested with multiple concurrent Projects.')
+            ' Has not been tested with multiple concurrent Projects.')
 
         beep_interval = NOTICE_INTERVAL * 2
         beep_tip_txt = (
