@@ -26,7 +26,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'files.py'
-__module_ver__ = '0.1.6'
+__module_ver__ = '0.1.7'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -77,6 +77,12 @@ def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
                   'Was file deleted, moved or renamed?')
         messagebox.showerror(title='FILE NOT FOUND',
                              detail=fnferr, parent=parent)
+    except OSError as oserr:
+        unkerr = (f'On {node()}, a file append error with:\n{dest}\n'
+                  f'Were you working on the file recently?\n')
+        messagebox.showerror(title='FILE ERROR',
+                             detail=unkerr, parent=parent)
+        print(oserr)
 
 
 def save_as(source: Path, parent=None) -> None:
