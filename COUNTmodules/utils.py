@@ -172,7 +172,7 @@ class Tooltip:
     @staticmethod
     def tip_pos_calculator(widget: tk,
                            label: tk.Label,
-                           tip_delta=(10, 5)) -> tuple:
+                           tip_delta: tuple = (10, 5)) -> tuple:
         """
         Set screen position of the tooltip Toplevel so that it remains
         on screen with proper padding.
@@ -289,7 +289,7 @@ def absolute_path_to(relative_path: str) -> Path:
     return Path(relative_path).resolve()
 
 
-def beep(count) -> None:
+def beep(count: int) -> None:
     """
     Play beep sound through the computer's speaker.
 
@@ -354,7 +354,9 @@ def enter_only_digits(entry, action_type) -> bool:
     return True
 
 
-def position_wrt_window(window: tk, offset_x=0, offset_y=0) -> str:
+def position_wrt_window(window: tk,
+                        offset_x: int = 0,
+                        offset_y: int = 0) -> str:
     """
     Get screen position of a tkinter Toplevel object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
