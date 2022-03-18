@@ -546,7 +546,7 @@ class CountModeler:
             if self.share.setting['do_log'].get():
                 self.log_it('notice')
 
-    def log_it(self, called_from) -> None:
+    def log_it(self, called_from: str) -> None:
         """
         Write interval and summary metrics for recently reported
         BOINC tasks. Provide information on aberrant task status.
@@ -1899,7 +1899,7 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).notice_it()
 
-    def logit(self, called_from) -> None:
+    def logit(self, called_from: str) -> None:
         """Send data to log file.
         Is called from Viewer.start_threads()
 
@@ -1919,9 +1919,8 @@ class CountController(tk.Tk):
         """
         CountFyi(share=self).compliment_me()
 
-    def filepaths(self, window) -> None:
+    def filepaths(self, window: tk.Toplevel) -> None:
         """Is called from Viewer.master_widgets(), Help menu bar.
-        Toplevel window of full paths for program-generated files.
         """
         CountFyi(share=self).file_paths(window)
 
