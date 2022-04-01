@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.11'
+__version__ = '0.10.12'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -539,7 +539,8 @@ class CountModeler:
                     else:
                         self.share.note['notice_txt'].set(
                             f'*** All {cycles_max} count intervals have been run. ***\n')
-                    print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n')
+                    print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n'
+                          'You can quit the program from the GUI, then restart from the command line.\n')
 
             app.update_idletasks()
             # Call to log_it() here needs to be outside the thread lock.
@@ -1447,7 +1448,7 @@ class CountViewer(tk.Frame):
         # Need to provide a unique name of app window for concurrent instances.
         if good_settings and not self.share.setting['do_log'].get():
             app.title(f'Count BOINC tasks on {gethostname()}'
-                      f' (Parallel run, not logging data)')
+                      f' (Not logging data)')
 
         return good_settings
 
