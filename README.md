@@ -105,12 +105,13 @@ Added features in the GUI version:
 <ul>
 <li>View the log file in a pop-up window.</li>
 <li>Backup the log file.</li>
-<li>Pop-up analysis of data recorded in the log file.</li>
+<li>Analysis and plotting of data recorded in the log file.</li>
 <li>Pop-up Help menu.</li>
 </ul>
 
 ![gcount-tasks main window](images/gcount-tasks_scrnshot.png)
 ![log-analysis](images/gcount-tasks_analysis.png)
+![time-plot](images/gcount-tasks_plot.png)
 
 ### Stand-alone versions: GcountTasks (no Python installation needed)
 Note that these stand-alone programs will only run with the boinccmd binary in its default install location. If you launch a GcountTasks stand-alone and get an error message, you can still run gcount-tasks from the command line once you set up a valid boinccmd path in the countCFG.txt configuration file.
