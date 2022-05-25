@@ -81,8 +81,10 @@ class Logs:
         Reads log file and analyses Summary and Interval counts.
         Called from cls.show_analysis().
 
-        :param plot: Optional parameter to call plot_times(); use
-            'plot' to pass as True.
+        :param plot: Optional parameter to call plot_times(); call as
+            analyze_logfile('plot') to define *plot* as True. Is called
+            from Menu in CountViewer.master_widgets() or from key bind
+            in CountViewer.master_layout().
         :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
@@ -141,6 +143,9 @@ class Logs:
             r'Tasks reported .+\n.+\n.+ range \[(\d{2}:\d{2}:\d{2}) -- (\d{2}:\d{2}:\d{2})]',
             logtext, MULTILINE)
 
+        if found_intvls and plot:
+            cls.plot_times(intvl_dates, found_intvl_avgt)
+
         if found_sumrys:
             sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
             num_sumry_intvl_vals = len(set(sumry_intvl_vals))
@@ -161,11 +166,6 @@ class Logs:
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
             intvl_t_range = T.logtimes_stat(sum(found_intvl_t_range, ()), 'range')
-
-            # Raise call to plot interval data as: analyze_logfile('plot')
-            #   so that positional bool param *plot* becomes True.
-            if plot:
-                cls.plot_times(intvl_dates, found_intvl_avgt)
 
             # Text & data used in most count reporting conditions below:
             logged_intvl_report = (
@@ -286,49 +286,6 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def plot_times(cls, tdate_dist: list, ttime_dist: list) -> None:
-        """
-        Draw plot window of time data; expect LOGFILE interval data.
-
-        :param tdate_dist: List of datetime strings when interval task
-            counts intervals were made.
-        :param ttime_dist: List of avg. task time string for the interval.
-            The distributions need to be in register and of same length.
-        :return: None
-        """
-
-        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
-        #   this greatly speeds up plotting.
-        tdates = [mdates.datestr2num(d) for d in tdate_dist]
-        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
-        data_cnt = len(tdates)
-
-        fig, ax = plt.subplots(figsize=(10, 8))
-        ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
-        ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
-        ax.set_title("Task times for logged count intervals")
-        ax.set_facecolor('#e5e5e5')  # X-term gray90.
-
-        ax.xaxis.axis_date()
-        ax.yaxis.axis_date()
-        ax.scatter(tdates, ttimes, s=8)
-        # ax.plot(tdates, ttimes, linewidth=1)
-
-        ax.autoscale(True)
-        ax.grid(True)
-
-        # Need to rotate and right-align the date labels to avoid crowding.
-        for label in ax.get_xticklabels(which='major'):
-            label.set(rotation=30, horizontalalignment='right')
-        loc = mdates.AutoDateLocator(interval_multiples=True)
-        ax.xaxis.set_major_locator(loc)
-        ax.xaxis.set_minor_locator(mdates.DayLocator())
-
-        ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-
-        plt.show()
-
-    @classmethod
     def show_analysis(cls, tk_obj: tk) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
@@ -387,6 +344,49 @@ class Logs:
         Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
+
+    @staticmethod
+    def plot_times(tdate_dist: list, ttime_dist: list) -> None:
+        """
+        Draw plot window of time data; expect LOGFILE interval data.
+
+        :param tdate_dist: List of datetime strings when interval task
+            counts intervals were made.
+        :param ttime_dist: List of avg. task time string for the interval.
+            The distributions need to be in register and of same length.
+        :return: None
+        """
+
+        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        #   this greatly speeds up plotting.
+        tdates = [mdates.datestr2num(d) for d in tdate_dist]
+        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
+        data_cnt = len(tdates)
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
+        ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
+        ax.set_title("Task times for logged count intervals")
+        ax.set_facecolor('#e5e5e5')  # X-term gray90.
+
+        ax.xaxis.axis_date()
+        ax.yaxis.axis_date()
+        ax.scatter(tdates, ttimes, s=8)
+        # ax.plot(tdates, ttimes, linewidth=1)
+
+        ax.autoscale(True)
+        ax.grid(True)
+
+        # Need to rotate and right-align the date labels to avoid crowding.
+        for label in ax.get_xticklabels(which='major'):
+            label.set(rotation=30, horizontalalignment='right')
+        loc = mdates.AutoDateLocator(interval_multiples=True)
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_minor_locator(mdates.DayLocator())
+
+        ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+
+        plt.show()
 
     @staticmethod
     def uptime(logtext: str) -> str:
