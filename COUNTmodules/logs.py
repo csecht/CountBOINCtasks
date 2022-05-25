@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.8'
+__module_ver__ = '0.1.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -82,9 +82,7 @@ class Logs:
         Called from cls.show_analysis().
 
         :param plot: Optional parameter to call plot_times(); call as
-            analyze_logfile('plot') to define *plot* as True. Is called
-            from Menu in CountViewer.master_widgets() or from key bind
-            in CountViewer.master_layout().
+            analyze_logfile(plot=True).
         :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
@@ -143,9 +141,6 @@ class Logs:
             r'Tasks reported .+\n.+\n.+ range \[(\d{2}:\d{2}:\d{2}) -- (\d{2}:\d{2}:\d{2})]',
             logtext, MULTILINE)
 
-        if found_intvls and plot:
-            cls.plot_times(intvl_dates, found_intvl_avgt)
-
         if found_sumrys:
             sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
             num_sumry_intvl_vals = len(set(sumry_intvl_vals))
@@ -177,6 +172,9 @@ class Logs:
                 f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n')
+
+        if found_intvls and plot:
+            cls.plot_times(intvl_dates, found_intvl_avgt)
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -259,29 +257,28 @@ class Logs:
                 )
 
         # Summary text has been defined, so now do recent interval text.
-        if found_sumrys and found_intvls:
-            if recent_intervals:
-                if num_recent_intvl_vals == 1:
-                    recent_interval_text = (
-                        'Since last Summary, additional counts from:\n'
-                        f'{recent_dates[0]} to {recent_dates[-1]}\n'
-                        f'   {str(num_recent_tasks).ljust(11)} '
-                        f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
-                        f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
-                    )
-                else:
-                    recent_interval_text = (
-                        'Since last Summary, additional counts from:\n'
-                        f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
-                        f'   {str(num_recent_tasks).ljust(11)} '
-                        f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
-                        f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
-                        f'There are {num_recent_intvl_vals} different interval times,\n'
-                        f'   {set(recent_intvl_vals)},\n'
-                        '   so interpret results with caution.\n'
-                    )
+        if found_sumrys and found_intvls and recent_intervals:
+            if num_recent_intvl_vals == 1:
+                recent_interval_text = (
+                    'Since last Summary, additional counts from:\n'
+                    f'{recent_dates[0]} to {recent_dates[-1]}\n'
+                    f'   {str(num_recent_tasks).ljust(11)} '
+                    f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
+                    f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
+                )
             else:
-                recent_interval_text = 'No counts logged after last Summary.\n'
+                recent_interval_text = (
+                    'Since last Summary, additional counts from:\n'
+                    f'{recent_dates[0]} to {recent_dates[-1]}\n\n'
+                    f'   {str(num_recent_tasks).ljust(11)} '
+                    f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
+                    f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
+                    f'There are {num_recent_intvl_vals} different interval times,\n'
+                    f'   {set(recent_intvl_vals)},\n'
+                    '   so interpret results with caution.\n'
+                )
+        else:
+            recent_interval_text = 'No counts logged after last Summary.\n'
 
         return summary_text, recent_interval_text
 
@@ -362,6 +359,7 @@ class Logs:
         tdates = [mdates.datestr2num(d) for d in tdate_dist]
         ttimes = [mdates.datestr2num(t) for t in ttime_dist]
         data_cnt = len(tdates)
+        print(len(tdates), len(ttimes))
 
         fig, ax = plt.subplots(figsize=(10, 8))
         ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
@@ -535,10 +533,15 @@ class Logs:
             ttk.Button(filewin, text='Analysis',
                        command=lambda: cls.show_analysis(filewin),
                        takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(filewin))
-
+            ttk.Button(filewin, text='Plot times',
+                       command=lambda: cls.analyze_logfile(plot=True),
+                       takefocus=False).pack(padx=4)
+            filewin.bind('<Shift-Control-L>',
+                         lambda _: cls.show_analysis(filewin))
             filewin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
+            # filewin.bind('<Shift-Control-P>',
+            #              lambda _: cls.analyze_logfile(plot=True))
 
         elif filepath == cls.ANALYSISFILE:
             filewin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
@@ -546,7 +549,8 @@ class Logs:
                 filewin, text='Erase',
                 command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
                 takefocus=False).pack(padx=4)
-            filewin.bind('<Shift-Control-L>', lambda _: cls.show_analysis(tk_obj))
+            filewin.bind('<Shift-Control-L>',
+                         lambda _: cls.show_analysis(tk_obj))
 
         Binds.click('right', filewin)
         Binds.keyboard('close', filewin)

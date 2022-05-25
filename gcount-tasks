@@ -1001,7 +1001,7 @@ class CountViewer(tk.Frame):
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE, app))
         self.master.bind('<Shift-Control-P>',
-                         lambda _: Logs.analyze_logfile('plot'))
+                         lambda _: Logs.analyze_logfile(plot=True))
         self.master.bind('<Shift-Control-L>',
                          lambda _: Logs.show_analysis(app))
         self.master.bind('<Shift-Control-A>',
