@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.12'
+__version__ = '0.10.13'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -934,6 +934,9 @@ class CountViewer(tk.Frame):
                          command=lambda: Logs.view(Logs.LOGFILE, app),
                          # MacOS: can't display 'Cmd+L' b/c won't override native cmd.
                          accelerator='Ctrl+L')
+        view.add_command(label='Plot of log data',
+                         command=lambda: Logs.analyze_logfile('plot'),
+                         accelerator='Ctrl+Shift+P')
         view.add_command(label='Analysis of log data',
                          command=lambda: Logs.show_analysis(app),
                          accelerator='Ctrl+Shift+L')
@@ -997,7 +1000,10 @@ class CountViewer(tk.Frame):
         # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE, app))
-        self.master.bind('<Shift-Control-L>', lambda _: Logs.show_analysis(app))
+        self.master.bind('<Shift-Control-P>',
+                         lambda _: Logs.analyze_logfile('plot'))
+        self.master.bind('<Shift-Control-L>',
+                         lambda _: Logs.show_analysis(app))
         self.master.bind('<Shift-Control-A>',
                          lambda _: Logs.view(Logs.ANALYSISFILE, app))
         self.master.bind('<Shift-Control-C>', lambda _: self.share.compliment())

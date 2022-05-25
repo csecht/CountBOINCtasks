@@ -3,7 +3,7 @@
 Functions to convert, format, and analyse input time values.
 Functions:
     string_to_min() - Convert a time string to minutes.
-    string_to_dt() - Convert formatted date string to datetime.strftime()
+    str2dt() - Convert formatted date string to datetime.strftime()
                      object.
     duration() - Difference between datetime.strftime() objects.
     sec_to_format() - Convert seconds to a specified time format.
@@ -65,7 +65,7 @@ def string_to_min(time_string: str) -> Union[float, int]:
         raise KeyError(err_msg) from keyerr
 
 
-def string_to_dt(dt_str: str, str_format: str) -> datetime:
+def str2dt(dt_str: str, str_format: str) -> datetime:
     """
     Convert formatted date string to datetime object.
     Use to compare datetimes in text files.
@@ -83,7 +83,7 @@ def string_to_dt(dt_str: str, str_format: str) -> datetime:
 def duration(unit: str, start: datetime, end: datetime) -> float:
     """
     Difference between start and end datetime objects as the given
-    time unit. Can use times.string_to_dt to convert formatted
+    time unit. Can use times.str2dt to convert formatted
     time strings to datetime objects.
 
     :param unit: The desired time duration unit, as a timedelta keyword:

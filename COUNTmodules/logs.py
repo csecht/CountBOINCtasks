@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.7'
+__module_ver__ = '0.1.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -29,12 +29,15 @@ __status__ = 'Development Status :: 4 - Beta'
 
 import sys
 import tkinter as tk
-from tkinter import messagebox, ttk
-from tkinter.scrolledtext import ScrolledText
 from datetime import datetime
 from pathlib import Path
 from re import search, findall, MULTILINE
 from socket import gethostname
+from tkinter import messagebox, ttk
+from tkinter.scrolledtext import ScrolledText
+
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 
 from COUNTmodules import binds, files, instances, times, utils
 
@@ -73,11 +76,13 @@ class Logs:
                             f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
-    def analyze_logfile(cls) -> tuple:
+    def analyze_logfile(cls, plot=False) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Called from cls.show_analysis().
 
+        :param plot: Optional parameter to call plot_times(); use
+            'plot' to pass as True.
         :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
@@ -156,6 +161,11 @@ class Logs:
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
             intvl_t_range = T.logtimes_stat(sum(found_intvl_t_range, ()), 'range')
+
+            # Raise call to plot interval data as: analyze_logfile('plot')
+            #   so that positional bool param *plot* becomes True.
+            if plot:
+                cls.plot_times(intvl_dates, found_intvl_avgt)
 
             # Text & data used in most count reporting conditions below:
             logged_intvl_report = (
@@ -276,6 +286,49 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
+    def plot_times(cls, tdate_dist: list, ttime_dist: list) -> None:
+        """
+        Draw plot window of time data; expect LOGFILE interval data.
+
+        :param tdate_dist: List of datetime strings when interval task
+            counts intervals were made.
+        :param ttime_dist: List of avg. task time string for the interval.
+            The distributions need to be in register and of same length.
+        :return: None
+        """
+
+        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        #   this greatly speeds up plotting.
+        tdates = [mdates.datestr2num(d) for d in tdate_dist]
+        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
+        data_cnt = len(tdates)
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
+        ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
+        ax.set_title("Task times for logged count intervals")
+        ax.set_facecolor('#e5e5e5')  # X-term gray90.
+
+        ax.xaxis.axis_date()
+        ax.yaxis.axis_date()
+        ax.scatter(tdates, ttimes, s=8)
+        # ax.plot(tdates, ttimes, linewidth=1)
+
+        ax.autoscale(True)
+        ax.grid(True)
+
+        # Need to rotate and right-align the date labels to avoid crowding.
+        for label in ax.get_xticklabels(which='major'):
+            label.set(rotation=30, horizontalalignment='right')
+        loc = mdates.AutoDateLocator(interval_multiples=True)
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_minor_locator(mdates.DayLocator())
+
+        ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+
+        plt.show()
+
+    @classmethod
     def show_analysis(cls, tk_obj: tk) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
@@ -351,7 +404,7 @@ class Logs:
 
         # start_dt is a datetime.timedelta object, so initialize with
         #    formatted Epoch origin time.
-        start_dt = T.string_to_dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
+        start_dt = T.str2dt('1970-Jan-01 00:00:00', LONG_STRFTIME)
 
         # Need to calc uptime hours for all start-to-finish segments that
         #   have interval task counts.
@@ -362,11 +415,11 @@ class Logs:
             if 'most recent BOINC report' in line:
                 starttime_match = search(
                     r'^(.+); .+ most recent BOINC report', line).group(1)
-                start_dt = T.string_to_dt(starttime_match, LONG_STRFTIME)
+                start_dt = T.str2dt(starttime_match, LONG_STRFTIME)
             if 'Tasks reported' in line:
                 intvltime_match = search(
                     r'^(.+); Tasks reported', line).group(1)
-                interval_dt = T.string_to_dt(intvltime_match, LONG_STRFTIME)
+                interval_dt = T.str2dt(intvltime_match, LONG_STRFTIME)
                 start2intvls.append(T.duration('hours', start_dt, interval_dt))
                 if any(hr < 0 for hr in start2intvls):
                     return 'cannot determine'
