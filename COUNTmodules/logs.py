@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.10'
+__module_ver__ = '0.1.11'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -38,6 +38,9 @@ from tkinter.scrolledtext import ScrolledText
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import matplotlib.backends.backend_tkagg as backend
+
 
 from COUNTmodules import binds, files, instances, times, utils
 
@@ -79,10 +82,11 @@ class Logs:
     def analyze_logfile(cls, plot=False) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
-        Called from cls.show_analysis().
+        Called from cls.show_analysis() when need to show results.
+        Called from master menu or keybinding when need to plot times.
 
-        :param plot: Optional parameter to call plot_times(); call as
-            analyze_logfile(plot=True).
+        :param plot: Optional parameter used to call plot_times();
+            USE: analyze_logfile(plot=True).
         :return: text strings to display in show_analysis() Toplevel.
         """
         sumry_dates = []
@@ -355,6 +359,14 @@ class Logs:
             The distributions need to be in register and of same length.
         :return: None
         """
+        # Need a toplevel window for the matplotlab plot so that the
+        #   interval thread can continue counting; a naked Matplotlab
+        #   figure object will run in the same thread as main and pause
+        #   the interval timer and counts.
+        # Source: https://pythonguides.com/python-tkinter-canvas/
+        plotwin = tk.Toplevel(bg='SteelBlue4')
+        plotwin.title('Plot of task times')
+
         # Need to define text and background colors.
         light = '#e5e5e5'  # X-term gray90
         dark = '#262626'  # X-term gray15
@@ -390,11 +402,6 @@ class Logs:
         ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
         ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
         ax.set_title("Task times for logged count intervals")
-        ax.annotate('Note: interval timer is paused while plot window is open;\n'
-                    'while open, reported task times may be missed.',
-                    xy=(.025, .975), xycoords='figure fraction',
-                    horizontalalignment='left', verticalalignment='top',
-                    fontsize=small_font, color='orange')
 
         ax.xaxis.axis_date()
         ax.yaxis.axis_date()
@@ -412,10 +419,16 @@ class Logs:
         loc = mdates.AutoDateLocator(interval_multiples=True)
         ax.xaxis.set_major_locator(loc)
         ax.xaxis.set_minor_locator(mdates.DayLocator())
-
         ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
-        plt.show()
+        canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
+        toolbar.update()
+
+        canvas.get_tk_widget().pack()
 
     @staticmethod
     def uptime(logtext: str) -> str:
