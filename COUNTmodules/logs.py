@@ -363,7 +363,7 @@ class Logs:
         # https://stackoverflow.com/questions/3899980/
         #   how-to-change-the-font-size-on-a-matplotlib-plot
         if MY_OS in 'lin, win':
-            small_font = 8
+            small_font = 9
             medium_font = 12
             bigger_font = 16
         else:  # macOS needs larger sizes
@@ -372,8 +372,8 @@ class Logs:
             bigger_font = 19
         plt.rc('axes', titlesize=bigger_font, titlecolor=light)
         plt.rc('axes', labelsize=medium_font, labelcolor=light)
-        plt.rc('xtick', labelsize=small_font, labelcolor=light)
-        plt.rc('ytick', labelsize=small_font, labelcolor=light)
+        plt.rc('xtick', labelsize=small_font, labelcolor=light, color=light)
+        plt.rc('ytick', labelsize=small_font, labelcolor=light, color=light)
         # plt.rc('legend', fontsize=small_font)  # legend fontsize
         # plt.rc('figure', titlesize=bigger_font)  # fontsize of the figure title
         # plt.rc('font', size=small_font)  # controls default text sizes
@@ -391,7 +391,7 @@ class Logs:
         ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
         ax.set_title("Task times for logged count intervals")
         ax.annotate('Note: interval timer is paused while plot window is open;\n'
-                    'reported task times may be missed.',
+                    'while open, reported task times may be missed.',
                     xy=(.025, .975), xycoords='figure fraction',
                     horizontalalignment='left', verticalalignment='top',
                     fontsize=small_font, color='orange')
