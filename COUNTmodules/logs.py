@@ -36,11 +36,9 @@ from socket import gethostname
 from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
+import matplotlib.backends.backend_tkagg as backend
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-import matplotlib.backends.backend_tkagg as backend
-
 
 from COUNTmodules import binds, files, instances, times, utils
 
