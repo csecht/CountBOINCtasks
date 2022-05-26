@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.9'
+__module_ver__ = '0.1.10'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -214,6 +214,7 @@ class Logs:
                 '   There are not enough data to analyze.\n'
                 '   Need at least one summary or one\n'
                 '   interval count in the log file.\n')
+            return summary_text, recent_interval_text
 
         if not found_sumrys and found_intvls:
             summary_text = '\nNo summary counts are logged yet.\n\n'
@@ -231,6 +232,7 @@ class Logs:
                     f'logged, {set(intvl_vals)},\n'
                     'so interpret results with caution.\n\n'
                 )
+            return summary_text, recent_interval_text
 
         if found_sumrys:
             if num_sumry_intvl_vals == 1:
@@ -353,19 +355,46 @@ class Logs:
             The distributions need to be in register and of same length.
         :return: None
         """
+        # Need to define text and background colors.
+        light = '#e5e5e5'  # X-term gray90
+        dark = '#262626'  # X-term gray15
+
+        # Font sizing adapted from Duarte's answer at:
+        # https://stackoverflow.com/questions/3899980/
+        #   how-to-change-the-font-size-on-a-matplotlib-plot
+        if MY_OS in 'lin, win':
+            small_font = 8
+            medium_font = 12
+            bigger_font = 16
+        else:  # macOS needs larger sizes
+            small_font = 11
+            medium_font = 15
+            bigger_font = 19
+        plt.rc('axes', titlesize=bigger_font, titlecolor=light)
+        plt.rc('axes', labelsize=medium_font, labelcolor=light)
+        plt.rc('xtick', labelsize=small_font, labelcolor=light)
+        plt.rc('ytick', labelsize=small_font, labelcolor=light)
+        # plt.rc('legend', fontsize=small_font)  # legend fontsize
+        # plt.rc('figure', titlesize=bigger_font)  # fontsize of the figure title
+        # plt.rc('font', size=small_font)  # controls default text sizes
 
         # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
         #   this greatly speeds up plotting.
         tdates = [mdates.datestr2num(d) for d in tdate_dist]
         ttimes = [mdates.datestr2num(t) for t in ttime_dist]
         data_cnt = len(tdates)
-        print(len(tdates), len(ttimes))
 
         fig, ax = plt.subplots(figsize=(10, 8))
+        fig.set_facecolor(dark)
+        ax.set_facecolor(light)
         ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
         ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
         ax.set_title("Task times for logged count intervals")
-        ax.set_facecolor('#e5e5e5')  # X-term gray90.
+        ax.annotate('Note: interval timer is paused while plot window is open;\n'
+                    'reported task times may be missed.',
+                    xy=(.025, .975), xycoords='figure fraction',
+                    horizontalalignment='left', verticalalignment='top',
+                    fontsize=small_font, color='orange')
 
         ax.xaxis.axis_date()
         ax.yaxis.axis_date()
@@ -378,6 +407,8 @@ class Logs:
         # Need to rotate and right-align the date labels to avoid crowding.
         for label in ax.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
+        for label in ax.get_yticklabels(which='major'):
+            label.set(rotation=30)
         loc = mdates.AutoDateLocator(interval_multiples=True)
         ax.xaxis.set_major_locator(loc)
         ax.xaxis.set_minor_locator(mdates.DayLocator())
