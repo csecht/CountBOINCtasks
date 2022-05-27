@@ -204,7 +204,7 @@ class Logs:
                 summary_text = 'An error occurred. Cannot analyse log data.\n'
                 recent_interval_text = (
                     'Quick fix: backup then delete the log file; restart program.\n'
-                    'See menu bar Help > "File paths" log file location.\n'
+                    'See menu bar Help > "File paths" for the log file location.\n'
                 )
 
                 return summary_text, recent_interval_text
@@ -349,7 +349,8 @@ class Logs:
     @staticmethod
     def plot_times(tdate_dist: list, ttime_dist: list) -> None:
         """
-        Draw plot window of time data; expect LOGFILE interval data.
+        Draw plot window of time data; expect parameters to be parallel
+        lists of LOGFILE timed interval task time data.
 
         :param tdate_dist: List of datetime strings when interval task
             counts intervals were made.
@@ -362,10 +363,10 @@ class Logs:
         #   figure object will run in the same thread as main and pause
         #   the interval timer and counts.
         # Source: https://pythonguides.com/python-tkinter-canvas/
-        plotwin = tk.Toplevel(bg='SteelBlue4')
+        plotwin = tk.Toplevel()
         plotwin.title('Plot of task times')
 
-        # Need to define text and background colors.
+        # Define text and field colors.
         light = '#e5e5e5'  # X-term gray90
         dark = '#262626'  # X-term gray15
 
@@ -398,7 +399,7 @@ class Logs:
         fig.set_facecolor(dark)
         ax.set_facecolor(light)
         ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
-        ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
+        ax.set_ylabel('Avg. task completion time of count interval, hr:min:sec')
         ax.set_title("Task times for logged count intervals")
 
         ax.xaxis.axis_date()
@@ -483,9 +484,7 @@ class Logs:
         return str(round(sum(intvl_duration), 1))
 
     @classmethod
-    def view(cls,
-             filepath: Path,
-             tk_obj: tk) -> None:
+    def view(cls, filepath: Path, tk_obj: tk) -> None:
         """
         Create a separate Toplevel window to view a text file as
         scrolled text.
