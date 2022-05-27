@@ -187,6 +187,12 @@ class Logs:
 
         if found_intvls and plot and DO_PLOT:
             cls.plot_times(intvl_dates, found_intvl_avgt)
+        elif not found_intvls:
+            detail = ('There are no data to plot.\n'
+                      'Need at least one interval count to\n'
+                      'plot task completion times over time.\n')
+            messagebox.showinfo(title='No counts available',
+                                detail=detail)
         elif found_intvls and plot and not DO_PLOT:
             detail = ('Matplotlib module needs to be installed.\n'
                       'It can be installed with the command:\n'
