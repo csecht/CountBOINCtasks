@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.11'
+__module_ver__ = '0.1.12'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -391,22 +391,18 @@ class Logs:
         # Font sizing adapted from Duarte's answer at:
         # https://stackoverflow.com/questions/3899980/
         #   how-to-change-the-font-size-on-a-matplotlib-plot
-        if MY_OS in 'lin, win':
+        if MY_OS == 'lin':
             small_font = 9
             medium_font = 12
             bigger_font = 16
-        else:  # macOS (darwin)
+        else:  # macOS (darwin), Windows (win)
             small_font = 7
             medium_font = 10
             bigger_font = 14
-
         plt.rc('axes', titlesize=bigger_font, titlecolor=light)
         plt.rc('axes', labelsize=medium_font, labelcolor=light)
-        plt.rc('xtick', labelsize=small_font, labelcolor=light, color=light)
-        plt.rc('ytick', labelsize=small_font, labelcolor=light, color=light)
-        # plt.rc('legend', fontsize=small_font)  # legend fontsize
-        # plt.rc('figure', titlesize=bigger_font)  # fontsize of the figure title
-        # plt.rc('font', size=small_font)  # controls default text sizes
+        plt.rc('xtick', labelsize=small_font, color=light)
+        plt.rc('ytick', labelsize=small_font, color=light)
 
         # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
         #   this greatly speeds up plotting.
@@ -414,9 +410,11 @@ class Logs:
         ttimes = [mdates.datestr2num(t) for t in ttime_dist]
         data_cnt = len(tdates)
 
-        fig, ax = plt.subplots(figsize=(10, 8))
+        fig, ax = plt.subplots(figsize=(7.25, 5.75))  # Windows
         if MY_OS == 'dar':
             fig, ax = plt.subplots(figsize=(8, 6))
+        elif MY_OS == 'lin':
+            fig, ax = plt.subplots(figsize=(10, 8))
 
         fig.set_facecolor(dark)
         ax.set_facecolor(light)
