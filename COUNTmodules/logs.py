@@ -187,7 +187,7 @@ class Logs:
 
         if found_intvls and plot and DO_PLOT:
             cls.plot_times(intvl_dates, found_intvl_avgt)
-        else:
+        elif found_intvls and plot and not DO_PLOT:
             detail=('Matplotlib module needs to be installed.\n'
                     'It can be installed with the command:\n'
                     'pip install -U matplotlib\n'
