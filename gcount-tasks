@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.13'
+__version__ = '0.10.14'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -54,11 +54,22 @@ try:
     import tkinter as tk
     from tkinter import messagebox, ttk
 except (ImportError, ModuleNotFoundError) as error:
-    print(f'This program requires tkinter, which is included with \n'
-          'Python 3.7+ distributions.\n'
-          'Install the most recent version or re-install Python and include Tk/Tcl.\n'
-          '\nOn Linux, you may also need: $ sudo apt-get install python3-tk\n'
-          f'See also: https://tkdocs.com/tutorial/install.html \n{error}')
+    sys.exit('This program requires tkinter, which is included with \n'
+             'Python 3.7+ distributions.\n'
+             'Install the most recent version or re-install Python and include Tk/Tcl.\n'
+             '\nOn Linux, you may also need: $ sudo apt-get install python3-tk\n'
+             f'See also: https://tkdocs.com/tutorial/install.html \n'
+             f'Error msg: {error}')
+
+try:
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+    import matplotlib.backends.backend_tkagg as backend
+except (ImportError, ModuleNotFoundError) as error:
+    print('Matplotlib module was not found. Task time plots not available.\n'
+          'It can be installed with the command: pip install -U matplotlib\n'
+          'or python -m pip install -U matplotlib\n'
+          f'Error msg: {error}')
 
 Binds = binds
 BC = boinc_commands

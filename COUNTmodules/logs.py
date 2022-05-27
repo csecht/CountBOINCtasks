@@ -36,9 +36,19 @@ from socket import gethostname
 from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
-import matplotlib.backends.backend_tkagg as backend
-import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+    import matplotlib.backends.backend_tkagg as backend
+    DO_PLOT = True
+    # import matplotlib.backends.backend_macosx as macbackend
+    # from matplotlib.backends.backend_macosx import (FigureCanvasMac, NavigationToolbar2Mac)
+except (ImportError, ModuleNotFoundError) as err:
+    print('Matplotlib module was not found. Task time plots not available.\n'
+          'It can be installed with the command: pip install -U matplotlib\n'
+          'or python -m pip install -U matplotlib\n'
+          f'Error msg: {err}')
+    DO_PLOT = False
 
 from COUNTmodules import binds, files, instances, times, utils
 
@@ -175,8 +185,15 @@ class Logs:
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n')
 
-        if found_intvls and plot:
+        if found_intvls and plot and DO_PLOT:
             cls.plot_times(intvl_dates, found_intvl_avgt)
+        else:
+            detail=('Matplotlib module needs to be installed.\n'
+                    'It can be installed with the command:\n'
+                    'pip install -U matplotlib\n'
+                    'or python -m pip install -U matplotlib')
+            messagebox.showinfo(title='Plotting not available.',
+                                detail=detail)
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -204,7 +221,7 @@ class Logs:
                 summary_text = 'An error occurred. Cannot analyse log data.\n'
                 recent_interval_text = (
                     'Quick fix: backup then delete the log file; restart program.\n'
-                    'See menu bar Help > "File paths" for the log file location.\n'
+                    'See menu bar Help > "File paths" log file location.\n'
                 )
 
                 return summary_text, recent_interval_text
@@ -337,6 +354,7 @@ class Logs:
         def new_text():
             new_txt = analysistxt.get(1.0, tk.END)
             Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
+
         ttk.Button(analysiswin, text='Save analysis', command=new_text,
                    takefocus=False).pack(padx=4)
 
@@ -349,8 +367,7 @@ class Logs:
     @staticmethod
     def plot_times(tdate_dist: list, ttime_dist: list) -> None:
         """
-        Draw plot window of time data; expect parameters to be parallel
-        lists of LOGFILE timed interval task time data.
+        Draw plot window of time data; expect LOGFILE interval data.
 
         :param tdate_dist: List of datetime strings when interval task
             counts intervals were made.
@@ -363,12 +380,13 @@ class Logs:
         #   figure object will run in the same thread as main and pause
         #   the interval timer and counts.
         # Source: https://pythonguides.com/python-tkinter-canvas/
-        plotwin = tk.Toplevel()
+        plotwin = tk.Toplevel(bg='SteelBlue4')
         plotwin.title('Plot of task times')
 
-        # Define text and field colors.
-        light = '#e5e5e5'  # X-term gray90
-        dark = '#262626'  # X-term gray15
+        # Need to define text and background colors to match
+        #   filetext fg and bg in view().
+        light = '#cccccc'  # X-term gray80
+        dark = '#333333'  # X-term gray20
 
         # Font sizing adapted from Duarte's answer at:
         # https://stackoverflow.com/questions/3899980/
@@ -377,10 +395,11 @@ class Logs:
             small_font = 9
             medium_font = 12
             bigger_font = 16
-        else:  # macOS needs larger sizes
-            small_font = 11
-            medium_font = 15
-            bigger_font = 19
+        else:  # macOS (darwin)
+            small_font = 7
+            medium_font = 10
+            bigger_font = 14
+
         plt.rc('axes', titlesize=bigger_font, titlecolor=light)
         plt.rc('axes', labelsize=medium_font, labelcolor=light)
         plt.rc('xtick', labelsize=small_font, labelcolor=light, color=light)
@@ -396,10 +415,13 @@ class Logs:
         data_cnt = len(tdates)
 
         fig, ax = plt.subplots(figsize=(10, 8))
+        if MY_OS == 'dar':
+            fig, ax = plt.subplots(figsize=(8, 6))
+
         fig.set_facecolor(dark)
         ax.set_facecolor(light)
         ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
-        ax.set_ylabel('Avg. task completion time of count interval, hr:min:sec')
+        ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
         ax.set_title("Task times for logged count intervals")
 
         ax.xaxis.axis_date()
@@ -420,14 +442,25 @@ class Logs:
         ax.xaxis.set_minor_locator(mdates.DayLocator())
         ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
+        # macOS has toolbar functions, but icons are non-informative,
+        #   so don't include toolbar on macOS.
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.draw()
         canvas.get_tk_widget().pack()
 
-        toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
-        toolbar.update()
+        if MY_OS in 'lin, win':
+            toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
+            toolbar.update()
+            canvas.get_tk_widget().pack()
+        # else:
+        #     canvas = FigureCanvasMac(fig)
+        #     toolbar = NavigationToolbar2Mac(canvas)
+        #     toolbar.update()
+            # canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+            # canvas = macbackend.FigureCanvasMac(fig)
+            # canvas.draw()
+            # toolbar = macbackend.NavigationToolbar2Mac(canvas)
 
-        canvas.get_tk_widget().pack()
 
     @staticmethod
     def uptime(logtext: str) -> str:
@@ -484,7 +517,9 @@ class Logs:
         return str(round(sum(intvl_duration), 1))
 
     @classmethod
-    def view(cls, filepath: Path, tk_obj: tk) -> None:
+    def view(cls,
+             filepath: Path,
+             tk_obj: tk) -> None:
         """
         Create a separate Toplevel window to view a text file as
         scrolled text.
@@ -610,7 +645,7 @@ def about() -> None:
     print(f'{"Module ver.:".ljust(11)}', __module_ver__)
     print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
     print(f'{"URL:".ljust(11)}', __project_url__)
-    print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
+    print(f'{"Maintainer:".ljust(11)}', __maintainer__)
     print(f'{"Status:".ljust(11)}', __status__)
     sys.exit(0)
 

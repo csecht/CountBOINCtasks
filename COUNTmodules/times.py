@@ -210,8 +210,11 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
         longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
         stat_result = f'[{shortest} -- {longest}]'
     elif stat == 'stdev':
-        stat_result = str(
-            timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
+        try:
+            stat_result = str(
+                timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
+        except statistics.StatisticsError:
+            stat_result = 'stdev needs more data'
     else:
         stat_result = 'unexpected condition'
 
