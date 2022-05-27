@@ -188,10 +188,10 @@ class Logs:
         if found_intvls and plot and DO_PLOT:
             cls.plot_times(intvl_dates, found_intvl_avgt)
         elif found_intvls and plot and not DO_PLOT:
-            detail=('Matplotlib module needs to be installed.\n'
-                    'It can be installed with the command:\n'
-                    'pip install -U matplotlib\n'
-                    'or python -m pip install -U matplotlib')
+            detail = ('Matplotlib module needs to be installed.\n'
+                      'It can be installed with the command:\n'
+                      'pip install -U matplotlib\n'
+                      'or python -m pip install -U matplotlib')
             messagebox.showinfo(title='Plotting not available.',
                                 detail=detail)
 
@@ -456,11 +456,10 @@ class Logs:
         #     canvas = FigureCanvasMac(fig)
         #     toolbar = NavigationToolbar2Mac(canvas)
         #     toolbar.update()
-            # canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-            # canvas = macbackend.FigureCanvasMac(fig)
-            # canvas.draw()
-            # toolbar = macbackend.NavigationToolbar2Mac(canvas)
-
+        # canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        # canvas = macbackend.FigureCanvasMac(fig)
+        # canvas.draw()
+        # toolbar = macbackend.NavigationToolbar2Mac(canvas)
 
     @staticmethod
     def uptime(logtext: str) -> str:
