@@ -41,7 +41,7 @@ from tkinter import messagebox
 from time import sleep
 from pathlib import Path
 
-if 'win' in sys.platform:
+if sys.platform[:3] == 'win':
     import winsound
 
 
