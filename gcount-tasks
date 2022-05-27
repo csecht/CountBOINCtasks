@@ -66,10 +66,10 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
 except (ImportError, ModuleNotFoundError) as error:
-    sys.exit('Matplotlib module was not found.\n'
-             'It can be installed with the command: pip install -U matplotlib\n'
-             'or python -m pip install -U matplotlib\n'
-             f'Error msg: {error}')
+    print('Matplotlib module was not found. Task time plots not available.\n'
+          'It can be installed with the command: pip install -U matplotlib\n'
+          'or python -m pip install -U matplotlib\n'
+          f'Error msg: {error}')
 
 Binds = binds
 BC = boinc_commands
