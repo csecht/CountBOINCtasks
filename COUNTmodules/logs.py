@@ -41,8 +41,6 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
     from matplotlib.figure import Figure
-    # import matplotlib.backends.backend_macosx as macbackend
-    # from matplotlib.backends.backend_macosx import (FigureCanvasMac, NavigationToolbar2Mac)
     CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
     print('Matplotlib module was not found. Task time plots not available.\n'
@@ -88,13 +86,13 @@ class Logs:
                             f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
-    def analyze_logfile(cls, plot=False) -> tuple:
+    def analyze_logfile(cls, do_plot=False) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Called from cls.show_analysis() when need to show results.
         Called from master menu or keybinding when need to plot times.
 
-        :param plot: Optional parameter used to call plot_times();
+        :param do_plot: Optional parameter used to call plot_times();
             USE: analyze_logfile(plot=True).
         :return: text strings to display in show_analysis() Toplevel.
         """
@@ -187,7 +185,7 @@ class Logs:
                 f'   {intvl_t_range} range of task times\n\n')
 
         # Need to check whether plotting is available and possible.
-        if found_intvls and plot and CAN_PLOT:
+        if found_intvls and do_plot and CAN_PLOT:
             cls.plot_times(intvl_dates, found_intvl_avgt)
         elif not found_intvls:
             detail = ('There are no data to plot.\n'
@@ -195,7 +193,7 @@ class Logs:
                       'plot task completion times over time.\n')
             messagebox.showinfo(title='No counts available',
                                 detail=detail)
-        elif found_intvls and plot and not CAN_PLOT:
+        elif found_intvls and do_plot and not CAN_PLOT:
             detail = ('Matplotlib module needs to be installed.\n'
                       'It can be installed with the command:\n'
                       'pip install -U matplotlib\n'
@@ -395,7 +393,7 @@ class Logs:
 
         # Need to define text and background colors to match
         #   filetext fg and bg in view().
-        light = '#cccccc'  # X-term gray80
+        light = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
         dark = '#333333'  # X-term gray20
 
         # Font sizing adapted from Duarte's answer at:
@@ -463,8 +461,6 @@ class Logs:
             toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
             toolbar.update()
             canvas.get_tk_widget().pack()
-        # else:
-        #   toolbar = macbackend.NavigationToolbar2Mac(canvas)
 
     @staticmethod
     def uptime(logtext: str) -> str:
@@ -614,7 +610,7 @@ class Logs:
                        command=lambda: cls.show_analysis(filewin),
                        takefocus=False).pack(padx=4)
             ttk.Button(filewin, text='Plot times',
-                       command=lambda: cls.analyze_logfile(plot=True),
+                       command=lambda: cls.analyze_logfile(do_plot=True),
                        takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>',
                          lambda _: cls.show_analysis(filewin))
