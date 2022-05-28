@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.15'
+__module_ver__ = '0.1.16'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -40,9 +40,10 @@ try:
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
-    CAN_PLOT = True
+    from matplotlib.figure import Figure
     # import matplotlib.backends.backend_macosx as macbackend
     # from matplotlib.backends.backend_macosx import (FigureCanvasMac, NavigationToolbar2Mac)
+    CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
     print('Matplotlib module was not found. Task time plots not available.\n'
           'It can be installed with the command: pip install -U matplotlib\n'
@@ -420,35 +421,37 @@ class Logs:
         ttimes = [mdates.datestr2num(t) for t in ttime_dist]
         data_cnt = len(tdates)
 
-        fig, ax = plt.subplots(figsize=(7.25, 5.75)) # Windows
+        fig = Figure(figsize=(7.25, 5.75))  # Windows; initialize fig.
         if MY_OS == 'lin':
-            fig, ax = plt.subplots(figsize=(10, 8))
+            fig = Figure(figsize=(10, 8))
         elif MY_OS == 'dar':
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig = Figure(figsize=(8, 6))
+
+        tplot = fig.add_subplot(111)
 
         fig.set_facecolor(dark)
-        ax.set_facecolor(light)
-        ax.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
-        ax.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
-        ax.set_title("Task times for logged count intervals")
+        tplot.set_facecolor(light)
+        tplot.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
+        tplot.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
+        tplot.set_title("Task times for logged count intervals")
 
-        ax.xaxis.axis_date()
-        ax.yaxis.axis_date()
-        ax.scatter(tdates, ttimes, s=8)
+        tplot.xaxis.axis_date()
+        tplot.yaxis.axis_date()
+        tplot.scatter(tdates, ttimes, s=8)
         # ax.plot(tdates, ttimes, linewidth=1)
 
-        ax.autoscale(True)
-        ax.grid(True)
+        tplot.autoscale(True)
+        tplot.grid(True)
 
         # Need to rotate and right-align the date labels to avoid crowding.
-        for label in ax.get_xticklabels(which='major'):
+        for label in tplot.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
-        for label in ax.get_yticklabels(which='major'):
+        for label in tplot.get_yticklabels(which='major'):
             label.set(rotation=30)
         loc = mdates.AutoDateLocator(interval_multiples=True)
-        ax.xaxis.set_major_locator(loc)
-        ax.xaxis.set_minor_locator(mdates.DayLocator())
-        ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        tplot.xaxis.set_major_locator(loc)
+        tplot.xaxis.set_minor_locator(mdates.DayLocator())
+        tplot.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
         # macOS has toolbar functions, but icons are non-informative,
         #   so don't include toolbar on macOS.
