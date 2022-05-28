@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.16'
+__module_ver__ = '0.1.17'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -385,16 +385,9 @@ class Logs:
             The distributions need to be in register and of same length.
         :return: None
         """
-        # Need a toplevel window for the matplotlab plot so that the
-        #   interval thread can continue counting; a naked Matplotlab
-        #   figure object will run in the same thread as main and pause
-        #   the interval timer and counts.
-        # Source: https://pythonguides.com/python-tkinter-canvas/
-        plotwin = tk.Toplevel(bg='SteelBlue4')  # Color matches main.
-        plotwin.title('Plot of task times')
 
-        # Need to define text and background colors to match
-        #   filetext fg and bg in view().
+        # Need to define text and background colors to match (or close)
+        #   filetext fg and bg in logs.view().
         light = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
         dark = '#333333'  # X-term gray20
 
@@ -415,12 +408,6 @@ class Logs:
         plt.rc('xtick', labelsize=small_font, color=light)
         plt.rc('ytick', labelsize=small_font, color=light)
 
-        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
-        #   this greatly speeds up plotting.
-        tdates = [mdates.datestr2num(d) for d in tdate_dist]
-        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
-        data_cnt = len(tdates)
-
         fig = Figure(figsize=(7.25, 5.75))  # Windows; initialize fig.
         if MY_OS == 'lin':
             fig = Figure(figsize=(10, 8))
@@ -429,40 +416,65 @@ class Logs:
 
         tplot = fig.add_subplot(111)
 
-        fig.set_facecolor(dark)
-        tplot.set_facecolor(light)
-        tplot.set_xlabel(f'Datetime of interval count ({data_cnt} logged counts)')
-        tplot.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
-        tplot.set_title("Task times for logged count intervals")
-
-        tplot.xaxis.axis_date()
-        tplot.yaxis.axis_date()
-        tplot.scatter(tdates, ttimes, s=8)
-        # ax.plot(tdates, ttimes, linewidth=1)
-
         tplot.autoscale(True)
         tplot.grid(True)
+        fig.set_facecolor(dark)
+        tplot.set_facecolor(light)
 
         # Need to rotate and right-align the date labels to avoid crowding.
         for label in tplot.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
         for label in tplot.get_yticklabels(which='major'):
             label.set(rotation=30)
+
         loc = mdates.AutoDateLocator(interval_multiples=True)
         tplot.xaxis.set_major_locator(loc)
         tplot.xaxis.set_minor_locator(mdates.DayLocator())
         tplot.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
-        # macOS has toolbar functions, but icons are non-informative,
-        #   so don't include toolbar on macOS.
+        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        #   this greatly speeds up plotting when axes are date objects.
+        tplot.xaxis.axis_date()
+        tplot.yaxis.axis_date()
+        tdates = [mdates.datestr2num(d) for d in tdate_dist]
+        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
+
+        tplot.scatter(tdates, ttimes, s=8)
+        # ax.plot(tdates, ttimes, linewidth=1)
+
+        # Everything is set up, so now make a window for the plot canvas.
+
+        # Need a toplevel window for the matplotlab plot so that the
+        #   interval thread can continue counting; a naked Matplotlab
+        #   figure object will run in the same thread as main and pause
+        #   the interval timer and counts.
+        # Source: https://pythonguides.com/python-tkinter-canvas/
+        plotwin = tk.Toplevel(bg='SteelBlue4')  # Color matches main.
+        plotwin.title('Plot of task times')
+
+        tplot.set_xlabel(f'Datetime of interval count ({len(tdates)} logged counts)')
+        tplot.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
+        tplot.set_title("Task times for logged count intervals")
+
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.draw()
         canvas.get_tk_widget().pack()
 
+        # The Toolbar for plot interaction does not work well in macOS,
+        #   because _backend_tk.py uses tk.Button and mac can only
+        #   properly configure ttk.Buttons, so don't include Toolbar for macOS.
+        # Potential solution: https://stackoverflow.com/questions/59606641/
+        #    how-do-i-configure-a-matplotlib-toolbar-so-that-the-buttons-in-the-toolbars-are....
         if MY_OS in 'lin, win':
             toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
             toolbar.update()
             canvas.get_tk_widget().pack()
+
+            # Have the toolbar match the Figure colors.
+            toolbar.config(background=dark)
+            toolbar._message_label.config(background=dark, foreground=light)
+
+            toolbar.update()
 
     @staticmethod
     def uptime(logtext: str) -> str:
