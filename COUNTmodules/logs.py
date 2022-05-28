@@ -37,10 +37,11 @@ from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 try:
+    import matplotlib
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
-    DO_PLOT = True
+    CAN_PLOT = True
     # import matplotlib.backends.backend_macosx as macbackend
     # from matplotlib.backends.backend_macosx import (FigureCanvasMac, NavigationToolbar2Mac)
 except (ImportError, ModuleNotFoundError) as err:
@@ -48,7 +49,7 @@ except (ImportError, ModuleNotFoundError) as err:
           'It can be installed with the command: pip install -U matplotlib\n'
           'or python -m pip install -U matplotlib\n'
           f'Error msg: {err}')
-    DO_PLOT = False
+    CAN_PLOT = False
 
 from COUNTmodules import binds, files, instances, times, utils
 
@@ -153,6 +154,24 @@ class Logs:
             r'Tasks reported .+\n.+\n.+ range \[(\d{2}:\d{2}:\d{2}) -- (\d{2}:\d{2}:\d{2})]',
             logtext, MULTILINE)
 
+        # Need to evaluate whether plotting is possible when *plot* True is called .
+        if found_intvls and plot and CAN_PLOT:
+            cls.plot_times(intvl_dates, found_intvl_avgt)
+        elif not found_intvls:
+            detail = ('There are no data to plot.\n'
+                      'Need at least one interval count to\n'
+                      'plot task completion times over time.\n')
+            messagebox.showinfo(title='No counts available',
+                                detail=detail)
+        elif found_intvls and plot and not CAN_PLOT:
+            detail = ('Matplotlib module needs to be installed.\n'
+                      'It can be installed with the command:\n'
+                      'pip install -U matplotlib\n'
+                      'or python -m pip install -U matplotlib')
+            messagebox.showinfo(title='Plotting not available.',
+                                detail=detail)
+
+        ##### Generate test & data for showing in analysis results.
         if found_sumrys:
             sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
             num_sumry_intvl_vals = len(set(sumry_intvl_vals))
@@ -184,22 +203,6 @@ class Logs:
                 f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n')
-
-        if found_intvls and plot and DO_PLOT:
-            cls.plot_times(intvl_dates, found_intvl_avgt)
-        elif not found_intvls:
-            detail = ('There are no data to plot.\n'
-                      'Need at least one interval count to\n'
-                      'plot task completion times over time.\n')
-            messagebox.showinfo(title='No counts available',
-                                detail=detail)
-        elif found_intvls and plot and not DO_PLOT:
-            detail = ('Matplotlib module needs to be installed.\n'
-                      'It can be installed with the command:\n'
-                      'pip install -U matplotlib\n'
-                      'or python -m pip install -U matplotlib')
-            messagebox.showinfo(title='Plotting not available.',
-                                detail=detail)
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -388,6 +391,7 @@ class Logs:
         # Source: https://pythonguides.com/python-tkinter-canvas/
         plotwin = tk.Toplevel(bg='SteelBlue4')
         plotwin.title('Plot of task times')
+        matplotlib.use('TkAgg')
 
         # Need to define text and background colors to match
         #   filetext fg and bg in view().
