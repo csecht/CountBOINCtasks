@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.12'
+__module_ver__ = '0.1.15'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -37,7 +37,6 @@ from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 try:
-    import matplotlib
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
@@ -154,24 +153,6 @@ class Logs:
             r'Tasks reported .+\n.+\n.+ range \[(\d{2}:\d{2}:\d{2}) -- (\d{2}:\d{2}:\d{2})]',
             logtext, MULTILINE)
 
-        # Need to evaluate whether plotting is possible when *plot* True is called .
-        if found_intvls and plot and CAN_PLOT:
-            cls.plot_times(intvl_dates, found_intvl_avgt)
-        elif not found_intvls:
-            detail = ('There are no data to plot.\n'
-                      'Need at least one interval count to\n'
-                      'plot task completion times over time.\n')
-            messagebox.showinfo(title='No counts available',
-                                detail=detail)
-        elif found_intvls and plot and not CAN_PLOT:
-            detail = ('Matplotlib module needs to be installed.\n'
-                      'It can be installed with the command:\n'
-                      'pip install -U matplotlib\n'
-                      'or python -m pip install -U matplotlib')
-            messagebox.showinfo(title='Plotting not available.',
-                                detail=detail)
-
-        ##### Generate test & data for showing in analysis results.
         if found_sumrys:
             sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
             num_sumry_intvl_vals = len(set(sumry_intvl_vals))
@@ -203,6 +184,25 @@ class Logs:
                 f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n')
+
+        # Need to check whether plotting is available and possible.
+        if found_intvls and plot and CAN_PLOT:
+            cls.plot_times(intvl_dates, found_intvl_avgt)
+        elif not found_intvls:
+            detail = ('There are no data to plot.\n'
+                      'Need at least one interval count to\n'
+                      'plot task completion times over time.\n')
+            messagebox.showinfo(title='No counts available',
+                                detail=detail)
+        elif found_intvls and plot and not CAN_PLOT:
+            detail = ('Matplotlib module needs to be installed.\n'
+                      'It can be installed with the command:\n'
+                      'pip install -U matplotlib\n'
+                      'or python -m pip install -U matplotlib')
+            messagebox.showinfo(title='Plotting not available.',
+                                detail=detail)
+
+        ##### Generate test & data for showing in analysis results. ####
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -391,7 +391,6 @@ class Logs:
         # Source: https://pythonguides.com/python-tkinter-canvas/
         plotwin = tk.Toplevel(bg='SteelBlue4')
         plotwin.title('Plot of task times')
-        matplotlib.use('TkAgg')
 
         # Need to define text and background colors to match
         #   filetext fg and bg in view().
@@ -409,6 +408,7 @@ class Logs:
             small_font = 7
             medium_font = 10
             bigger_font = 14
+
         plt.rc('axes', titlesize=bigger_font, titlecolor=light)
         plt.rc('axes', labelsize=medium_font, labelcolor=light)
         plt.rc('xtick', labelsize=small_font, color=light)
@@ -420,11 +420,11 @@ class Logs:
         ttimes = [mdates.datestr2num(t) for t in ttime_dist]
         data_cnt = len(tdates)
 
-        fig, ax = plt.subplots(figsize=(7.25, 5.75))  # Windows
-        if MY_OS == 'dar':
-            fig, ax = plt.subplots(figsize=(8, 6))
-        elif MY_OS == 'lin':
+        fig, ax = plt.subplots(figsize=(7.25, 5.75)) # Windows
+        if MY_OS == 'lin':
             fig, ax = plt.subplots(figsize=(10, 8))
+        elif MY_OS == 'dar':
+            fig, ax = plt.subplots(figsize=(8, 6))
 
         fig.set_facecolor(dark)
         ax.set_facecolor(light)
@@ -461,13 +461,7 @@ class Logs:
             toolbar.update()
             canvas.get_tk_widget().pack()
         # else:
-        #     canvas = FigureCanvasMac(fig)
-        #     toolbar = NavigationToolbar2Mac(canvas)
-        #     toolbar.update()
-        # canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        # canvas = macbackend.FigureCanvasMac(fig)
-        # canvas.draw()
-        # toolbar = macbackend.NavigationToolbar2Mac(canvas)
+        #   toolbar = macbackend.NavigationToolbar2Mac(canvas)
 
     @staticmethod
     def uptime(logtext: str) -> str:
