@@ -638,7 +638,7 @@ class CountModeler:
                 logging.info(report)
                 if self.share.note['proj_stalled'].get():
                     report = (
-                        f' *** PROJECT UPDATE may be needed for current Project. ***\n'
+                        ' *** PROJECT UPDATE may be needed for current Project. ***\n'
                         '  All tasks were "Ready to report" and waiting to upload.\n'
                         '  Verify in BOINC Manager.')
                     logging.info(report)
@@ -1325,7 +1325,7 @@ class CountViewer(tk.Frame):
         beep_tip_txt = (
             f'Provide an audible notification when no tasks are running'
             ' because tasks or Project are suspended by user or because'
-            ' of an unexpected event. Occurs after the first full' 
+            ' of an unexpected event. Occurs after the first full'
             ' interval cycle elapses with no tasks running; beeps then'
             f' occur every {beep_interval} seconds.')
 

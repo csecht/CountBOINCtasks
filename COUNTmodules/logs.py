@@ -376,6 +376,8 @@ class Logs:
     def plot_times(tdate_dist: list, ttime_dist: list) -> None:
         """
         Draw plot window of time data; expect LOGFILE interval data.
+        The plot will be interactive via toolbar buttons on Linux and
+        Windows platforms, not on macOS.
 
         :param tdate_dist: List of datetime strings when interval task
             counts intervals were made.
@@ -388,7 +390,7 @@ class Logs:
         #   figure object will run in the same thread as main and pause
         #   the interval timer and counts.
         # Source: https://pythonguides.com/python-tkinter-canvas/
-        plotwin = tk.Toplevel(bg='SteelBlue4')
+        plotwin = tk.Toplevel(bg='SteelBlue4')  # Color matches main.
         plotwin.title('Plot of task times')
 
         # Need to define text and background colors to match
