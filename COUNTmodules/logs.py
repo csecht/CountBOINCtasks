@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.17'
+__module_ver__ = '0.1.18'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -442,38 +442,41 @@ class Logs:
         tplot.scatter(tdates, ttimes, s=8)
         # ax.plot(tdates, ttimes, linewidth=1)
 
-        # Everything is set up, so now make a window for the plot canvas.
+        #### The plot is configured, so now draw it in a new window. ###
 
         # Need a toplevel window for the matplotlab plot so that the
         #   interval thread can continue counting; a naked Matplotlab
         #   figure object will run in the same thread as main and pause
         #   the interval timer and counts.
-        # Source: https://pythonguides.com/python-tkinter-canvas/
-        plotwin = tk.Toplevel(bg='SteelBlue4')  # Color matches main.
+        plotwin = tk.Toplevel()
         plotwin.title('Plot of task times')
+        plotwin.minsize(500, 250)
 
         tplot.set_xlabel(f'Datetime of interval count ({len(tdates)} logged counts)')
         tplot.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
         tplot.set_title("Task times for logged count intervals")
 
+        # The plot and toolbar drawing area...
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.draw()
-        canvas.get_tk_widget().pack()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
         # The Toolbar for plot interaction does not work well in macOS,
-        #   because _backend_tk.py uses tk.Button and mac can only
-        #   properly configure ttk.Buttons, so don't include Toolbar for macOS.
+        #   because _backend_tk.py uses tk.Button and macOS can only
+        #   properly configure ttk.Buttons. Don't include Toolbar for macOS.
         # Potential solution: https://stackoverflow.com/questions/59606641/
         #    how-do-i-configure-a-matplotlib-toolbar-so-that-the-buttons-in-the-toolbars-are....
         if MY_OS in 'lin, win':
             toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
             toolbar.update()
-            canvas.get_tk_widget().pack()
+            # Pack Toolbar at top of the tplot window (with tk.BOTTOM).
+            canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
             # Have the toolbar match the Figure colors.
+            # Toolbar color: https://stackoverflow.com/questions/48351630/
+            #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
             toolbar.config(background=dark)
             toolbar._message_label.config(background=dark, foreground=light)
-
             toolbar.update()
 
     @staticmethod
