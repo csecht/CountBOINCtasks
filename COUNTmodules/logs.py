@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.19'
+__module_ver__ = '0.1.20'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -397,24 +397,25 @@ class Logs:
         if MY_OS == 'lin':
             small_font = 9
             medium_font = 12
-            bigger_font = 16
+            bigger_font = 14
         else:  # macOS (darwin), Windows (win)
             small_font = 7
             medium_font = 10
-            bigger_font = 14
+            bigger_font = 12
 
         plt.rc('axes', titlesize=bigger_font, titlecolor=light)
         plt.rc('axes', labelsize=medium_font, labelcolor=light)
         plt.rc('xtick', labelsize=small_font, color=light)
         plt.rc('ytick', labelsize=small_font, color=light)
 
-        fig = Figure(figsize=(7.25, 5.75))  # Windows; initialize fig.
+        # Initialize fig Figure for Windows...
+        fig = Figure(figsize=(7.25, 5.75), constrained_layout=True)
         if MY_OS == 'lin':
-            fig = Figure(figsize=(10, 8))
+            fig = Figure(figsize=(8, 6), constrained_layout=True)
         elif MY_OS == 'dar':
-            fig = Figure(figsize=(8, 6))
+            fig = Figure(figsize=(8, 6), constrained_layout=True)
 
-        tplot = fig.add_subplot(111)
+        tplot = fig.add_subplot()
 
         # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
         #   this greatly speeds up plotting when axes are date objects.
@@ -439,7 +440,7 @@ class Logs:
         tplot.xaxis.set_minor_locator(mdates.DayLocator())
         tplot.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
-        tplot.scatter(tdates, ttimes, s=8)
+        tplot.scatter(tdates, ttimes, s=6)
         # ax.plot(tdates, ttimes, linewidth=1)
 
         #### The plot is configured, so now draw it in a new window. ###
@@ -451,37 +452,52 @@ class Logs:
         plotwin = tk.Toplevel()
         plotwin.title('Plot of task times')
         plotwin.minsize(500, 250)
+        plotwin.rowconfigure(0, weight=0)
+        plotwin.rowconfigure(1, weight=1)
+        plotwin.columnconfigure(0, weight=1)
+        plotwin.configure(bg=dark)
 
         tplot.set_xlabel(f'Datetime of interval count ({len(tdates)} logged counts)')
-        tplot.set_ylabel('Task completion time avg. for count interval, hr:min:sec')
+        tplot.set_ylabel('Task completion time, interval avg, hr:min:sec')
         tplot.set_title("Task times for logged count intervals")
 
         # The plot and toolbar drawing area...
+        # Use grid() instead of pack to position widgets;
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        canvas.get_tk_widget().config(bg=dark)
+        canvas.get_tk_widget().grid(row=1, column=0,
+                                    padx=40, pady=35,
+                                    # ipady=40,
+                                    sticky=tk.NSEW)
 
         # The Toolbar for plot navigation does not work well in macOS
         #   because _backend_tk.py uses tk.Button and macOS can only
-        #   properly configure ttk.Buttons. Don't include Toolbar for macOS.
-        # Potential solution: https://stackoverflow.com/questions/59606641/
-        #    how-do-i-configure-a-matplotlib-toolbar-so-that-the-buttons-in-the-toolbars-are....
-        if MY_OS in 'lin, win':
-            toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
+        #   properly configure ttk.Buttons. Remove Toolbar for macOS.
+        if MY_OS == 'dar':
+            plt.rcParams['toolbar'] = 'None'
 
-            # Have the toolbar match the Figure colors.
-            # Toolbar color: https://stackoverflow.com/questions/48351630/
-            #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
-            toolbar.config(background=dark)
-            toolbar._message_label.config(background=dark, foreground=light)
+        # Grid, not pack, the toolbar, source: B. Oakley & LBoss answer at:
+        #   https://stackoverflow.com/questions/12913854/
+        #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
+        toolbar_frame = tk.Frame(master=plotwin)
+        toolbar_frame.rowconfigure(0, weight=1)
+        toolbar_frame.config(bg=dark)
+        toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
+        # Need to remove the subplots navigation button.
+        # Source: https://stackoverflow.com/questions/
+        #    59155873/how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
+        toolbar.children['!button4'].pack_forget()
 
-            # Pack Toolbar at top of the tplot window with tk.BOTTOM.
-            # Default pack in _backend_tk.py is side=tk.BOTTOM, fill=tk.X,
-            #   so why using side=bottom here moves the bar to TOP is unclear.
-            # Note: with toolbar at top, it will disappear when window is
-            #   resized with less height; this is by design.
-            canvas.get_tk_widget().pack(fill=tk.BOTH, side=tk.BOTTOM)
-            toolbar.update()
+        # Have the toolbar match the Figure colors.
+        # Toolbar color: https://stackoverflow.com/questions/48351630/
+        #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
+        toolbar.config(bg=dark)
+        toolbar._message_label.config(bg=dark, fg=light, padx=20)
+
+        # Grid toolbar at top of the tplot window.
+        toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
+        toolbar.update()
 
     @staticmethod
     def uptime(logtext: str) -> str:
