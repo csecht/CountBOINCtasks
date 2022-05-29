@@ -1963,14 +1963,15 @@ if __name__ == "__main__":
             except KeyboardInterrupt:
                 _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
                         " *** Keyboard interrupt by user ***\n"
-                        f"This instance's temporary file, {sentinel.name},"
-                        " has been deleted.\n")
+                        "This instance's temporary file,\n"
+                        f"{sentinel.name}\nhas been deleted.\n")
                 print(_msg)
                 logging.info(msg=_msg)
             except Exception as unknown:
                 print(f'An unexpected error: {unknown}\n'
-                      f"This instance's temporary file, {sentinel.name},"
-                      " has been deleted.\n")
+                      " *** Keyboard interrupt by user ***\n"
+                      "This instance's temporary file,\n"
+                      f"{sentinel.name}\nhas been deleted.\n")
 
     else:
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
