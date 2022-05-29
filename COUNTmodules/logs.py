@@ -548,10 +548,10 @@ class Logs:
         minsize_h = 0
         fnf_query = ''
 
+        # Need to set platform-specific window width so to not hide Buttons.
+        # Widths depend on each platform's TkFixedFont width in filetext.
         if filepath == cls.LOGFILE:
             minsize_h = 220
-            # Need to set OS-specific width for font used in filetext.
-            #   These widths are based on TkFixedFont:
             if MY_OS == 'lin':
                 minsize_w = 800
             if MY_OS == 'win':
@@ -587,11 +587,9 @@ class Logs:
 
         insert_txt = Path(filepath).read_text(encoding='utf-8')
 
-        max_line = len(max(insert_txt.splitlines(), key=len))
-
         # Use a "dark" background/foreground theme for file text.
         filetext = ScrolledText(filewin, font='TkFixedFont',
-                                width=max_line, height=text_height,
+                                height=text_height,
                                 bg='grey20', fg='grey80',
                                 insertbackground='grey80',
                                 relief='groove', bd=4, padx=12
