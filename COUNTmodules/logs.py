@@ -376,7 +376,7 @@ class Logs:
     def plot_times(tdate_dist: list, ttime_dist: list) -> None:
         """
         Draw plot window of time data; expect LOGFILE interval data.
-        The plot will be interactive via toolbar buttons on Linux and
+        The plot will be navigable via toolbar buttons on Linux and
         Windows platforms, not on macOS.
 
         :param tdate_dist: List of datetime strings when interval task
@@ -461,22 +461,26 @@ class Logs:
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-        # The Toolbar for plot interaction does not work well in macOS,
+        # The Toolbar for plot navigation does not work well in macOS
         #   because _backend_tk.py uses tk.Button and macOS can only
         #   properly configure ttk.Buttons. Don't include Toolbar for macOS.
         # Potential solution: https://stackoverflow.com/questions/59606641/
         #    how-do-i-configure-a-matplotlib-toolbar-so-that-the-buttons-in-the-toolbars-are....
         if MY_OS in 'lin, win':
             toolbar = backend.NavigationToolbar2Tk(canvas, plotwin)
-            toolbar.update()
-            # Pack Toolbar at top of the tplot window (with tk.BOTTOM).
-            canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
             # Have the toolbar match the Figure colors.
             # Toolbar color: https://stackoverflow.com/questions/48351630/
             #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
             toolbar.config(background=dark)
             toolbar._message_label.config(background=dark, foreground=light)
+
+            # Pack Toolbar at top of the tplot window with tk.BOTTOM.
+            # Default pack in _backend_tk.py is side=tk.BOTTOM, fill=tk.X,
+            #   so why using side=bottom here moves the bar to TOP is unclear.
+            # Note: with toolbar at top, it will disappear when window is
+            #   resized with less height; this is by design.
+            canvas.get_tk_widget().pack(fill=tk.BOTH, side=tk.BOTTOM)
             toolbar.update()
 
     @staticmethod
