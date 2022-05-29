@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.18'
+__module_ver__ = '0.1.19'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -416,6 +416,13 @@ class Logs:
 
         tplot = fig.add_subplot(111)
 
+        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        #   this greatly speeds up plotting when axes are date objects.
+        tplot.xaxis.axis_date()
+        tplot.yaxis.axis_date()
+        tdates = [mdates.datestr2num(d) for d in tdate_dist]
+        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
+
         tplot.autoscale(True)
         tplot.grid(True)
         fig.set_facecolor(dark)
@@ -431,13 +438,6 @@ class Logs:
         tplot.xaxis.set_major_locator(loc)
         tplot.xaxis.set_minor_locator(mdates.DayLocator())
         tplot.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-
-        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
-        #   this greatly speeds up plotting when axes are date objects.
-        tplot.xaxis.axis_date()
-        tplot.yaxis.axis_date()
-        tdates = [mdates.datestr2num(d) for d in tdate_dist]
-        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
 
         tplot.scatter(tdates, ttimes, s=8)
         # ax.plot(tdates, ttimes, linewidth=1)
