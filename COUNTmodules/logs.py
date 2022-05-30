@@ -43,7 +43,7 @@ try:
     from matplotlib.figure import Figure
     CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
-    print('Matplotlib module was not found. Task time plots not available.\n'
+    print('Task time plots not available; Matplotlib module was not found.\n'
           'It can be installed with the command: pip install -U matplotlib\n'
           'or python -m pip install -U matplotlib\n'
           f'Error msg: {err}')
@@ -462,13 +462,12 @@ class Logs:
         tplot.set_title("Task times for logged count intervals")
 
         # The plot and toolbar drawing area...
-        # Use grid() instead of pack to position widgets;
+        # Use grid() instead of pack() to position widgets;
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.draw()
         canvas.get_tk_widget().config(bg=dark)
         canvas.get_tk_widget().grid(row=1, column=0,
                                     padx=40, pady=35,
-                                    # ipady=40,
                                     sticky=tk.NSEW)
 
         # Grid, not pack, the toolbar, source: B. Oakley & LBoss answer at:
@@ -476,23 +475,22 @@ class Logs:
         #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
         toolbar_frame = tk.Frame(master=plotwin)
         toolbar_frame.rowconfigure(0, weight=1)
-        toolbar_frame.config(bg=dark)
         toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
         # Need to remove the subplots navigation button.
-        # Source: https://stackoverflow.com/questions/
-        #    59155873/how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
+        # Source: https://stackoverflow.com/questions/59155873/
+        #   how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
         toolbar.children['!button4'].pack_forget()
 
         # Have the toolbar match the Figure colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
         #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
         toolbar.config(bg=dark)
-        toolbar._message_label.config(bg=dark, fg=light, padx=20)
+        toolbar._message_label.config(bg=dark, fg=light, padx=40)
 
         # Grid toolbar at top of the tplot window.
         # The Toolbar for plot navigation does not work well in macOS
         #   because _backend_tk.py uses tk.Button and macOS can only
-        #   properly configure ttk.Buttons. Remove Toolbar for macOS.
+        #   properly configure ttk.Buttons, so no Toolbar for macOS.
         if MY_OS in 'lin, win':
             toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
             toolbar.update()
