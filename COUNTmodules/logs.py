@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.20'
+__module_ver__ = '0.1.21'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -453,47 +453,59 @@ class Logs:
         plotwin.title('Plot of task times')
         plotwin.minsize(500, 250)
         plotwin.rowconfigure(0, weight=0)
-        plotwin.rowconfigure(1, weight=1)
+        plotwin.rowconfigure(1, weight=0)
+        plotwin.rowconfigure(2, weight=1)
         plotwin.columnconfigure(0, weight=1)
         plotwin.configure(bg=dark)
 
-        tplot.set_xlabel(f'Datetime of interval count ({len(tdates)} logged counts)')
-        tplot.set_ylabel('Task completion time, interval avg, hr:min:sec')
+        tplot.set_xlabel(f'Datetime of interval count (yr-mo-date)')
+        tplot.set_ylabel('Task completion time, interval avg\n(hr:min:sec)')
         tplot.set_title("Task times for logged count intervals")
 
-        # The plot and toolbar drawing area...
-        # Use grid() instead of pack() to position widgets;
+        # The plot and toolbar drawing areas:
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.draw()
         canvas.get_tk_widget().config(bg=dark)
-        canvas.get_tk_widget().grid(row=1, column=0,
-                                    padx=40, pady=35,
-                                    sticky=tk.NSEW)
 
-        # Grid, not pack, the toolbar, source: B. Oakley & LBoss answer at:
-        #   https://stackoverflow.com/questions/12913854/
-        #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
-        toolbar_frame = tk.Frame(master=plotwin)
-        toolbar_frame.rowconfigure(0, weight=1)
+        toolbar_frame = tk.Frame(master=plotwin)  # Need a Frame for grid().
         toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
+
         # Need to remove the subplots navigation button.
         # Source: https://stackoverflow.com/questions/59155873/
         #   how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
         toolbar.children['!button4'].pack_forget()
 
-        # Have the toolbar match the Figure colors.
+        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
+                                 bg=dark, fg=light)
+
+        # Have toolbar colors match the Figure plot colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
         #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
         toolbar.config(bg=dark)
         toolbar._message_label.config(bg=dark, fg=light, padx=40)
 
-        # Grid toolbar at top of the tplot window.
-        # The Toolbar for plot navigation does not work well in macOS
-        #   because _backend_tk.py uses tk.Button and macOS can only
-        #   properly configure ttk.Buttons, so no Toolbar for macOS.
+        # Now show the plot; use grid() instead of pack() for positioning.
+        # Toolbar goes at top of the tplot window, sample size label and
+        #     plot canvas follow.
+        # How to grid a toolbar, source: B. Oakley & LBoss answer at:
+        #   https://stackoverflow.com/questions/12913854/
+        #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
+        # Note that while the Frame is gridded, the toolbar packs its
+        #   widgets (leaving white space at right side). Other widgets
+        #   can't be gridded in the toolbar Frame b/c it "already has
+        #   slaves managed by pack".
+        # The Toolbar does not work well in macOS because _backend_tk.py
+        #   uses tk.Button and macOS can only properly configure ttk.Buttons,
+        #   so no Toolbar for macOS.
         if MY_OS in 'lin, win':
             toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
             toolbar.update()
+
+        plot_sample_n.grid(row=1, column=0,
+                           padx=46, sticky=tk.E)
+        canvas.get_tk_widget().grid(row=2, column=0,
+                                    padx=30, pady=(0, 30),
+                                    sticky=tk.NSEW)
 
     @staticmethod
     def uptime(logtext: str) -> str:
