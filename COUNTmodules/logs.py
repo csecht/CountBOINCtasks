@@ -458,9 +458,9 @@ class Logs:
         plotwin.columnconfigure(0, weight=1)
         plotwin.configure(bg=dark)
 
-        tplot.set_xlabel(f'Datetime of interval count (yr-mo-date)')
+        tplot.set_xlabel('Datetime of interval count')
         tplot.set_ylabel('Task completion time, interval avg\n(hr:min:sec)')
-        tplot.set_title("Task times for logged count intervals")
+        tplot.set_title('Task times for logged count intervals')
 
         # The plot and toolbar drawing areas:
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
