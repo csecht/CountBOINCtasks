@@ -413,7 +413,7 @@ class Logs:
         if MY_OS == 'lin':
             fig = Figure(figsize=(8, 6), constrained_layout=True)
         elif MY_OS == 'dar':
-            fig = Figure(figsize=(8, 6), constrained_layout=True)
+            fig = Figure(figsize=(6.5, 5), constrained_layout=True)
 
         tplot = fig.add_subplot()
 
@@ -471,12 +471,6 @@ class Logs:
                                     # ipady=40,
                                     sticky=tk.NSEW)
 
-        # The Toolbar for plot navigation does not work well in macOS
-        #   because _backend_tk.py uses tk.Button and macOS can only
-        #   properly configure ttk.Buttons. Remove Toolbar for macOS.
-        if MY_OS == 'dar':
-            plt.rcParams['toolbar'] = 'None'
-
         # Grid, not pack, the toolbar, source: B. Oakley & LBoss answer at:
         #   https://stackoverflow.com/questions/12913854/
         #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
@@ -496,8 +490,12 @@ class Logs:
         toolbar._message_label.config(bg=dark, fg=light, padx=20)
 
         # Grid toolbar at top of the tplot window.
-        toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
-        toolbar.update()
+        # The Toolbar for plot navigation does not work well in macOS
+        #   because _backend_tk.py uses tk.Button and macOS can only
+        #   properly configure ttk.Buttons. Remove Toolbar for macOS.
+        if MY_OS in 'lin, win':
+            toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
+            toolbar.update()
 
     @staticmethod
     def uptime(logtext: str) -> str:
