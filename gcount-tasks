@@ -913,7 +913,7 @@ class CountViewer(tk.Frame):
                          # MacOS: can't display 'Cmd+L' b/c won't override native cmd.
                          accelerator='Ctrl+L')
         view.add_command(label='Plot of log data',
-                         command=lambda: Logs.analyze_logfile('plot'),
+                         command=lambda: Logs.analyze_logfile(do_plot=True),
                          accelerator='Ctrl+Shift+P')
         view.add_command(label='Analysis of log data',
                          command=lambda: Logs.show_analysis(app),
