@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.21'
+__module_ver__ = '0.1.22'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -379,10 +379,11 @@ class Logs:
         The plot will be navigable via toolbar buttons on Linux and
         Windows platforms, not on macOS.
 
-        :param tdate_dist: List of datetime strings when interval task
-            counts intervals were made.
-        :param ttime_dist: List of avg. task time string for the interval.
-            The distributions need to be in register and of same length.
+        :param tdate_dist: Distribution of datetime (strings) when
+            interval task counts intervals were made.
+        :param ttime_dist: Distribution of average task time (strings)
+            for the interval.
+            Distribution lists need to be of same length.
         :return: None
         """
 
@@ -408,42 +409,44 @@ class Logs:
         plt.rc('xtick', labelsize=small_font, color=light)
         plt.rc('ytick', labelsize=small_font, color=light)
 
-        # Initialize fig Figure for Windows...
-        fig = Figure(figsize=(7.25, 5.75), constrained_layout=True)
+        # Initialize fig Figure for Windows, adjust platform-specific sizes:
+        fig, ax = plt.subplots(figsize=(7.25, 5.75), constrained_layout=True)
         if MY_OS == 'lin':
-            fig = Figure(figsize=(8, 6), constrained_layout=True)
+            fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
         elif MY_OS == 'dar':
-            fig = Figure(figsize=(6.5, 5), constrained_layout=True)
+            fig, ax = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
-        tplot = fig.add_subplot()
+        ax.set_title("Task times for logged count intervals")
+        ax.set_xlabel(f'Datetime of interval count (yr-mo-date)')
+        ax.set_ylabel('Task completion time, interval avg\n(hr:min:sec)')
 
-        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
-        #   this greatly speeds up plotting when axes are date objects.
-        tplot.xaxis.axis_date()
-        tplot.yaxis.axis_date()
-        tdates = [mdates.datestr2num(d) for d in tdate_dist]
-        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
-
-        tplot.autoscale(True)
-        tplot.grid(True)
+        ax.autoscale(True)
+        ax.grid(True)
         fig.set_facecolor(dark)
-        tplot.set_facecolor(light)
+        ax.set_facecolor(light)
 
         # Need to rotate and right-align the date labels to avoid crowding.
-        for label in tplot.get_xticklabels(which='major'):
+        for label in ax.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
-        for label in tplot.get_yticklabels(which='major'):
+        for label in ax.get_yticklabels(which='major'):
             label.set(rotation=30)
 
         loc = mdates.AutoDateLocator(interval_multiples=True)
-        tplot.xaxis.set_major_locator(loc)
-        tplot.xaxis.set_minor_locator(mdates.DayLocator())
-        tplot.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_minor_locator(mdates.DayLocator())
+        ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
-        tplot.scatter(tdates, ttimes, s=6)
-        # ax.plot(tdates, ttimes, linewidth=1)
+        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        #   this greatly speeds up plotting when axes are date objects.
+        ax.xaxis.axis_date()
+        ax.yaxis.axis_date()
+        tdates = [mdates.datestr2num(d) for d in tdate_dist]
+        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
 
-        #### The plot is configured, so now draw it in a new window. ###
+        ax.scatter(tdates, ttimes, s=6)
+
+        # The plot is set up, now draw it in a new window and place the
+        #   toolbar in a frame so everything can be gridded (not packed).
 
         # Need a toplevel window for the matplotlab plot so that the
         #   interval thread can continue counting; a naked Matplotlab
@@ -457,10 +460,6 @@ class Logs:
         plotwin.rowconfigure(2, weight=1)
         plotwin.columnconfigure(0, weight=1)
         plotwin.configure(bg=dark)
-
-        tplot.set_xlabel(f'Datetime of interval count (yr-mo-date)')
-        tplot.set_ylabel('Task completion time, interval avg\n(hr:min:sec)')
-        tplot.set_title("Task times for logged count intervals")
 
         # The plot and toolbar drawing areas:
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
@@ -496,7 +495,7 @@ class Logs:
         #   slaves managed by pack".
         # The Toolbar does not work well in macOS because _backend_tk.py
         #   uses tk.Button and macOS can only properly configure ttk.Buttons,
-        #   so no Toolbar for macOS.
+        #   so use a Toolbar only for Linux and Windows.
         if MY_OS in 'lin, win':
             toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
             toolbar.update()
