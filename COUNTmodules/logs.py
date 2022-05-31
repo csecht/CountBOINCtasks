@@ -474,14 +474,15 @@ class Logs:
         #   how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
         toolbar.children['!button4'].pack_forget()
 
-        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
-                                 bg=dark, fg=light)
-
         # Have toolbar colors match the Figure plot colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
         #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
         toolbar.config(bg=dark)
         toolbar._message_label.config(bg=dark, fg=light, padx=40)
+
+        # Need to inform user of number of data points; place above the plot.
+        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
+                                 bg=dark, fg=light)
 
         # Now show the plot; use grid() instead of pack() for positioning.
         # Toolbar goes at top of the tplot window, sample size label and
@@ -493,12 +494,15 @@ class Logs:
         #   widgets (leaving white space at right side). Other widgets
         #   can't be gridded in the toolbar Frame b/c it "already has
         #   slaves managed by pack".
+        toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
+
         # The Toolbar does not work well in macOS because _backend_tk.py
         #   uses tk.Button and macOS can only properly configure ttk.Buttons,
-        #   so use a Toolbar only for Linux and Windows.
-        if MY_OS in 'lin, win':
-            toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
-            toolbar.update()
+        #   so show the Toolbar only for Linux and Windows.
+        # NOTE: need to find a way for macOS to display the _message_label
+        #   without the toolbar or without showing the toolbar buttons.
+        if MY_OS == 'dar':
+            toolbar.pack_forget()
 
         plot_sample_n.grid(row=1, column=0,
                            padx=46, sticky=tk.E)
