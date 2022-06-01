@@ -480,7 +480,6 @@ class Logs:
 
         # Have toolbar colors match the plot and figure colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
-        #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
         toolbar.config(bg=dark)
         toolbar._message_label.config(bg=dark, fg=light, padx=40)
 
