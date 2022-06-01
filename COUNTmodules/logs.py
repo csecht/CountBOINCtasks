@@ -420,10 +420,14 @@ class Logs:
         ax.set_xlabel(f'Datetime of interval count (yr-mo-date)')
         ax.set_ylabel('Task completion time, interval avg\n(hr:min:sec)')
 
-        ax.autoscale(True)
-        ax.grid(True)
-        fig.set_facecolor(dark)
-        ax.set_facecolor(light)
+        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        #   this greatly speeds up plotting when axes are date objects.
+        ax.xaxis.axis_date()
+        ax.yaxis.axis_date()
+        tdates = [mdates.datestr2num(d) for d in tdate_dist]
+        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
+
+        ax.scatter(tdates, ttimes, s=6)
 
         # Need to rotate and right-align the date labels to avoid crowding.
         for label in ax.get_xticklabels(which='major'):
@@ -436,14 +440,10 @@ class Logs:
         ax.xaxis.set_minor_locator(mdates.DayLocator())
         ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
-        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
-        #   this greatly speeds up plotting when axes are date objects.
-        ax.xaxis.axis_date()
-        ax.yaxis.axis_date()
-        tdates = [mdates.datestr2num(d) for d in tdate_dist]
-        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
-
-        ax.scatter(tdates, ttimes, s=6)
+        ax.autoscale(True)
+        ax.grid(True)
+        fig.set_facecolor(dark)
+        ax.set_facecolor(light)
 
         # The plot is set up, now draw it in a new window and place the
         #   toolbar in a frame so everything can be gridded (not packed).
