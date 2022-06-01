@@ -466,44 +466,42 @@ class Logs:
         canvas.draw()
         canvas.get_tk_widget().config(bg=dark)
 
+        # Toolbar can be gridded at top of plow window by placing it in
+        #   a Frame. Source: B. Oakley & LBoss answers at:
+        #   https://stackoverflow.com/questions/12913854/
+        #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
         toolbar_frame = tk.Frame(master=plotwin)  # Need a Frame for grid().
         toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
 
-        # Need to remove the subplots navigation button.
+        # Need to remove the subplots navigation button b/c it is buggy.
         # Source: https://stackoverflow.com/questions/59155873/
         #   how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
         toolbar.children['!button4'].pack_forget()
 
-        # Have toolbar colors match the Figure plot colors.
+        # Have toolbar colors match the plot and figure colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
         #   how-do-you-set-the-navigationtoolbar2tkaggs-background-to-a-certain-color-in-tk
         toolbar.config(bg=dark)
         toolbar._message_label.config(bg=dark, fg=light, padx=40)
 
-        # Need to inform user of number of data points; place above the plot.
+        # Need to inform user of number of data points.
         plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
                                  bg=dark, fg=light)
 
-        # Now show the plot; use grid() instead of pack() for positioning.
-        # Toolbar goes at top of the tplot window, sample size label and
-        #     plot canvas follow.
-        # How to grid a toolbar, source: B. Oakley & LBoss answer at:
-        #   https://stackoverflow.com/questions/12913854/
-        #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
-        # Note that while the Frame is gridded, the toolbar packs its
-        #   widgets (leaving white space at right side). Other widgets
-        #   can't be gridded in the toolbar Frame b/c it "already has
-        #   slaves managed by pack".
-        toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
-
-        # The Toolbar does not work well in macOS because _backend_tk.py
-        #   uses tk.Button and macOS can only properly configure ttk.Buttons,
-        #   so show the Toolbar only for Linux and Windows.
+        # NavigationToolbar2Tk does not work well in macOS because it
+        #   uses tk.Button and macOS can only properly configure ttk.Buttons.
+        #   Hence, show a toolbar only for Linux and Windows.
         # NOTE: need to find a way for macOS to display the _message_label
         #   without the toolbar or without showing the toolbar buttons.
         if MY_OS == 'dar':
             toolbar.pack_forget()
 
+        # Now show the plot; use grid() instead of pack().
+        # Note that while the toolbar_frame is gridded, toolbar packs its
+        #   widgets (which leaves white space at right border). Hence,
+        #   other widgets can't be gridded in the toolbar Frame b/c it
+        #   "already has slaves managed by pack".
+        toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
         plot_sample_n.grid(row=1, column=0,
                            padx=46, sticky=tk.E)
         canvas.get_tk_widget().grid(row=2, column=0,
