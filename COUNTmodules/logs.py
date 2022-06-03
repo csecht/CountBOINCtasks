@@ -35,7 +35,6 @@ from re import search, findall, MULTILINE
 from socket import gethostname
 from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
-from typing import Callable, Any
 
 try:
     import matplotlib.dates as mdates
@@ -105,6 +104,7 @@ class Logs:
         sumry_cnt_range = ''
 
         intvl_dates = []
+        intvl_counts = []
         intvl_vals = []
         num_intvl_vals = 0
         intvl_cnt_avg = 0.0
