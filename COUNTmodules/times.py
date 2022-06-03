@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'times.py'
-__module_ver__ = '0.2.7'
+__module_ver__ = '0.2.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -234,10 +234,13 @@ def boinc_ttimes_stats(times_sec: iter) -> dict:
     """
     numtimes = len(times_sec)
     total = sec_to_format(int(sum(times_sec)), 'std')
-    avg = sec_to_format(int(statistics.fmean(times_sec)), 'std')
-    stdev = sec_to_format(int(statistics.stdev(times_sec)), 'std')
-    low = sec_to_format(int(min(times_sec)), 'std')
-    high = sec_to_format(int(max(times_sec)), 'std')
+    if numtimes > 0:
+        avg = sec_to_format(int(statistics.fmean(times_sec)), 'std')
+        stdev = sec_to_format(int(statistics.stdev(times_sec)), 'std')
+        low = sec_to_format(int(min(times_sec)), 'std')
+        high = sec_to_format(int(max(times_sec)), 'std')
+    else:
+        avg = stdev = low = high = '00:00:00'
 
     if numtimes > 1:
         return {
@@ -251,15 +254,15 @@ def boinc_ttimes_stats(times_sec: iter) -> dict:
             'tt_total': total,
             'tt_avg': total,
             'tt_sd': 'n/a',
-            'tt_min': avg,
-            'tt_max': avg}
+            'tt_min': total,
+            'tt_max': total}
     # numtimes is 0...
     return {
         'tt_total': '00:00:00',
         'tt_avg': '00:00:00',
-        'tt_sd': 'n/a',
-        'tt_min': 'n/a',
-        'tt_max': 'n/a'}
+        'tt_sd': '00:00:00',
+        'tt_min': '00:00:00',
+        'tt_max': '00:00:00'}
 
 
 def about() -> None:
