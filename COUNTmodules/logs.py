@@ -487,7 +487,7 @@ class Logs:
 
         # Internal functions to show/hide interval task counts, controlled by
         #  count_data_btn Button. Manage which y-axis coordinates are tracked
-        #  in the navigation toolbar with zorder the function, as described in:
+        #  in the navigation toolbar with the zorder function, as described in:
         #  https://stackoverflow.com/questions/21583965/
         #    matplotlib-cursor-value-with-two-axes
         def hide_count_data() -> None:
@@ -502,7 +502,7 @@ class Logs:
             ax2.xaxis.axis_date()
             ax2.xaxis.set_minor_locator(mdates.DayLocator())
             ax2.set_zorder(-1)
-            # Marker "hides" because color becomes plot bg.
+            # Marker "hides" because its color becomes plot bg.
             ax2.scatter(tdates, tcount_dist,
                         marker='.', s=6, color=light)
 
@@ -525,15 +525,13 @@ class Logs:
                             marker='.', s=6, color=count_color)
                 ax2.set_zorder(1)
                 fig.canvas.draw()
-
             else:
                 count_data_btn.config(text='Show count data')
-                ax2.clear()
                 hide_count_data()
                 fig.canvas.draw()
 
         # The plots are set up, now draw them in a new window. Place the
-        #   toolbar in a frame so everything can be gridded (not packed).
+        #   toolbar in a Frame so everything can be gridded (not packed).
 
         # Need a toplevel window for the matplotlab plot so that the
         #   interval thread can continue counting; a naked Matplotlab
@@ -560,7 +558,6 @@ class Logs:
         # The plot and toolbar drawing areas:
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.get_tk_widget().config(bg=dark)
-        # canvas.draw()
 
         # Toolbar can be gridded at top of plow window by placing it in
         #   a Frame. Source: B. Oakley & LBoss answers at:
@@ -594,6 +591,15 @@ class Logs:
         canvas.get_tk_widget().grid(row=3, column=0,
                                     padx=30, pady=(0, 30),
                                     sticky=tk.NSEW)
+
+        def exit_on_x() -> None:
+            """
+            Explicitly close all matplotlib objects when user
+            closes plot window with the system's "X" button.
+            """
+            plt.close('all')
+            plotwin.destroy()
+        plotwin.protocol('WM_DELETE_WINDOW', exit_on_x)
 
     @staticmethod
     def uptime(logtext: str) -> str:
