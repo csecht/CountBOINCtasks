@@ -35,6 +35,7 @@ from re import search, findall, MULTILINE
 from socket import gethostname
 from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
+from typing import Callable, Any
 
 try:
     import matplotlib.dates as mdates
@@ -186,7 +187,7 @@ class Logs:
 
         # Need to check whether plotting is available and possible.
         if found_intvls and do_plot and CAN_PLOT:
-            cls.plot_times(intvl_dates, found_intvl_avgt)
+            cls.plot_times(intvl_dates, found_intvl_avgt, found_intvl_t_range, intvl_counts)
         elif not found_intvls:
             detail = ('There are no data to plot.\n'
                       'Need at least one interval count to\n'
@@ -373,24 +374,42 @@ class Logs:
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
     @staticmethod
-    def plot_times(tdate_dist: list, ttime_dist: list) -> None:
+    def plot_times(tdate_dist: list,
+                   ttime_dist: list,
+                   trange_dist: list,
+                   tcount_dist: list) -> None:
         """
-        Draw plot window of time data; expect LOGFILE interval data.
+        Draw plot window of task times and counts (optional) for
+        intervals recorded in LOGFILE.
         The plot will be navigable via toolbar buttons on Linux and
         Windows platforms, not on macOS.
+        Parameter lists of data distributions need to be same length.
 
-        :param tdate_dist: Distribution of datetime (strings) when
-            interval task counts intervals were made.
-        :param ttime_dist: Distribution of average task time (strings)
-            for the interval.
-            Distribution lists need to be of same length.
+        :param tdate_dist: Distribution of datetimes (strings) when
+            task count intervals were logged.
+        :param ttime_dist: Distribution of average task times (strings).
+        :param trange_dist: Distribution of minimum and maximum times
+            for the interval, as a list of tuples of strings ('min', 'max').
+        :param tcount_dist: Distribution of integer task counts.
+
         :return: None
         """
 
-        # Need to define text and background colors to match (or close)
-        #   filetext fg and bg in logs.view().
+        # Define text and background colors to match (or be close to)
+        #   filetext fg and bg used in logs.view().
         light = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
         dark = '#333333'  # X-term gray20
+        range_fill = '#bfbfbf',  # X-term gray75
+        count_color = 'green'
+
+        # Need to set style for count_data_button b/c ttk is the only way
+        #   to configure button colors on macOS.
+        style = ttk.Style()
+        style.configure('Plot.TButton', font=('TkTooltipFont', 9),
+                        background=dark,
+                        foreground=count_color,
+                        borderwidth=3,
+                        )
 
         # Font sizing adapted from Duarte's answer at:
         # https://stackoverflow.com/questions/3899980/
@@ -410,67 +429,141 @@ class Logs:
         plt.rc('ytick', labelsize=small_font, color=light)
 
         # Initialize fig Figure for Windows, adjust platform-specific sizes:
-        fig, ax = plt.subplots(figsize=(7.25, 5.75), constrained_layout=True)
+        fig, ax1 = plt.subplots(figsize=(7.25, 5.75), constrained_layout=True)
         if MY_OS == 'lin':
-            fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
+            fig, ax1 = plt.subplots(figsize=(8, 6), constrained_layout=True)
         elif MY_OS == 'dar':
-            fig, ax = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
+            fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
-        ax.set_title("Task times for logged count intervals")
-        ax.set_xlabel(f'Datetime of interval count (yr-mo-date)')
-        ax.set_ylabel('Task completion time, interval avg\n(hr:min:sec)')
+        ax1.set_title("Task times for logged count intervals")
+        ax1.set_xlabel(f'Datetime of interval count (yr-mo-date)')
+        ax1.set_ylabel('Task completion time, interval avg.\n(hr:min:sec)')
 
         # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
         #   this greatly speeds up plotting when axes are date objects.
-        ax.xaxis.axis_date()
-        ax.yaxis.axis_date()
+        ax1.xaxis.axis_date()
+        ax1.yaxis.axis_date()
+
         tdates = [mdates.datestr2num(d) for d in tdate_dist]
         ttimes = [mdates.datestr2num(t) for t in ttime_dist]
 
-        ax.scatter(tdates, ttimes, s=6)
+        mins, maxs = zip(*trange_dist)
+        mintimes = [mdates.datestr2num(m) for m in mins]
+        maxtimes = [mdates.datestr2num(m) for m in maxs]
+
+        ax1.scatter(tdates, mintimes, marker='^', s=8,
+                    color='orange',
+                    label='min time')
+        ax1.scatter(tdates, maxtimes, marker='v', s=8,
+                    color='orange',
+                    label='max time')
+        ax1.scatter(tdates, ttimes, s=6,
+                    label='avg. task time') # Default color is '#bfd1d4', light blue.
+
+        ax1.legend(framealpha=0.3,
+                   facecolor=light, edgecolor='black',
+                   fontsize=small_font,
+                   loc='best')
 
         # Need to rotate and right-align the date labels to avoid crowding.
-        for label in ax.get_xticklabels(which='major'):
+        for label in ax1.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
-        for label in ax.get_yticklabels(which='major'):
+        for label in ax1.get_yticklabels(which='major'):
             label.set(rotation=30)
 
         loc = mdates.AutoDateLocator(interval_multiples=True)
-        ax.xaxis.set_major_locator(loc)
-        ax.xaxis.set_minor_locator(mdates.DayLocator())
-        ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        ax1.xaxis.set_major_locator(loc)
+        ax1.xaxis.set_minor_locator(mdates.DayLocator())
+        ax1.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        ax1.yaxis.set_minor_locator(mdates.MinuteLocator())
 
-        ax.autoscale(True)
-        ax.grid(True)
+        ax1.autoscale(True)
+        ax1.grid(True)
         fig.set_facecolor(dark)
-        ax.set_facecolor(light)
+        ax1.set_facecolor(light)
 
-        # The plot is set up, now draw it in a new window and place the
+        ax2 = ax1.twinx()
+
+        # Internal functions to show/hide interval task counts, controlled by
+        #  count_data_btn Button. Manage which y-axis coordinates are tracked
+        #  in the navigation toolbar with zorder the function, as described in:
+        #  https://stackoverflow.com/questions/21583965/
+        #    matplotlib-cursor-value-with-two-axes
+        def hide_count_data() -> None:
+            """
+            Use to toggle show-hide count data plot.
+            Also use to show count right Y-axis at startup;
+            subsequently called from ttk.Button, count_data_btn.
+            """
+            ax2.set_ylabel('Task count, interval avg.', color=count_color)
+            ax2.spines['right'].set_color(count_color)
+            ax2.tick_params(axis='y', colors=count_color)
+            ax2.xaxis.axis_date()
+            ax2.xaxis.set_minor_locator(mdates.DayLocator())
+            ax2.set_zorder(-1)
+            ax2.scatter(tdates, tcount_dist, marker='None')
+        # Need to set up count right y-axis to show from the start.
+        hide_count_data()
+
+        def toggle_counts() -> None:
+            """
+            Show or hide interval average count data with a Button toggle.
+            Y-axis of count values, on the right, always shows.
+            """
+            if count_data_btn.cget('text') == 'Show count data':
+                count_data_btn.config(text='Hide count data')
+
+                ax2.set_ylabel('Task count, interval avg.', color=count_color)
+                ax2.spines['right'].set_color(count_color)
+                ax2.tick_params(axis='y', colors=count_color)
+
+                ax2.scatter(tdates, tcount_dist,
+                            marker='.', s=6, color=count_color)
+                ax2.set_zorder(1)
+                fig.canvas.draw()
+
+            else:
+                count_data_btn.config(text='Show count data')
+                ax2.clear()
+                hide_count_data()
+                fig.canvas.draw()
+
+        # The plots are set up, now draw them in a new window. Place the
         #   toolbar in a frame so everything can be gridded (not packed).
 
         # Need a toplevel window for the matplotlab plot so that the
         #   interval thread can continue counting; a naked Matplotlab
         #   figure object will run in the same thread as main and pause
-        #   the interval timer and counts.
+        #   the interval timer and counts. Resize plots with window.
         plotwin = tk.Toplevel()
-        plotwin.title('Plot of task times')
+        plotwin.title('Plots of task data')
         plotwin.minsize(500, 250)
-        plotwin.rowconfigure(0, weight=0)
-        plotwin.rowconfigure(1, weight=0)
-        plotwin.rowconfigure(2, weight=1)
+        plotwin.rowconfigure(3, weight=1)
         plotwin.columnconfigure(0, weight=1)
         plotwin.configure(bg=dark)
 
+        # Need to inform user of number of data points in the plot.
+        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
+                                 bg=dark, fg=light)
+
+        # Use a button to toggle the count data display.
+        count_data_btn = ttk.Button(plotwin,
+                                    text='Show count data',
+                                    command=toggle_counts,
+                                    width=0,
+                                    style='Plot.TButton')
+
         # The plot and toolbar drawing areas:
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
-        canvas.draw()
         canvas.get_tk_widget().config(bg=dark)
+        canvas.draw()
 
         # Toolbar can be gridded at top of plow window by placing it in
         #   a Frame. Source: B. Oakley & LBoss answers at:
         #   https://stackoverflow.com/questions/12913854/
         #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
-        toolbar_frame = tk.Frame(master=plotwin)  # Need a Frame for grid().
+        # Need a Frame to grid() placement of the toolbar.
+        toolbar_frame = tk.Frame(master=plotwin, bg=dark)
         toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
 
         # Need to remove the subplots navigation button b/c it is buggy.
@@ -483,10 +576,6 @@ class Logs:
         toolbar.config(bg=dark)
         toolbar._message_label.config(bg=dark, fg=light, padx=40)
 
-        # Need to inform user of number of data points.
-        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
-                                 bg=dark, fg=light)
-
         # NavigationToolbar2Tk does not work well in macOS because it
         #   uses tk.Button and macOS can only properly configure ttk.Buttons.
         #   Hence, show a toolbar only for Linux and Windows.
@@ -495,15 +584,15 @@ class Logs:
         if MY_OS == 'dar':
             toolbar.pack_forget()
 
-        # Now show the plot; use grid() instead of pack().
+        # Now display all plot widgets using grid() instead of pack().
         # Note that while the toolbar_frame is gridded, toolbar packs its
-        #   widgets (which leaves white space at right border). Hence,
-        #   other widgets can't be gridded in the toolbar Frame b/c it
+        #   widgets, leaving white space at right border. Other widgets
+        #   can't be gridded in the toolbar Frame b/c it
         #   "already has slaves managed by pack".
         toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
-        plot_sample_n.grid(row=1, column=0,
-                           padx=46, sticky=tk.E)
-        canvas.get_tk_widget().grid(row=2, column=0,
+        plot_sample_n.grid(row=1, column=0, padx=40, sticky=tk.E)
+        count_data_btn.grid(row=2, column=0, padx=40, sticky=tk.E)
+        canvas.get_tk_widget().grid(row=3, column=0,
                                     padx=30, pady=(0, 30),
                                     sticky=tk.NSEW)
 
