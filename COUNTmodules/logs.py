@@ -21,7 +21,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.22'
+__module_ver__ = '0.1.23'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -436,8 +436,8 @@ class Logs:
         elif MY_OS == 'dar':
             fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
-        ax1.set_title("Task times for logged count intervals")
-        ax1.set_xlabel(f'Datetime of interval count (yr-mo-date)')
+        ax1.set_title('Task times for logged count intervals')
+        ax1.set_xlabel('Datetime of interval count (yr-mo-date)')
         ax1.set_ylabel('Task completion time, interval avg.\n(hr:min:sec)')
 
         # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
@@ -502,7 +502,10 @@ class Logs:
             ax2.xaxis.axis_date()
             ax2.xaxis.set_minor_locator(mdates.DayLocator())
             ax2.set_zorder(-1)
-            ax2.scatter(tdates, tcount_dist, marker='None')
+            # Marker "hides" because color becomes plot bg.
+            ax2.scatter(tdates, tcount_dist,
+                        marker='.', s=6, color=light)
+
         # Need to set up count right y-axis to show from the start.
         hide_count_data()
 
@@ -576,14 +579,6 @@ class Logs:
         # Toolbar color: https://stackoverflow.com/questions/48351630/
         toolbar.config(bg=dark)
         toolbar._message_label.config(bg=dark, fg=light, padx=40)
-
-        # NavigationToolbar2Tk does not work well in macOS because it
-        #   uses tk.Button and macOS can only properly configure ttk.Buttons.
-        #   Hence, show a toolbar only for Linux and Windows.
-        # NOTE: need to find a way for macOS to display the _message_label
-        #   without the toolbar or without showing the toolbar buttons.
-        if MY_OS == 'dar':
-            toolbar.pack_forget()
 
         # Now display all plot widgets using grid() instead of pack().
         # Note that while the toolbar_frame is gridded, toolbar packs its
