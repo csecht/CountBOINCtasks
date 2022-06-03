@@ -397,10 +397,11 @@ class Logs:
 
         # Define text and background colors to match (or be close to)
         #   filetext fg and bg used in logs.view().
+        # Default marker color is '#bfd1d4', similar to SteelBlue4 or DodgerBlue4.
         light = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
         dark = '#333333'  # X-term gray20
-        range_fill = '#bfbfbf',  # X-term gray75
         count_color = 'green'
+        minmax_color = 'orange'
 
         # Need to set style for count_data_button b/c ttk is the only way
         #   to configure button colors on macOS.
@@ -452,13 +453,13 @@ class Logs:
         maxtimes = [mdates.datestr2num(m) for m in maxs]
 
         ax1.scatter(tdates, mintimes, marker='^', s=8,
-                    color='orange',
+                    color=minmax_color,
                     label='min time')
         ax1.scatter(tdates, maxtimes, marker='v', s=8,
-                    color='orange',
+                    color=minmax_color,
                     label='max time')
         ax1.scatter(tdates, ttimes, s=6,
-                    label='avg. task time') # Default color is '#bfd1d4', light blue.
+                    label='avg. task time')
 
         ax1.legend(framealpha=0.3,
                    facecolor=light, edgecolor='black',
