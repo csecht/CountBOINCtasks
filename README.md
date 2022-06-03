@@ -111,7 +111,18 @@ Added features in the GUI version:
 
 ![gcount-tasks main window](images/gcount-tasks_scrnshot.png)
 ![log-analysis](images/gcount-tasks_analysis.png)
+
+Iniitial plot of task time data in the log file.
 ![time-plot](images/gcount-tasks_plot.png)
+
+Use of magnifier tool to zoom in on average task times.
+![zoom-plot](images/gcount-tasks_plot_Yzoom.png)
+
+Zoom in again for two weeks of task time data.
+![zoom-plot](images/gcount-tasks_plot_XYzoom.png)
+
+Initial view showing all logged task count data.
+![zoom-plot](images/gcount-tasks_plot_counts.png)
 
 ### Stand-alone versions: GcountTasks (no Python installation needed)
 Note that these stand-alone programs will only run with the boinccmd binary in its default install location. If you launch a GcountTasks stand-alone and get an error message, you can still run gcount-tasks from the command line once you set up a valid boinccmd path in the countCFG.txt configuration file.
