@@ -560,7 +560,7 @@ class Logs:
         # The plot and toolbar drawing areas:
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
         canvas.get_tk_widget().config(bg=dark)
-        canvas.draw()
+        # canvas.draw()
 
         # Toolbar can be gridded at top of plow window by placing it in
         #   a Frame. Source: B. Oakley & LBoss answers at:
@@ -570,10 +570,13 @@ class Logs:
         toolbar_frame = tk.Frame(master=plotwin, bg=dark)
         toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
 
-        # Need to remove the subplots navigation button b/c it is buggy.
+        # Need to remove the subplots navigation button.
         # Source: https://stackoverflow.com/questions/59155873/
         #   how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
-        toolbar.children['!button4'].pack_forget()
+        if MY_OS in 'lin, dar':
+            toolbar.children['!button4'].pack_forget()
+        else:  # is Windows
+            toolbar.children['!button6'].pack_forget()
 
         # Have toolbar colors match the plot and figure colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
