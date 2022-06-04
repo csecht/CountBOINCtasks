@@ -72,6 +72,7 @@ class Logs:
     # Need to write log files to current working directory unless program
     #   is run from a PyInstaller frozen executable, then write to Home
     #   directory. Frozen executable paths need to be absolute paths.
+    run_test = False
     EXAMPLELOG = Path(Path.cwd(), 'example_log.txt')
     LOGFILE = Path(Path.cwd(),
                    f'{__program_name__}_log.txt').resolve()
