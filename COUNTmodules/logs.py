@@ -359,7 +359,10 @@ class Logs:
 
         # Have bg match self.master_bg of the app main window.
         analysiswin = tk.Toplevel(bg='SteelBlue4')
-        analysiswin.title('Analysis of logged data')
+        if cls.do_test:
+            analysiswin.title('-- TEST ANALYSIS of EXAMPLE LOG DATA --')
+        else:
+            analysiswin.title('Analysis of logged data')
         # Need to position window over the window from which it is called.
         analysiswin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
         analysiswin.minsize(520, 320)
@@ -378,9 +381,7 @@ class Logs:
         # print(ord("═")) -> 9552
         #   unicodedata.name(chr(9552)) -> 'BOX DRAWINGS DOUBLE HORIZONTAL'.
         sep = f'\n{"─" * max_line}\n'
-
         insert_txt = insert_txt + sep
-
         num_lines = insert_txt.count('\n')
 
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
@@ -468,7 +469,7 @@ class Logs:
             fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
         if cls.do_test:
-            ax1.set_title('-- TEST PLOTS with EXAMPLE TASK DATA --')
+            ax1.set_title('-- TEST PLOTS of EXAMPLE LOG DATA --')
         else:
             ax1.set_title('Task data for logged count intervals')
 
