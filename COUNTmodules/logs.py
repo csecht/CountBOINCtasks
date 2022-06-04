@@ -93,10 +93,11 @@ class Logs:
         Called from cls.show_analysis() when need to show results.
         Called from master menu or keybinding when need to plot times.
 
-        :param do_plot: When True, call plot_times();
+        :param do_plot: When True, call plot_data();
             USE: analyze_logfile(do_plot=True).
-        :param do_test: When True, call plot_times() with example data
-            provided with the distribution in example_log.txt.
+        :param do_test: When True, flags calls to plot_data() and from
+            show_analysis() for running tests with example data that is
+            provided, via the Project repository, in example_log.txt.
         :return: Text strings to display in show_analysis() Toplevel.
         """
         cls.do_test = do_test
@@ -136,7 +137,7 @@ class Logs:
 
             return summary_text, recent_interval_text  # <- Empty strings.
 
-        if do_test:
+        if cls.do_test:
             try:
                 logtext = Path(cls.EXAMPLELOG).read_text(encoding='utf-8')
                 texthash = utils.verify(logtext)
@@ -208,7 +209,7 @@ class Logs:
 
         # Need to check whether plotting is available and possible.
         if found_intvls and do_plot and CAN_PLOT:
-            cls.plot_times(intvl_dates, found_intvl_avgt, found_intvl_t_range, intvl_counts)
+            cls.plot_data(intvl_dates, found_intvl_avgt, found_intvl_t_range, intvl_counts)
         elif not found_intvls:
             detail = ('There are no data to plot.\n'
                       'Need at least one interval count to\n'
@@ -223,7 +224,7 @@ class Logs:
             messagebox.showinfo(title='Plotting not available.',
                                 detail=detail)
 
-        ##### Generate text & data for showing in analysis results. ####
+        # Generate text & data to display in show_analysis(). ##########
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -406,10 +407,10 @@ class Logs:
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
     @classmethod
-    def plot_times(cls, tdate_dist: list,
-                   ttime_dist: list,
-                   trange_dist: list,
-                   tcount_dist: list) -> None:
+    def plot_data(cls, tdate_dist: list,
+                  ttime_dist: list,
+                  trange_dist: list,
+                  tcount_dist: list) -> None:
         """
         Draw plot window of task times and counts (optional) for
         intervals recorded in LOGFILE.
