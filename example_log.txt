@@ -1,0 +1,2703 @@
+==============================================================================
+THIS IS AN EXAMPLE DATA LOG FILE FOR TESTING ANALYSIS AND PLOTTING FUNCTIONS.
+IF YOU EDIT ANY PART OF IT, THEN THE TESTS MAY FAIL OR GIVE DECEPTIVE RESULTS.
+==============================================================================
+
+>>> START GUI TASK COUNTER v.0.10.7, SETTINGS: <<<
+2022-Apr-09 22:12:11; Number of tasks in the most recent BOINC report: 18
+                      Task Time: avg 00:21:43,
+                                 range [00:21:34 -- 00:21:52],
+                                 stdev 00:00:05, total 06:30:58
+                      Total tasks in queue: 53
+                      Number of scheduled count intervals: 1008
+                      Counts every 1h, summaries every 1d.
+                      BOINC status evaluations every 15s.
+                      Project auto-update: False
+
+Timed intervals beginning now...
+
+
+2022-Apr-09 23:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:19 -- 00:21:51],
+                                 stdev 00:00:08, total 06:05:54
+                      Total tasks in queue: 53
+                      827 counts remain.
+
+2022-Apr-10 00:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:27,
+                                 range [00:21:16 -- 00:21:37],
+                                 stdev 00:00:06, total 06:04:52
+                      Total tasks in queue: 54
+                      826 counts remain.
+
+2022-Apr-10 01:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:14,
+                                 range [00:18:05 -- 00:22:03],
+                                 stdev 00:00:52, total 06:01:01
+                      Total tasks in queue: 54
+                      825 counts remain.
+
+2022-Apr-10 02:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:32,
+                                 range [00:21:18 -- 00:21:47],
+                                 stdev 00:00:06, total 06:27:44
+                      Total tasks in queue: 52
+                      824 counts remain.
+
+2022-Apr-10 03:12:10; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:32,
+                                 range [00:21:23 -- 00:21:45],
+                                 stdev 00:00:06, total 05:23:14
+                      Total tasks in queue: 53
+                      823 counts remain.
+
+2022-Apr-10 04:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:21,
+                                 range [00:17:46 -- 00:21:59],
+                                 stdev 00:00:57, total 06:03:00
+                      Total tasks in queue: 57
+                      822 counts remain.
+
+2022-Apr-10 05:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:36,
+                                 range [00:21:19 -- 00:21:50],
+                                 stdev 00:00:08, total 06:07:12
+                      Total tasks in queue: 53
+                      821 counts remain.
+
+2022-Apr-10 06:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:19 -- 00:21:48],
+                                 stdev 00:00:07, total 06:27:22
+                      Total tasks in queue: 52
+                      820 counts remain.
+
+2022-Apr-10 07:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:10,
+                                 range [00:18:02 -- 00:21:36],
+                                 stdev 00:00:52, total 05:38:46
+                      Total tasks in queue: 58
+                      819 counts remain.
+
+2022-Apr-10 08:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:20 -- 00:22:06],
+                                 stdev 00:00:10, total 05:45:10
+                      Total tasks in queue: 54
+                      818 counts remain.
+
+2022-Apr-10 09:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:25 -- 00:21:44],
+                                 stdev 00:00:05, total 06:06:44
+                      Total tasks in queue: 54
+                      817 counts remain.
+
+2022-Apr-10 10:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:35,
+                                 range [00:21:17 -- 00:21:53],
+                                 stdev 00:00:09, total 06:07:01
+                      Total tasks in queue: 54
+                      816 counts remain.
+
+2022-Apr-10 10:12:10; >>> SUMMARY: Count for the past 1d: 402
+                      Task Time: mean 0:21:27,
+                                 range [00:17:46 -- 00:22:06],
+                                 stdev 00:00:25, total 5d 23:51:08
+
+2022-Apr-10 11:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:21 -- 00:21:45],
+                                 stdev 00:00:06, total 06:05:44
+                      Total tasks in queue: 53
+                      815 counts remain.
+
+2022-Apr-10 12:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:14 -- 00:21:46],
+                                 stdev 00:00:07, total 06:05:25
+                      Total tasks in queue: 52
+                      814 counts remain.
+
+2022-Apr-10 13:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:21:14 -- 00:21:38],
+                                 stdev 00:00:06, total 05:43:40
+                      Total tasks in queue: 53
+                      813 counts remain.
+
+2022-Apr-10 14:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:13,
+                                 range [00:18:18 -- 00:21:40],
+                                 stdev 00:00:49, total 05:39:32
+                      Total tasks in queue: 57
+                      812 counts remain.
+
+2022-Apr-10 15:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:20 -- 00:22:03],
+                                 stdev 00:00:09, total 06:27:23
+                      Total tasks in queue: 54
+                      811 counts remain.
+
+2022-Apr-10 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:16 -- 00:21:34],
+                                 stdev 00:00:05, total 06:05:15
+                      Total tasks in queue: 52
+                      810 counts remain.
+
+2022-Apr-10 17:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:29,
+                                 range [00:21:23 -- 00:21:38],
+                                 stdev 00:00:04, total 05:22:29
+                      Total tasks in queue: 53
+                      809 counts remain.
+
+2022-Apr-10 18:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:14,
+                                 range [00:18:12 -- 00:21:39],
+                                 stdev 00:00:48, total 06:01:03
+                      Total tasks in queue: 57
+                      808 counts remain.
+
+2022-Apr-10 19:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:19 -- 00:21:40],
+                                 stdev 00:00:06, total 06:27:24
+                      Total tasks in queue: 53
+                      807 counts remain.
+
+2022-Apr-10 20:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:36,
+                                 range [00:21:27 -- 00:21:45],
+                                 stdev 00:00:05, total 06:07:15
+                      Total tasks in queue: 52
+                      806 counts remain.
+
+2022-Apr-10 21:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:21,
+                                 range [00:17:15 -- 00:22:09],
+                                 stdev 00:01:05, total 06:03:08
+                      Total tasks in queue: 53
+                      805 counts remain.
+
+2022-Apr-10 22:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:34,
+                                 range [00:21:23 -- 00:21:48],
+                                 stdev 00:00:07, total 05:01:57
+                      Total tasks in queue: 53
+                      804 counts remain.
+
+2022-Apr-10 23:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:32,
+                                 range [00:21:16 -- 00:21:40],
+                                 stdev 00:00:07, total 06:27:53
+                      Total tasks in queue: 52
+                      803 counts remain.
+
+2022-Apr-11 00:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:24,
+                                 range [00:17:59 -- 00:21:53],
+                                 stdev 00:00:53, total 06:25:13
+                      Total tasks in queue: 54
+                      802 counts remain.
+
+2022-Apr-11 01:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:14,
+                                 range [00:17:41 -- 00:21:44],
+                                 stdev 00:01:03, total 04:57:20
+                      Total tasks in queue: 58
+                      801 counts remain.
+
+2022-Apr-11 02:12:10; Tasks reported in the past 1h: 20
+                      Task Time: avg 00:21:36,
+                                 range [00:21:16 -- 00:22:00],
+                                 stdev 00:00:09, total 07:12:06
+                      Total tasks in queue: 53
+                      800 counts remain.
+
+2022-Apr-11 03:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:32,
+                                 range [00:21:11 -- 00:21:49],
+                                 stdev 00:00:09, total 05:01:33
+                      Total tasks in queue: 54
+                      799 counts remain.
+
+2022-Apr-11 04:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:34,
+                                 range [00:21:18 -- 00:21:52],
+                                 stdev 00:00:08, total 06:28:23
+                      Total tasks in queue: 52
+                      798 counts remain.
+
+2022-Apr-11 05:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:22 -- 00:21:40],
+                                 stdev 00:00:05, total 06:27:01
+                      Total tasks in queue: 51
+                      797 counts remain.
+
+2022-Apr-11 06:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:19,
+                                 range [00:17:23 -- 00:21:52],
+                                 stdev 00:01:04, total 05:41:14
+                      Total tasks in queue: 54
+                      796 counts remain.
+
+2022-Apr-11 07:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:18,
+                                 range [00:17:19 -- 00:21:42],
+                                 stdev 00:01:02, total 06:02:13
+                      Total tasks in queue: 53
+                      795 counts remain.
+
+2022-Apr-11 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:22 -- 00:21:41],
+                                 stdev 00:00:05, total 06:05:59
+                      Total tasks in queue: 53
+                      794 counts remain.
+
+2022-Apr-11 09:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:23,
+                                 range [00:18:10 -- 00:22:12],
+                                 stdev 00:00:56, total 05:42:21
+                      Total tasks in queue: 54
+                      793 counts remain.
+
+2022-Apr-11 10:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:36,
+                                 range [00:21:14 -- 00:21:59],
+                                 stdev 00:00:12, total 06:28:56
+                      Total tasks in queue: 53
+                      792 counts remain.
+
+2022-Apr-11 10:12:11; >>> SUMMARY: Count for the past 1d: 403
+                      Task Time: mean 0:21:27,
+                                 range [00:17:15 -- 00:22:12],
+                                 stdev 00:00:33, total 6d 00:10:38
+
+2022-Apr-11 11:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:29,
+                                 range [00:21:14 -- 00:21:42],
+                                 stdev 00:00:07, total 05:22:16
+                      Total tasks in queue: 54
+                      791 counts remain.
+
+2022-Apr-11 12:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:14 -- 00:21:52],
+                                 stdev 00:00:09, total 06:27:13
+                      Total tasks in queue: 53
+                      790 counts remain.
+
+2022-Apr-11 13:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:21:19 -- 00:21:43],
+                                 stdev 00:00:06, total 05:43:41
+                      Total tasks in queue: 54
+                      789 counts remain.
+
+2022-Apr-11 14:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:27,
+                                 range [00:21:20 -- 00:21:41],
+                                 stdev 00:00:05, total 06:04:41
+                      Total tasks in queue: 54
+                      788 counts remain.
+
+2022-Apr-11 15:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:26,
+                                 range [00:21:13 -- 00:21:41],
+                                 stdev 00:00:06, total 05:43:04
+                      Total tasks in queue: 54
+                      787 counts remain.
+
+2022-Apr-11 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:26 -- 00:21:40],
+                                 stdev 00:00:03, total 06:06:01
+                      Total tasks in queue: 53
+                      786 counts remain.
+
+2022-Apr-11 17:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:25,
+                                 range [00:21:20 -- 00:21:35],
+                                 stdev 00:00:04, total 06:25:47
+                      Total tasks in queue: 52
+                      785 counts remain.
+
+2022-Apr-11 18:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:12,
+                                 range [00:18:14 -- 00:21:42],
+                                 stdev 00:00:48, total 06:00:26
+                      Total tasks in queue: 57
+                      784 counts remain.
+
+2022-Apr-11 19:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:18 -- 00:21:52],
+                                 stdev 00:00:08, total 05:45:12
+                      Total tasks in queue: 53
+                      783 counts remain.
+
+2022-Apr-11 20:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:19 -- 00:21:38],
+                                 stdev 00:00:04, total 05:44:07
+                      Total tasks in queue: 53
+                      782 counts remain.
+
+2022-Apr-11 21:12:13; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:27,
+                                 range [00:21:19 -- 00:21:37],
+                                 stdev 00:00:05, total 06:04:51
+                      Total tasks in queue: 53
+                      781 counts remain.
+
+2022-Apr-11 22:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:21 -- 00:21:46],
+                                 stdev 00:00:06, total 06:05:57
+                      Total tasks in queue: 54
+                      780 counts remain.
+
+2022-Apr-11 23:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:22,
+                                 range [00:17:25 -- 00:22:28],
+                                 stdev 00:01:13, total 04:59:08
+                      Total tasks in queue: 55
+                      779 counts remain.
+
+2022-Apr-12 00:12:11; Tasks reported in the past 1h: 19
+                      Task Time: avg 00:21:43,
+                                 range [00:21:08 -- 00:22:23],
+                                 stdev 00:00:24, total 06:52:40
+                      Total tasks in queue: 53
+                      778 counts remain.
+
+2022-Apr-12 01:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:42,
+                                 range [00:21:09 -- 00:22:14],
+                                 stdev 00:00:24, total 06:08:55
+                      Total tasks in queue: 52
+                      777 counts remain.
+
+2022-Apr-12 02:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:38,
+                                 range [00:21:01 -- 00:22:10],
+                                 stdev 00:00:21, total 06:29:32
+                      Total tasks in queue: 50
+                      776 counts remain.
+
+2022-Apr-12 03:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:18:18 -- 00:22:09],
+                                 stdev 00:00:54, total 05:43:39
+                      Total tasks in queue: 52
+                      775 counts remain.
+
+2022-Apr-12 04:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:46,
+                                 range [00:21:18 -- 00:22:20],
+                                 stdev 00:00:18, total 05:26:34
+                      Total tasks in queue: 52
+                      774 counts remain.
+
+2022-Apr-12 05:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:45,
+                                 range [00:21:29 -- 00:22:08],
+                                 stdev 00:00:11, total 06:09:56
+                      Total tasks in queue: 53
+                      773 counts remain.
+
+2022-Apr-12 06:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:09,
+                                 range [00:16:33 -- 00:22:13],
+                                 stdev 00:01:31, total 06:20:43
+                      Total tasks in queue: 56
+                      772 counts remain.
+
+2022-Apr-12 07:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:46,
+                                 range [00:20:46 -- 00:22:41],
+                                 stdev 00:00:37, total 05:26:35
+                      Total tasks in queue: 53
+                      771 counts remain.
+
+2022-Apr-12 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:51,
+                                 range [00:21:03 -- 00:22:38],
+                                 stdev 00:00:30, total 06:11:39
+                      Total tasks in queue: 53
+                      770 counts remain.
+
+2022-Apr-12 09:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:50,
+                                 range [00:20:54 -- 00:22:43],
+                                 stdev 00:00:36, total 06:33:11
+                      Total tasks in queue: 52
+                      769 counts remain.
+
+2022-Apr-12 10:12:11; Tasks reported in the past 1h: 13
+                      Task Time: avg 00:21:41,
+                                 range [00:20:42 -- 00:22:28],
+                                 stdev 00:00:35, total 04:42:00
+                      Total tasks in queue: 55
+                      768 counts remain.
+
+2022-Apr-12 10:12:11; >>> SUMMARY: Count for the past 1d: 397
+                      Task Time: mean 0:21:32,
+                                 range [00:16:33 -- 00:22:43],
+                                 stdev 00:00:34, total 5d 22:38:04
+
+2022-Apr-12 11:12:11; Tasks reported in the past 1h: 19
+                      Task Time: avg 00:21:51,
+                                 range [00:21:05 -- 00:22:36],
+                                 stdev 00:00:26, total 06:55:18
+                      Total tasks in queue: 54
+                      767 counts remain.
+
+2022-Apr-12 12:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:54,
+                                 range [00:20:59 -- 00:22:44],
+                                 stdev 00:00:28, total 06:12:33
+                      Total tasks in queue: 52
+                      766 counts remain.
+
+2022-Apr-12 13:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:44,
+                                 range [00:21:04 -- 00:22:24],
+                                 stdev 00:00:27, total 05:47:48
+                      Total tasks in queue: 53
+                      765 counts remain.
+
+2022-Apr-12 14:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:41,
+                                 range [00:21:08 -- 00:22:17],
+                                 stdev 00:00:22, total 05:47:07
+                      Total tasks in queue: 54
+                      764 counts remain.
+
+2022-Apr-12 15:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:39,
+                                 range [00:21:10 -- 00:22:10],
+                                 stdev 00:00:18, total 06:29:52
+                      Total tasks in queue: 53
+                      763 counts remain.
+
+2022-Apr-12 16:12:10; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:31,
+                                 range [00:21:15 -- 00:21:51],
+                                 stdev 00:00:10, total 05:01:22
+                      Total tasks in queue: 54
+                      762 counts remain.
+
+2022-Apr-12 17:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:20 -- 00:21:54],
+                                 stdev 00:00:10, total 06:27:29
+                      Total tasks in queue: 54
+                      761 counts remain.
+
+2022-Apr-12 18:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:21 -- 00:21:43],
+                                 stdev 00:00:07, total 06:06:30
+                      Total tasks in queue: 54
+                      760 counts remain.
+
+2022-Apr-12 19:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:35,
+                                 range [00:21:27 -- 00:21:49],
+                                 stdev 00:00:06, total 06:07:05
+                      Total tasks in queue: 52
+                      759 counts remain.
+
+2022-Apr-12 20:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:21 -- 00:21:40],
+                                 stdev 00:00:06, total 05:44:04
+                      Total tasks in queue: 52
+                      758 counts remain.
+
+2022-Apr-12 21:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:17,
+                                 range [00:16:59 -- 00:21:49],
+                                 stdev 00:01:05, total 06:23:15
+                      Total tasks in queue: 55
+                      757 counts remain.
+
+2022-Apr-12 22:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:23 -- 00:22:03],
+                                 stdev 00:00:11, total 05:45:16
+                      Total tasks in queue: 54
+                      756 counts remain.
+
+2022-Apr-12 23:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:21 -- 00:21:40],
+                                 stdev 00:00:05, total 05:44:00
+                      Total tasks in queue: 54
+                      755 counts remain.
+
+2022-Apr-13 00:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:18 -- 00:21:46],
+                                 stdev 00:00:06, total 06:05:30
+                      Total tasks in queue: 54
+                      754 counts remain.
+
+2022-Apr-13 01:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:21:16 -- 00:21:40],
+                                 stdev 00:00:05, total 06:05:01
+                      Total tasks in queue: 53
+                      753 counts remain.
+
+2022-Apr-13 02:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:27,
+                                 range [00:21:22 -- 00:21:36],
+                                 stdev 00:00:04, total 05:43:27
+                      Total tasks in queue: 54
+                      752 counts remain.
+
+2022-Apr-13 03:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:28,
+                                 range [00:21:21 -- 00:21:42],
+                                 stdev 00:00:05, total 06:26:25
+                      Total tasks in queue: 53
+                      751 counts remain.
+
+2022-Apr-13 04:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:19 -- 00:21:44],
+                                 stdev 00:00:07, total 06:05:40
+                      Total tasks in queue: 52
+                      750 counts remain.
+
+2022-Apr-13 05:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:22 -- 00:21:47],
+                                 stdev 00:00:07, total 05:44:12
+                      Total tasks in queue: 53
+                      749 counts remain.
+
+2022-Apr-13 06:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:10,
+                                 range [00:18:09 -- 00:21:40],
+                                 stdev 00:00:54, total 05:17:38
+                      Total tasks in queue: 57
+                      748 counts remain.
+
+2022-Apr-13 07:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:17 -- 00:22:07],
+                                 stdev 00:00:11, total 06:05:28
+                      Total tasks in queue: 55
+                      747 counts remain.
+
+2022-Apr-13 08:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:27,
+                                 range [00:21:18 -- 00:21:39],
+                                 stdev 00:00:05, total 06:26:10
+                      Total tasks in queue: 54
+                      746 counts remain.
+
+2022-Apr-13 09:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:27,
+                                 range [00:21:19 -- 00:21:37],
+                                 stdev 00:00:06, total 06:04:52
+                      Total tasks in queue: 54
+                      745 counts remain.
+
+2022-Apr-13 10:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:19 -- 00:21:37],
+                                 stdev 00:00:04, total 06:05:17
+                      Total tasks in queue: 54
+                      744 counts remain.
+
+2022-Apr-13 10:12:10; >>> SUMMARY: Count for the past 1d: 403
+                      Task Time: mean 0:21:32,
+                                 range [00:16:59 -- 00:22:44],
+                                 stdev 00:00:23, total 6d 00:41:30
+
+2022-Apr-13 11:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:29,
+                                 range [00:21:22 -- 00:21:36],
+                                 stdev 00:00:04, total 05:43:57
+                      Total tasks in queue: 54
+                      743 counts remain.
+
+2022-Apr-13 12:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:26,
+                                 range [00:21:17 -- 00:21:36],
+                                 stdev 00:00:06, total 06:04:28
+                      Total tasks in queue: 54
+                      742 counts remain.
+
+2022-Apr-13 13:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:24 -- 00:21:39],
+                                 stdev 00:00:05, total 06:05:53
+                      Total tasks in queue: 54
+                      741 counts remain.
+
+2022-Apr-13 14:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:14 -- 00:21:45],
+                                 stdev 00:00:07, total 05:44:09
+                      Total tasks in queue: 54
+                      740 counts remain.
+
+2022-Apr-13 15:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:35,
+                                 range [00:21:24 -- 00:21:51],
+                                 stdev 00:00:07, total 06:07:06
+                      Total tasks in queue: 54
+                      739 counts remain.
+
+2022-Apr-13 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:21:18 -- 00:21:38],
+                                 stdev 00:00:05, total 06:05:07
+                      Total tasks in queue: 53
+                      738 counts remain.
+
+2022-Apr-13 17:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:38,
+                                 range [00:21:22 -- 00:21:51],
+                                 stdev 00:00:08, total 06:07:46
+                      Total tasks in queue: 51
+                      737 counts remain.
+
+2022-Apr-13 18:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:37,
+                                 range [00:21:27 -- 00:22:01],
+                                 stdev 00:00:09, total 06:07:43
+                      Total tasks in queue: 51
+                      736 counts remain.
+
+2022-Apr-13 19:12:10; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:19,
+                                 range [00:17:14 -- 00:21:52],
+                                 stdev 00:01:08, total 05:19:48
+                      Total tasks in queue: 53
+                      735 counts remain.
+
+2022-Apr-13 20:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:29,
+                                 range [00:17:03 -- 00:22:15],
+                                 stdev 00:01:08, total 06:26:57
+                      Total tasks in queue: 52
+                      734 counts remain.
+
+2022-Apr-13 21:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:48,
+                                 range [00:21:12 -- 00:22:15],
+                                 stdev 00:00:15, total 06:10:39
+                      Total tasks in queue: 50
+                      733 counts remain.
+
+2022-Apr-13 22:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:18:28 -- 00:22:37],
+                                 stdev 00:00:55, total 06:06:18
+                      Total tasks in queue: 52
+                      732 counts remain.
+
+2022-Apr-13 23:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:38,
+                                 range [00:17:15 -- 00:22:44],
+                                 stdev 00:01:20, total 05:46:12
+                      Total tasks in queue: 53
+                      731 counts remain.
+
+2022-Apr-14 00:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:22:19,
+                                 range [00:21:12 -- 00:22:57],
+                                 stdev 00:00:33, total 05:57:18
+                      Total tasks in queue: 52
+                      730 counts remain.
+
+2022-Apr-14 01:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:22:06,
+                                 range [00:20:52 -- 00:22:46],
+                                 stdev 00:00:32, total 06:15:58
+                      Total tasks in queue: 51
+                      729 counts remain.
+
+2022-Apr-14 02:12:10; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:58,
+                                 range [00:20:49 -- 00:22:40],
+                                 stdev 00:00:35, total 05:07:38
+                      Total tasks in queue: 54
+                      728 counts remain.
+
+2022-Apr-14 03:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:54,
+                                 range [00:20:54 -- 00:22:34],
+                                 stdev 00:00:34, total 06:34:14
+                      Total tasks in queue: 53
+                      727 counts remain.
+
+2022-Apr-14 04:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:46,
+                                 range [00:20:45 -- 00:22:24],
+                                 stdev 00:00:29, total 05:26:30
+                      Total tasks in queue: 54
+                      726 counts remain.
+
+2022-Apr-14 05:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:48,
+                                 range [00:20:55 -- 00:22:22],
+                                 stdev 00:00:25, total 06:32:34
+                      Total tasks in queue: 54
+                      725 counts remain.
+
+2022-Apr-14 06:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:44,
+                                 range [00:21:01 -- 00:22:10],
+                                 stdev 00:00:18, total 06:09:36
+                      Total tasks in queue: 53
+                      724 counts remain.
+
+2022-Apr-14 07:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:35,
+                                 range [00:20:56 -- 00:21:59],
+                                 stdev 00:00:19, total 05:23:51
+                      Total tasks in queue: 54
+                      723 counts remain.
+
+2022-Apr-14 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:38,
+                                 range [00:21:05 -- 00:22:00],
+                                 stdev 00:00:16, total 06:07:46
+                      Total tasks in queue: 54
+                      722 counts remain.
+
+2022-Apr-14 09:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:41,
+                                 range [00:21:09 -- 00:22:01],
+                                 stdev 00:00:12, total 06:30:22
+                      Total tasks in queue: 53
+                      721 counts remain.
+
+2022-Apr-14 10:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:15 -- 00:21:43],
+                                 stdev 00:00:06, total 06:06:39
+                      Total tasks in queue: 53
+                      720 counts remain.
+
+2022-Apr-14 10:12:11; >>> SUMMARY: Count for the past 1d: 399
+                      Task Time: mean 0:21:40,
+                                 range [00:17:03 -- 00:22:57],
+                                 stdev 00:00:34, total 6d 00:08:38
+
+2022-Apr-14 11:12:12; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:31,
+                                 range [00:21:18 -- 00:21:39],
+                                 stdev 00:00:04, total 05:44:26
+                      Total tasks in queue: 53
+                      719 counts remain.
+
+2022-Apr-14 12:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:29,
+                                 range [00:21:19 -- 00:21:36],
+                                 stdev 00:00:05, total 05:22:28
+                      Total tasks in queue: 54
+                      718 counts remain.
+
+2022-Apr-14 13:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:24 -- 00:21:38],
+                                 stdev 00:00:04, total 06:27:09
+                      Total tasks in queue: 53
+                      717 counts remain.
+
+2022-Apr-14 14:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:27,
+                                 range [00:21:13 -- 00:21:41],
+                                 stdev 00:00:07, total 06:26:14
+                      Total tasks in queue: 53
+                      716 counts remain.
+
+2022-Apr-14 15:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:19,
+                                 range [00:16:47 -- 00:21:49],
+                                 stdev 00:01:12, total 05:41:10
+                      Total tasks in queue: 54
+                      715 counts remain.
+
+2022-Apr-14 16:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:37,
+                                 range [00:21:31 -- 00:21:46],
+                                 stdev 00:00:03, total 05:02:46
+                      Total tasks in queue: 55
+                      714 counts remain.
+
+2022-Apr-14 17:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:38,
+                                 range [00:21:26 -- 00:21:56],
+                                 stdev 00:00:07, total 06:29:29
+                      Total tasks in queue: 55
+                      713 counts remain.
+
+2022-Apr-14 18:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:37,
+                                 range [00:21:28 -- 00:21:47],
+                                 stdev 00:00:05, total 06:29:20
+                      Total tasks in queue: 53
+                      712 counts remain.
+
+2022-Apr-14 19:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:46,
+                                 range [00:21:27 -- 00:22:06],
+                                 stdev 00:00:11, total 05:48:16
+                      Total tasks in queue: 54
+                      711 counts remain.
+
+2022-Apr-14 20:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:42,
+                                 range [00:21:29 -- 00:21:52],
+                                 stdev 00:00:06, total 06:09:00
+                      Total tasks in queue: 53
+                      710 counts remain.
+
+2022-Apr-14 21:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:40,
+                                 range [00:21:27 -- 00:21:54],
+                                 stdev 00:00:08, total 06:08:27
+                      Total tasks in queue: 53
+                      709 counts remain.
+
+2022-Apr-14 22:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:33,
+                                 range [00:21:21 -- 00:21:49],
+                                 stdev 00:00:06, total 05:44:55
+                      Total tasks in queue: 53
+                      708 counts remain.
+
+2022-Apr-14 23:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:37,
+                                 range [00:21:25 -- 00:21:56],
+                                 stdev 00:00:08, total 05:45:52
+                      Total tasks in queue: 54
+                      707 counts remain.
+
+2022-Apr-15 00:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:21:16 -- 00:21:48],
+                                 stdev 00:00:07, total 06:05:00
+                      Total tasks in queue: 54
+                      706 counts remain.
+
+2022-Apr-15 01:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:28,
+                                 range [00:21:14 -- 00:21:39],
+                                 stdev 00:00:06, total 06:26:35
+                      Total tasks in queue: 53
+                      705 counts remain.
+
+2022-Apr-15 02:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:21:14 -- 00:21:34],
+                                 stdev 00:00:06, total 05:43:29
+                      Total tasks in queue: 54
+                      704 counts remain.
+
+2022-Apr-15 03:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:26,
+                                 range [00:21:13 -- 00:21:38],
+                                 stdev 00:00:06, total 06:04:35
+                      Total tasks in queue: 53
+                      703 counts remain.
+
+2022-Apr-15 04:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:21:16 -- 00:21:39],
+                                 stdev 00:00:06, total 05:43:38
+                      Total tasks in queue: 54
+                      702 counts remain.
+
+2022-Apr-15 05:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:21:16 -- 00:21:38],
+                                 stdev 00:00:05, total 06:05:08
+                      Total tasks in queue: 54
+                      701 counts remain.
+
+2022-Apr-15 06:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:27,
+                                 range [00:21:17 -- 00:21:35],
+                                 stdev 00:00:04, total 06:26:16
+                      Total tasks in queue: 53
+                      700 counts remain.
+
+2022-Apr-15 07:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:29,
+                                 range [00:21:19 -- 00:21:36],
+                                 stdev 00:00:04, total 05:43:49
+                      Total tasks in queue: 52
+                      699 counts remain.
+
+2022-Apr-15 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:22 -- 00:21:40],
+                                 stdev 00:00:05, total 06:05:29
+                      Total tasks in queue: 52
+                      698 counts remain.
+
+2022-Apr-15 09:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:27,
+                                 range [00:21:18 -- 00:21:36],
+                                 stdev 00:00:04, total 05:43:14
+                      Total tasks in queue: 53
+                      697 counts remain.
+
+2022-Apr-15 10:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:18,
+                                 range [00:17:20 -- 00:22:02],
+                                 stdev 00:01:02, total 06:02:08
+                      Total tasks in queue: 55
+                      696 counts remain.
+
+2022-Apr-15 10:12:11; >>> SUMMARY: Count for the past 1d: 400
+                      Task Time: mean 0:21:30,
+                                 range [00:16:47 -- 00:22:06],
+                                 stdev 00:00:20, total 5d 23:29:04
+
+2022-Apr-15 11:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:36,
+                                 range [00:21:28 -- 00:21:43],
+                                 stdev 00:00:05, total 05:24:11
+                      Total tasks in queue: 54
+                      695 counts remain.
+
+2022-Apr-15 12:12:11; Tasks reported in the past 1h: 19
+                      Task Time: avg 00:21:39,
+                                 range [00:21:29 -- 00:21:59],
+                                 stdev 00:00:08, total 06:51:32
+                      Total tasks in queue: 53
+                      694 counts remain.
+
+2022-Apr-15 13:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:35,
+                                 range [00:21:25 -- 00:21:46],
+                                 stdev 00:00:05, total 05:02:12
+                      Total tasks in queue: 55
+                      693 counts remain.
+
+2022-Apr-15 14:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:39,
+                                 range [00:21:29 -- 00:21:47],
+                                 stdev 00:00:04, total 06:29:42
+                      Total tasks in queue: 54
+                      692 counts remain.
+
+2022-Apr-15 15:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:36,
+                                 range [00:21:28 -- 00:21:48],
+                                 stdev 00:00:05, total 06:28:55
+                      Total tasks in queue: 53
+                      691 counts remain.
+
+2022-Apr-15 16:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:29,
+                                 range [00:21:15 -- 00:21:43],
+                                 stdev 00:00:06, total 05:43:52
+                      Total tasks in queue: 53
+                      690 counts remain.
+
+2022-Apr-15 17:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:27,
+                                 range [00:21:22 -- 00:21:33],
+                                 stdev 00:00:03, total 05:21:56
+                      Total tasks in queue: 54
+                      689 counts remain.
+
+2022-Apr-15 18:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:16 -- 00:21:42],
+                                 stdev 00:00:06, total 06:27:19
+                      Total tasks in queue: 54
+                      688 counts remain.
+
+2022-Apr-15 19:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:12 -- 00:21:43],
+                                 stdev 00:00:07, total 06:06:21
+                      Total tasks in queue: 54
+                      687 counts remain.
+
+2022-Apr-15 20:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:19 -- 00:21:48],
+                                 stdev 00:00:07, total 05:45:13
+                      Total tasks in queue: 53
+                      686 counts remain.
+
+2022-Apr-15 21:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:26 -- 00:21:40],
+                                 stdev 00:00:04, total 05:44:38
+                      Total tasks in queue: 54
+                      685 counts remain.
+
+2022-Apr-15 22:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:19 -- 00:21:43],
+                                 stdev 00:00:06, total 06:06:40
+                      Total tasks in queue: 54
+                      684 counts remain.
+
+2022-Apr-15 23:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:24 -- 00:21:44],
+                                 stdev 00:00:05, total 06:06:52
+                      Total tasks in queue: 54
+                      683 counts remain.
+
+2022-Apr-16 00:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:38,
+                                 range [00:21:27 -- 00:21:46],
+                                 stdev 00:00:05, total 06:29:25
+                      Total tasks in queue: 53
+                      682 counts remain.
+
+2022-Apr-16 01:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:33,
+                                 range [00:21:25 -- 00:21:47],
+                                 stdev 00:00:06, total 05:44:58
+                      Total tasks in queue: 53
+                      681 counts remain.
+
+2022-Apr-16 02:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:31,
+                                 range [00:21:20 -- 00:21:44],
+                                 stdev 00:00:05, total 05:44:19
+                      Total tasks in queue: 54
+                      680 counts remain.
+
+2022-Apr-16 03:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:21:21 -- 00:21:41],
+                                 stdev 00:00:06, total 06:06:12
+                      Total tasks in queue: 54
+                      679 counts remain.
+
+2022-Apr-16 04:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:21:25 -- 00:21:39],
+                                 stdev 00:00:04, total 06:06:06
+                      Total tasks in queue: 54
+                      678 counts remain.
+
+2022-Apr-16 05:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:14 -- 00:21:40],
+                                 stdev 00:00:07, total 06:05:31
+                      Total tasks in queue: 53
+                      677 counts remain.
+
+2022-Apr-16 06:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:29,
+                                 range [00:21:13 -- 00:21:36],
+                                 stdev 00:00:06, total 05:22:28
+                      Total tasks in queue: 54
+                      676 counts remain.
+
+2022-Apr-16 07:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:28,
+                                 range [00:21:20 -- 00:21:37],
+                                 stdev 00:00:04, total 06:26:32
+                      Total tasks in queue: 53
+                      675 counts remain.
+
+2022-Apr-16 08:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:24 -- 00:21:39],
+                                 stdev 00:00:05, total 05:44:38
+                      Total tasks in queue: 53
+                      674 counts remain.
+
+2022-Apr-16 09:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:14,
+                                 range [00:18:16 -- 00:21:41],
+                                 stdev 00:00:48, total 06:01:10
+                      Total tasks in queue: 57
+                      673 counts remain.
+
+2022-Apr-16 10:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:21:17 -- 00:21:46],
+                                 stdev 00:00:07, total 06:05:02
+                      Total tasks in queue: 53
+                      672 counts remain.
+
+2022-Apr-16 10:12:11; >>> SUMMARY: Count for the past 1d: 400
+                      Task Time: mean 0:21:31,
+                                 range [00:18:16 -- 00:21:59],
+                                 stdev 00:00:12, total 5d 23:35:56
+
+2022-Apr-16 11:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:22 -- 00:21:37],
+                                 stdev 00:00:05, total 06:05:27
+                      Total tasks in queue: 53
+                      671 counts remain.
+
+2022-Apr-16 12:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:27,
+                                 range [00:21:15 -- 00:21:39],
+                                 stdev 00:00:06, total 06:04:49
+                      Total tasks in queue: 53
+                      670 counts remain.
+
+2022-Apr-16 13:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:14,
+                                 range [00:18:06 -- 00:21:52],
+                                 stdev 00:00:52, total 05:39:54
+                      Total tasks in queue: 55
+                      669 counts remain.
+
+2022-Apr-16 14:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:19 -- 00:21:46],
+                                 stdev 00:00:07, total 06:27:13
+                      Total tasks in queue: 53
+                      668 counts remain.
+
+2022-Apr-16 15:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:27,
+                                 range [00:21:18 -- 00:21:47],
+                                 stdev 00:00:07, total 05:43:26
+                      Total tasks in queue: 53
+                      667 counts remain.
+
+2022-Apr-16 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:25,
+                                 range [00:21:16 -- 00:21:35],
+                                 stdev 00:00:05, total 06:04:06
+                      Total tasks in queue: 52
+                      666 counts remain.
+
+2022-Apr-16 17:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:26,
+                                 range [00:21:17 -- 00:21:36],
+                                 stdev 00:00:05, total 06:04:33
+                      Total tasks in queue: 53
+                      665 counts remain.
+
+2022-Apr-16 18:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:20:56,
+                                 range [00:17:45 -- 00:21:51],
+                                 stdev 00:01:23, total 04:53:11
+                      Total tasks in queue: 59
+                      664 counts remain.
+
+2022-Apr-16 19:12:11; Tasks reported in the past 1h: 19
+                      Task Time: avg 00:21:35,
+                                 range [00:21:20 -- 00:21:47],
+                                 stdev 00:00:07, total 06:50:19
+                      Total tasks in queue: 54
+                      663 counts remain.
+
+2022-Apr-16 20:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:17 -- 00:21:50],
+                                 stdev 00:00:08, total 06:06:24
+                      Total tasks in queue: 54
+                      662 counts remain.
+
+2022-Apr-16 21:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:36,
+                                 range [00:21:21 -- 00:21:52],
+                                 stdev 00:00:08, total 06:07:24
+                      Total tasks in queue: 53
+                      661 counts remain.
+
+2022-Apr-16 22:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:41,
+                                 range [00:21:26 -- 00:22:00],
+                                 stdev 00:00:09, total 05:47:06
+                      Total tasks in queue: 52
+                      660 counts remain.
+
+2022-Apr-16 23:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:28 -- 00:21:45],
+                                 stdev 00:00:04, total 05:45:10
+                      Total tasks in queue: 53
+                      659 counts remain.
+
+2022-Apr-17 00:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:33,
+                                 range [00:21:24 -- 00:21:46],
+                                 stdev 00:00:05, total 06:27:58
+                      Total tasks in queue: 53
+                      658 counts remain.
+
+2022-Apr-17 01:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:24,
+                                 range [00:16:57 -- 00:22:06],
+                                 stdev 00:01:07, total 06:25:13
+                      Total tasks in queue: 53
+                      657 counts remain.
+
+2022-Apr-17 02:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:20 -- 00:21:42],
+                                 stdev 00:00:07, total 05:45:11
+                      Total tasks in queue: 53
+                      656 counts remain.
+
+2022-Apr-17 03:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:32,
+                                 range [00:21:17 -- 00:21:41],
+                                 stdev 00:00:08, total 05:23:14
+                      Total tasks in queue: 54
+                      655 counts remain.
+
+2022-Apr-17 04:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:36,
+                                 range [00:21:25 -- 00:21:53],
+                                 stdev 00:00:07, total 06:07:27
+                      Total tasks in queue: 54
+                      654 counts remain.
+
+2022-Apr-17 05:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:20 -- 00:21:38],
+                                 stdev 00:00:05, total 06:27:17
+                      Total tasks in queue: 52
+                      653 counts remain.
+
+2022-Apr-17 06:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:19 -- 00:21:43],
+                                 stdev 00:00:07, total 05:44:34
+                      Total tasks in queue: 52
+                      652 counts remain.
+
+2022-Apr-17 07:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:15,
+                                 range [00:17:32 -- 00:21:49],
+                                 stdev 00:01:01, total 05:40:10
+                      Total tasks in queue: 58
+                      651 counts remain.
+
+2022-Apr-17 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:43,
+                                 range [00:21:33 -- 00:22:02],
+                                 stdev 00:00:06, total 06:09:25
+                      Total tasks in queue: 55
+                      650 counts remain.
+
+2022-Apr-17 09:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:41,
+                                 range [00:21:29 -- 00:21:52],
+                                 stdev 00:00:06, total 06:30:31
+                      Total tasks in queue: 52
+                      649 counts remain.
+
+2022-Apr-17 10:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:43,
+                                 range [00:21:35 -- 00:21:49],
+                                 stdev 00:00:03, total 05:47:33
+                      Total tasks in queue: 52
+                      648 counts remain.
+
+2022-Apr-17 10:12:11; >>> SUMMARY: Count for the past 1d: 402
+                      Task Time: mean 0:21:30,
+                                 range [00:16:57 -- 00:22:06],
+                                 stdev 00:00:28, total 6d 00:07:47
+
+2022-Apr-17 11:12:10; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:36,
+                                 range [00:21:28 -- 00:21:42],
+                                 stdev 00:00:04, total 05:24:13
+                      Total tasks in queue: 53
+                      647 counts remain.
+
+2022-Apr-17 12:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:37,
+                                 range [00:21:29 -- 00:21:46],
+                                 stdev 00:00:04, total 06:29:09
+                      Total tasks in queue: 52
+                      646 counts remain.
+
+2022-Apr-17 13:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:20,
+                                 range [00:17:10 -- 00:21:50],
+                                 stdev 00:01:05, total 06:02:51
+                      Total tasks in queue: 55
+                      645 counts remain.
+
+2022-Apr-17 14:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:26,
+                                 range [00:17:34 -- 00:22:06],
+                                 stdev 00:01:00, total 06:26:00
+                      Total tasks in queue: 54
+                      644 counts remain.
+
+2022-Apr-17 15:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:47,
+                                 range [00:21:10 -- 00:22:14],
+                                 stdev 00:00:18, total 05:26:46
+                      Total tasks in queue: 53
+                      643 counts remain.
+
+2022-Apr-17 16:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:42,
+                                 range [00:21:25 -- 00:22:01],
+                                 stdev 00:00:12, total 05:25:42
+                      Total tasks in queue: 54
+                      642 counts remain.
+
+2022-Apr-17 17:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:36,
+                                 range [00:21:22 -- 00:21:52],
+                                 stdev 00:00:09, total 06:29:05
+                      Total tasks in queue: 51
+                      641 counts remain.
+
+2022-Apr-17 18:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:32,
+                                 range [00:21:13 -- 00:21:47],
+                                 stdev 00:00:11, total 06:27:39
+                      Total tasks in queue: 50
+                      640 counts remain.
+
+2022-Apr-17 19:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:01,
+                                 range [00:19:34 -- 00:21:38],
+                                 stdev 00:00:37, total 05:36:28
+                      Total tasks in queue: 55
+                      639 counts remain.
+
+2022-Apr-17 20:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:09,
+                                 range [00:17:25 -- 00:22:15],
+                                 stdev 00:01:17, total 05:59:45
+                      Total tasks in queue: 54
+                      638 counts remain.
+
+2022-Apr-17 21:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:22:02,
+                                 range [00:21:04 -- 00:22:57],
+                                 stdev 00:00:34, total 05:30:36
+                      Total tasks in queue: 53
+                      637 counts remain.
+
+2022-Apr-17 22:12:10; Tasks reported in the past 1h: 13
+                      Task Time: avg 00:21:29,
+                                 range [00:17:39 -- 00:22:49],
+                                 stdev 00:01:19, total 04:39:24
+                      Total tasks in queue: 55
+                      636 counts remain.
+
+2022-Apr-17 23:12:11; Tasks reported in the past 1h: 22
+                      Task Time: avg 00:22:14,
+                                 range [00:21:11 -- 00:23:18],
+                                 stdev 00:00:38, total 08:09:18
+                      Total tasks in queue: 49
+                      635 counts remain.
+
+2022-Apr-18 00:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:59,
+                                 range [00:17:20 -- 00:23:16],
+                                 stdev 00:01:25, total 05:29:58
+                      Total tasks in queue: 50
+                      634 counts remain.
+
+2022-Apr-18 01:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:41,
+                                 range [00:17:16 -- 00:22:54],
+                                 stdev 00:01:19, total 06:08:46
+                      Total tasks in queue: 51
+                      633 counts remain.
+
+2022-Apr-18 02:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:20:45 -- 00:22:34],
+                                 stdev 00:00:37, total 05:45:17
+                      Total tasks in queue: 53
+                      632 counts remain.
+
+2022-Apr-18 03:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:38,
+                                 range [00:17:58 -- 00:22:36],
+                                 stdev 00:01:07, total 06:07:51
+                      Total tasks in queue: 52
+                      631 counts remain.
+
+2022-Apr-18 04:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:48,
+                                 range [00:21:09 -- 00:22:27],
+                                 stdev 00:00:30, total 06:10:47
+                      Total tasks in queue: 50
+                      630 counts remain.
+
+2022-Apr-18 05:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:40,
+                                 range [00:18:13 -- 00:22:48],
+                                 stdev 00:01:06, total 05:46:48
+                      Total tasks in queue: 52
+                      629 counts remain.
+
+2022-Apr-18 06:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:39,
+                                 range [00:16:07 -- 00:22:35],
+                                 stdev 00:01:29, total 06:29:57
+                      Total tasks in queue: 52
+                      628 counts remain.
+
+2022-Apr-18 07:12:11; Tasks reported in the past 1h: 12
+                      Task Time: avg 00:22:01,
+                                 range [00:21:08 -- 00:22:41],
+                                 stdev 00:00:33, total 04:24:23
+                      Total tasks in queue: 54
+                      627 counts remain.
+
+2022-Apr-18 08:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:59,
+                                 range [00:21:09 -- 00:22:32],
+                                 stdev 00:00:25, total 06:35:52
+                      Total tasks in queue: 54
+                      626 counts remain.
+
+2022-Apr-18 09:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:55,
+                                 range [00:21:17 -- 00:22:24],
+                                 stdev 00:00:19, total 06:34:39
+                      Total tasks in queue: 54
+                      625 counts remain.
+
+2022-Apr-18 10:12:11; Tasks reported in the past 1h: 12
+                      Task Time: avg 00:21:47,
+                                 range [00:17:27 -- 00:22:47],
+                                 stdev 00:01:27, total 04:21:34
+                      Total tasks in queue: 54
+                      624 counts remain.
+
+2022-Apr-18 10:12:11; >>> SUMMARY: Count for the past 1d: 393
+                      Task Time: mean 0:21:40,
+                                 range [00:16:07 -- 00:23:18],
+                                 stdev 00:00:53, total 5d 22:02:55
+
+2022-Apr-18 11:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:22:08,
+                                 range [00:21:12 -- 00:22:37],
+                                 stdev 00:00:30, total 06:38:41
+                      Total tasks in queue: 54
+                      623 counts remain.
+
+2022-Apr-18 12:12:10; Tasks reported in the past 1h: 19
+                      Task Time: avg 00:21:45,
+                                 range [00:16:20 -- 00:22:28],
+                                 stdev 00:01:23, total 06:53:18
+                      Total tasks in queue: 55
+                      622 counts remain.
+
+2022-Apr-18 13:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:22:13,
+                                 range [00:21:31 -- 00:23:02],
+                                 stdev 00:00:26, total 06:17:50
+                      Total tasks in queue: 51
+                      621 counts remain.
+
+2022-Apr-18 14:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:50,
+                                 range [00:21:12 -- 00:22:18],
+                                 stdev 00:00:23, total 05:27:38
+                      Total tasks in queue: 54
+                      620 counts remain.
+
+2022-Apr-18 15:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:57,
+                                 range [00:21:13 -- 00:22:26],
+                                 stdev 00:00:19, total 06:13:21
+                      Total tasks in queue: 54
+                      619 counts remain.
+
+2022-Apr-18 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:51,
+                                 range [00:21:18 -- 00:22:08],
+                                 stdev 00:00:16, total 06:11:32
+                      Total tasks in queue: 51
+                      618 counts remain.
+
+2022-Apr-18 17:12:11; Tasks reported in the past 1h: 13
+                      Task Time: avg 00:21:47,
+                                 range [00:21:26 -- 00:22:04],
+                                 stdev 00:00:13, total 04:43:11
+                      Total tasks in queue: 55
+                      617 counts remain.
+
+2022-Apr-18 18:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:41,
+                                 range [00:21:16 -- 00:21:56],
+                                 stdev 00:00:12, total 06:30:28
+                      Total tasks in queue: 55
+                      616 counts remain.
+
+2022-Apr-18 19:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:38,
+                                 range [00:21:13 -- 00:21:58],
+                                 stdev 00:00:12, total 06:29:33
+                      Total tasks in queue: 54
+                      615 counts remain.
+
+2022-Apr-18 20:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:37,
+                                 range [00:21:23 -- 00:21:50],
+                                 stdev 00:00:07, total 06:29:06
+                      Total tasks in queue: 52
+                      614 counts remain.
+
+2022-Apr-18 21:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:40,
+                                 range [00:21:28 -- 00:21:59],
+                                 stdev 00:00:08, total 05:25:10
+                      Total tasks in queue: 53
+                      613 counts remain.
+
+2022-Apr-18 22:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:37,
+                                 range [00:21:17 -- 00:21:58],
+                                 stdev 00:00:10, total 05:24:24
+                      Total tasks in queue: 55
+                      612 counts remain.
+
+2022-Apr-18 23:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:18 -- 00:21:45],
+                                 stdev 00:00:07, total 06:27:34
+                      Total tasks in queue: 55
+                      611 counts remain.
+
+2022-Apr-19 00:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:36,
+                                 range [00:21:23 -- 00:21:53],
+                                 stdev 00:00:08, total 06:29:04
+                      Total tasks in queue: 53
+                      610 counts remain.
+
+2022-Apr-19 01:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:34,
+                                 range [00:21:22 -- 00:21:45],
+                                 stdev 00:00:06, total 05:45:06
+                      Total tasks in queue: 53
+                      609 counts remain.
+
+2022-Apr-19 02:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:16 -- 00:21:50],
+                                 stdev 00:00:08, total 06:06:23
+                      Total tasks in queue: 53
+                      608 counts remain.
+
+2022-Apr-19 03:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:29,
+                                 range [00:21:21 -- 00:21:45],
+                                 stdev 00:00:06, total 05:22:29
+                      Total tasks in queue: 55
+                      607 counts remain.
+
+2022-Apr-19 04:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:31,
+                                 range [00:21:22 -- 00:21:46],
+                                 stdev 00:00:07, total 06:27:28
+                      Total tasks in queue: 54
+                      606 counts remain.
+
+2022-Apr-19 05:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:21:21 -- 00:21:44],
+                                 stdev 00:00:06, total 06:06:06
+                      Total tasks in queue: 52
+                      605 counts remain.
+
+2022-Apr-19 06:12:10; Tasks reported in the past 1h: 11
+                      Task Time: avg 00:21:31,
+                                 range [00:21:22 -- 00:21:41],
+                                 stdev 00:00:06, total 03:56:43
+                      Total tasks in queue: 52
+                      604 counts remain.
+
+2022-Apr-19 07:12:11; Tasks reported in the past 1h: 21
+                      Task Time: avg 00:21:33,
+                                 range [00:21:23 -- 00:21:46],
+                                 stdev 00:00:05, total 07:32:33
+                      Total tasks in queue: 53
+                      603 counts remain.
+
+2022-Apr-19 08:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:21,
+                                 range [00:17:57 -- 00:22:14],
+                                 stdev 00:00:55, total 06:24:24
+                      Total tasks in queue: 52
+                      602 counts remain.
+
+2022-Apr-19 09:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:12,
+                                 range [00:17:47 -- 00:21:47],
+                                 stdev 00:00:55, total 05:39:12
+                      Total tasks in queue: 56
+                      601 counts remain.
+
+2022-Apr-19 10:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:34,
+                                 range [00:21:16 -- 00:21:46],
+                                 stdev 00:00:08, total 06:28:16
+                      Total tasks in queue: 52
+                      600 counts remain.
+
+2022-Apr-19 10:12:10; >>> SUMMARY: Count for the past 1d: 403
+                      Task Time: mean 0:21:39,
+                                 range [00:16:20 -- 00:23:02],
+                                 stdev 00:00:29, total 6d 01:29:40
+
+2022-Apr-19 11:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:24,
+                                 range [00:16:17 -- 00:22:20],
+                                 stdev 00:01:25, total 05:21:09
+                      Total tasks in queue: 54
+                      599 counts remain.
+
+2022-Apr-19 12:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:41,
+                                 range [00:21:29 -- 00:21:48],
+                                 stdev 00:00:05, total 06:30:21
+                      Total tasks in queue: 53
+                      598 counts remain.
+
+2022-Apr-19 13:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:35,
+                                 range [00:21:15 -- 00:21:51],
+                                 stdev 00:00:08, total 06:07:01
+                      Total tasks in queue: 52
+                      597 counts remain.
+
+2022-Apr-19 14:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:21,
+                                 range [00:18:03 -- 00:21:55],
+                                 stdev 00:01:00, total 04:59:07
+                      Total tasks in queue: 58
+                      596 counts remain.
+
+2022-Apr-19 15:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:43,
+                                 range [00:20:39 -- 00:22:31],
+                                 stdev 00:00:35, total 06:31:05
+                      Total tasks in queue: 53
+                      595 counts remain.
+
+2022-Apr-19 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:42,
+                                 range [00:21:01 -- 00:22:30],
+                                 stdev 00:00:29, total 06:09:05
+                      Total tasks in queue: 52
+                      594 counts remain.
+
+2022-Apr-19 17:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:49,
+                                 range [00:21:18 -- 00:22:43],
+                                 stdev 00:00:25, total 05:49:07
+                      Total tasks in queue: 53
+                      593 counts remain.
+
+2022-Apr-19 18:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:38,
+                                 range [00:18:02 -- 00:23:03],
+                                 stdev 00:01:04, total 06:07:57
+                      Total tasks in queue: 54
+                      592 counts remain.
+
+2022-Apr-19 19:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:22:03,
+                                 range [00:20:48 -- 00:23:00],
+                                 stdev 00:00:39, total 06:14:51
+                      Total tasks in queue: 52
+                      591 counts remain.
+
+2022-Apr-19 20:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:43,
+                                 range [00:20:42 -- 00:22:46],
+                                 stdev 00:00:41, total 05:47:33
+                      Total tasks in queue: 54
+                      590 counts remain.
+
+2022-Apr-19 21:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:59,
+                                 range [00:20:57 -- 00:22:58],
+                                 stdev 00:00:43, total 06:13:58
+                      Total tasks in queue: 53
+                      589 counts remain.
+
+2022-Apr-19 22:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:58,
+                                 range [00:21:10 -- 00:22:51],
+                                 stdev 00:00:32, total 05:07:44
+                      Total tasks in queue: 54
+                      588 counts remain.
+
+2022-Apr-19 23:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:22:19,
+                                 range [00:21:32 -- 00:23:13],
+                                 stdev 00:00:40, total 06:19:27
+                      Total tasks in queue: 54
+                      587 counts remain.
+
+2022-Apr-20 00:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:22:04,
+                                 range [00:21:22 -- 00:23:08],
+                                 stdev 00:00:39, total 06:37:29
+                      Total tasks in queue: 52
+                      586 counts remain.
+
+2022-Apr-20 01:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:48,
+                                 range [00:20:42 -- 00:23:02],
+                                 stdev 00:00:45, total 05:27:03
+                      Total tasks in queue: 54
+                      585 counts remain.
+
+2022-Apr-20 02:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:52,
+                                 range [00:20:50 -- 00:22:46],
+                                 stdev 00:00:40, total 06:33:44
+                      Total tasks in queue: 53
+                      584 counts remain.
+
+2022-Apr-20 03:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:57,
+                                 range [00:20:51 -- 00:22:43],
+                                 stdev 00:00:37, total 05:51:23
+                      Total tasks in queue: 52
+                      583 counts remain.
+
+2022-Apr-20 04:12:10; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:54,
+                                 range [00:20:55 -- 00:22:55],
+                                 stdev 00:00:35, total 05:28:41
+                      Total tasks in queue: 54
+                      582 counts remain.
+
+2022-Apr-20 05:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:22:37,
+                                 range [00:21:35 -- 00:23:35],
+                                 stdev 00:00:47, total 06:24:45
+                      Total tasks in queue: 51
+                      581 counts remain.
+
+2022-Apr-20 06:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:22:18,
+                                 range [00:21:30 -- 00:23:23],
+                                 stdev 00:00:48, total 05:34:36
+                      Total tasks in queue: 52
+                      580 counts remain.
+
+2022-Apr-20 07:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:22:00,
+                                 range [00:20:41 -- 00:23:05],
+                                 stdev 00:00:41, total 06:36:06
+                      Total tasks in queue: 52
+                      579 counts remain.
+
+2022-Apr-20 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:53,
+                                 range [00:20:42 -- 00:22:52],
+                                 stdev 00:00:42, total 06:12:05
+                      Total tasks in queue: 51
+                      578 counts remain.
+
+2022-Apr-20 09:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:31,
+                                 range [00:17:09 -- 00:22:57],
+                                 stdev 00:01:24, total 05:22:59
+                      Total tasks in queue: 51
+                      577 counts remain.
+
+2022-Apr-20 10:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:53,
+                                 range [00:20:57 -- 00:22:45],
+                                 stdev 00:00:39, total 06:12:01
+                      Total tasks in queue: 51
+                      576 counts remain.
+
+2022-Apr-20 10:12:11; >>> SUMMARY: Count for the past 1d: 394
+                      Task Time: mean 0:21:52,
+                                 range [00:16:17 -- 00:23:35],
+                                 stdev 00:00:47, total 5d 23:39:31
+
+2022-Apr-20 11:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:38,
+                                 range [00:17:28 -- 00:22:42],
+                                 stdev 00:01:10, total 05:46:20
+                      Total tasks in queue: 55
+                      575 counts remain.
+
+2022-Apr-20 12:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:27,
+                                 range [00:17:51 -- 00:22:25],
+                                 stdev 00:00:58, total 06:26:21
+                      Total tasks in queue: 52
+                      574 counts remain.
+
+2022-Apr-20 13:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:33,
+                                 range [00:21:19 -- 00:21:56],
+                                 stdev 00:00:10, total 05:01:50
+                      Total tasks in queue: 53
+                      573 counts remain.
+
+2022-Apr-20 14:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:14,
+                                 range [00:18:03 -- 00:22:02],
+                                 stdev 00:00:51, total 06:22:27
+                      Total tasks in queue: 56
+                      572 counts remain.
+
+2022-Apr-20 15:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:57,
+                                 range [00:20:55 -- 00:22:57],
+                                 stdev 00:00:37, total 06:35:21
+                      Total tasks in queue: 51
+                      571 counts remain.
+
+2022-Apr-20 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:18:24 -- 00:22:25],
+                                 stdev 00:00:54, total 06:04:57
+                      Total tasks in queue: 53
+                      570 counts remain.
+
+2022-Apr-20 17:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:25,
+                                 range [00:17:44 -- 00:22:22],
+                                 stdev 00:01:06, total 05:00:01
+                      Total tasks in queue: 54
+                      569 counts remain.
+
+2022-Apr-20 18:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:39,
+                                 range [00:21:26 -- 00:21:54],
+                                 stdev 00:00:08, total 06:29:43
+                      Total tasks in queue: 53
+                      568 counts remain.
+
+2022-Apr-20 19:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:44,
+                                 range [00:21:05 -- 00:22:01],
+                                 stdev 00:00:13, total 06:09:36
+                      Total tasks in queue: 52
+                      567 counts remain.
+
+2022-Apr-20 20:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:22,
+                                 range [00:17:23 -- 00:22:11],
+                                 stdev 00:01:06, total 05:41:53
+                      Total tasks in queue: 53
+                      566 counts remain.
+
+2022-Apr-20 21:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:23 -- 00:21:42],
+                                 stdev 00:00:06, total 05:44:42
+                      Total tasks in queue: 53
+                      565 counts remain.
+
+2022-Apr-20 22:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:17,
+                                 range [00:17:02 -- 00:21:49],
+                                 stdev 00:01:13, total 04:57:58
+                      Total tasks in queue: 58
+                      564 counts remain.
+
+2022-Apr-20 23:12:11; Tasks reported in the past 1h: 21
+                      Task Time: avg 00:21:42,
+                                 range [00:21:34 -- 00:21:55],
+                                 stdev 00:00:06, total 07:35:59
+                      Total tasks in queue: 53
+                      563 counts remain.
+
+2022-Apr-21 00:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:41,
+                                 range [00:21:26 -- 00:21:51],
+                                 stdev 00:00:05, total 05:25:18
+                      Total tasks in queue: 54
+                      562 counts remain.
+
+2022-Apr-21 01:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:37,
+                                 range [00:21:25 -- 00:21:48],
+                                 stdev 00:00:06, total 06:29:08
+                      Total tasks in queue: 54
+                      561 counts remain.
+
+2022-Apr-21 02:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:38,
+                                 range [00:21:27 -- 00:21:55],
+                                 stdev 00:00:07, total 06:08:00
+                      Total tasks in queue: 52
+                      560 counts remain.
+
+2022-Apr-21 03:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:22 -- 00:21:45],
+                                 stdev 00:00:06, total 06:06:41
+                      Total tasks in queue: 52
+                      559 counts remain.
+
+2022-Apr-21 04:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:12,
+                                 range [00:17:43 -- 00:21:50],
+                                 stdev 00:00:57, total 05:39:23
+                      Total tasks in queue: 57
+                      558 counts remain.
+
+2022-Apr-21 05:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:17 -- 00:22:14],
+                                 stdev 00:00:12, total 06:06:22
+                      Total tasks in queue: 54
+                      557 counts remain.
+
+2022-Apr-21 06:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:18 -- 00:21:39],
+                                 stdev 00:00:06, total 06:05:43
+                      Total tasks in queue: 53
+                      556 counts remain.
+
+2022-Apr-21 07:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:26,
+                                 range [00:21:17 -- 00:21:38],
+                                 stdev 00:00:06, total 05:42:56
+                      Total tasks in queue: 54
+                      555 counts remain.
+
+2022-Apr-21 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:14 -- 00:21:47],
+                                 stdev 00:00:08, total 06:05:59
+                      Total tasks in queue: 54
+                      554 counts remain.
+
+2022-Apr-21 09:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:25,
+                                 range [00:21:18 -- 00:21:40],
+                                 stdev 00:00:06, total 06:04:20
+                      Total tasks in queue: 54
+                      553 counts remain.
+
+2022-Apr-21 10:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:37,
+                                 range [00:21:18 -- 00:21:54],
+                                 stdev 00:00:09, total 06:07:34
+                      Total tasks in queue: 53
+                      552 counts remain.
+
+2022-Apr-21 10:12:10; >>> SUMMARY: Count for the past 1d: 401
+                      Task Time: mean 0:21:32,
+                                 range [00:17:02 -- 00:22:57],
+                                 stdev 00:00:37, total 5d 23:58:43
+
+2022-Apr-21 11:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:36,
+                                 range [00:21:27 -- 00:21:46],
+                                 stdev 00:00:06, total 05:24:12
+                      Total tasks in queue: 54
+                      551 counts remain.
+
+2022-Apr-21 12:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:20 -- 00:21:37],
+                                 stdev 00:00:04, total 06:05:20
+                      Total tasks in queue: 54
+                      550 counts remain.
+
+2022-Apr-21 13:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:20 -- 00:21:42],
+                                 stdev 00:00:06, total 06:05:53
+                      Total tasks in queue: 54
+                      549 counts remain.
+
+2022-Apr-21 14:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:24 -- 00:21:41],
+                                 stdev 00:00:05, total 06:06:25
+                      Total tasks in queue: 53
+                      548 counts remain.
+
+2022-Apr-21 15:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:29,
+                                 range [00:21:21 -- 00:21:39],
+                                 stdev 00:00:04, total 05:43:49
+                      Total tasks in queue: 54
+                      547 counts remain.
+
+2022-Apr-21 16:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:23 -- 00:21:45],
+                                 stdev 00:00:05, total 06:05:51
+                      Total tasks in queue: 54
+                      546 counts remain.
+
+2022-Apr-21 17:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:36,
+                                 range [00:21:20 -- 00:21:51],
+                                 stdev 00:00:07, total 05:45:37
+                      Total tasks in queue: 54
+                      545 counts remain.
+
+2022-Apr-21 18:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:42,
+                                 range [00:21:33 -- 00:21:53],
+                                 stdev 00:00:05, total 06:09:04
+                      Total tasks in queue: 53
+                      544 counts remain.
+
+2022-Apr-21 19:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:38,
+                                 range [00:21:25 -- 00:21:51],
+                                 stdev 00:00:08, total 05:46:15
+                      Total tasks in queue: 54
+                      543 counts remain.
+
+2022-Apr-21 20:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:21 -- 00:21:46],
+                                 stdev 00:00:06, total 06:05:54
+                      Total tasks in queue: 54
+                      542 counts remain.
+
+2022-Apr-21 21:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:18 -- 00:21:49],
+                                 stdev 00:00:08, total 06:27:11
+                      Total tasks in queue: 53
+                      541 counts remain.
+
+2022-Apr-21 22:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:13 -- 00:21:42],
+                                 stdev 00:00:07, total 05:44:07
+                      Total tasks in queue: 54
+                      540 counts remain.
+
+2022-Apr-21 23:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:12 -- 00:21:52],
+                                 stdev 00:00:10, total 06:05:46
+                      Total tasks in queue: 53
+                      539 counts remain.
+
+2022-Apr-22 00:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:17 -- 00:21:40],
+                                 stdev 00:00:06, total 05:44:10
+                      Total tasks in queue: 53
+                      538 counts remain.
+
+2022-Apr-22 01:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:28,
+                                 range [00:21:16 -- 00:21:37],
+                                 stdev 00:00:06, total 06:05:12
+                      Total tasks in queue: 53
+                      537 counts remain.
+
+2022-Apr-22 02:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:30,
+                                 range [00:21:17 -- 00:21:42],
+                                 stdev 00:00:07, total 06:05:31
+                      Total tasks in queue: 52
+                      536 counts remain.
+
+2022-Apr-22 03:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:15,
+                                 range [00:17:43 -- 00:21:47],
+                                 stdev 00:00:57, total 05:40:02
+                      Total tasks in queue: 55
+                      535 counts remain.
+
+2022-Apr-22 04:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:40,
+                                 range [00:21:22 -- 00:22:03],
+                                 stdev 00:00:11, total 06:08:33
+                      Total tasks in queue: 54
+                      534 counts remain.
+
+2022-Apr-22 05:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:28,
+                                 range [00:21:20 -- 00:21:43],
+                                 stdev 00:00:06, total 06:26:41
+                      Total tasks in queue: 53
+                      533 counts remain.
+
+2022-Apr-22 06:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:19 -- 00:21:41],
+                                 stdev 00:00:05, total 06:05:25
+                      Total tasks in queue: 53
+                      532 counts remain.
+
+2022-Apr-22 07:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:21:20 -- 00:21:37],
+                                 stdev 00:00:04, total 05:43:32
+                      Total tasks in queue: 53
+                      531 counts remain.
+
+2022-Apr-22 08:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:25 -- 00:21:41],
+                                 stdev 00:00:04, total 05:44:42
+                      Total tasks in queue: 54
+                      530 counts remain.
+
+2022-Apr-22 09:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:26,
+                                 range [00:21:17 -- 00:21:41],
+                                 stdev 00:00:06, total 06:04:32
+                      Total tasks in queue: 54
+                      529 counts remain.
+
+2022-Apr-22 10:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:30,
+                                 range [00:21:16 -- 00:21:37],
+                                 stdev 00:00:05, total 06:27:13
+                      Total tasks in queue: 53
+                      528 counts remain.
+
+2022-Apr-22 10:12:11; >>> SUMMARY: Count for the past 1d: 401
+                      Task Time: mean 0:21:30,
+                                 range [00:17:43 -- 00:22:03],
+                                 stdev 00:00:13, total 5d 23:51:07
+
+2022-Apr-22 11:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:22 -- 00:21:41],
+                                 stdev 00:00:05, total 05:44:04
+                      Total tasks in queue: 53
+                      527 counts remain.
+
+2022-Apr-22 12:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:37,
+                                 range [00:21:26 -- 00:21:51],
+                                 stdev 00:00:06, total 05:24:28
+                      Total tasks in queue: 54
+                      526 counts remain.
+
+2022-Apr-22 13:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:24 -- 00:21:36],
+                                 stdev 00:00:03, total 06:05:48
+                      Total tasks in queue: 55
+                      525 counts remain.
+
+2022-Apr-22 14:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:35,
+                                 range [00:21:22 -- 00:21:52],
+                                 stdev 00:00:06, total 06:28:33
+                      Total tasks in queue: 53
+                      524 counts remain.
+
+2022-Apr-22 15:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:20 -- 00:21:48],
+                                 stdev 00:00:06, total 06:06:44
+                      Total tasks in queue: 52
+                      523 counts remain.
+
+2022-Apr-22 16:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:33,
+                                 range [00:21:21 -- 00:21:41],
+                                 stdev 00:00:05, total 05:45:02
+                      Total tasks in queue: 52
+                      522 counts remain.
+
+2022-Apr-22 17:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:18,
+                                 range [00:18:07 -- 00:21:46],
+                                 stdev 00:00:52, total 05:40:55
+                      Total tasks in queue: 58
+                      521 counts remain.
+
+2022-Apr-22 18:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:29,
+                                 range [00:20:58 -- 00:21:41],
+                                 stdev 00:00:10, total 06:26:59
+                      Total tasks in queue: 54
+                      520 counts remain.
+
+2022-Apr-22 19:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:21:21 -- 00:21:48],
+                                 stdev 00:00:07, total 06:06:10
+                      Total tasks in queue: 53
+                      519 counts remain.
+
+2022-Apr-22 20:12:10; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:33,
+                                 range [00:21:26 -- 00:21:40],
+                                 stdev 00:00:04, total 05:23:22
+                      Total tasks in queue: 53
+                      518 counts remain.
+
+2022-Apr-22 21:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:32,
+                                 range [00:21:24 -- 00:21:39],
+                                 stdev 00:00:04, total 06:27:49
+                      Total tasks in queue: 53
+                      517 counts remain.
+
+2022-Apr-22 22:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:23 -- 00:21:41],
+                                 stdev 00:00:05, total 05:44:47
+                      Total tasks in queue: 53
+                      516 counts remain.
+
+2022-Apr-22 23:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:25 -- 00:21:38],
+                                 stdev 00:00:03, total 06:06:26
+                      Total tasks in queue: 52
+                      515 counts remain.
+
+2022-Apr-23 00:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:18,
+                                 range [00:17:33 -- 00:21:50],
+                                 stdev 00:01:01, total 05:40:52
+                      Total tasks in queue: 57
+                      514 counts remain.
+
+2022-Apr-23 01:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:34,
+                                 range [00:21:25 -- 00:21:52],
+                                 stdev 00:00:07, total 06:06:43
+                      Total tasks in queue: 54
+                      513 counts remain.
+
+2022-Apr-23 02:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:33,
+                                 range [00:21:22 -- 00:21:49],
+                                 stdev 00:00:06, total 05:23:16
+                      Total tasks in queue: 55
+                      512 counts remain.
+
+2022-Apr-23 03:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:35,
+                                 range [00:21:29 -- 00:21:45],
+                                 stdev 00:00:04, total 06:28:44
+                      Total tasks in queue: 54
+                      511 counts remain.
+
+2022-Apr-23 04:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:37,
+                                 range [00:21:25 -- 00:21:46],
+                                 stdev 00:00:05, total 06:29:10
+                      Total tasks in queue: 53
+                      510 counts remain.
+
+2022-Apr-23 05:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:38,
+                                 range [00:21:32 -- 00:21:49],
+                                 stdev 00:00:06, total 05:46:23
+                      Total tasks in queue: 53
+                      509 counts remain.
+
+2022-Apr-23 06:12:11; Tasks reported in the past 1h: 14
+                      Task Time: avg 00:21:40,
+                                 range [00:21:29 -- 00:21:51],
+                                 stdev 00:00:05, total 05:03:31
+                      Total tasks in queue: 55
+                      508 counts remain.
+
+2022-Apr-23 07:12:11; Tasks reported in the past 1h: 19
+                      Task Time: avg 00:21:35,
+                                 range [00:21:19 -- 00:21:48],
+                                 stdev 00:00:08, total 06:50:16
+                      Total tasks in queue: 53
+                      507 counts remain.
+
+2022-Apr-23 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:20 -- 00:21:44],
+                                 stdev 00:00:07, total 06:06:27
+                      Total tasks in queue: 52
+                      506 counts remain.
+
+2022-Apr-23 09:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:31,
+                                 range [00:21:18 -- 00:21:49],
+                                 stdev 00:00:08, total 06:05:59
+                      Total tasks in queue: 52
+                      505 counts remain.
+
+2022-Apr-23 10:12:11; Tasks reported in the past 1h: 13
+                      Task Time: avg 00:21:15,
+                                 range [00:18:24 -- 00:21:51],
+                                 stdev 00:00:57, total 04:36:24
+                      Total tasks in queue: 58
+                      504 counts remain.
+
+2022-Apr-23 10:12:11; >>> SUMMARY: Count for the past 1d: 396
+                      Task Time: mean 0:21:31,
+                                 range [00:17:33 -- 00:21:52],
+                                 stdev 00:00:20, total 5d 22:09:03
+
+2022-Apr-23 11:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:43,
+                                 range [00:20:59 -- 00:22:22],
+                                 stdev 00:00:26, total 06:31:05
+                      Total tasks in queue: 55
+                      503 counts remain.
+
+2022-Apr-23 12:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:42,
+                                 range [00:21:04 -- 00:22:20],
+                                 stdev 00:00:26, total 06:30:37
+                      Total tasks in queue: 52
+                      502 counts remain.
+
+2022-Apr-23 13:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:48,
+                                 range [00:21:10 -- 00:22:30],
+                                 stdev 00:00:23, total 06:10:36
+                      Total tasks in queue: 52
+                      501 counts remain.
+
+2022-Apr-23 14:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:42,
+                                 range [00:21:13 -- 00:22:09],
+                                 stdev 00:00:17, total 05:47:19
+                      Total tasks in queue: 52
+                      500 counts remain.
+
+2022-Apr-23 15:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:17:23 -- 00:22:21],
+                                 stdev 00:01:07, total 06:06:08
+                      Total tasks in queue: 54
+                      499 counts remain.
+
+2022-Apr-23 16:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:40,
+                                 range [00:21:20 -- 00:22:02],
+                                 stdev 00:00:13, total 06:30:16
+                      Total tasks in queue: 52
+                      498 counts remain.
+
+2022-Apr-23 17:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:18,
+                                 range [00:18:50 -- 00:22:40],
+                                 stdev 00:00:55, total 05:19:41
+                      Total tasks in queue: 54
+                      497 counts remain.
+
+2022-Apr-23 18:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:51,
+                                 range [00:20:43 -- 00:22:53],
+                                 stdev 00:00:44, total 06:33:24
+                      Total tasks in queue: 52
+                      496 counts remain.
+
+2022-Apr-23 19:12:10; Tasks reported in the past 1h: 13
+                      Task Time: avg 00:21:51,
+                                 range [00:20:56 -- 00:22:49],
+                                 stdev 00:00:40, total 04:44:11
+                      Total tasks in queue: 54
+                      495 counts remain.
+
+2022-Apr-23 20:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:54,
+                                 range [00:20:48 -- 00:22:52],
+                                 stdev 00:00:38, total 06:12:25
+                      Total tasks in queue: 55
+                      494 counts remain.
+
+2022-Apr-23 21:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:22:15,
+                                 range [00:21:38 -- 00:23:04],
+                                 stdev 00:00:32, total 06:40:33
+                      Total tasks in queue: 52
+                      493 counts remain.
+
+2022-Apr-23 22:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:51,
+                                 range [00:20:49 -- 00:22:53],
+                                 stdev 00:00:38, total 05:27:46
+                      Total tasks in queue: 52
+                      492 counts remain.
+
+2022-Apr-23 23:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:50,
+                                 range [00:20:43 -- 00:22:49],
+                                 stdev 00:00:39, total 06:33:00
+                      Total tasks in queue: 52
+                      491 counts remain.
+
+2022-Apr-24 00:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:44,
+                                 range [00:20:44 -- 00:22:32],
+                                 stdev 00:00:36, total 06:09:44
+                      Total tasks in queue: 51
+                      490 counts remain.
+
+2022-Apr-24 01:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:39,
+                                 range [00:17:33 -- 00:22:53],
+                                 stdev 00:01:17, total 05:46:28
+                      Total tasks in queue: 52
+                      489 counts remain.
+
+2022-Apr-24 02:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:22:03,
+                                 range [00:21:15 -- 00:22:49],
+                                 stdev 00:00:28, total 05:52:55
+                      Total tasks in queue: 51
+                      488 counts remain.
+
+2022-Apr-24 03:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:18:37 -- 00:22:41],
+                                 stdev 00:01:00, total 05:44:09
+                      Total tasks in queue: 55
+                      487 counts remain.
+
+2022-Apr-24 04:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:33,
+                                 range [00:21:12 -- 00:22:05],
+                                 stdev 00:00:13, total 06:28:11
+                      Total tasks in queue: 53
+                      486 counts remain.
+
+2022-Apr-24 05:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:22,
+                                 range [00:18:38 -- 00:22:40],
+                                 stdev 00:00:57, total 05:41:59
+                      Total tasks in queue: 53
+                      485 counts remain.
+
+2022-Apr-24 06:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:51,
+                                 range [00:20:59 -- 00:22:32],
+                                 stdev 00:00:31, total 05:49:37
+                      Total tasks in queue: 54
+                      484 counts remain.
+
+2022-Apr-24 07:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:56,
+                                 range [00:21:05 -- 00:22:34],
+                                 stdev 00:00:25, total 05:29:12
+                      Total tasks in queue: 54
+                      483 counts remain.
+
+2022-Apr-24 08:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:46,
+                                 range [00:21:05 -- 00:22:25],
+                                 stdev 00:00:25, total 06:10:03
+                      Total tasks in queue: 55
+                      482 counts remain.
+
+2022-Apr-24 09:12:10; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:43,
+                                 range [00:21:03 -- 00:22:19],
+                                 stdev 00:00:25, total 06:31:01
+                      Total tasks in queue: 54
+                      481 counts remain.
+
+2022-Apr-24 10:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:46,
+                                 range [00:21:16 -- 00:22:22],
+                                 stdev 00:00:20, total 06:31:51
+                      Total tasks in queue: 52
+                      480 counts remain.
+
+2022-Apr-24 10:12:11; >>> SUMMARY: Count for the past 1d: 401
+                      Task Time: mean 0:21:44,
+                                 range [00:17:23 -- 00:23:04],
+                                 stdev 00:00:39, total 6d 01:22:21
+
+2022-Apr-24 11:12:11; Tasks reported in the past 1h: 12
+                      Task Time: avg 00:21:52,
+                                 range [00:21:32 -- 00:22:22],
+                                 stdev 00:00:16, total 04:22:35
+                      Total tasks in queue: 55
+                      479 counts remain.
+
+2022-Apr-24 12:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:48,
+                                 range [00:21:19 -- 00:22:23],
+                                 stdev 00:00:19, total 06:32:28
+                      Total tasks in queue: 55
+                      478 counts remain.
+
+2022-Apr-24 13:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:46,
+                                 range [00:21:18 -- 00:22:14],
+                                 stdev 00:00:17, total 06:32:03
+                      Total tasks in queue: 53
+                      477 counts remain.
+
+2022-Apr-24 14:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:42,
+                                 range [00:21:24 -- 00:22:07],
+                                 stdev 00:00:12, total 06:08:58
+                      Total tasks in queue: 53
+                      476 counts remain.
+
+2022-Apr-24 15:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:41,
+                                 range [00:21:24 -- 00:22:06],
+                                 stdev 00:00:11, total 05:47:03
+                      Total tasks in queue: 53
+                      475 counts remain.
+
+2022-Apr-24 16:12:10; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:41,
+                                 range [00:21:27 -- 00:22:04],
+                                 stdev 00:00:10, total 05:47:00
+                      Total tasks in queue: 54
+                      474 counts remain.
+
+2022-Apr-24 17:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:43,
+                                 range [00:21:26 -- 00:22:03],
+                                 stdev 00:00:10, total 06:31:04
+                      Total tasks in queue: 53
+                      473 counts remain.
+
+2022-Apr-24 18:12:11; Tasks reported in the past 1h: 15
+                      Task Time: avg 00:21:36,
+                                 range [00:21:28 -- 00:21:51],
+                                 stdev 00:00:06, total 05:24:14
+                      Total tasks in queue: 54
+                      472 counts remain.
+
+2022-Apr-24 19:12:12; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:44,
+                                 range [00:21:32 -- 00:21:58],
+                                 stdev 00:00:07, total 06:09:34
+                      Total tasks in queue: 53
+                      471 counts remain.
+
+2022-Apr-24 20:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:34,
+                                 range [00:21:15 -- 00:21:47],
+                                 stdev 00:00:10, total 06:28:18
+                      Total tasks in queue: 53
+                      470 counts remain.
+
+2022-Apr-24 21:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:19 -- 00:21:50],
+                                 stdev 00:00:08, total 05:44:04
+                      Total tasks in queue: 52
+                      469 counts remain.
+
+2022-Apr-24 22:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:29,
+                                 range [00:21:20 -- 00:21:46],
+                                 stdev 00:00:07, total 06:05:22
+                      Total tasks in queue: 52
+                      468 counts remain.
+
+2022-Apr-24 23:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:11,
+                                 range [00:17:45 -- 00:21:42],
+                                 stdev 00:00:56, total 05:39:10
+                      Total tasks in queue: 57
+                      467 counts remain.
+
+2022-Apr-25 00:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:33,
+                                 range [00:21:21 -- 00:22:11],
+                                 stdev 00:00:11, total 06:06:35
+                      Total tasks in queue: 54
+                      466 counts remain.
+
+2022-Apr-25 01:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:29,
+                                 range [00:21:20 -- 00:21:38],
+                                 stdev 00:00:05, total 06:26:59
+                      Total tasks in queue: 51
+                      465 counts remain.
+
+2022-Apr-25 02:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:17,
+                                 range [00:17:08 -- 00:22:02],
+                                 stdev 00:01:07, total 05:40:35
+                      Total tasks in queue: 55
+                      464 counts remain.
+
+2022-Apr-25 03:12:10; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:35,
+                                 range [00:21:23 -- 00:21:48],
+                                 stdev 00:00:07, total 06:07:05
+                      Total tasks in queue: 52
+                      463 counts remain.
+
+2022-Apr-25 04:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:32,
+                                 range [00:21:19 -- 00:21:41],
+                                 stdev 00:00:06, total 05:44:45
+                      Total tasks in queue: 52
+                      462 counts remain.
+
+2022-Apr-25 05:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:30,
+                                 range [00:21:12 -- 00:21:40],
+                                 stdev 00:00:06, total 05:44:06
+                      Total tasks in queue: 52
+                      461 counts remain.
+
+2022-Apr-25 06:12:11; Tasks reported in the past 1h: 17
+                      Task Time: avg 00:21:32,
+                                 range [00:18:22 -- 00:22:49],
+                                 stdev 00:01:01, total 06:06:08
+                      Total tasks in queue: 51
+                      460 counts remain.
+
+2022-Apr-25 07:12:11; Tasks reported in the past 1h: 16
+                      Task Time: avg 00:21:28,
+                                 range [00:18:09 -- 00:22:41],
+                                 stdev 00:01:05, total 05:43:31
+                      Total tasks in queue: 54
+                      459 counts remain.
+
+2022-Apr-25 08:12:11; Tasks reported in the past 1h: 18
+                      Task Time: avg 00:21:52,
+                                 range [00:17:00 -- 00:22:57],
+                                 stdev 00:01:19, total 06:33:42
+                      Total tasks in queue: 52
+                      458 counts remain.
+
+2022-Apr-25 09:12:11; Tasks reported in the past 1h: 8
+                      Task Time: avg 00:22:02,
+                                 range [00:21:36 -- 00:22:43],
+                                 stdev 00:00:27, total 02:56:18
+                      Total tasks in queue: 53
+                      457 counts remain.
+
+2022-Apr-25 10:12:10; Tasks reported in the past 1h: 24
+                      Task Time: avg 00:21:43,
+                                 range [00:20:45 -- 00:22:34],
+                                 stdev 00:00:31, total 08:41:20
+                      Total tasks in queue: 54
+                      456 counts remain.
+
+2022-Apr-25 10:12:10; >>> SUMMARY: Count for the past 1d: 397
+                      Task Time: mean 0:21:36,
+                                 range [00:17:00 -- 00:22:57],
+                                 stdev 00:00:33, total 5d 23:03:09
+

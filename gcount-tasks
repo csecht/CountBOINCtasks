@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.20'
+__version__ = '0.10.21'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -934,13 +934,17 @@ class CountViewer(tk.Frame):
 
         help_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Help', menu=help_menu)
-        help_menu.add_command(label='Information', command=self.share.info)
+        help_menu.add_command(label='Information',
+                              command=self.share.info)
         help_menu.add_command(label='Compliment',
                               command=self.share.compliment,
                               accelerator='Ctrl+Shift+C')
         help_menu.add_command(label='File paths',
                               command=lambda: self.share.filepaths(app))
-        help_menu.add_command(label='About', command=self.share.about)
+        help_menu.add_command(label='Run test plot',
+                              command=lambda: Logs.analyze_logfile(run_test=True))
+        help_menu.add_command(label='About',
+                              command=self.share.about)
 
         # For Button constructors, self.master is implicit as the parent.
         self.share.viewlog_b = ttk.Button(
@@ -1745,9 +1749,12 @@ class CountFyi:
         pathswin.focus_set()
 
         insert_txt = (
-            f'Full file paths created by {__program_name__}\n\n'
+            'Included with GitHub project distribution:\n\n'
+            f'Example log file: (file exists: {Path.exists(Logs.EXAMPLELOG)})\n'
+            f'   {Logs.EXAMPLELOG}\n\n'
+            f'Created by {__program_name__}:\n\n'
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
-            f'   ...do not alter this file while program is running\n'
+            '   ...do not alter this file while program is running\n'
             f'   {Logs.LOGFILE}\n\n'
             f'Saved log analyses (file exists: {Path.exists(Logs.ANALYSISFILE)})\n'
             f'   {Logs.ANALYSISFILE}\n'
@@ -1771,9 +1778,9 @@ class CountFyi:
                            padx=10, pady=10)
         pathstxt.insert(1.0, insert_txt)
 
-        # Need to center the header lines.
-        pathstxt.tag_configure("header", justify='center')
-        pathstxt.tag_add("header", "1.0", "3.0")
+        # Need to center the header line.
+        # pathstxt.tag_configure("header", justify='center')
+        # pathstxt.tag_add("header", "1.0", "1.0")
         pathstxt.pack()
 
         Binds.keyboard('close', pathswin)
@@ -1812,10 +1819,13 @@ class CountFyi:
                 Only one stand-alone app instance is allowed.\n
         - When analysis of logged hours is "cannot determine"...
                 Quick fix: backup then delete log file, restart program.\n
-        - Right-click actions only affect on-screen text, not file content,
-                except edits in the log analysis window, such as notations,
-                can be saved to the log analysis file.\n
+        - If plotting log data is not working, try Help>Run test plot
+                to check whether the problem is with your log file.
+                Quick fix: backup then delete log file, restart program.\n
         - Most common key commands work as expected.
+        - Right-click actions only affect on-screen text, not file content.
+                Edits in the log analysis window, such as notations,
+                can be saved to the log analysis file.\n
         """)
 
         # OS-specific Text widths were empirically determined for TkTextFont.

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Methods to analyze and view BOINC task data logged to file.
 
@@ -21,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.23'
+__module_ver__ = '0.1.24'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -40,7 +39,6 @@ try:
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
-    from matplotlib.figure import Figure
     CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
     print('Task time plots not available; Matplotlib module was not found.\n'
@@ -74,6 +72,7 @@ class Logs:
     # Need to write log files to current working directory unless program
     #   is run from a PyInstaller frozen executable, then write to Home
     #   directory. Frozen executable paths need to be absolute paths.
+    EXAMPLELOG = Path(Path.cwd(), 'example_log.txt')
     LOGFILE = Path(Path.cwd(),
                    f'{__program_name__}_log.txt').resolve()
     ANALYSISFILE = Path(Path.cwd(),
@@ -86,16 +85,19 @@ class Logs:
                             f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
-    def analyze_logfile(cls, do_plot=False) -> tuple:
+    def analyze_logfile(cls, do_plot=False, run_test=False) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Called from cls.show_analysis() when need to show results.
         Called from master menu or keybinding when need to plot times.
 
-        :param do_plot: Optional parameter used to call plot_times();
-            USE: analyze_logfile(plot=True).
-        :return: text strings to display in show_analysis() Toplevel.
+        :param do_plot: When True, call plot_times();
+            USE: analyze_logfile(do_plot=True).
+        :param run_test: When True, call plot_times() with example data
+            provided with the distribution in example_log.txt.
+        :return: Text strings to display in show_analysis() Toplevel.
         """
+        cls.run_test = run_test
         sumry_dates = []
         sumry_intvl_vals = []
         num_sumry_intvl_vals = 0
@@ -131,6 +133,23 @@ class Logs:
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
             return summary_text, recent_interval_text  # <- Empty strings.
+
+        if run_test:
+            try:
+                logtext = Path(cls.EXAMPLELOG).read_text(encoding='utf-8')
+                texthash = utils.verify(logtext)
+                if texthash != 4006408145:  # As of 06:41 4 June 2022.
+                    msg = (f'Content of {cls.EXAMPLELOG} has changed, so'
+                           ' the test may not work. If not working, reinstall'
+                           f' the example file from {__project_url__}')
+                    messagebox.showinfo(title='EXAMPLE LOG DATA MAY BE CORRUPT',
+                                        detail=msg)
+                do_plot = True
+            except FileNotFoundError:
+                info = (f'Missing example file:\n{cls.EXAMPLELOG}\n'
+                        'Was the log file deleted, moved or renamed?\n'
+                        f'Try reinstalling it from {__project_url__}.')
+                messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
         # Regex is based on this structure used in CountModeler.log_it():
         # 2021-Dec-21 06:27:18; Tasks reported in the past 1h: 18
@@ -202,7 +221,7 @@ class Logs:
             messagebox.showinfo(title='Plotting not available.',
                                 detail=detail)
 
-        ##### Generate test & data for showing in analysis results. ####
+        ##### Generate text & data for showing in analysis results. ####
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
@@ -373,8 +392,8 @@ class Logs:
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
-    @staticmethod
-    def plot_times(tdate_dist: list,
+    @classmethod
+    def plot_times(cls, tdate_dist: list,
                    ttime_dist: list,
                    trange_dist: list,
                    tcount_dist: list) -> None:
@@ -436,7 +455,11 @@ class Logs:
         elif MY_OS == 'dar':
             fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
-        ax1.set_title('Task times for logged count intervals')
+        if cls.run_test:
+            ax1.set_title('-- TEST PLOTS with EXAMPLE TASK DATA --')
+        else:
+            ax1.set_title('Task data for logged count intervals')
+
         ax1.set_xlabel('Datetime of interval count (yr-mo-date)')
         ax1.set_ylabel('Task completion time, interval avg.\n(hr:min:sec)')
 
