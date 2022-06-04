@@ -39,6 +39,7 @@ try:
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import matplotlib.backends.backend_tkagg as backend
+
     CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
     print('Task time plots not available; Matplotlib module was not found.\n'
@@ -72,7 +73,7 @@ class Logs:
     # Need to write log files to current working directory unless program
     #   is run from a PyInstaller frozen executable, then write to Home
     #   directory. Frozen executable paths need to be absolute paths.
-    run_test = False
+    do_test = False
     EXAMPLELOG = Path(Path.cwd(), 'example_log.txt')
     LOGFILE = Path(Path.cwd(),
                    f'{__program_name__}_log.txt').resolve()
@@ -86,7 +87,7 @@ class Logs:
                             f'{__program_name__}_analysis.txt').resolve()
 
     @classmethod
-    def analyze_logfile(cls, do_plot=False, run_test=False) -> tuple:
+    def analyze_logfile(cls, do_plot=False, do_test=False) -> tuple:
         """
         Reads log file and analyses Summary and Interval counts.
         Called from cls.show_analysis() when need to show results.
@@ -94,11 +95,11 @@ class Logs:
 
         :param do_plot: When True, call plot_times();
             USE: analyze_logfile(do_plot=True).
-        :param run_test: When True, call plot_times() with example data
+        :param do_test: When True, call plot_times() with example data
             provided with the distribution in example_log.txt.
         :return: Text strings to display in show_analysis() Toplevel.
         """
-        cls.run_test = run_test
+        cls.do_test = do_test
         sumry_dates = []
         sumry_intvl_vals = []
         num_sumry_intvl_vals = 0
@@ -135,7 +136,7 @@ class Logs:
 
             return summary_text, recent_interval_text  # <- Empty strings.
 
-        if run_test:
+        if do_test:
             try:
                 logtext = Path(cls.EXAMPLELOG).read_text(encoding='utf-8')
                 texthash = utils.verify(logtext)
@@ -333,7 +334,7 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, tk_obj: tk) -> None:
+    def show_analysis(cls, tk_obj: tk, do_test=False) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
@@ -342,11 +343,17 @@ class Logs:
 
         :param tk_obj: The tk object over which to display the Toplevel,
             usually a window object.
+        :param do_test: When True, plotting and analysis are tested with
+            example log data instead of working log file data.
+        :return: None
         """
 
         # NOTE: When the log file is not found by analyze_logfile(), the
         #   returned texts will be empty, so no need to continue.
-        summary_text, recent_interval_text = cls.analyze_logfile()
+        if do_test:
+            summary_text, recent_interval_text = cls.analyze_logfile(do_test=True)
+        else:
+            summary_text, recent_interval_text = cls.analyze_logfile()
         if not summary_text and not recent_interval_text:
             return
 
@@ -356,6 +363,10 @@ class Logs:
         # Need to position window over the window from which it is called.
         analysiswin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
         analysiswin.minsize(520, 320)
+
+        # topmost helps position the window when user calls Help option
+        #   to test with example log data.
+        analysiswin.attributes('-topmost', True)
 
         insert_txt = summary_text + recent_interval_text
 
@@ -456,7 +467,7 @@ class Logs:
         elif MY_OS == 'dar':
             fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
-        if cls.run_test:
+        if cls.do_test:
             ax1.set_title('-- TEST PLOTS with EXAMPLE TASK DATA --')
         else:
             ax1.set_title('Task data for logged count intervals')
@@ -623,6 +634,7 @@ class Logs:
             """
             plt.close('all')
             plotwin.destroy()
+
         plotwin.protocol('WM_DELETE_WINDOW', exit_on_x)
 
     @staticmethod

@@ -28,7 +28,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021 C.S. Echt'
 __credits__ = 'Inspired by rickslab-gpu-utils'
 __license__ = 'GNU General Public License'
-__version__ = '0.10.21'
+__version__ = '0.10.22'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -941,8 +941,9 @@ class CountViewer(tk.Frame):
                               accelerator='Ctrl+Shift+C')
         help_menu.add_command(label='File paths',
                               command=lambda: self.share.filepaths(app))
-        help_menu.add_command(label='Run test plot',
-                              command=lambda: Logs.analyze_logfile(run_test=True))
+        help_menu.add_command(label='Test example data',
+                              command=lambda: Logs.show_analysis(app, do_test=True))
+
         help_menu.add_command(label='About',
                               command=self.share.about)
 
@@ -1819,8 +1820,9 @@ class CountFyi:
                 Only one stand-alone app instance is allowed.\n
         - When analysis of logged hours is "cannot determine"...
                 Quick fix: backup then delete log file, restart program.\n
-        - If plotting log data is not working, try Help>Run test plot
-                to check whether the problem is with your log file.
+        - If plotting or analysis of log data is not working, run a test
+                with Help>Run example data. If that works, then the
+                problem is with your log file data. (Did you edit it?)
                 Quick fix: backup then delete log file, restart program.\n
         - Most common key commands work as expected.
         - Right-click actions only affect on-screen text, not file content.
