@@ -29,7 +29,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'utils.py'
-__module_ver__ = '0.1.12 '
+__module_ver__ = '0.1.13 '
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -379,6 +379,23 @@ def position_wrt_window(window: tk,
     coord_y = window.winfo_y() + offset_y
 
     return f'+{coord_x}+{coord_y}'
+
+
+def verify(text: str) -> int:
+    """
+    Generate a custom hash value for the input string. Intended for
+    verification of Project distribution file content.
+    Code source:
+    https://stackoverflow.com/questions/27522626/
+    hash-function-in-python-3-3-returns-different-results-between-sessions/70262376#70262376
+
+    :param text: A string object.
+    :return: An identical hash integer for identical *text* objects.
+    """
+    my_hash = 0
+    for ch in text:
+        my_hash = (my_hash * 281 ^ ord(ch) * 997) & 0xFFFFFFFF
+    return my_hash
 
 
 def about() -> None:
