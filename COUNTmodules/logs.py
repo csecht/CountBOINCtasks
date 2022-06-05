@@ -470,8 +470,10 @@ class Logs:
         else:
             ax1.set_title('Task data for logged count intervals')
 
-        ax1.set_xlabel('Datetime of interval count (yr-mo-date)')
-        ax1.set_ylabel('Task completion time, interval avg.\n(hr:min:sec)')
+        ax1.set_xlabel('Datetime of interval count\n'
+                       '(yr-mo-date hr:min, auto-formatted with scale)')
+        ax1.set_ylabel('Task completion time, interval avg.\n'
+                       '(hr:min:sec, auto-formatted with scale)')
 
         # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
         #   this greatly speeds up plotting when axes are date objects.
