@@ -20,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.24'
+__module_ver__ = '0.1.25'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -58,10 +58,15 @@ Utils = utils
 __program_name__ = instances.program_name()
 
 MY_OS = sys.platform[:3]
+
+# Datetime formats used in loging and analysis reporting.
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 SHORT_STRFTIME = '%Y %b %d %H:%M'
-SHORTER_STRFTIME = '%b %d %H:%M'
-DAY_STRFTIME = '%A %H:%M'
+
+# Colors used for matplotlib plots.
+MARKER_COLOR = 'green'
+LIGHT_COLOR = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
+DARK_BG = '#333333'  # X-term gray20
 
 
 class Logs:
@@ -335,7 +340,7 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, tk_obj: tk, do_test=False) -> None:
+    def show_analysis(cls, tk_obj: tk.Toplevel, do_test=False) -> None:
         """
         Generate a Toplevel window to display cumulative logged task
         data that have been analyzed by cls.analyze_logfile().
@@ -407,7 +412,8 @@ class Logs:
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
     @classmethod
-    def plot_data(cls, tdate_dist: list,
+    def plot_data(cls,
+                  tdate_dist: list,
                   ttime_dist: list,
                   trange_dist: list,
                   tcount_dist: list) -> None:
@@ -433,17 +439,7 @@ class Logs:
         # Default marker color is '#bfd1d4', similar to SteelBlue4 or DodgerBlue4.
         light = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
         dark = '#333333'  # X-term gray20
-        count_color = 'green'
         minmax_color = 'orange'
-
-        # Need to set style for count_data_button b/c ttk is the only way
-        #   to configure button colors on macOS.
-        style = ttk.Style()
-        style.configure('Plot.TButton', font=('TkTooltipFont', 9),
-                        background=dark,
-                        foreground=count_color,
-                        borderwidth=3,
-                        )
 
         # Font sizing adapted from Duarte's answer at:
         # https://stackoverflow.com/questions/3899980/
@@ -517,91 +513,140 @@ class Logs:
 
         ax1.autoscale(True)
         ax1.grid(True)
-        fig.set_facecolor(dark)
-        ax1.set_facecolor(light)
+        fig.set_facecolor(DARK_BG)
+        ax1.set_facecolor(LIGHT_COLOR)
 
+        # Show task count's right (second) Y-axis at startup, but hide
+        #   its data. Show and hide count data with a toggle command
+        #   for the count_data_btn button.
         ax2 = ax1.twinx()
+        ax2.set_ylabel('Task count, interval avg.', color=MARKER_COLOR)
+        ax2.spines['right'].set_color(MARKER_COLOR)
+        ax2.tick_params(axis='y', colors=MARKER_COLOR)
+        ax2.xaxis.axis_date()
+        ax2.xaxis.set_minor_locator(mdates.DayLocator())
+        ax2.set_zorder(-1)
+        # Marker "hides" data because its color becomes plot bg.
+        ax2.scatter(tdates, tcount_dist,
+                    marker='.', s=6, color=LIGHT_COLOR)
 
-        # Internal functions to show/hide interval task counts, controlled by
-        #  count_data_btn Button. Manage which y-axis coordinates are tracked
-        #  in the navigation toolbar with the zorder function, as described in:
-        #  https://stackoverflow.com/questions/21583965/
-        #    matplotlib-cursor-value-with-two-axes
-        def hide_count_data() -> None:
-            """
-            Use to toggle show-hide count data plot.
-            Also use to show count right Y-axis at startup;
-            subsequently called from ttk.Button, count_data_btn.
-            """
-            ax2.set_ylabel('Task count, interval avg.', color=count_color)
-            ax2.spines['right'].set_color(count_color)
-            ax2.tick_params(axis='y', colors=count_color)
-            ax2.xaxis.axis_date()
-            ax2.xaxis.set_minor_locator(mdates.DayLocator())
-            ax2.set_zorder(-1)
+        cls.draw_plots(fig, ax2, tdates, tcount_dist)
+
+    @staticmethod
+    def toggle_controller(button: tk.Button,
+                          figure: plt.Axes,
+                          axis: plt.Axes,
+                          xdata: list,
+                          ydata: list) -> None:
+        """
+        Show/hide matplotlib data for a 2nd Y axis.
+        Toggle is controlled by Button(). *axis* configurations for spine
+        tick_params, locators, and label should already be defined.
+        Which y-axis coordinates are tracked in the navigation
+        toolbar is managed with the zorder() function, as described in:
+        https://stackoverflow.com/questions/21583965/
+        matplotlib-cursor-value-with-two-axes
+
+        :param button: The calling button to toggle
+        :param figure: The matplotlib subplot figure object.
+        :param axis: The data axis to toggle, e.g., 2nd y-axis.
+        :param xdata: The (shared) x-axis data distribution list.
+        :param ydata: The 2nd y-axis data distribution list to toggle,
+            e.g. interval task counts.
+        :return: None
+        """
+
+        if button.cget('text') == 'Show count data':
+            button.config(text='Hide count data')
+
+            axis.scatter(xdata, ydata,
+                         marker='.', s=6, color=MARKER_COLOR)
+            axis.set_zorder(1)
+
+        else:  # button text is 'Hide count data'
             # Marker "hides" because its color becomes plot bg.
-            ax2.scatter(tdates, tcount_dist,
-                        marker='.', s=6, color=light)
+            button.config(text='Show count data')
 
-        # Need to set up count right y-axis to show from the start.
-        hide_count_data()
+            axis.scatter(xdata, ydata,
+                         marker='.', s=6, color=LIGHT_COLOR)
+            axis.set_zorder(-1)
 
-        def toggle_counts() -> None:
-            """
-            Show or hide interval average count data with a Button toggle.
-            Y-axis of count values, on the right, always shows.
-            """
-            if count_data_btn.cget('text') == 'Show count data':
-                count_data_btn.config(text='Hide count data')
+        figure.canvas.draw()
 
-                ax2.set_ylabel('Task count, interval avg.', color=count_color)
-                ax2.spines['right'].set_color(count_color)
-                ax2.tick_params(axis='y', colors=count_color)
+    @classmethod
+    def draw_plots(cls,
+                   fig: plt.Axes,
+                   ax2: plt.Axes,
+                   tdates: list,
+                   tcounts: list) -> None:
+        """
+        Draw plot Canvas, control, and information widgets in a toplevel
+        window. Place the navigation toolbar in a Frame so widgets can be
+        gridded (not packed per default).
 
-                ax2.scatter(tdates, tcount_dist,
-                            marker='.', s=6, color=count_color)
-                ax2.set_zorder(1)
-                fig.canvas.draw()
-            else:
-                count_data_btn.config(text='Show count data')
-                hide_count_data()
-                fig.canvas.draw()
+        :param fig: The matplotlib subplot figure object.
+        :param ax2: The 2nd (shared) y-axis; used only as a passthrough
+            for call to button's toggle_controller().
+        :param tdates: The x-axis datetime distribution list.
+        :param tcounts: The 2nd y-axis task count distribution list; used
+            only as a passthrough for call to button's toggle_controller().
+        :return: None
+        """
 
-        # The plots are set up, now draw them in a new window. Place the
-        #   toolbar in a Frame so everything can be gridded (not packed).
+        # Need to set style for count_data_button b/c ttk is the only way
+        #   to configure button colors on macOS.
+        style = ttk.Style()
+        style.configure('Plot.TButton', font=('TkTooltipFont', 9),
+                        background=DARK_BG,
+                        foreground=MARKER_COLOR,
+                        borderwidth=3)
 
-        # Need a toplevel window for the matplotlab plot so that the
-        #   interval thread can continue counting; a naked Matplotlab
-        #   figure object will run in the same thread as main and pause
-        #   the interval timer and counts. Resize plots with window.
+        # Need a toplevel window for the plot Canvas so that the interval
+        #   thread can continue counting; a naked Matplotlab figure
+        #   window will run in the same thread as main and pause
+        #   the interval timer and counts.
+        # Resize plot canvas with the plot window.
         plotwin = tk.Toplevel()
         plotwin.title('Plots of task data')
         plotwin.minsize(500, 250)
         plotwin.rowconfigure(3, weight=1)
         plotwin.columnconfigure(0, weight=1)
-        plotwin.configure(bg=dark)
+        plotwin.configure(bg=DARK_BG)
 
-        # Need to inform user of number of data points in the plot.
-        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
-                                 bg=dark, fg=light)
+        def exit_on_x() -> None:
+            """
+            Explicitly close all matplotlib objects and the plot window
+            when user closes the plot window with the system's default
+            close window icon (e.g., "X" in Windows and Ubuntu).
+            """
+            plt.close('all')
+            plotwin.destroy()
+        plotwin.protocol('WM_DELETE_WINDOW', exit_on_x)
 
-        # Use a button to toggle the count data display.
+        def toggle_data():
+            cls.toggle_controller(count_data_btn, fig, ax2, tdates, tcounts)
+
+        # Use a button to toggle display of task count data.
         count_data_btn = ttk.Button(plotwin,
                                     text='Show count data',
-                                    command=toggle_counts,
+                                    command=toggle_data,
                                     width=0,
                                     style='Plot.TButton')
 
-        # The plot and toolbar drawing areas:
+        # Need to inform user of the number of data points in the plot.
+        plot_sample_n = tk.Label(plotwin, text=f'N = {len(tdates)}',
+                                 bg=DARK_BG, fg=LIGHT_COLOR)
+
+        # Put the plot and toolbar drawing areas onto a Canvas.
         canvas = backend.FigureCanvasTkAgg(fig, master=plotwin)
-        canvas.get_tk_widget().config(bg=dark)
+        canvas.get_tk_widget().config(bg=DARK_BG)
 
         # Toolbar can be gridded at top of plow window by placing it in
         #   a Frame. Source: B. Oakley & LBoss answers at:
         #   https://stackoverflow.com/questions/12913854/
         #     displaying-matplotlib-navigation-toolbar-in-tkinter-via-grid
         # Need a Frame to grid() placement of the toolbar.
-        toolbar_frame = tk.Frame(master=plotwin, bg=dark)
+        toolbar_frame = tk.Frame(master=plotwin, bg=DARK_BG)
         toolbar = backend.NavigationToolbar2Tk(canvas, toolbar_frame)
 
         # Need to remove the subplots navigation button.
@@ -614,13 +659,13 @@ class Logs:
 
         # Have toolbar colors match the plot and figure colors.
         # Toolbar color: https://stackoverflow.com/questions/48351630/
-        toolbar.config(bg=dark)
-        toolbar._message_label.config(bg=dark, fg=light, padx=40)
+        toolbar.config(bg=DARK_BG)
+        toolbar._message_label.config(bg=DARK_BG, fg=LIGHT_COLOR, padx=40)
 
-        # Now display all plot widgets using grid() instead of pack().
+        # Now display all widgets using grid() instead of pack().
         # Note that while the toolbar_frame is gridded, toolbar packs its
-        #   widgets, leaving white space at right border. Other widgets
-        #   can't be gridded in the toolbar Frame b/c it
+        #   widgets, leaving a white space at right border.
+        #   Other widgets can't be gridded in the toolbar Frame b/c it
         #   "already has slaves managed by pack".
         toolbar_frame.grid(row=0, column=0, sticky=tk.EW)
         plot_sample_n.grid(row=1, column=0, padx=40, sticky=tk.E)
@@ -628,16 +673,6 @@ class Logs:
         canvas.get_tk_widget().grid(row=3, column=0,
                                     padx=30, pady=(0, 30),
                                     sticky=tk.NSEW)
-
-        def exit_on_x() -> None:
-            """
-            Explicitly close all matplotlib objects when user
-            closes plot window with the system's "X" button.
-            """
-            plt.close('all')
-            plotwin.destroy()
-
-        plotwin.protocol('WM_DELETE_WINDOW', exit_on_x)
 
     @staticmethod
     def uptime(logtext: str) -> str:
