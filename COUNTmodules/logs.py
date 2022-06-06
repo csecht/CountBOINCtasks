@@ -20,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.27'
+__module_ver__ = '0.1.28'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -230,7 +230,15 @@ class Logs:
 
         # Need to check whether plotting is available and possible.
         if found_intvls and do_plot and CAN_PLOT:
-            cls.plot_data(intvl_dates, found_intvl_avgt, found_intvl_t_range, intvl_counts)
+            interval_data = {
+                'intvl_dates': intvl_dates,
+                'found_intvl_avgt': found_intvl_avgt,
+                'found_intvl_t_range': found_intvl_t_range,
+                'intvl_counts': intvl_counts,
+                'intvl_vals': intvl_vals
+            }
+            cls.plot_data(**interval_data)
+
         elif not found_intvls:
             detail = ('There are no data to plot.\n'
                       'Need at least one interval count to\n'
@@ -356,11 +364,8 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def plot_data(cls,
-                  tdate_dist: list,
-                  ttime_dist: list,
-                  trange_dist: list,
-                  tcount_dist: list) -> None:
+    def plot_data(cls, **interval_data: dict) -> None:
+
         """
         Draw plot window of task times and counts (optional) for
         intervals recorded in LOGFILE.
@@ -368,15 +373,22 @@ class Logs:
         Windows platforms, not on macOS.
         Parameter lists of data distributions need to be same length.
 
-        :param tdate_dist: Distribution of datetimes (strings) when
-            task count intervals were logged.
-        :param ttime_dist: Distribution of average task times (strings).
-        :param trange_dist: Distribution of minimum and maximum times
-            for the interval, as a list of tuples of strings ('min', 'max').
-        :param tcount_dist: Distribution of integer task counts.
+        :param interval_data: Dictionary of interval task data lists.
+        Keys:
+            intvl_dates: Datetimes (strings) when task count intervals
+                were logged.
+            found_intvl_avgt: Average task times (strings).
+            found_intvl_t_range: Minimum and maximum task times (string tuples).
+            intvl_counts: Number of task counts (integers) per interval.
+            intvl_vals: Interval time durations (strings).
 
         :return: None
         """
+        tdate_list = interval_data['intvl_dates']
+        ttime_list = interval_data['found_intvl_avgt']
+        trange_list = interval_data['found_intvl_t_range']
+        tcount_list = [c for c in interval_data['intvl_counts']]
+        intvl_length = ', '.join(set(interval_data['intvl_vals']))
 
         # Font sizing adapted from Duarte's answer at:
         # https://stackoverflow.com/questions/3899980/
@@ -414,15 +426,15 @@ class Logs:
         ax1.set_ylabel('Task completion time, interval avg.\n'
                        '(hr:min:sec, auto-formatted with scale)')
 
-        # Need to convert date_dist and ttime_dist strings to Matplotlib dates;
+        # Need to convert date_list and ttime_list strings to Matplotlib dates;
         #   this greatly speeds up plotting when axes are date objects.
         ax1.xaxis.axis_date()
         ax1.yaxis.axis_date()
 
-        tdates = [mdates.datestr2num(d) for d in tdate_dist]
-        ttimes = [mdates.datestr2num(t) for t in ttime_dist]
+        tdates = [mdates.datestr2num(d) for d in tdate_list]
+        ttimes = [mdates.datestr2num(t) for t in ttime_list]
 
-        mins, maxs = zip(*trange_dist)
+        mins, maxs = zip(*trange_list)
         mintimes = [mdates.datestr2num(m) for m in mins]
         maxtimes = [mdates.datestr2num(m) for m in maxs]
 
@@ -468,10 +480,10 @@ class Logs:
         ax2.xaxis.set_minor_locator(mdates.DayLocator())
         ax2.set_zorder(-1)
         # Marker "hides" data because its color becomes plot bg.
-        ax2.scatter(tdates, tcount_dist,
+        ax2.scatter(tdates, tcount_list,
                     marker='.', s=6, color=LIGHT_COLOR)
 
-        cls.plot_display(fig, ax2, tdates, tcount_dist)
+        cls.plot_display(fig, ax2, tdates, tcount_list, intvl_length)
 
     @staticmethod
     def plot_data_toggle(button: tk.Button,
@@ -519,7 +531,8 @@ class Logs:
                      fig: plt.Axes,
                      ax2: plt.Axes,
                      tdates: list,
-                     tcounts: list) -> None:
+                     tcounts: list,
+                     intvl_length: str) -> None:
         """
         Show plot Canvas, control, and information widgets in a toplevel
         window.
@@ -530,6 +543,7 @@ class Logs:
         :param tdates: The x-axis datetime distribution list.
         :param tcounts: The 2nd y-axis task count distribution list; used
             only as a passthrough for call to plot_data_toggle().
+        :param intvl_length: Unique time duration value(s) of intervals.
         :return: None
         """
 
@@ -541,7 +555,7 @@ class Logs:
         plotwin = tk.Toplevel()
         plotwin.title('Plots of task data')
         plotwin.minsize(500, 250)
-        plotwin.rowconfigure(3, weight=1)
+        plotwin.rowconfigure(4, weight=1)
         plotwin.columnconfigure(0, weight=1)
         plotwin.configure(bg=DARK_BG)
         plotwin.protocol('WM_DELETE_WINDOW', lambda: close_plots(plotwin))
@@ -582,15 +596,21 @@ class Logs:
                         background=DARK_BG, foreground=MARKER_COLOR2,
                         borderwidth=3)
 
-        # Need to inform user of the number of data points in the plot.
-        num_samples = tk.Label(plotwin, text=f'N = {len(tdates)}',
+        # Need to inform user of the number of data points in the plot
+        #   and the duration(s) of count intervals.
+        num_samples = tk.Label(plotwin,
+                               text=f'N = {len(tdates)}',
                                bg=DARK_BG, fg=LIGHT_COLOR)
+        interval_duration = tk.Label(plotwin,
+                                     text=f'Interval(s): {intvl_length}',
+                                     bg=DARK_BG, fg=LIGHT_COLOR)
 
         # Now display all widgets:
         toolbar.grid(row=0, column=0, sticky=tk.EW)
         num_samples.grid(row=1, column=0, padx=40, sticky=tk.E)
-        count_data_btn.grid(row=2, column=0, padx=40, sticky=tk.E)
-        canvas.get_tk_widget().grid(row=3, column=0,
+        interval_duration.grid(row=2, column=0, padx=40, sticky=tk.E)
+        count_data_btn.grid(row=3, column=0, padx=40, sticky=tk.E)
+        canvas.get_tk_widget().grid(row=4, column=0,
                                     padx=30, pady=(0, 30),
                                     sticky=tk.NSEW)
 
