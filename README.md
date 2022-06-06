@@ -124,6 +124,9 @@ Zoom in again for two weeks of task time data.
 Initial view showing all logged task count data.
 ![zoom-plot](images/gcount-tasks_plot_counts.png)
 
+If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select "Text example data" to produce this plot window:
+![example-plot](images/gcount-tasks_testplot.png)
+
 ### Stand-alone versions: GcountTasks (no Python installation needed)
 Note that these stand-alone programs will only run with the boinccmd binary in its default install location. If you launch a GcountTasks stand-alone and get an error message, you can still run gcount-tasks from the command line once you set up a valid boinccmd path in the countCFG.txt configuration file.
 #### GcountTasks.exe - Windows
