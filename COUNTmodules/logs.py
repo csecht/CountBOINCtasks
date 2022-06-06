@@ -59,16 +59,16 @@ __program_name__ = instances.program_name()
 
 MY_OS = sys.platform[:3]
 
-# Datetime formats used in loging and analysis reporting.
+# Datetime string formats used in logging and analysis reporting.
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 SHORT_STRFTIME = '%Y %b %d %H:%M'
 
-# Colors used for matplotlib plots. Default marker color is '#bfd1d4',
-#   similar to X-term SteelBlue4 or DodgerBlue4.
+# Colors used for Matplotlib plots. Default marker color 'blue' is '#bfd1d4',
+#   similar to X11 SteelBlue4 or DodgerBlue4 used by tkinter.
 MARKER_COLOR2 = 'green'
 MARKER_COLOR3 = 'orange'
-LIGHT_COLOR = '#d9d9d9'  # X-term gray85; X-term gray80 '#cccccc'
-DARK_BG = '#333333'  # X-term gray20
+LIGHT_COLOR = '#d9d9d9'  # X11 gray85; X11 gray80 '#cccccc'
+DARK_BG = '#333333'  # X11 gray20
 
 
 def close_plots(window: tk.Toplevel) -> None:
