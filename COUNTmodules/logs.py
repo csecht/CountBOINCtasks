@@ -461,7 +461,7 @@ class Logs:
         #   its data. Show and hide count data with a toggle command
         #   from a "Show count data" ttk.Button() in the plot window.
         ax2 = ax1.twinx()
-        ax2.set_ylabel('Task count, interval avg.', color=MARKER_COLOR2)
+        ax2.set_ylabel('Interval task count', color=MARKER_COLOR2)
         ax2.spines['right'].set_color(MARKER_COLOR2)
         ax2.tick_params(axis='y', colors=MARKER_COLOR2)
         ax2.xaxis.axis_date()
