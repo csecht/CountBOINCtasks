@@ -20,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.26'
+__module_ver__ = '0.1.27'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -76,7 +76,8 @@ def close_plots(window: tk.Toplevel) -> None:
     Explicitly close all matplotlib objects and their parent tk window
     when the user closes the plot window with the system's built-in
     close window icon ("X").
-    This is required to cleanly exit and close the matplotlib thread.
+    This is required to cleanly exit and close the thread running
+    Matplotlib.
 
     :param window: The parent window being closed with a click on X.
     """
@@ -355,78 +356,6 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def show_analysis(cls, tk_obj: tk, do_test=False) -> None:
-        """
-        Generate a Toplevel window to display cumulative logged task
-        data that have been analyzed by cls.analyze_logfile().
-        Button appends displayed results to an analysis log file.
-        Called from a cls.view() button or a master keybinding.
-
-        :param tk_obj: The tk object over which to display the Toplevel,
-            usually a Toplevel window.
-        :param do_test: When True, plotting and analysis are tested with
-            example log data instead of with working log file data.
-        :return: None
-        """
-
-        # NOTE: When the log file is not found by analyze_logfile(), the
-        #   returned texts will be empty, so no need to continue.
-        if do_test:
-            summary_text, recent_interval_text = cls.analyze_logfile(do_test=True)
-        else:
-            summary_text, recent_interval_text = cls.analyze_logfile()
-        if not summary_text and not recent_interval_text:
-            return
-
-        # Have bg match self.master_bg of the app main window.
-        analysiswin = tk.Toplevel(bg='SteelBlue4')
-        if cls.do_test:
-            analysiswin.title('-- TEST ANALYSIS of EXAMPLE LOG DATA --')
-        else:
-            analysiswin.title('Analysis of logged data')
-        # Need to position window over the window from which it is called.
-        analysiswin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
-        analysiswin.minsize(520, 320)
-
-        # topmost helps position the window when user calls Help option
-        #   to test with example log data.
-        analysiswin.attributes('-topmost', True)
-
-        insert_txt = summary_text + recent_interval_text
-
-        max_line = len(max(insert_txt.splitlines(), key=len))
-
-        # Separator dash from https://coolsymbol.com/line-symbols.html.
-        # print(ord("─")) -> 9472
-        #   unicodedata.name(chr(9472)) -> 'BOX DRAWINGS LIGHT HORIZONTAL'.
-        # print(ord("═")) -> 9552
-        #   unicodedata.name(chr(9552)) -> 'BOX DRAWINGS DOUBLE HORIZONTAL'.
-        sep = f'\n{"─" * max_line}\n'
-        insert_txt = insert_txt + sep
-        num_lines = insert_txt.count('\n')
-
-        analysistxt = tk.Text(analysiswin, font='TkFixedFont',
-                              width=max_line, height=num_lines,
-                              bg='grey100', fg='grey5',
-                              relief='groove', bd=4, padx=15, pady=10)
-        analysistxt.insert(1.0, insert_txt)
-        analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
-
-        # Need to allow user to save annotated analysis text.
-        def new_text():
-            new_txt = analysistxt.get(1.0, tk.END)
-            Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
-
-        ttk.Button(analysiswin, text='Save analysis', command=new_text,
-                   takefocus=False).pack(padx=4)
-
-        Binds.click('right', analysistxt)
-        Binds.keyboard('close', analysiswin)
-        Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
-        analysiswin.bind('<Shift-Control-A>',
-                         lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
-
-    @classmethod
     def plot_data(cls,
                   tdate_dist: list,
                   ttime_dist: list,
@@ -497,19 +426,19 @@ class Logs:
         mintimes = [mdates.datestr2num(m) for m in mins]
         maxtimes = [mdates.datestr2num(m) for m in maxs]
 
-        ax1.scatter(tdates, mintimes, marker='^', s=8,
+        ax1.scatter(tdates, mintimes, marker='^', s=6,
                     color=MARKER_COLOR3,
                     label='min time')
-        ax1.scatter(tdates, maxtimes, marker='v', s=8,
+        ax1.scatter(tdates, maxtimes, marker='v', s=6,
                     color=MARKER_COLOR3,
                     label='max time')
-        ax1.scatter(tdates, ttimes, s=6,
+        ax1.scatter(tdates, ttimes, s=4,
                     label='avg. task time')
 
         ax1.legend(framealpha=0.3,
                    facecolor=LIGHT_COLOR, edgecolor='black',
                    fontsize=small_font,
-                   loc='best')
+                   loc='upper left')
 
         # Need to rotate and right-align the date labels to avoid crowding.
         for label in ax1.get_xticklabels(which='major'):
@@ -542,14 +471,14 @@ class Logs:
         ax2.scatter(tdates, tcount_dist,
                     marker='.', s=6, color=LIGHT_COLOR)
 
-        cls.draw_plots(fig, ax2, tdates, tcount_dist)
+        cls.plot_display(fig, ax2, tdates, tcount_dist)
 
     @staticmethod
-    def toggle_controller(button: tk.Button,
-                          figure: plt.Axes,
-                          axis: plt.Axes,
-                          xdata: list,
-                          ydata: list) -> None:
+    def plot_data_toggle(button: tk.Button,
+                         figure: plt.Axes,
+                         axis: plt.Axes,
+                         xdata: list,
+                         ydata: list) -> None:
         """
         Show/hide matplotlib data for a 2nd Y axis.
         Toggle is controlled by Button(). *axis* configurations for spine
@@ -586,22 +515,21 @@ class Logs:
         figure.canvas.draw()
 
     @classmethod
-    def draw_plots(cls,
-                   fig: plt.Axes,
-                   ax2: plt.Axes,
-                   tdates: list,
-                   tcounts: list) -> None:
+    def plot_display(cls,
+                     fig: plt.Axes,
+                     ax2: plt.Axes,
+                     tdates: list,
+                     tcounts: list) -> None:
         """
-        Draw plot Canvas, control, and information widgets in a toplevel
-        window. Place the navigation toolbar in a Frame so widgets can be
-        gridded (not packed per default).
+        Show plot Canvas, control, and information widgets in a toplevel
+        window.
 
         :param fig: The matplotlib subplot figure object.
         :param ax2: The 2nd (shared) y-axis; used only as a passthrough
-            for call to button's toggle_controller().
+            for call to button's plot_data_toggle().
         :param tdates: The x-axis datetime distribution list.
         :param tcounts: The 2nd y-axis task count distribution list; used
-            only as a passthrough for call to button's toggle_controller().
+            only as a passthrough for call to plot_data_toggle().
         :return: None
         """
 
@@ -637,13 +565,13 @@ class Logs:
         else:  # is Windows
             toolbar.children['!button6'].pack_forget()
 
-        def toggle_data():
-            cls.toggle_controller(count_data_btn, fig, ax2, tdates, tcounts)
+        def toggle():
+            cls.plot_data_toggle(count_data_btn, fig, ax2, tdates, tcounts)
 
         # Need a button to toggle display of task count data.
         count_data_btn = ttk.Button(plotwin,
                                     text='Show count data',
-                                    command=toggle_data,
+                                    command=toggle,
                                     width=0,
                                     style='Plot.TButton')
 
@@ -651,8 +579,7 @@ class Logs:
         #   to configure button colors on macOS.
         style = ttk.Style()
         style.configure('Plot.TButton', font=('TkTooltipFont', 9),
-                        background=DARK_BG,
-                        foreground=MARKER_COLOR2,
+                        background=DARK_BG, foreground=MARKER_COLOR2,
                         borderwidth=3)
 
         # Need to inform user of the number of data points in the plot.
@@ -666,6 +593,78 @@ class Logs:
         canvas.get_tk_widget().grid(row=3, column=0,
                                     padx=30, pady=(0, 30),
                                     sticky=tk.NSEW)
+
+    @classmethod
+    def show_analysis(cls, tk_obj: tk, do_test=False) -> None:
+        """
+        Generate a Toplevel window to display cumulative logged task
+        data that have been analyzed by cls.analyze_logfile().
+        Button appends displayed results to an analysis log file.
+        Called from a cls.view() button or a master keybinding.
+
+        :param tk_obj: The tk object over which to display the Toplevel,
+            usually a Toplevel window.
+        :param do_test: When True, plotting and analysis are tested with
+            example log data instead of with working log file data.
+        :return: None
+        """
+
+        # NOTE: When the log file is not found by analyze_logfile(), the
+        #   returned texts will be empty, so no need to continue.
+        if do_test:
+            summary_text, recent_interval_text = cls.analyze_logfile(do_test=True)
+        else:
+            summary_text, recent_interval_text = cls.analyze_logfile()
+        if not summary_text and not recent_interval_text:
+            return
+
+        # Have bg match self.master_bg of the app main window.
+        analysiswin = tk.Toplevel(bg='SteelBlue4')
+        if cls.do_test:
+            analysiswin.title('-- TEST ANALYSIS of EXAMPLE LOG DATA --')
+        else:
+            analysiswin.title('Analysis of logged data')
+        # Need to position window over the window from which it is called.
+        analysiswin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
+        analysiswin.minsize(520, 320)
+
+        # topmost helps position the window when user calls Help option
+        #   to test with example log data.
+        analysiswin.attributes('-topmost', True)
+
+        insert_txt = summary_text + recent_interval_text
+
+        max_line = len(max(insert_txt.splitlines(), key=len))
+
+        # Separator dash from https://coolsymbol.com/line-symbols.html.
+        # print(ord("─")) -> 9472
+        #   unicodedata.name(chr(9472)) -> 'BOX DRAWINGS LIGHT HORIZONTAL'.
+        # print(ord("═")) -> 9552
+        #   unicodedata.name(chr(9552)) -> 'BOX DRAWINGS DOUBLE HORIZONTAL'.
+        sep = f'\n{"─" * max_line}\n'
+        insert_txt = insert_txt + sep
+        num_lines = insert_txt.count('\n')
+
+        analysistxt = tk.Text(analysiswin, font='TkFixedFont',
+                              width=max_line, height=num_lines,
+                              bg='grey100', fg='grey5',
+                              relief='groove', bd=4, padx=15, pady=10)
+        analysistxt.insert(1.0, insert_txt)
+        analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+        # Need to allow user to save annotated analysis text.
+        def new_text():
+            new_txt = analysistxt.get(1.0, tk.END)
+            Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
+
+        ttk.Button(analysiswin, text='Save analysis', command=new_text,
+                   takefocus=False).pack(padx=4)
+
+        Binds.click('right', analysistxt)
+        Binds.keyboard('close', analysiswin)
+        Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
+        analysiswin.bind('<Shift-Control-A>',
+                         lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
     @staticmethod
     def uptime(logtext: str) -> str:
