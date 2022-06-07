@@ -37,7 +37,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.7'
+__module_ver__ = '0.5.8'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -47,8 +47,6 @@ import shlex
 import sys
 from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
-
-from COUNTmodules import utils
 
 CFGFILE = Path('countCFG.txt').resolve()
 
@@ -111,18 +109,12 @@ def set_boincpath() -> str:
 
         # Need to exit program if boinccmd not in default path.
         if not Path.is_file(default_path[MY_OS]):
-            if getattr(sys, 'frozen', False):
-                # Exit PyInstaller standalone app here.
-                utils.boinccmd_not_found(f'{default_path[MY_OS]}')
-
             badpath_msg = (
                 '\nThe application boinccmd is not in its expected default path: '
                 f'{default_path[MY_OS]}\n'
                 'You should enter your custom path for boinccmd in the'
-                " the current folder's configuration file, countCFG.txt.")
-
+                " the CountBOINCtasks-master folder's configuration file, countCFG.txt.")
             sys.exit(badpath_msg)
-
         else:
             boincpath = f'"{default_path[MY_OS]}"'
 
