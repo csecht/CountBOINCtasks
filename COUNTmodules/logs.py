@@ -20,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.29'
+__module_ver__ = '0.1.30'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -403,13 +403,6 @@ class Logs:
             medium_font = 10
             bigger_font = 12
 
-        # Use text and background colors to match (or be close to) those
-        #   in filetext fg and bg used in logs.view().
-        plt.rc('axes', titlesize=bigger_font, titlecolor=LIGHT_COLOR)
-        plt.rc('axes', labelsize=medium_font, labelcolor=LIGHT_COLOR)
-        plt.rc('xtick', labelsize=small_font, color=LIGHT_COLOR)
-        plt.rc('ytick', labelsize=small_font, color=LIGHT_COLOR)
-
         # Initialize fig Figure for Windows, adjust platform-specific sizes:
         fig, ax1 = plt.subplots(figsize=(7.25, 5.75), constrained_layout=True)
         if MY_OS == 'lin':
@@ -418,16 +411,26 @@ class Logs:
             fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
         if cls.do_test:
-            ax1.set_title('-- TEST PLOTS of EXAMPLE LOG DATA --')
+            ax1.set_title('-- TEST PLOTS of EXAMPLE LOG DATA --',
+                          fontsize=bigger_font)
         else:
-            ax1.set_title('Task data for logged count intervals')
+            ax1.set_title('Task data for logged count intervals',
+                          fontsize=bigger_font)
+            # fig.suptitle('Task data for logged count intervals',
+            #              fontsize=14, fontweight='bold', color=LIGHT_COLOR)
 
         ax1.set_xlabel('Datetime of interval count\n'
-                       '(yr-mo-date hr:min, auto-formatted with scale)')
+                       '(yr-mo-date)', fontsize=medium_font)
         ax1.set_ylabel('Task completion time, interval avg.\n'
-                       '(hr:min:sec, auto-formatted with scale)')
+                       '(hr:min:sec)', fontsize=medium_font)
 
-        # Need to convert date_list and ttime_list strings to Matplotlib dates;
+        ax1.title.set_color(LIGHT_COLOR)
+        ax1.yaxis.label.set_color(LIGHT_COLOR)
+        ax1.xaxis.label.set_color(LIGHT_COLOR)
+        ax1.tick_params(axis='x', which='both', colors=LIGHT_COLOR)
+        ax1.tick_params(axis='y', which='both', colors=LIGHT_COLOR)
+
+        # Need to convert tdate_list and ttime_list strings to Matplotlib dates;
         #   this greatly speeds up plotting when axes are date objects.
         ax1.xaxis.axis_date()
         ax1.yaxis.axis_date()
@@ -461,7 +464,8 @@ class Logs:
 
         loc = mdates.AutoDateLocator()
         ax1.xaxis.set_major_locator(loc)
-        ax1.xaxis.set_minor_locator(mdates.DayLocator())
+        # ax1.xaxis.set_minor_locator(mdates.DayLocator())
+        ax1.xaxis.set_minor_locator(tck.AutoMinorLocator(10))
         ax1.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
         ax1.yaxis.set_minor_locator(tck.AutoMinorLocator(10))
 
