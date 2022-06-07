@@ -5,24 +5,26 @@
 ### Keep it, or its alias-symlink, in the CountBOINCtasks-master folder.
 
 # If you have moved BOINC components from their default install location,
-# you can run gcount-tasks by entering your custom BOINC path below.
+# you can run count-tasks or gcount-tasks by entering your custom BOINC
+# path here on the last line.
 
-# To use a custom path, remove the leading # from the "custom_path" line,
-# and write your system path using the examples as template. Generally,
-# you should enter it as you would for in the command line to execute the
-# boinccmd program (without arguments).
+# Generally, you should enter your custom path as you would in a command
+# line used to execute the boinccmd program (but without arguments).
 # Note that in the macOS Terminal, while you would need to escape a
 # space in a folder name, e.g. /Application\ Support/, or use double quotes
-# around a path that contained spaces, you do not need escapes or quotes for
-# this custom_path.
+# around a path that contained spaces, do not use escapes or quotes in
+# the custom_path line below.
 
-# Path examples (BOINC default paths):
+# Example path formats using BOINC default paths found on different platforms.
+#   Use the general structure for your system, but replace the example
+#   paths with the path to your boinccmd program.
 # Windows: \Program Files\BOINC\boinccmd.exe
 # Linux:   /usr/bin/boinccmd
 # MacOS:  $HOME/Library/Application Support/BOINC/boinccmd
-# Note: On macOS, the Terminal command line would be entered as:
-# /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
+#       Note: On macOS, the equivalent Terminal command line would be:
+#       /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
-#custom_path <uncomment this line and put your custom path here, without brackets.>
+# Remove the "#", retain "custom_path ", and insert your desired path.
+#custom_path your/custom/path/goes/here
 
 
