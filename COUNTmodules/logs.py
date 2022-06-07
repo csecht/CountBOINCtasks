@@ -20,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.28'
+__module_ver__ = '0.1.29'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -38,6 +38,7 @@ from tkinter.scrolledtext import ScrolledText
 try:
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
+    import matplotlib.ticker as tck
     import matplotlib.backends.backend_tkagg as backend
 
     CAN_PLOT = True
@@ -307,8 +308,8 @@ class Logs:
                 recent_interval_text = (
                     f'{logged_intvl_report}'
                     f'   {str(intvl_cnt_avg).ljust(11)} tasks per count interval\n'
-                    f'There are {num_intvl_vals} different interval times\n'
-                    f'logged, {set(intvl_vals)},\n'
+                    f'There are {num_intvl_vals} different interval durations\n'
+                    f'logged: {", ".join(set(intvl_vals))},\n'
                     'so interpret results with caution.\n\n'
                 )
             return summary_text, recent_interval_text
@@ -458,11 +459,11 @@ class Logs:
         for label in ax1.get_yticklabels(which='major'):
             label.set(rotation=30)
 
-        loc = mdates.AutoDateLocator(interval_multiples=True)
+        loc = mdates.AutoDateLocator()
         ax1.xaxis.set_major_locator(loc)
         ax1.xaxis.set_minor_locator(mdates.DayLocator())
         ax1.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-        ax1.yaxis.set_minor_locator(mdates.MinuteLocator())
+        ax1.yaxis.set_minor_locator(tck.AutoMinorLocator(10))
 
         ax1.autoscale(True)
         ax1.grid(True)
