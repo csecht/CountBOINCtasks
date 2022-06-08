@@ -20,7 +20,7 @@ __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2020-2021 C. Echt'
 __license__ = 'GNU General Public License'
 __module_name__ = 'logs.py'
-__module_ver__ = '0.1.30'
+__module_ver__ = '0.1.31'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -66,7 +66,7 @@ SHORT_STRFTIME = '%Y %b %d %H:%M'
 
 # Colors used for Matplotlib plots. Default marker color 'blue' is '#bfd1d4',
 #   similar to X11 SteelBlue4 or DodgerBlue4 used by tkinter.
-MARKER_COLOR2 = 'green'
+MARKER_COLOR2 = 'deepskyblue' # DeepSkyBlue, '#00bfff'
 MARKER_COLOR3 = 'orange'
 LIGHT_COLOR = '#d9d9d9'  # X11 gray85; X11 gray80 '#cccccc'
 DARK_BG = '#333333'  # X11 gray20
@@ -420,7 +420,7 @@ class Logs:
             #              fontsize=14, fontweight='bold', color=LIGHT_COLOR)
 
         ax1.set_xlabel('Datetime of interval count\n'
-                       '(yr-mo-date)', fontsize=medium_font)
+                       '(yr-mo > yr-mo-date > mo-date hr)', fontsize=medium_font)
         ax1.set_ylabel('Task completion time, interval avg.\n'
                        '(hr:min:sec)', fontsize=medium_font)
 
@@ -464,8 +464,8 @@ class Logs:
 
         loc = mdates.AutoDateLocator()
         ax1.xaxis.set_major_locator(loc)
-        # ax1.xaxis.set_minor_locator(mdates.DayLocator())
-        ax1.xaxis.set_minor_locator(tck.AutoMinorLocator(10))
+        ax1.xaxis.set_minor_locator(loc)
+
         ax1.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
         ax1.yaxis.set_minor_locator(tck.AutoMinorLocator(10))
 
