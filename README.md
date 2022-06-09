@@ -124,7 +124,7 @@ Zoom in again for two weeks of task time data.
 Initial view showing all logged task count data.
 ![zoom-plot](images/gcount-tasks_plot_counts.png)
 
-If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select "Text example data" to produce this plot window:
+If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select "Test example data" to produce this plot window:
 ![example-plot](images/gcount-tasks_testplot.png)
 
 ### Stand-alone versions: GcountTasks (no Python installation needed)
