@@ -177,16 +177,18 @@ class Logs:
                 messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
         # Regex is based on this structure used in CountModeler.log_it():
-        # 2021-Dec-21 06:27:18; Tasks reported in the past 1h: 18
-        #                       Task Time: avg 00:21:35,
-        #                                  range [00:21:20 -- 00:21:54],
-        #                                  stdev 00:00:11, total 06:28:45
-        #                       Total tasks in queue: 53
-        #                       984 counts remain.
-        # 2021-Dec-21 06:27:18; >>> SUMMARY: Count for the past 1d: 402
-        #                       Task Time: mean 0:21:28,
-        #                                  range [00:16:03 -- 00:22:33],
-        #                                  stdev 00:00:42, total 5d 23:54:05
+        """
+        2021-Dec-21 06:27:18; Tasks reported in the past 1h: 18
+                              Task Time: avg 00:21:35,
+                                         range [00:21:20 -- 00:21:54],
+                                         stdev 00:00:11, total 06:28:45
+                              Total tasks in queue: 53
+                              984 counts remain.
+        2021-Dec-21 06:27:18; >>> SUMMARY: Count for the past 1d: 402
+                              Task Time: mean 0:21:28,
+                                         range [00:16:03 -- 00:22:33],
+                                         stdev 00:00:42, total 5d 23:54:05
+        """
         found_sumrys = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
         found_intvls = findall(
@@ -227,7 +229,8 @@ class Logs:
                 f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
                 f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
-                f'   {intvl_t_range} range of task times\n\n')
+                f'   {intvl_t_range} range of task times\n\n'
+            )
 
         # Need to check whether plotting is available and possible.
         if found_intvls and do_plot and CAN_PLOT:
@@ -243,16 +246,19 @@ class Logs:
         elif not found_intvls:
             detail = ('There are no data to plot.\n'
                       'Need at least one interval count to\n'
-                      'plot task completion times over time.\n')
+                      'plot task completion times over time.\n'
+                      )
             messagebox.showinfo(title='No counts available',
                                 detail=detail)
         elif found_intvls and do_plot and not CAN_PLOT:
             detail = ('Matplotlib module needs to be installed.\n'
                       'It can be installed with the command:\n'
                       'pip install -U matplotlib\n'
-                      'or python -m pip install -U matplotlib')
+                      'or python -m pip install -U matplotlib'
+                      )
             messagebox.showinfo(title='Plotting not available.',
-                                detail=detail)
+                                detail=detail
+                                )
 
         # Generate text & data to display in show_analysis(). ##########
 
@@ -293,7 +299,8 @@ class Logs:
                 f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
                 '   There are not enough data to analyze.\n'
                 '   Need at least one summary or one\n'
-                '   interval count in the log file.\n')
+                '   interval count in the log file.\n'
+            )
             return summary_text, recent_interval_text
 
         if not found_sumrys and found_intvls:
@@ -592,23 +599,27 @@ class Logs:
                                     text='Show count data',
                                     command=toggle,
                                     width=0,
-                                    style='Plot.TButton')
+                                    style='Plot.TButton'
+                                    )
 
         # Need to set style for count_data_button b/c ttk is the only way
         #   to configure button colors on macOS.
         style = ttk.Style()
         style.configure('Plot.TButton', font=('TkTooltipFont', 9),
                         background=DARK_BG, foreground=MARKER_COLOR2,
-                        borderwidth=3)
+                        borderwidth=3
+                        )
 
         # Need to inform user of the number of data points in the plot
         #   and the duration(s) of count intervals.
         num_samples = tk.Label(plotwin,
                                text=f'N = {len(tdates)}',
-                               bg=DARK_BG, fg=LIGHT_COLOR)
+                               bg=DARK_BG, fg=LIGHT_COLOR
+                               )
         interval_duration = tk.Label(plotwin,
                                      text=f'Interval(s): {intvl_length}',
-                                     bg=DARK_BG, fg=LIGHT_COLOR)
+                                     bg=DARK_BG, fg=LIGHT_COLOR
+                                     )
 
         # Now display all widgets:
         toolbar.grid(row=0, column=0, sticky=tk.EW)
@@ -617,7 +628,8 @@ class Logs:
         count_data_btn.grid(row=3, column=0, padx=40, sticky=tk.E)
         canvas.get_tk_widget().grid(row=4, column=0,
                                     padx=30, pady=(0, 30),
-                                    sticky=tk.NSEW)
+                                    sticky=tk.NSEW
+                                    )
 
     @classmethod
     def show_analysis(cls, tk_obj: tk, do_test=False) -> None:
@@ -673,7 +685,9 @@ class Logs:
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
                               width=max_line, height=num_lines,
                               bg='grey100', fg='grey5',
-                              relief='groove', bd=4, padx=15, pady=10)
+                              relief='groove', bd=4,
+                              padx=15, pady=10
+                              )
         analysistxt.insert(1.0, insert_txt)
         analysistxt.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
 
@@ -807,7 +821,8 @@ class Logs:
                                 height=text_height,
                                 bg='grey20', fg='grey80',
                                 insertbackground='grey80',
-                                relief='groove', bd=4, padx=12
+                                relief='groove', bd=4,
+                                padx=12
                                 )
         filetext.insert(tk.INSERT, insert_txt)
         filetext.see(tk.END)
