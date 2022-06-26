@@ -412,6 +412,7 @@ class Logs:
 
         # Initialize fig Figure for Windows, adjust platform-specific sizes:
         fig, ax1 = plt.subplots(figsize=(7.25, 5.75), constrained_layout=True)
+
         if MY_OS == 'lin':
             fig, ax1 = plt.subplots(figsize=(8, 6), constrained_layout=True)
         elif MY_OS == 'dar':
@@ -469,7 +470,7 @@ class Logs:
         for label in ax1.get_yticklabels(which='major'):
             label.set(rotation=30)
 
-        loc = mdates.AutoDateLocator()
+        loc = mdates.AutoDateLocator(interval_multiples=True)
         ax1.xaxis.set_major_locator(loc)
         ax1.xaxis.set_minor_locator(loc)
 
@@ -491,9 +492,8 @@ class Logs:
         ax2.xaxis.axis_date()
         ax2.xaxis.set_minor_locator(mdates.DayLocator())
         ax2.set_zorder(-1)
-        # Marker "hides" data because its color becomes plot bg.
-        ax2.scatter(tdates, tcount_list,
-                    marker='.', s=6, color=LIGHT_COLOR)
+        # Count markers become 'hidden' because color becomes transparent.
+        ax2.scatter(tdates, tcount_list, alpha=0)
 
         cls.plot_display(fig, ax2, tdates, tcount_list, intvl_length)
 
@@ -529,11 +529,11 @@ class Logs:
             axis.set_zorder(1)
 
         else:  # button text is 'Hide count data'
-            # Marker "hides" because its color becomes plot bg.
+            # Marker "hides" because color becomes transparent.
             button.config(text='Show count data')
 
             axis.scatter(xdata, ydata,
-                         marker='.', s=6, color=LIGHT_COLOR)
+                         marker='.', alpha=0)
             axis.set_zorder(-1)
 
         figure.canvas.draw()
