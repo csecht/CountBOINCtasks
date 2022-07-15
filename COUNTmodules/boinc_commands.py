@@ -37,7 +37,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
                'Keith Myers - Testing, debug']
 __license__ = 'GNU General Public License'
 __module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.8'
+__module_ver__ = '0.5.9'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -88,14 +88,19 @@ def set_boincpath() -> str:
     # Do split to remove the "custom_path" tag, then join to restore the
     #   path with any spaces it might have.
     if Path.is_file(CFGFILE):
-        cfg_text = Path('countCFG.txt').read_text()
+        cfg_text = Path(CFGFILE).read_text()
         for line in cfg_text.splitlines():
             if '#' not in line and 'custom_path' in line:
                 parts = line.split()
                 del parts[0]
                 custom_path = " ".join(parts)
 
-                return custom_path
+                if Path.is_file(Path(custom_path)):
+                    return custom_path
+                else:
+                    errmsg = f"The custom path, {custom_path}, is not" \
+                             f" a recognized file or path.\n"
+                    sys.exit(errmsg)
 
     default_path = {
         'win': Path('/Program Files/BOINC/boinccmd.exe'),
@@ -113,7 +118,7 @@ def set_boincpath() -> str:
                 '\nThe application boinccmd is not in its expected default path: '
                 f'{default_path[MY_OS]}\n'
                 'You should enter your custom path for boinccmd in the'
-                " the CountBOINCtasks-master folder's configuration file, countCFG.txt.")
+                f" the CountBOINCtasks-master folder's configuration file, {CFGFILE.name}.")
             sys.exit(badpath_msg)
         else:
             boincpath = f'"{default_path[MY_OS]}"'
