@@ -6,21 +6,8 @@ timed intervals for tasks recently reported to BOINC servers. It can be
 run on Windows, Linux, or MacOS. It is the tkinter GUI version of
 count-tasks. Its MVC architecture is modified from examples provided
 at https://stackoverflow.com/questions/32864610/ and links therein.
+
 Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    See the GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/
-    or the LICENSE text file included with this distribution.
 """
 # Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License
 
@@ -88,8 +75,7 @@ def parse_args() -> None:
     if args.about:
         print(__doc__)
         print(f'{"Author:".ljust(13)}', CMod.__author__)
-        print(f'{"Credits:".ljust(13)}', CMod.__credits__)
-        print(f'{"License:".ljust(13)}', CMod.__license__)
+        print(f'{"Credits:".ljust(13)}', *[f'\n      {item}' for item in CMod.__credits__])
         print(f'{"Copyright:".ljust(13)}', CMod.__copyright__)
         print(f'{"Program:".ljust(13)}', CMod.program_name)
         print(f'{"Version:".ljust(13)}', CMod.__version__)
@@ -97,6 +83,7 @@ def parse_args() -> None:
         print(f'{"URL:".ljust(13)}', CMod.__project_url__)
         print(f'{"Maintainer:".ljust(13)}', CMod.__maintainer__)
         print(f'{"Status:".ljust(13)}', CMod.__status__)
+        print(f'{"License:".ljust(13)}', CMod.LICENSE)
         print()
         sys.exit(0)
 
@@ -1651,13 +1638,13 @@ class CountFyi:
         insert_txt = (f'{__doc__}\n'
                       f'{"Author:".ljust(13)}{CMod.__author__}\n'
                       f'{"Credits:".ljust(13)}{CMod.__credits__}\n'
-                      f'{"License:".ljust(13)}{CMod.__license__}\n'
                       f'{"Program:".ljust(13)}{CMod.program_name}\n'
                       f'{"Version:".ljust(13)}{CMod.__version__}\n'
                       f'{"Dev. Env.:".ljust(13)}{CMod.__dev_environment__}\n'
                       f'{"URL:".ljust(13)}{CMod.__project_url__}\n'
                       f'{"Maintainer:".ljust(13)}{CMod.__maintainer__}\n'
                       f'{"Status:".ljust(13)}{CMod.__status__}\n'
+                      f'{"License:".ljust(13)}{CMod.__license__}\n'
                       )
 
         max_line = len(max(insert_txt.splitlines(), key=len))

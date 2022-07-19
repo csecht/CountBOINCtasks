@@ -5,33 +5,9 @@ CountBOINCtasks provides task counts and time statistics at timed
 intervals for tasks most recently reported to BOINC servers.
 Download the current version from:
 https://github.com/csecht/CountBOINCtasks
-
-    Copyright (C) 2021 C. Echt
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/.
 """
+# Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License
 
-__author__ =    'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C.S. Echt'
-__credits__ =   ['Inspired by rickslab-gpu-utils',
-                 'Keith Myers - Testing, debug']
-__license__ =   'GNU General Public License'
-__version__ =   '0.4.30'
-__program_name__ = 'count-tasks'
-__maintainer__ = 'cecht'
-__docformat__ = 'reStructuredText'
-__status__ =    'Development Status :: 4 - BETA'
 
 import argparse
 import logging
@@ -42,6 +18,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import COUNTmodules as CMod
 from COUNTmodules import boinc_commands, times
 
 BC = boinc_commands
@@ -52,13 +29,6 @@ LOGPATH = str(Path('count-tasks_log.txt'))
 # Here logging is lazily employed to manage the user's data log file.
 logging.basicConfig(filename=LOGPATH, level=logging.INFO,
                     filemode="a", format='%(message)s')
-
-if sys.version_info < (3, 6):
-    print('Sorry, but running count-tasks requires Python 3.6 or later.\n'
-          'Current Python version: '
-          f'{sys.version_info.major}.{sys.version_info.minor}\n'
-          'Python downloads are available from https://docs.python.org/')
-    sys.exit(1)
 
 
 class DataIntervals:
@@ -418,6 +388,9 @@ def check_summary_arg(parameter: str) -> str:
 
 if __name__ == '__main__':
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+    # Program will exit at COUNTmodules.__init__.py if Python ver. fails.
+
     # NOTE: --interval and --summary argument formats are different
     #   because summary times can be min, hr, or days, while interval times
     #   are always minutes (60 maximum).
@@ -477,13 +450,17 @@ if __name__ == '__main__':
 
     if args.about:
         print(__doc__)
-        print('Author:    ', __author__)
-        print('Copyright: ', __copyright__)
-        print('Credits:   ', *[f'\n      {item}' for item in __credits__])
-        print('License:   ', __license__)
-        print('Version:   ', __version__)
-        print('Maintainer:', __maintainer__)
-        print('Status:    ', __status__)
+        print(f'{"Author:".ljust(13)}', CMod.__author__)
+        print('Credits:   ', *[f'\n      {item}' for item in CMod.__credits__])
+        print(f'{"Copyright:".ljust(13)}', CMod.__copyright__)
+        print(f'{"Program:".ljust(13)}', CMod.program_name)
+        print(f'{"Version:".ljust(13)}', CMod.__version__)
+        print(f'{"Dev Env:".ljust(13)}', CMod.__dev_environment__)
+        print(f'{"URL:".ljust(13)}', CMod.__project_url__)
+        print(f'{"Maintainer:".ljust(13)}', CMod.__maintainer__)
+        print(f'{"Status:".ljust(13)}', CMod.__status__)
+        print(f'{"License:".ljust(13)}', CMod.LICENSE)
+        print()
         sys.exit(0)
 
     try:
