@@ -19,20 +19,10 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
     See the GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/.
+    along with this program. If not, see https://www.gnu.org/licenses/
+    or the LICENSE text file included with this distribution.
 """
-# ^^ Text for --about invocation argument via __doc__.
-# Also used in Fyi.about(); __program_name__ used throughout.
-# __program_name__ may be context-specific, see definition below.
-__author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021 C.S. Echt'
-__credits__ = 'Inspired by rickslab-gpu-utils'
-__license__ = 'GNU General Public License'
-__version__ = '0.11.0'
-__dev_environment__ = "Python 3.8 - 3.9"
-__project_url__ = 'https://github.com/csecht/CountBOINCtasks'
-__maintainer__ = 'cecht'
-__status__ = 'Development Status :: 2 - Beta'
+# Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License
 
 import argparse
 import logging
@@ -44,11 +34,9 @@ from random import choice
 from socket import gethostname
 from time import sleep, time
 
+import COUNTmodules as CMod
 from COUNTmodules \
-    import binds, boinc_commands, files, instances, logs, times, utils, vcheck
-
-# Need to check that Python interpreter is at least the required version.
-vcheck.minversion('3.6')
+    import binds, boinc_commands, files, instances, logs, times, utils
 
 try:
     import tkinter as tk
@@ -79,8 +67,6 @@ T = times
 Utils = utils
 Tooltip = utils.Tooltip
 
-__program_name__ = Instances.program_name()
-
 MY_OS = sys.platform[:3]
 LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
 SHORT_STRFTIME = '%Y %b %d %H:%M'
@@ -101,16 +87,16 @@ def parse_args() -> None:
     args = parser.parse_args()
     if args.about:
         print(__doc__)
-        print(f'{"Author:".ljust(13)}', __author__)
-        print(f'{"Credits:".ljust(13)}', __credits__)
-        print(f'{"License:".ljust(13)}', __license__)
-        print(f'{"Copyright:".ljust(13)}', __copyright__)
-        print(f'{"Program:".ljust(13)}', __program_name__)
-        print(f'{"Version:".ljust(13)}', __version__)
-        print(f'{"Dev Env:".ljust(13)}', __dev_environment__)
-        print(f'{"URL:".ljust(13)}', __project_url__)
-        print(f'{"Maintainer:".ljust(13)}', __maintainer__)
-        print(f'{"Status:".ljust(13)}', __status__)
+        print(f'{"Author:".ljust(13)}', CMod.__author__)
+        print(f'{"Credits:".ljust(13)}', CMod.__credits__)
+        print(f'{"License:".ljust(13)}', CMod.__license__)
+        print(f'{"Copyright:".ljust(13)}', CMod.__copyright__)
+        print(f'{"Program:".ljust(13)}', CMod.program_name)
+        print(f'{"Version:".ljust(13)}', CMod.__version__)
+        print(f'{"Dev Env:".ljust(13)}', CMod.__dev_environment__)
+        print(f'{"URL:".ljust(13)}', CMod.__project_url__)
+        print(f'{"Maintainer:".ljust(13)}', CMod.__maintainer__)
+        print(f'{"Status:".ljust(13)}', CMod.__status__)
         print()
         sys.exit(0)
 
@@ -240,7 +226,7 @@ class CountModeler:
         if self.share.setting['do_log'].get():
             self.log_it('start')
 
-    def task_states(self) -> None:
+    def task_status(self) -> None:
         """
         Query boinc-client for status of tasks queued, running, and
         suspended; set corresponding dictionary tk control variables.
@@ -257,12 +243,15 @@ class CountModeler:
         #   calling BC.get_tasks() for each tag.
         tags = ('   name: ',
                 '   active_task_state: ',
-                '   state: ')
+                '   state: ',
+                '   scheduler state: ')
         num_tasks_all = len([elem for elem in tasks_all if tags[0] in elem])
-        tasks_active = [elem.replace(tags[1], '') for elem in tasks_all
-                        if tags[1] in elem]
+        active_task_states = [elem.replace(tags[1], '') for elem in tasks_all
+                              if tags[1] in elem]
         task_states = [elem.replace(tags[2], '') for elem in tasks_all
                        if tags[2] in elem]
+        scheduler_states = [elem.replace(tags[3], '') for elem in tasks_all
+                            if tags[3] in elem]
 
         # When communication to server is stalled, all tasks will be
         #  "Ready to report" with a state of 'uploaded', so a forced
@@ -275,16 +264,20 @@ class CountModeler:
             self.share.note['proj_stalled'].set(True)
 
         num_running = len(
-            [task for task in tasks_active if 'EXECUTING' in task])
+            [task for task in active_task_states if 'EXECUTING' in task])
         num_suspended_by_boinc = len(
-            [task for task in tasks_active if 'SUSPENDED' in task])
+            [task for task in active_task_states if 'SUSPENDED' in task])
         num_suspended_by_user = len(
             [task for task in tasks_all if 'suspended via GUI: yes' in task])
+        num_activity_susp_user_req = len(
+            [task for task in active_task_states if 'UNINITIALIZED' in task and
+             'scheduled' in scheduler_states])
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.note['num_running'].set(num_running)
         self.share.note['num_suspended_by_boinc'].set(num_suspended_by_boinc)
         self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
+        self.share.note['num_activity_susp_user_req'].set(num_activity_susp_user_req)
         self.share.note['no_new_tasks'].set(no_new_tasks)
 
     def interval_data(self) -> None:
@@ -367,7 +360,7 @@ class CountModeler:
                 # Track when no new tasks were reported in past interval;
                 #   tic_nnt used in log_it().
                 # Need to update num_running value from task_states().
-                self.task_states()
+                self.task_status()
                 num_running = self.share.note['num_running'].get()
 
                 if task_count_new == 0:
@@ -462,10 +455,11 @@ class CountModeler:
                 # Need to keep track of cycles for regulate Utils.beep() calls.
                 notice_cycle_number += 1
 
-                self.task_states()
+                self.task_status()
                 num_running = self.share.note['num_running'].get()
                 num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
                 num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
+                num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
                 num_tasks_all = self.share.data['num_tasks_all'].get()
                 tic_nnt = self.share.note['tic_nnt'].get()
                 proj_stalled = self.share.note['proj_stalled'].get()
@@ -527,6 +521,11 @@ class CountModeler:
                             # Settings window Tooltip text for beep timing.
                             if notice_cycle_number % 2 == 0:
                                 Utils.beep(2)
+                    elif num_activity_susp_user_req > 0:
+                        self.share.note['notice_txt'].set(
+                            'NO TASKS running.\n'
+                            'Activity suspended on user request. Check BOINC Manager.'
+                            )
                     elif num_suspended_by_boinc > 0:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running.\n'
@@ -596,12 +595,13 @@ class CountModeler:
             cycles_remain = self.share.data['cycles_remain'].get()
             num_running = self.share.note['num_running'].get()
             num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
+            num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
             no_new_tasks = self.share.note['no_new_tasks'].get()
             tic_nnt = self.share.note['tic_nnt'].get()
 
             if called_from == 'start' and cycles_max > 0:
                 report = (
-                    f'\n>>> START GUI TASK COUNTER v.{__version__}, SETTINGS: <<<\n'
+                    f'\n>>> START GUI TASK COUNTER v.{CMod.__version__}, SETTINGS: <<<\n'
                     f'{self.share.long_time_start};'
                     ' Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
@@ -663,6 +663,10 @@ class CountModeler:
                 if num_suspended_by_user > 0:
                     report = (f'{indent}'
                               f'{num_suspended_by_user} tasks suspended by user.')
+                    logging.info(report)
+                if num_activity_susp_user_req > 0:
+                    report = (f'{indent}'
+                              f'Task activity suspended on user request.')
                     logging.info(report)
                 if no_new_tasks:
                     report = (f'{indent}Not receiving new tasks.\n'
@@ -799,6 +803,7 @@ class CountViewer(tk.Frame):
             'no_new_tasks': tk.BooleanVar(),
             'num_suspended_by_user': tk.IntVar(),
             'num_suspended_by_boinc': tk.IntVar(),
+            'num_activity_susp_user_req': tk.IntVar(),
         }
 
         # Labels for settings values; gridded in master_layout(). They are
@@ -1533,7 +1538,7 @@ class CountViewer(tk.Frame):
         starting_tip_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
-            f' {__program_name__} started. Once the first count'
+            f' {CMod.program_name} started. Once the first count'
             ' interval time has elapsed, data for that interval will'
             ' display and this button will become "Interval data".'
         )
@@ -1640,19 +1645,19 @@ class CountFyi:
                                highlightbackground='grey75')
         aboutwin.geometry(Utils.position_wrt_window(app, 30, 20))
         aboutwin.resizable(False, False)
-        aboutwin.title(f'About {__program_name__}')
+        aboutwin.title(f'About {CMod.program_name}')
         aboutwin.focus_set()
 
         insert_txt = (f'{__doc__}\n'
-                      f'{"Author:".ljust(13)}{__author__}\n'
-                      f'{"Credits:".ljust(13)}{__credits__}\n'
-                      f'{"License:".ljust(13)}{__license__}\n'
-                      f'{"Program:".ljust(13)}{__program_name__}\n'
-                      f'{"Version:".ljust(13)}{__version__}\n'
-                      f'{"Dev. Env.:".ljust(13)}{__dev_environment__}\n'
-                      f'{"URL:".ljust(13)}{__project_url__}\n'
-                      f'{"Maintainer:".ljust(13)}{__maintainer__}\n'
-                      f'{"Status:".ljust(13)}{__status__}\n'
+                      f'{"Author:".ljust(13)}{CMod.__author__}\n'
+                      f'{"Credits:".ljust(13)}{CMod.__credits__}\n'
+                      f'{"License:".ljust(13)}{CMod.__license__}\n'
+                      f'{"Program:".ljust(13)}{CMod.program_name}\n'
+                      f'{"Version:".ljust(13)}{CMod.__version__}\n'
+                      f'{"Dev. Env.:".ljust(13)}{CMod.__dev_environment__}\n'
+                      f'{"URL:".ljust(13)}{CMod.__project_url__}\n'
+                      f'{"Maintainer:".ljust(13)}{CMod.__maintainer__}\n'
+                      f'{"Status:".ljust(13)}{CMod.__status__}\n'
                       )
 
         max_line = len(max(insert_txt.splitlines(), key=len))
@@ -1753,7 +1758,7 @@ class CountFyi:
             'Included with GitHub project distribution:\n\n'
             f'Example log file: (file exists: {Path.exists(Logs.EXAMPLELOG)})\n'
             f'   {Logs.EXAMPLELOG}\n\n'
-            f'Created by {__program_name__}:\n\n'
+            f'Created by {CMod.program_name}:\n\n'
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
             '   ...do not alter this file while program is running\n'
             f'   {Logs.LOGFILE}\n\n'
@@ -1938,9 +1943,6 @@ class CountController(tk.Tk):
 if __name__ == "__main__":
     parse_args()
 
-    # Need to confirm that the boinccmd path exists.
-    BC.set_boincpath()
-
     # Need to set up conditions to control multiple instances.
     # Must not allow multiple instances to write to the same log file,
     #   so best to exit program to prevent that.
@@ -1948,11 +1950,11 @@ if __name__ == "__main__":
     #   for stand-alone and Terminal executions.
     # Multiple instances of Terminal executions can run when from
     #   different directories.
-    exit_msg = (f'\nNOTICE: {__program_name__} is already running from'
+    exit_msg = (f'\nNOTICE: {CMod.program_name} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-        exit_msg = (f'\nNOTICE: {__program_name__}'
+        exit_msg = (f'\nNOTICE: {CMod.program_name}'
                     ' is already running. Exiting...\n')
 
     if MY_OS == 'win':
@@ -1971,7 +1973,7 @@ if __name__ == "__main__":
 
         with sentinel:
             try:
-                print(f'{__program_name__} now running...')
+                print(f'{CMod.program_name} now running...')
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
 
@@ -1997,14 +1999,13 @@ if __name__ == "__main__":
 
     else:
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
-                                 f'.{__program_name__}_lockfile')
+                                 f'.{CMod.program_name}_lockfile')
 
         # pylint: disable=consider-using-with
         lockfile = open(lockfile_fullpath, 'w')
         Instances.lock_or_exit(lockfile, exit_msg)
 
         try:
-            print(f'{__program_name__} now running...')
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
 
@@ -2012,6 +2013,8 @@ if __name__ == "__main__":
             img = tk.PhotoImage(
                 file=Utils.absolute_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
+
+            print(f'{CMod.program_name} now running...')
 
             app.mainloop()
 
