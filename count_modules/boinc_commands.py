@@ -15,33 +15,8 @@ project_url() - Return dictionary of BOINC project NAMES and server urls.
 get_project_url() - Return current local host boinc-client Project URLs.
 project_action() - Execute a boinc-client action for a specified Project.
 no_new_tasks() - Get Project status for "Don't request more work".
-
-    Copyright (C) 2020-2021  C. Echt
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/.
 """
-__author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020-2021 C. Echt'
-__credits__ = ['Inspired by rickslab-gpu-utils',
-               'Keith Myers - Testing, debug']
-__license__ = 'GNU General Public License'
-__module_name__ = 'boinc_commands.py'
-__module_ver__ = '0.5.9'
-__dev_environment__ = "Python 3.8 - 3.9"
-__project_url__ = 'https://github.com/csecht/CountBOINCtasks'
-__maintainer__ = 'cecht'
-__status__ = 'Development Status :: 4 - Beta'
+# Copyright (C) 2021 C. Echt under GNU General Public License'
 
 import shlex
 import sys
@@ -411,23 +386,3 @@ def no_new_tasks(cmd=' --get_project_status') -> bool:
 
     return False
 
-
-def about() -> None:
-    """
-    Print basic information about this module.
-    """
-    print(__doc__)
-    print(f'{"Author:".ljust(11)}', __author__)
-    print(f'{"Copyright:".ljust(11)}', __copyright__)
-    print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __module_name__)
-    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
-    print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
-    print(f'{"URL:".ljust(11)}', __project_url__)
-    print(f'{"Maintainer:".ljust(11)}', __maintainer__)
-    print(f'{"Status:".ljust(11)}', __status__)
-    sys.exit(0)
-
-
-if __name__ == '__main__':
-    about()

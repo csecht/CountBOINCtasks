@@ -1,4 +1,4 @@
-from . import vcheck, instances, boinc_commands
+from . import vcheck, instances, boinc_commands, platform_check
 
 """
 Constant variables used in --about calls.
@@ -12,7 +12,7 @@ __copyright__ = 'Copyright (C) 2021-2022 C.S. Echt'
 __license__ = 'GNU General Public License'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - count-tasks: testing, debug']
-__version__ = '0.11.2'
+__version__ = '0.11.3'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'
@@ -35,6 +35,7 @@ LICENSE = """
     along with this program (the LICENCE.txt file). If not, see
     https://www.gnu.org/licenses/."""
 
+platform_check.check_platform()
 vcheck.minversion('3.6')
 
 boinc_commands.set_boincpath()

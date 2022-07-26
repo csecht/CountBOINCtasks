@@ -8,31 +8,8 @@ Functions:
     duration() - Difference between datetime.strftime() objects.
     sec_to_format() - Convert seconds to a specified time format.
     logtimes_stat() - Calculate statistical metric of a group of times.
-
-    Copyright (C) 2020-2021  C. Echt
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/.
 """
-__author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020-2021 C. Echt'
-__license__ = 'GNU General Public License'
-__module_name__ = 'times.py'
-__module_ver__ = '0.2.9'
-__dev_environment__ = "Python 3.8 - 3.9"
-__project_url__ = 'https://github.com/csecht/CountBOINCtasks'
-__maintainer__ = 'cecht'
-__status__ = 'Development Status :: 4 - Beta'
+# Copyright (C) 2021 C. Echt under GNU General Public License'
 
 import statistics
 import sys

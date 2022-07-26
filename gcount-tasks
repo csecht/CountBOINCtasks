@@ -11,7 +11,6 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 """
 # Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License
 
-import argparse
 import logging
 import sys
 import threading
@@ -21,9 +20,17 @@ from random import choice
 from socket import gethostname
 from time import sleep, time
 
-import COUNTmodules as CMod
-from COUNTmodules \
-    import binds, boinc_commands, files, instances, logs, times, utils
+import count_modules as cmod
+from count_modules import (binds as Binds,
+                           boinc_commands as BC,
+                           config_constants as cfg,
+                           files as Files,
+                           instances as Instances,
+                           platform_check as chk,
+                           times as T,
+                           utils as Utils)
+from count_modules.logs import Logs
+from count_modules.utils import Tooltip
 
 try:
     import tkinter as tk
@@ -43,107 +50,6 @@ except (ImportError, ModuleNotFoundError) as err:
           'It can be installed with the command: pip install -U matplotlib\n'
           'or python -m pip install -U matplotlib\n'
           f'Error msg: {err}')
-
-
-Binds = binds
-BC = boinc_commands
-Files = files
-Instances = instances
-Logs = logs.Logs()
-T = times
-Utils = utils
-Tooltip = utils.Tooltip
-
-MY_OS = sys.platform[:3]
-LONG_STRFTIME = '%Y-%b-%d %H:%M:%S'
-SHORT_STRFTIME = '%Y %b %d %H:%M'
-SHORTER_STRFTIME = '%b %d %H:%M'
-DAY_STRFTIME = '%A %H:%M'
-NOTICE_INTERVAL = 15  # <- time.sleep() seconds
-
-
-# ################ Useful functions, not part of MVC ###################
-def parse_args() -> None:
-    """Allow handling of common command line arguments.
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--about',
-                        help='Provides description, version, GNU license',
-                        action='store_true',
-                        default=False)
-    args = parser.parse_args()
-    if args.about:
-        print(__doc__)
-        print(f'{"Author:".ljust(13)}', CMod.__author__)
-        print(f'{"Credits:".ljust(13)}', *[f'\n      {item}' for item in CMod.__credits__])
-        print(f'{"Copyright:".ljust(13)}', CMod.__copyright__)
-        print(f'{"Program:".ljust(13)}', CMod.program_name)
-        print(f'{"Version:".ljust(13)}', CMod.__version__)
-        print(f'{"Dev Env:".ljust(13)}', CMod.__dev_environment__)
-        print(f'{"URL:".ljust(13)}', CMod.__project_url__)
-        print(f'{"Maintainer:".ljust(13)}', CMod.__maintainer__)
-        print(f'{"Status:".ljust(13)}', CMod.__status__)
-        print(f'{"License:".ljust(13)}', CMod.LICENSE)
-        print()
-        sys.exit(0)
-
-
-def check_boinc_tk() -> None:
-    """
-    Check whether BOINC client is running; quit app if not.
-    Called before proceeding to implement settings and begin counting,
-    and at each notice interval.
-    """
-    # Note: Any BC boinccmd will return this string (in a list)
-    #   if boinc-client is not running. BC.get_version() is used b/c it
-    #   is short. A similar function is BC.check_boinc(), but only for
-    #   Terminal output; with GUI, need to use messagebox and destroy().
-    if "can't connect to local host" in BC.get_version():
-        okay = messagebox.askokcancel(
-            title='BOINC ERROR',
-            detail='BOINC commands cannot be executed.\n'
-                   'Is the BOINC client running?\nExiting now...')
-        if okay:
-            app.update_idletasks()
-            app.after(100)
-            app.destroy()
-            sys.exit(0)
-        else:
-            app.update_idletasks()
-            app.after(100)
-            app.destroy()
-            sys.exit(0)
-
-
-def quit_gui(keybind=None) -> None:
-    """
-    Error-free and informative exit from the program.
-    Called from multiple widgets or keybindings.
-
-    :param keybind: Implicit event passed from bind().
-    """
-
-    # Write exit message to an existing log file, even if the setting
-    #   "log to file" was not selected, BUT not for additional instances.
-    time_now = datetime.now().strftime(LONG_STRFTIME)
-    quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
-    print(quit_txt)
-
-    if Path.exists(Logs.LOGFILE):
-        Files.append_txt(Logs.LOGFILE, quit_txt, False)
-    # pylint: disable=broad-except
-    try:
-        matplotlib.pyplot.close('all')
-        app.update_idletasks()
-        app.after(200)
-        app.destroy()
-    except Exception as unk:
-        print(f'An error occurred: {unk}')
-        if MY_OS == 'win':
-            sentinel.close()
-        sys.exit('Program exit with unexpected condition.')
-
-    return keybind
 
 
 # ############################ MVC Classes #############################
@@ -220,7 +126,7 @@ class CountModeler:
         Called from notice_it().
         """
 
-        self.share.status_time = datetime.now().strftime(LONG_STRFTIME)
+        self.share.status_time = datetime.now().strftime(cfg.LONG_STRFTIME)
         tasks_all = BC.get_tasks('all')
         no_new_tasks = BC.no_new_tasks()
 
@@ -338,11 +244,11 @@ class CountModeler:
                 self.share.data['cycles_remain'].set(cycles_remain)
                 # Display weekday with time of previous interval to aid the user.
                 self.share.data['time_prev_cnt'].set(
-                    datetime.now().strftime(DAY_STRFTIME))
+                    datetime.now().strftime(cfg.DAY_STRFTIME))
                 # Capture full ending time here, instead of in log_it(),
                 #   so that the logged time matches displayed time.
                 self.share.data['intvl_count_t'].set(
-                    datetime.now().strftime(LONG_STRFTIME))
+                    datetime.now().strftime(cfg.LONG_STRFTIME))
 
                 # Track when no new tasks were reported in past interval;
                 #   tic_nnt used in log_it().
@@ -376,7 +282,7 @@ class CountModeler:
                 #   prior summary rather than weekday, as above (%A %H:%M).
                 if summary_m >= 10080:
                     self.share.data['time_prev_cnt'].set(
-                        datetime.now().strftime(SHORTER_STRFTIME))
+                        datetime.now().strftime(cfg.SHORTER_STRFTIME))
                 summary_time = self.share.data['time_prev_cnt'].get()
 
                 if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
@@ -428,16 +334,16 @@ class CountModeler:
     def notice_it(self) -> None:
         """
         Notices for BOINC task state information should run on short
-        time intervals. A NOTICE_INTERVAL of 15 works well.
+        time intervals. A cfg.NOTICE_INTERVAL of 15 works well.
         Is threaded as notice_thread; started in Viewer.start_threads().
-        Calls to: check_boinc_tk(), task_states(), and log_it().
+        Calls to: Utils.check_boinc_tk(), task_states(), and log_it().
         """
         notice_cycle_number = 0
         while self.share.data['cycles_remain'].get() > 0:
-            sleep(NOTICE_INTERVAL)
+            sleep(cfg.NOTICE_INTERVAL)
             with self.thread_lock:
                 # Need to quit app if boinc-client is no longer running.
-                check_boinc_tk()
+                Utils.check_boinc_tk()
 
                 # Need to keep track of cycles for regulate Utils.beep() calls.
                 notice_cycle_number += 1
@@ -480,7 +386,7 @@ class CountModeler:
                         # Use a de-emphasized color for this non-notice status text.
                         self.share.notice_l.config(fg=self.share.row_fg)
                         self.share.note['notice_txt'].set(
-                            f'All is well (updates every {NOTICE_INTERVAL} seconds)')
+                            f'All is well (updates every {cfg.NOTICE_INTERVAL} seconds)')
 
                 if num_running == 0:
                     if proj_stalled:
@@ -588,7 +494,7 @@ class CountModeler:
 
             if called_from == 'start' and cycles_max > 0:
                 report = (
-                    f'\n>>> START GUI TASK COUNTER v.{CMod.__version__}, SETTINGS: <<<\n'
+                    f'\n>>> START GUI TASK COUNTER v.{cmod.__version__}, SETTINGS: <<<\n'
                     f'{self.share.long_time_start};'
                     ' Number of tasks in the most recent BOINC report:'
                     f' {self.task_count_start}\n'
@@ -598,7 +504,7 @@ class CountModeler:
                     f'{indent}Total tasks in queue: {num_tasks_all}\n'
                     f'{indent}Number of scheduled count intervals: {cycles_max}\n'
                     f'{indent}Counts every {interval_t}, summaries every {summary_t}.\n'
-                    f'{indent}BOINC status evaluations every {NOTICE_INTERVAL}s.\n'
+                    f'{indent}BOINC status evaluations every {cfg.NOTICE_INTERVAL}s.\n'
                     f'{indent}Project auto-update:'
                     f" {self.share.setting['proj_update'].get()}\n\n"
                     'Timed intervals beginning now...\n')
@@ -904,9 +810,9 @@ class CountViewer(tk.Frame):
             label='Backup analysis file',
             command=lambda: Files.save_as(Logs.ANALYSISFILE))
         file.add_separator()
-        file.add_command(label='Quit', command=quit_gui,
+        file.add_command(label='Quit', command=Utils.quit_gui,
                          accelerator='Ctrl+Q')
-        # ^^ Note: use Ctrl+Q for macOS also to call quit_gui; Cmd+Q still works.
+        # ^^ Note: use Ctrl+Q for macOS also to call Utils.quit_gui; Cmd+Q still works.
 
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='View', menu=view)
@@ -977,11 +883,11 @@ class CountViewer(tk.Frame):
                            highlightbackground='grey75'
                            )
         # Need to provide exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', quit_gui)
+        self.master.protocol('WM_DELETE_WINDOW', Utils.quit_gui)
 
-        self.master.bind_all('<Escape>', quit_gui)
-        self.master.bind('<Control-q>', quit_gui)
-        # ^^ Note: macOS Command-q will quit program without quit_gui info msg.
+        self.master.bind_all('<Escape>', Utils.quit_gui)
+        self.master.bind('<Control-q>', Utils.quit_gui)
+        # ^^ Note: macOS Command-q will quit program without Utils.quit_gui info msg.
         # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE, app))
@@ -997,7 +903,7 @@ class CountViewer(tk.Frame):
         #   bound to the tkinter predefined virtual event <<LineStart>>,
         #   not <<SelectAll>>, for some reason? And  Shift-Control-A
         #   will select text from cursor to <<LineStart>>.
-        if MY_OS in 'lin':
+        if chk.MY_OS in 'lin':
             def select_all():
                 app.focus_get().event_generate('<<SelectAll>>')
 
@@ -1112,10 +1018,10 @@ class CountViewer(tk.Frame):
             row=12, column=1, padx=3, sticky=tk.W)
 
         # Place cycles_remain value in same cell as its header, but shifted right.
-        if MY_OS in 'lin, dar':
+        if chk.MY_OS in 'lin, dar':
             self.cycles_remain_l.grid(
                 row=12, column=2, padx=(123, 0), sticky=tk.W)
-        elif MY_OS == 'win':
+        elif chk.MY_OS == 'win':
             self.cycles_remain_l.grid(
                 row=12, column=2, padx=(110, 0), sticky=tk.W)
 
@@ -1150,11 +1056,11 @@ class CountViewer(tk.Frame):
 
         # Need to make settings window topmost to place it above the
         #   app window.
-        if MY_OS in 'lin, win':
+        if chk.MY_OS in 'lin, win':
             self.settings_win.attributes('-topmost', True)
         # In macOS, topmost places Combobox selections BEHIND the window,
         #    but focus_force() makes it visible; must be a tkinter bug?
-        elif MY_OS == 'dar':
+        elif chk.MY_OS == 'dar':
             self.settings_win.focus_force()
 
         settings_style = ttk.Style()
@@ -1328,7 +1234,7 @@ class CountViewer(tk.Frame):
             ' is ticked. This notice also may occur under normal'
             ' conditions when only 1 or 2 tasks are queued.')
 
-        beep_interval = NOTICE_INTERVAL * 2
+        beep_interval = cfg.NOTICE_INTERVAL * 2
         beep_tip_txt = (
             f'Provide an audible notification when no tasks are running'
             ' because tasks or Project are suspended by user or because'
@@ -1342,17 +1248,17 @@ class CountViewer(tk.Frame):
         Tooltip(beep_tip_btn, beep_tip_txt)
 
         # Need OS-specific grids for proper padding and alignments:
-        if MY_OS == 'lin':
+        if chk.MY_OS == 'lin':
             intvl_tip_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
             update_tip_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(15, 0), sticky=tk.W)
-        elif MY_OS == 'win':
+        elif chk.MY_OS == 'win':
             intvl_tip_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
             update_tip_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(5, 0), sticky=tk.W)
-        elif MY_OS == 'dar':
+        elif chk.MY_OS == 'dar':
             intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
             update_tip_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
@@ -1488,9 +1394,9 @@ class CountViewer(tk.Frame):
         Establish start time.
         Called from start_when_confirmed() from 'Count now' button.
         """
-        time_start = datetime.now().strftime(SHORT_STRFTIME)
+        time_start = datetime.now().strftime(cfg.SHORT_STRFTIME)
         self.time_start_l.config(text=time_start)
-        self.share.long_time_start = datetime.now().strftime(LONG_STRFTIME)
+        self.share.long_time_start = datetime.now().strftime(cfg.LONG_STRFTIME)
 
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
@@ -1525,7 +1431,7 @@ class CountViewer(tk.Frame):
         starting_tip_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
-            f' {CMod.program_name} started. Once the first count'
+            f' {cmod.program_name} started. Once the first count'
             ' interval time has elapsed, data for that interval will'
             ' display and this button will become "Interval data".'
         )
@@ -1632,19 +1538,19 @@ class CountFyi:
                                highlightbackground='grey75')
         aboutwin.geometry(Utils.position_wrt_window(app, 30, 20))
         aboutwin.resizable(False, False)
-        aboutwin.title(f'About {CMod.program_name}')
+        aboutwin.title(f'About {cmod.program_name}')
         aboutwin.focus_set()
 
         insert_txt = (f'{__doc__}\n'
-                      f'{"Author:".ljust(13)}{CMod.__author__}\n'
-                      f'{"Credits:".ljust(13)}{CMod.__credits__}\n'
-                      f'{"Program:".ljust(13)}{CMod.program_name}\n'
-                      f'{"Version:".ljust(13)}{CMod.__version__}\n'
-                      f'{"Dev. Env.:".ljust(13)}{CMod.__dev_environment__}\n'
-                      f'{"URL:".ljust(13)}{CMod.__project_url__}\n'
-                      f'{"Maintainer:".ljust(13)}{CMod.__maintainer__}\n'
-                      f'{"Status:".ljust(13)}{CMod.__status__}\n'
-                      f'{"License:".ljust(13)}{CMod.__license__}\n'
+                      f'{"Author:".ljust(13)}{cmod.__author__}\n'
+                      f'{"Credits:".ljust(13)}{cmod.__credits__}\n'
+                      f'{"Program:".ljust(13)}{cmod.program_name}\n'
+                      f'{"Version:".ljust(13)}{cmod.__version__}\n'
+                      f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
+                      f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
+                      f'{"Maintainer:".ljust(13)}{cmod.__maintainer__}\n'
+                      f'{"Status:".ljust(13)}{cmod.__status__}\n'
+                      f'{"License:".ljust(13)}{cmod.__license__}\n'
                       )
 
         max_line = len(max(insert_txt.splitlines(), key=len))
@@ -1745,7 +1651,7 @@ class CountFyi:
             'Included with GitHub project distribution:\n\n'
             f'Example log file: (file exists: {Path.exists(Logs.EXAMPLELOG)})\n'
             f'   {Logs.EXAMPLELOG}\n\n'
-            f'Created by {CMod.program_name}:\n\n'
+            f'Created by {cmod.program_name}:\n\n'
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
             '   ...do not alter this file while program is running\n'
             f'   {Logs.LOGFILE}\n\n'
@@ -1754,7 +1660,7 @@ class CountFyi:
         )
 
         # Need to add OS-specific instance management file path.
-        if MY_OS == 'win':
+        if chk.MY_OS == 'win':
             insert_txt = (f'{insert_txt}\nSentinel file for this instance'
                           f' (is deleted on exit)\n'
                           f'   {sentinel.name}\n')
@@ -1803,7 +1709,7 @@ class CountFyi:
         - At start, '# tasks reported' and 'Interval time' are from
                 the most recent hourly BOINC report.\n
         - Number of tasks in queue and Notices update every"""
-                      f' {NOTICE_INTERVAL} seconds.\n'
+                      f' {cfg.NOTICE_INTERVAL} seconds.\n'
                       """
         - Displayed countdown clock time is approximate.\n
         - Counts and Notices histories are in the log file.\n
@@ -1824,9 +1730,9 @@ class CountFyi:
 
         # OS-specific Text widths were empirically determined for TkTextFont.
         os_width = 0
-        if MY_OS in 'lin, win':
+        if chk.MY_OS in 'lin, win':
             os_width = 64
-        elif MY_OS == 'dar':
+        elif chk.MY_OS == 'dar':
             os_width = 56
 
         infotxt = tk.Text(infowin, font='TkTextFont',
@@ -1859,13 +1765,13 @@ class CountController(tk.Tk):
         #    but not get minimized enough to exclude notices row.
         # Main window sizes need to be OS-specific b/c of different
         #    default OS text font widths.
-        if MY_OS == 'lin':
+        if chk.MY_OS == 'lin':
             self.minsize(594, 370)
             self.maxsize(780, 400)
-        elif MY_OS == 'win':
+        elif chk.MY_OS == 'win':
             self.minsize(544, 380)
             self.maxsize(720, 400)
-        elif MY_OS == 'dar':
+        elif chk.MY_OS == 'dar':
             self.minsize(615, 390)
             self.maxsize(780, 425)
 
@@ -1928,7 +1834,7 @@ class CountController(tk.Tk):
 
 
 if __name__ == "__main__":
-    parse_args()
+    Utils.manage_args()
 
     # Need to set up conditions to control multiple instances.
     # Must not allow multiple instances to write to the same log file,
@@ -1937,14 +1843,14 @@ if __name__ == "__main__":
     #   for stand-alone and Terminal executions.
     # Multiple instances of Terminal executions can run when from
     #   different directories.
-    exit_msg = (f'\nNOTICE: {CMod.program_name} is already running from'
+    exit_msg = (f'\nNOTICE: {cmod.program_name} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-        exit_msg = (f'\nNOTICE: {CMod.program_name}'
+        exit_msg = (f'\nNOTICE: {cmod.program_name}'
                     ' is already running. Exiting...\n')
 
-    if MY_OS == 'win':
+    if chk.MY_OS == 'win':
 
         # Can restrict all executions to only one instance if
         #   "with sentinel:" is replaced with these mutex module calls.
@@ -1960,7 +1866,7 @@ if __name__ == "__main__":
 
         with sentinel:
             try:
-                print(f'{CMod.program_name} now running...')
+                print(f'{cmod.program_name} now running...')
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
 
@@ -1972,7 +1878,7 @@ if __name__ == "__main__":
                 app.mainloop()
 
             except KeyboardInterrupt:
-                _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+                _msg = (f"\n{datetime.now().strftime(cfg.LONG_STRFTIME)};"
                         " *** Keyboard interrupt by user ***\n"
                         "This instance's temporary file,\n"
                         f"{sentinel.name}\nhas been deleted.\n")
@@ -1986,7 +1892,7 @@ if __name__ == "__main__":
 
     else:
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
-                                 f'.{CMod.program_name}_lockfile')
+                                 f'.{cmod.program_name}_lockfile')
 
         # pylint: disable=consider-using-with
         lockfile = open(lockfile_fullpath, 'w')
@@ -2001,12 +1907,12 @@ if __name__ == "__main__":
                 file=Utils.absolute_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
 
-            print(f'{CMod.program_name} now running...')
+            print(f'{cmod.program_name} now running...')
 
             app.mainloop()
 
         except KeyboardInterrupt:
-            _msg = (f"\n{datetime.now().strftime(LONG_STRFTIME)};"
+            _msg = (f"\n{datetime.now().strftime(cfg.LONG_STRFTIME)};"
                     " *** Keyboard interrupt by user ***\n")
             print(_msg)
             logging.info(msg=_msg)

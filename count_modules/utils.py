@@ -1,45 +1,42 @@
 #!/usr/bin/env python3
 """
 General utility functions in gcount-tasks.
+Class: Tooltip - Bind mouse hover events to create a tooltip.
 Functions:
-    absolute_path_to() - Get absolute path to files and directories.
-    beep() - Play beep on speakers.
-    boinccmd_not_found() - Display message for a bad boinccmd path; use
-        with standalone app.
-    enter_only_digits() - Constrain tk.Entry() values to digits.
-    position_wrt_window() - Set coordinates of a tk.Toplevel relative
+    absolute_path_to - Get absolute path to files and directories.
+    beep - Play beep on speakers.
+    boinccmd_not_found - Display message for a bad boinccmd path; use
+        with standalone __main__.app.
+    check_boinc_tk - Check whether BOINC client is running, quit if not.
+    enter_only_digits - Constrain tk.Entry() values to digits.
+    position_wrt_window - Set coordinates of a tk.Toplevel relative
         to another window position.
-
-    Copyright (C) 2020-2021  C. Echt
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/.
+    manage_args - Handles command line arguments.
+    quit_gui - Error-free and informative exit from the program.
+    verify - Generate a hash value for to verify distribution
+        text file content.
 """
-__author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2020-2021 C. Echt'
-__license__ = 'GNU General Public License'
-__module_name__ = 'utils.py'
-__module_ver__ = '0.1.13 '
-__dev_environment__ = "Python 3.8 - 3.9"
-__project_url__ = 'https://github.com/csecht/CountBOINCtasks'
-__maintainer__ = 'cecht'
-__status__ = 'Development Status :: 4 - Beta'
+# Copyright (C) 2021 C. Echt under GNU General Public License'
 
+import argparse
 import sys
 import tkinter as tk
+from datetime import datetime
+import matplotlib.pyplot
 from tkinter import messagebox
 from time import sleep
 from pathlib import Path
+
+import __main__
+
+import count_modules as cmod
+from count_modules import (boinc_commands,
+                           config_constants as cfg,
+                           files as Files,
+                           platform_check as chk,
+                           )
+from count_modules.logs import Logs
+
 
 if sys.platform[:3] == 'win':
     import winsound
@@ -51,10 +48,10 @@ class Tooltip:
     text for the given widget.
 
     USAGE: Tooltip(widget, text, state, wait_time, wrap_length)
-        widget: tk.widget for which the tootltip is to appear.
+        widget: tk.widget for which the tootltip is to __main__.appear.
         text: the widget's tip; use '' for *state* of 'disabled'.
         state: 'normal' (default) or 'disabled'.
-        wait_time (ms): delay of tip appearance (default is 600),
+        wait_time (ms): delay of tip __main__.appearance (default is 600),
         wrap_length (pixels): of tip window width (default is 250).
 
         Create a standard tooltip: utils.Tooltip(mywidget, mytext)
@@ -312,13 +309,13 @@ def beep(count: int) -> None:
 def boinccmd_not_found(default_path: str) -> None:
     """
     Display a popup message for a bad boinccmd path for a
-    standalone app; exits program once user acknowledges.
+    standalone __main__.app; exits program once user acknowledges.
 
     :param default_path: The expected path for the boinccmd command.
     """
     okay = messagebox.askokcancel(
         title='BOINC ERROR: bad cmd path',
-        detail='The application boinccmd is not in its expected default path:\n'
+        detail='The __main__.application boinccmd is not in its expected default path:\n'
                f'{default_path}\n'
                'Edit the configuration file, countCFG.txt,\n'
                'in the CountBOINCtasks-master folder,\n'
@@ -327,6 +324,33 @@ def boinccmd_not_found(default_path: str) -> None:
         sys.exit(0)
     else:
         sys.exit(0)
+
+
+def check_boinc_tk() -> None:
+    """
+    Check whether BOINC client is running; quit __main__.app if not.
+    Called before proceeding to implement settings and begin counting,
+    and at each notice interval.
+    """
+    # Note: Any BC boinccmd will return this string (in a list)
+    #   if boinc-client is not running. BC.get_version() is used b/c it
+    #   is short. A similar function is BC.check_boinc(), but only for
+    #   Terminal output; with GUI, need to use messagebox and destroy().
+    if "can't connect to local host" in boinc_commands.get_version():
+        okay = messagebox.askokcancel(
+            title='BOINC ERROR',
+            detail='BOINC commands cannot be executed.\n'
+                   'Is the BOINC client running?\nExiting now...')
+        if okay:
+            __main__.app.update_idletasks()
+            __main__.app.after(100)
+            __main__.app.destroy()
+            sys.exit(0)
+        else:
+            __main__.app.update_idletasks()
+            __main__.app.after(100)
+            __main__.app.destroy()
+            sys.exit(0)
 
 
 def enter_only_digits(entry, action_type) -> bool:
@@ -358,7 +382,7 @@ def position_wrt_window(window: tk,
                         offset_x: int = 0,
                         offset_y: int = 0) -> str:
     """
-    Get screen position of a tkinter Toplevel object and apply optional
+    Get screen position of a tkinter Toplevel object and __main__.apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
     with respect to the parent window.
     Example use with the geometry() method:
@@ -366,7 +390,7 @@ def position_wrt_window(window: tk,
     When used with get_toplevel(), it is expected that all the parent's
     Toplevel Button() widgets are configured for 'takefocus=False'.
 
-    :param window: The tk window object (e.g., 'root', 'app',
+    :param window: The tk window object (e.g., 'root', '__main__.app',
                    '.!toplevel2') of mainloop for which to get its
                    screen pixel coordinates.
     :param offset_x: optional pixels to add/subtract to x coordinate of
@@ -379,6 +403,62 @@ def position_wrt_window(window: tk,
     coord_y = window.winfo_y() + offset_y
 
     return f'+{coord_x}+{coord_y}'
+
+
+def manage_args() -> None:
+    """Allow handling of common command line arguments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--about',
+                        help='Provides description, version, GNU license',
+                        action='store_true',
+                        default=False)
+    args = parser.parse_args()
+    if args.about:
+        print(__doc__)
+        print(f'{"Author:".ljust(13)}', cmod.__author__)
+        print(f'{"Credits:".ljust(13)}', *[f'\n      {item}' for item in cmod.__credits__])
+        print(f'{"Copyright:".ljust(13)}', cmod.__copyright__)
+        print(f'{"Program:".ljust(13)}', cmod.program_name)
+        print(f'{"Version:".ljust(13)}', cmod.__version__)
+        print(f'{"Dev Env:".ljust(13)}', cmod.__dev_environment__)
+        print(f'{"URL:".ljust(13)}', cmod.__project_url__)
+        print(f'{"Maintainer:".ljust(13)}', cmod.__maintainer__)
+        print(f'{"Status:".ljust(13)}', cmod.__status__)
+        print(f'{"License:".ljust(13)}', cmod.LICENSE)
+        print()
+        sys.exit(0)
+
+
+def quit_gui(keybind=None) -> None:
+    """
+    Error-free and informative exit from the program.
+    Called from multiple widgets or keybindings.
+
+    :param keybind: Implicit event passed from bind().
+    """
+
+    # Write exit message to an existing log file, even if the setting
+    #   "log to file" was not selected, BUT not for additional instances.
+    time_now = datetime.now().strftime(cfg.LONG_STRFTIME)
+    quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
+    print(quit_txt)
+
+    if Path.exists(Logs.LOGFILE):
+        Files.append_txt(Logs.LOGFILE, quit_txt, False)
+    # pylint: disable=broad-except
+    try:
+        matplotlib.pyplot.close('all')
+        __main__.app.update_idletasks()
+        __main__.app.after(200)
+        __main__.app.destroy()
+    except Exception as unk:
+        print(f'An error occurred: {unk}')
+        if chk.MY_OS == 'win':
+            __main__.sentinel.close()
+        sys.exit('Program exit with unexpected condition.')
+
+    return keybind
 
 
 def verify(text: str) -> int:
@@ -396,24 +476,3 @@ def verify(text: str) -> int:
     for ch in text:
         my_hash = (my_hash * 281 ^ ord(ch) * 997) & 0xFFFFFFFF
     return my_hash
-
-
-def about() -> None:
-    """
-    Print basic information about this module.
-    """
-    print(__doc__)
-    print(f'{"Author:".ljust(11)}', __author__)
-    print(f'{"Copyright:".ljust(11)}', __copyright__)
-    print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __module_name__)
-    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
-    print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
-    print(f'{"URL:".ljust(11)}', __project_url__)
-    print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
-    print(f'{"Status:".ljust(11)}', __status__)
-    sys.exit(0)
-
-
-if __name__ == '__main__':
-    about()
