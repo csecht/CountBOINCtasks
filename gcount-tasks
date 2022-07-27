@@ -60,11 +60,8 @@ class CountModeler:
     Communication with the Viewer Class for data display occurs via
     the 'share' parameter.
     """
-    # Need to have these vars as Class attributes, so they will not be
-    # reset when interval_data() is called.
-    # ttimes_smry would be fine in __init__, but is here for clarity.
-    ttimes_used = set()
-    ttimes_smry = set()
+
+    __slots__ = ('share', 'thread_lock', 'task_count_start', 'task_count_new')
 
     def __init__(self, share):
         self.share = share
@@ -90,11 +87,13 @@ class CountModeler:
         self.share.setting['do_log'].set(True)
         self.share.setting['proj_update'].set(False)
 
-    def start_data(self) -> None:
+    def start_data(self) -> set:
         """
         Gather initial task data and times; set data dictionary
         control variables. Log data to file if so optioned.
         Called from start_when_confirmed().
+
+        :return: The set of starting task times.
         """
         # As with task names, task times as sec.microsec are unique.
         #   In the future, may want to inspect task names with
@@ -102,10 +101,6 @@ class CountModeler:
         ttimes_start = BC.get_reported('elapsed time')
         self.share.data['task_count'].set(len(ttimes_start))
         self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
-
-        # Begin the set of used/old tasks to exclude from new tasks;
-        #   used in interval_data() to track tasks across intervals.
-        self.ttimes_used.update(ttimes_start)
 
         startdict = T.boinc_ttimes_stats(ttimes_start)
         self.share.data['tt_avg'].set(startdict['tt_avg'])
@@ -119,6 +114,11 @@ class CountModeler:
         if self.share.setting['do_log'].get():
             self.log_it('start')
 
+        # Begin keeping track of the set of used/old tasks to exclude
+        #   from new tasks; pass to in interval_data() to track tasks
+        #   across intervals.
+        return set(ttimes_start)
+
     def task_status(self) -> None:
         """
         Query boinc-client for status of tasks queued, running, and
@@ -126,25 +126,24 @@ class CountModeler:
         Called from notice_it().
         """
 
-        self.share.status_time = datetime.now().strftime(cfg.LONG_STRFTIME)
+        self.share.status_time = datetime.now().strftime(cfg.LONG_FMT)
         tasks_all = BC.get_tasks('all')
         no_new_tasks = BC.no_new_tasks()
 
-        # Need the literal task data tags as found in boinccmd stdout;
+        # Need the literal task data tag as found in boinccmd stdout;
         #   the format is same as tag_str in BC.get_tasks().
-        # Use tuple index to populate the list expressions instead of
-        #   calling BC.get_tasks() for each tag.
-        tags = ('   name: ',
-                '   active_task_state: ',
-                '   state: ',
-                '   scheduler state: ')
-        num_tasks_all = len([elem for elem in tasks_all if tags[0] in elem])
-        active_task_states = [elem.replace(tags[1], '') for elem in tasks_all
-                              if tags[1] in elem]
-        task_states = [elem.replace(tags[2], '') for elem in tasks_all
-                       if tags[2] in elem]
-        scheduler_states = [elem.replace(tags[3], '') for elem in tasks_all
-                            if tags[3] in elem]
+        tag = {'name': '   name: ',
+               'active': '   active_task_state: ',
+               'state': '   state: ',
+               'sched state': '   scheduler state: '}
+
+        num_tasks_all = len([elem for elem in tasks_all if tag['name'] in elem])
+        active_task_states = [elem.replace(tag['active'], '') for elem in tasks_all
+                              if tag['active'] in elem]
+        task_states = [elem.replace(tag['state'], '') for elem in tasks_all
+                       if tag['state'] in elem]
+        scheduler_states = [elem.replace(tag['sched state'], '') for elem in tasks_all
+                            if tag['sched state'] in elem]
 
         # When communication to server is stalled, all tasks will be
         #  "Ready to report" with a state of 'uploaded', so a forced
@@ -181,6 +180,8 @@ class CountModeler:
         Is threaded as interval_thread; started in Viewer.start_threads()
         Calls to: get_minutes(), log_it().
         """
+
+        ttimes_used = self.start_data() # The set of starting task times.
         ttimes_new = set()
         ttimes_smry = set()
         cycles_max = self.share.setting['cycles_max'].get()
@@ -227,13 +228,13 @@ class CountModeler:
             #  For cycle[0], ttimes_used is starting tasks from start_data()
             #    and ttimes_new is empty.
             with self.thread_lock:
-                self.ttimes_used.update(ttimes_new)
+                ttimes_used.update(ttimes_new)
                 ttimes_reported = set(BC.get_reported('elapsed time'))
 
                 # Need to reset prior ttimes_new, then repopulate it with only
                 #   newly reported tasks.
                 ttimes_new.clear()
-                ttimes_new = ttimes_reported - self.ttimes_used
+                ttimes_new = ttimes_reported - ttimes_used
 
                 task_count_new = len(ttimes_new)
                 self.share.data['task_count'].set(task_count_new)
@@ -244,11 +245,11 @@ class CountModeler:
                 self.share.data['cycles_remain'].set(cycles_remain)
                 # Display weekday with time of previous interval to aid the user.
                 self.share.data['time_prev_cnt'].set(
-                    datetime.now().strftime(cfg.DAY_STRFTIME))
+                    datetime.now().strftime(cfg.DAY_FMT))
                 # Capture full ending time here, instead of in log_it(),
                 #   so that the logged time matches displayed time.
                 self.share.data['intvl_count_t'].set(
-                    datetime.now().strftime(cfg.LONG_STRFTIME))
+                    datetime.now().strftime(cfg.LONG_FMT))
 
                 # Track when no new tasks were reported in past interval;
                 #   tic_nnt used in log_it().
@@ -282,7 +283,7 @@ class CountModeler:
                 #   prior summary rather than weekday, as above (%A %H:%M).
                 if summary_m >= 10080:
                     self.share.data['time_prev_cnt'].set(
-                        datetime.now().strftime(cfg.SHORTER_STRFTIME))
+                        datetime.now().strftime(cfg.SHORTER_FMT))
                 summary_time = self.share.data['time_prev_cnt'].get()
 
                 if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
@@ -612,6 +613,44 @@ class CountViewer(tk.Frame):
     with the Modeler Class for data manipulation occurs via the 'share'
     parameter.
     """
+
+    __slots__ = (
+        'beep_choice',
+        'countnow_button',
+        'cycles_max_entry',
+        'cycles_max_l',
+        'cycles_remain_l',
+        'data_bg',
+        'dataframe',
+        'deemphasize',
+        'emphasize',
+        'info_button_img',
+        'interval_t_l',
+        'log_choice',
+        'master_bg',
+        'menubar',
+        'num_tasks_all_l',
+        'settings_win',
+        'share',
+        'summary_t_l',
+        'sumry_value_entry',
+        'task_count_l',
+        'task_count_sumry_l',
+        'time_next_cnt_l',
+        'time_prev_cnt_l',
+        'time_prev_sumry_l',
+        'time_start_l',
+        'tt_avg_l',
+        'tt_range_l',
+        'tt_sd_l',
+        'tt_total_l',
+        'ttmean_sumry_l',
+        'ttrange_sumry_l',
+        'ttsd_sumry_l',
+        'ttsum_sumry_l',
+        'update_choice',
+        'view_button_style'
+    )
 
     def __init__(self, share):
         super().__init__()
@@ -1394,9 +1433,9 @@ class CountViewer(tk.Frame):
         Establish start time.
         Called from start_when_confirmed() from 'Count now' button.
         """
-        time_start = datetime.now().strftime(cfg.SHORT_STRFTIME)
+        time_start = datetime.now().strftime(cfg.SHORT_FMT)
         self.time_start_l.config(text=time_start)
-        self.share.long_time_start = datetime.now().strftime(cfg.LONG_STRFTIME)
+        self.share.long_time_start = datetime.now().strftime(cfg.LONG_FMT)
 
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
@@ -1878,7 +1917,7 @@ if __name__ == "__main__":
                 app.mainloop()
 
             except KeyboardInterrupt:
-                _msg = (f"\n{datetime.now().strftime(cfg.LONG_STRFTIME)};"
+                _msg = (f"\n{datetime.now().strftime(cfg.LONG_FMT)};"
                         " *** Keyboard interrupt by user ***\n"
                         "This instance's temporary file,\n"
                         f"{sentinel.name}\nhas been deleted.\n")
@@ -1912,7 +1951,7 @@ if __name__ == "__main__":
             app.mainloop()
 
         except KeyboardInterrupt:
-            _msg = (f"\n{datetime.now().strftime(cfg.LONG_STRFTIME)};"
+            _msg = (f"\n{datetime.now().strftime(cfg.LONG_FMT)};"
                     " *** Keyboard interrupt by user ***\n")
             print(_msg)
             logging.info(msg=_msg)
