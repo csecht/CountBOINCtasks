@@ -3,11 +3,12 @@
 """
 Functions to determine whether another program instance is running.
 
-Class OneWinstance(): Windows only; uses CreateMutex.
-program_name(): sets the program name depending on app
-exit_popup(): Create a toplevel window to announce program exit.
-lock_or_exit(): Linux and macOS only; uses fcntl.lockf()
-sentinel_or_exit(): Cross-platform; uses Temporary sentinel files.
+Class OneWinstance: Windows only; uses CreateMutex.
+Functions:
+program_name: sets the program name depending on app
+exit_popup: Create a toplevel window to announce program exit.
+lock_or_exit: Linux and macOS only; uses fcntl.lockf()
+sentinel_or_exit: Cross-platform; uses Temporary sentinel files.
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 

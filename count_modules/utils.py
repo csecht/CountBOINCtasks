@@ -440,7 +440,7 @@ def quit_gui(keybind=None) -> None:
 
     # Write exit message to an existing log file, even if the setting
     #   "log to file" was not selected, BUT not for additional instances.
-    time_now = datetime.now().strftime(cfg.LONG_STRFTIME)
+    time_now = datetime.now().strftime(cfg.LONG_FMT)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
 

@@ -2,10 +2,10 @@
 """
 Basic tkinter file handling functions.
 Functions:
-    append_txt() - Append text to the destination file.
-    save_as() - Copy source file to destination of choice.
-    erase() - Delete file content and the displayed window text.
-    update() - Replace text in window with current file content.
+    append_txt - Append text to the destination file.
+    save_as - Copy source file to destination of choice.
+    erase - Delete file content and the displayed window text.
+    update - Replace text in window with current file content.
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 

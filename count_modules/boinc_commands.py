@@ -3,18 +3,18 @@
 Executes BOINC commands and parsing task data through boinccmd.
 Not all boinc-client commands are supported.
 Functions:
-set_boinc_path() - Return OS-specific path for BOINC's boinccmd binary.
-run_boinc() - Execute a boinc-client command line; returns output.
-get_version() - Get version number of boinc client; return list of one.
-check_boinc() - Check whether BOINC client is running; exit if not.
-get_reported() - Get data for reported boinc-client tasks.
-get_tasks() - Get data for current boinc-client tasks.
-get_runningtasks() - Get names of running boinc-client tasks for a
+set_boinc_path - Return OS-specific path for BOINC's boinccmd binary.
+run_boinc - Execute a boinc-client command line; returns output.
+get_version - Get version number of boinc client; return list of one.
+check_boinc - Check whether BOINC client is running; exit if not.
+get_reported - Get data for reported boinc-client tasks.
+get_tasks - Get data for current boinc-client tasks.
+get_runningtasks - Get names of running boinc-client tasks for a
     specified app.
-project_url() - Return dictionary of BOINC project NAMES and server urls.
-get_project_url() - Return current local host boinc-client Project URLs.
-project_action() - Execute a boinc-client action for a specified Project.
-no_new_tasks() - Get Project status for "Don't request more work".
+project_url - Return dictionary of BOINC project NAMES and server urls.
+get_project_url - Return current local host boinc-client Project URLs.
+project_action - Execute a boinc-client action for a specified Project.
+no_new_tasks - Get Project status for "Don't request more work".
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 

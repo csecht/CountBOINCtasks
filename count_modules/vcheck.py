@@ -2,8 +2,8 @@
 """
 Simple check of current Python version.
 Functions:
-minversion() - Exit program if not minimum required version.
-maxversion() - Warn if newer than tested versions.
+minversion - Exit program if not minimum required version.
+maxversion - Warn if newer than tested versions.
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 

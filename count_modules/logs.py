@@ -1,5 +1,10 @@
 """
 Methods to analyze and view BOINC task data logged to file.
+
+Class Logs, functions: analyze_logfile, plot_data, plot_data_toggle,
+                       plot_display, show_analysis, uptime
+Functions: close_plots
+
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 
@@ -27,6 +32,7 @@ except (ImportError, ModuleNotFoundError) as err:
           f'Error msg: {err}')
     CAN_PLOT = False
 
+import count_modules as CMod
 from count_modules import binds, files, instances, times, utils
 
 Binds = binds
@@ -144,14 +150,14 @@ class Logs:
                 if texthash != 4006408145:  # As of 06:41 4 June 2022.
                     msg = (f'Content of {cls.EXAMPLELOG} has changed, so'
                            ' the test may not work. If not working, reinstall'
-                           f' the example file from {__project_url__}')
+                           f' the example file from {CMod.__project_url__}')
                     messagebox.showinfo(title='EXAMPLE LOG DATA MAY BE CORRUPT',
                                         detail=msg)
                 do_plot = True
             except FileNotFoundError:
                 info = (f'Missing example file:\n{cls.EXAMPLELOG}\n'
                         'Was the log file deleted, moved or renamed?\n'
-                        f'Try reinstalling it from {__project_url__}.')
+                        f'Try reinstalling it from {CMod.__project_url__}.')
                 messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
         # Regex is based on this structure used in CountModeler.log_it():
@@ -704,7 +710,7 @@ class Logs:
         # Need to calc uptime hours for all start-to-finish segments that
         #   have interval task counts.
         # Datetimes that begin each log entry are formatted as,
-        #    '2021-Dec-05 16:33:49; ...'; LONG_STRFTIME is the time
+        #    '2021-Dec-05 16:33:49; ...'; LONG_FMT is the time
         #     format used in the log file.
         for line in logtext.split('\n'):
             if 'most recent BOINC report' in line:

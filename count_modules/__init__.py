@@ -1,18 +1,19 @@
-from . import vcheck, instances, boinc_commands, platform_check
+"""
+Constants used in --about calls and other modules; program_name is used
+throughout the main script.
 
-"""
-Constant variables used in --about calls.
-program_name used throughout gcount_tasks.
 Program exits here if Python interpreter is not minimum required version.
-Confirm that the boinccmd path exists; option to modify if not.
+Confirm that the boinccmd path exists; option to modify path if not.
 """
+
+from . import vcheck, instances, boinc_commands, platform_check
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021-2022 C.S. Echt'
 __license__ = 'GNU General Public License'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - count-tasks: testing, debug']
-__version__ = '0.11.3'
+__version__ = '0.11.4'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'

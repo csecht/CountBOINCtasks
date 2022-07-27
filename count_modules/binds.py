@@ -2,8 +2,8 @@
 """
 Functions to set tkinter mouse click and keyboard bindings.
 Functions:
-    click() - Mouse button bindings for a named object.
-    keyboard() - Bind a key to a function for the specified toplevel.
+    click - Mouse button bindings for a named object.
+    keyboard - Bind a key to a function for the specified toplevel.
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 

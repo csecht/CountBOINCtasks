@@ -2,12 +2,12 @@
 """
 Functions to convert, format, and analyse input time values.
 Functions:
-    string_to_min() - Convert a time string to minutes.
-    str2dt() - Convert formatted date string to datetime.strftime()
+    string_to_min - Convert a time string to minutes.
+    str2dt - Convert formatted date string to datetime.strftime()
                      object.
-    duration() - Difference between datetime.strftime() objects.
-    sec_to_format() - Convert seconds to a specified time format.
-    logtimes_stat() - Calculate statistical metric of a group of times.
+    duration - Difference between datetime.strftime() objects.
+    sec_to_format - Convert seconds to a specified time format.
+    logtimes_stat - Calculate statistical metric of a group of times.
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 
