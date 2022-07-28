@@ -2,10 +2,10 @@
 """
 Basic tkinter file handling functions.
 Functions:
-    append_txt - Append text to the destination file.
+    append_txt - Append text_obj to the destination file.
     save_as - Copy source file to destination of choice.
-    erase - Delete file content and the displayed window text.
-    update - Replace text in window with current file content.
+    erase - Delete file content and the displayed window text_obj.
+    update - Replace text_obj in window with current file content.
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 
@@ -20,7 +20,7 @@ from tkinter import messagebox, filedialog
 
 def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
     """
-    Append text to the destination file.
+    Append text_obj to the destination file.
 
     :param dest: Path object of destination file.
     :param savetxt: Text to be written to dest.
@@ -107,14 +107,14 @@ def save_as(source: Path, parent=None) -> None:
         print(f'Log file backup: Permission to open {source} denied.')
 
 
-def erase(file: Path, tktext: tk.Text, parent=None) -> None:
+def erase(text_obj: tk.Text, file: Path, parent=None) -> None:
     """
     Delete file contents and its displayed window text.
 
+    :param text_obj: A tkinter.ScrolledText or tkinter.Text insert.
     :param file: Path object of file from which to erase content.
-    :param tktext: A tkinter.ScrolledText or tkinter.Text insert.
     :param parent: The parent window over which to place messagebox,
-                   usually the *tktext* Toplevel. Defaults to root
+                   usually the *text_obj* Toplevel. Defaults to root
                    as parent window.
     """
 
@@ -143,7 +143,7 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
         try:
             with open(file, 'w') as _f:
                 _f.close()
-            tktext.delete('1.0', tk.END)
+            text_obj.delete('1.0', tk.END)
             if parent:
                 parent.focus_set()
         except PermissionError:
@@ -153,12 +153,12 @@ def erase(file: Path, tktext: tk.Text, parent=None) -> None:
                                  detail=info, parent=parent)
 
 
-def update(tktext: tk.Text, file: Path, parent=None) -> None:
+def update(text_obj: tk.Text, file: Path, parent=None) -> None:
     """
     Replace text in open log window with (new) log file content.
 
-    :param tktext: A tkinter.scrolledtext.ScrolledText or
-           tkinter.Text insert.
+    :param text_obj: A tkinter.scrolledtext.ScrolledText or
+           tkinter.Text to insert.
     :param file: Path object of file from which to replace content.
     :param parent: The parent window over which to place messagebox;
            usually a Toplevel(). Defaults to app window.
@@ -171,10 +171,10 @@ def update(tktext: tk.Text, file: Path, parent=None) -> None:
                              detail=msg, parent=parent)
         return
 
-    tktext.delete(tk.INSERT, tk.END)
-    tktext.insert(tk.INSERT, Path(file).read_text())
-    tktext.see(tk.END)
-    tktext.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+    text_obj.delete(tk.INSERT, tk.END)
+    text_obj.insert(tk.INSERT, Path(file).read_text())
+    text_obj.see(tk.END)
+    text_obj.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
     # Need to remove focus from calling Button so can execute any
     #   immediately following rt-click commands in parent. Use as a
     #   precaution in case Button is not configured takefocus=False.

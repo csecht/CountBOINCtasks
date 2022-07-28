@@ -33,12 +33,11 @@ except (ImportError, ModuleNotFoundError) as err:
     CAN_PLOT = False
 
 import count_modules as CMod
-from count_modules import binds, files, instances, times, utils
-
-Binds = binds
-Files = files
-T = times
-Utils = utils
+from count_modules import (binds as Binds,
+                           files as Files,
+                           instances,
+                           times as T,
+                           utils as Utils)
 
 __program_name__ = instances.program_name()
 
@@ -146,7 +145,7 @@ class Logs:
         if cls.do_test:
             try:
                 logtext = Path(cls.EXAMPLELOG).read_text(encoding='utf-8')
-                texthash = utils.verify(logtext)
+                texthash = Utils.verify(logtext)
                 if texthash != 4006408145:  # As of 06:41 4 June 2022.
                     msg = (f'Content of {cls.EXAMPLELOG} has changed, so'
                            ' the test may not work. If not working, reinstall'
@@ -849,7 +848,7 @@ class Logs:
             filewin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
             ttk.Button(
                 filewin, text='Erase',
-                command=lambda: Files.erase(cls.ANALYSISFILE, filetext, filewin),
+                command=lambda: Files.erase(filetext, cls.ANALYSISFILE, filewin),
                 takefocus=False).pack(padx=4)
             filewin.bind('<Shift-Control-L>',
                          lambda _: cls.show_analysis(tk_obj))
