@@ -415,7 +415,7 @@ def manage_args() -> None:
                         default=False)
     args = parser.parse_args()
     if args.about:
-        print(__doc__)
+        print(__main__.__doc__)
         print(f'{"Author:".ljust(13)}', cmod.__author__)
         print(f'{"Credits:".ljust(13)}', *[f'\n      {item}' for item in cmod.__credits__])
         print(f'{"Copyright:".ljust(13)}', cmod.__copyright__)
