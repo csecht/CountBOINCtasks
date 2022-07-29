@@ -1293,10 +1293,10 @@ class CountViewer(tk.Frame):
             update_tip_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(15, 0), sticky=tk.W)
         elif chk.MY_OS == 'win':
-            intvl_tip_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
-            cycles_tip_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
-            update_tip_btn.grid(row=4, column=0, padx=(5, 0), sticky=tk.W)
-            beep_tip_btn.grid(row=5, column=0, padx=(5, 0), sticky=tk.W)
+            intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
+            cycles_tip_btn.grid(row=2, column=0, padx=(110, 0), sticky=tk.W)
+            update_tip_btn.grid(row=4, column=0, padx=(35, 0), sticky=tk.W)
+            beep_tip_btn.grid(row=5, column=0, padx=(35, 0), sticky=tk.W)
         elif chk.MY_OS == 'dar':
             intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
@@ -1579,6 +1579,8 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title(f'About {cmod.program_name}')
         aboutwin.focus_set()
+        print("The width of Tkinter window:", app.winfo_width())
+        print("The height of Tkinter window:", app.winfo_height())
 
         insert_txt = (f'{__doc__}\n'
                       f'{"Author:".ljust(13)}{cmod.__author__}\n'
@@ -1808,8 +1810,8 @@ class CountController(tk.Tk):
             self.minsize(594, 370)
             self.maxsize(780, 400)
         elif chk.MY_OS == 'win':
-            self.minsize(544, 380)
-            self.maxsize(720, 400)
+            self.minsize(600, 590)
+            self.maxsize(962, 673)
         elif chk.MY_OS == 'dar':
             self.minsize(615, 390)
             self.maxsize(780, 425)
