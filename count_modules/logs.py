@@ -569,10 +569,7 @@ class Logs:
         # Need to remove the subplots navigation button.
         # Source: https://stackoverflow.com/questions/59155873/
         #   how-to-remove-toolbar-button-from-navigationtoolbar2tk-figurecanvastkagg
-        if MY_OS in 'lin, dar':
-            toolbar.children['!button4'].pack_forget()
-        else:  # is Windows
-            toolbar.children['!button6'].pack_forget()
+        toolbar.children['!button4'].pack_forget()
 
         def toggle():
             cls.plot_data_toggle(count_data_btn, fig, ax2, tdates, tcounts)
