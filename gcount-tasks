@@ -1579,8 +1579,6 @@ class CountFyi:
         aboutwin.resizable(False, False)
         aboutwin.title(f'About {cmod.program_name}')
         aboutwin.focus_set()
-        print("The width of Tkinter window:", app.winfo_width())
-        print("The height of Tkinter window:", app.winfo_height())
 
         insert_txt = (f'{__doc__}\n'
                       f'{"Author:".ljust(13)}{cmod.__author__}\n'
