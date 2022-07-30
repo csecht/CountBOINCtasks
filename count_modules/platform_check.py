@@ -19,11 +19,11 @@ def check_platform():
 
     # Need to account for scaling in Windows10 and earlier releases.
     if MY_OS == 'win':
+        from ctypes import windll
+
         if platform.release() < '10':
-            import ctypes
-            ctypes.windll.user32.SetProcessDPIAware()
+            windll.user32.SetProcessDPIAware()
         else:
-            from ctypes import windll
             windll.shcore.SetProcessDpiAwareness(1)
 
 

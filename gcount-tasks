@@ -86,6 +86,7 @@ class CountModeler:
         self.share.setting['cycles_max'].set(1008)
         self.share.setting['do_log'].set(True)
         self.share.setting['proj_update'].set(False)
+        self.share.setting['sound_beep'].set(False)
 
     def start_data(self) -> set:
         """
