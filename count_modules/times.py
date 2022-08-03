@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """
 Functions to convert, format, and analyse input time values.
 Functions:
     string_to_min - Convert a time string to minutes.
     str2dt - Convert formatted date string to datetime.strftime()
-                     object.
+             object.
     duration - Difference between datetime.strftime() objects.
     sec_to_format - Convert seconds to a specified time format.
     logtimes_stat - Calculate statistical metric of a group of times.
@@ -12,7 +11,6 @@ Functions:
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 
 import statistics
-import sys
 from datetime import datetime, timedelta
 from typing import Union
 
@@ -228,23 +226,3 @@ def boinc_ttimes_stats(times_sec: iter) -> dict:
         'tt_min': low,
         'tt_max': high}
 
-
-def about() -> None:
-    """
-    Print basic information about this module.
-    """
-    print(__doc__)
-    print(f'{"Author:".ljust(11)}', __author__)
-    print(f'{"Copyright:".ljust(11)}', __copyright__)
-    print(f'{"License:".ljust(11)}', __license__)
-    print(f'{"Module:".ljust(11)}', __module_name__)
-    print(f'{"Module ver.:".ljust(11)}', __module_ver__)
-    print(f'{"Dev Env:".ljust(11)}', __dev_environment__)
-    print(f'{"URL:".ljust(11)}', __project_url__)
-    print(f'{"Maintainer:".ljust(11)}',  __maintainer__)
-    print(f'{"Status:".ljust(11)}', __status__)
-    sys.exit(0)
-
-
-if __name__ == '__main__':
-    about()
