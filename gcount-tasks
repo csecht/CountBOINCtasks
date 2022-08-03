@@ -850,7 +850,7 @@ class CountViewer(tk.Frame):
             label='Backup analysis file',
             command=lambda: Files.save_as(Logs.ANALYSISFILE))
         file.add_separator()
-        file.add_command(label='Quit', command=Utils.quit_gui,
+        file.add_command(label='Quit', command=lambda: Utils.quit_gui(app),
                          accelerator='Ctrl+Q')
         # ^^ Note: use Ctrl+Q for macOS also to call Utils.quit_gui; Cmd+Q still works.
 
@@ -923,11 +923,12 @@ class CountViewer(tk.Frame):
                            highlightbackground='grey75'
                            )
         # Need to provide exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', Utils.quit_gui)
+        self.master.protocol('WM_DELETE_WINDOW', lambda: Utils.quit_gui(app))
 
-        self.master.bind_all('<Escape>', Utils.quit_gui)
-        self.master.bind('<Control-q>', Utils.quit_gui)
+        self.master.bind_all('<Escape>', lambda _: Utils.quit_gui(app))
+        self.master.bind('<Control-q>', lambda _: Utils.quit_gui(app))
         # ^^ Note: macOS Command-q will quit program without Utils.quit_gui info msg.
+
         # Note: Toplevel key bindings are set with module Binds.keyboard().
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE, app))
@@ -1899,7 +1900,7 @@ if __name__ == "__main__":
 
         # Using exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
-        # Note: sentinel_count not currently used in main script b/c
+        # Note: sentinel_count is not currently used in main script b/c
         #    instance management is handled through Instances module.
         sentinel, sentinel_count = Instances.sentinel_or_exit(
             Logs.LOGFILE.parent, exit_msg)

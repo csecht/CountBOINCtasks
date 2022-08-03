@@ -18,17 +18,23 @@ Functions:
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 
+# Standard library imports:
 import argparse
 import sys
 import tkinter as tk
 from datetime import datetime
-import matplotlib.pyplot
-from tkinter import messagebox
-from time import sleep
 from pathlib import Path
+from time import sleep
+from tkinter import messagebox
 
+if sys.platform[:3] == 'win':
+    import winsound
+
+# Third party imports:
+import matplotlib.pyplot
+
+# Local program imports:
 import __main__
-
 import count_modules as cmod
 from count_modules import (boinc_commands,
                            config_constants as cfg,
@@ -36,10 +42,6 @@ from count_modules import (boinc_commands,
                            platform_check as chk,
                            )
 from count_modules.logs import Logs
-
-
-if sys.platform[:3] == 'win':
-    import winsound
 
 
 class Tooltip:
@@ -430,11 +432,12 @@ def manage_args() -> None:
         sys.exit(0)
 
 
-def quit_gui(keybind=None) -> None:
+def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     """
     Error-free and informative exit from the program.
     Called from multiple widgets or keybindings.
 
+    :param mainloop: The main tk.Tk() window running in the mainloop.
     :param keybind: Implicit event passed from bind().
     """
 
@@ -449,9 +452,9 @@ def quit_gui(keybind=None) -> None:
     # pylint: disable=broad-except
     try:
         matplotlib.pyplot.close('all')
-        __main__.app.update_idletasks()
-        __main__.app.after(200)
-        __main__.app.destroy()
+        mainloop.update_idletasks()
+        mainloop.after(200)
+        mainloop.destroy()
     except Exception as unk:
         print(f'An error occurred: {unk}')
         if chk.MY_OS == 'win':
