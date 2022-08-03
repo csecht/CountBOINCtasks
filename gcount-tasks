@@ -11,6 +11,7 @@ Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 """
 # Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License
 
+# Standard library imports:
 import logging
 import sys
 import threading
@@ -20,18 +21,7 @@ from random import choice
 from socket import gethostname
 from time import sleep, time
 
-import count_modules as cmod
-from count_modules import (binds as Binds,
-                           boinc_commands as BC,
-                           config_constants as cfg,
-                           files as Files,
-                           instances as Instances,
-                           platform_check as chk,
-                           times as T,
-                           utils as Utils)
-from count_modules.logs import Logs
-from count_modules.utils import Tooltip
-
+# Third party imports (tk may not be included in some Python installations):
 try:
     import tkinter as tk
     from tkinter import messagebox, ttk
@@ -50,6 +40,19 @@ except (ImportError, ModuleNotFoundError) as err:
           'It can be installed with the command: pip install -U matplotlib\n'
           'or python -m pip install -U matplotlib\n'
           f'Error msg: {err}')
+
+# Local program imports:
+import count_modules as cmod
+from count_modules import (binds as Binds,
+                           boinc_commands as BC,
+                           config_constants as cfg,
+                           files as Files,
+                           instances as Instances,
+                           platform_check as chk,
+                           times as T,
+                           utils as Utils)
+from count_modules.logs import Logs
+from count_modules.utils import Tooltip
 
 
 # ############################ MVC Classes #############################
@@ -978,7 +981,7 @@ class CountViewer(tk.Frame):
             'stdev': 6,
             'range': 7,
             'total': 8,
-            'Datetime, interval:': 10,
+            'Interval, datetime:': 10,
             'Next count in:': 11,
             'Tasks in queue:': 12,
             'Notices:': 13
@@ -998,7 +1001,7 @@ class CountViewer(tk.Frame):
         ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
 
         # Need to accommodate cases of two headers in same row.
-        tk.Label(text='summary:',
+        tk.Label(text='Summary, dt:',
                  bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(text='Counts until exit:',
