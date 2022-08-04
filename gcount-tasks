@@ -981,7 +981,7 @@ class CountViewer(tk.Frame):
             'stdev': 6,
             'range': 7,
             'total': 8,
-            'Interval, datetime:': 10,
+            'Interval datetime:': 10,
             'Next count in:': 11,
             'Tasks in queue:': 12,
             'Notices:': 13
@@ -1001,7 +1001,7 @@ class CountViewer(tk.Frame):
         ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
 
         # Need to accommodate cases of two headers in same row.
-        tk.Label(text='Summary, dt:',
+        tk.Label(text='Summary dt:',
                  bg=self.master_bg, fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(text='Counts until exit:',
