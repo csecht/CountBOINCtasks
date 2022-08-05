@@ -1648,8 +1648,7 @@ class CountFyi:
             'Crunchers are the best sort of people.',
             "I can't think of anything to say. Sorry.",
         ]
-        praise = choice(compliments)
-        self.share.compliment_l.config(text=praise)
+        self.share.compliment_l.config(text=choice(compliments))
         self.share.notice_l.grid_remove()
         # Need to re-grid initial master_widgets() grids b/c its grid may
         #   have been removed by a notice_l call. Original grid coordinates
