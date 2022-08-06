@@ -1055,7 +1055,7 @@ class CountViewer(tk.Frame):
         self.time_prev_cnt_l.grid(
             row=10, column=1, columnspan=2, padx=3, sticky=tk.W)
         self.time_prev_sumry_l.grid(
-            row=10, column=2, padx=(73, 0), sticky=tk.W)
+            row=10, column=2, padx=(90, 0), sticky=tk.W)
         self.time_next_cnt_l.grid(
             row=11, column=1, padx=3, sticky=tk.W)
         self.num_tasks_all_l.grid(
@@ -1069,7 +1069,7 @@ class CountViewer(tk.Frame):
             self.cycles_remain_l.grid(
                 row=12, column=2, padx=(110, 0), sticky=tk.W)
 
-        #   Need pady for alignment with the row header.
+        # Need pady for alignment with the row header.
         self.share.notice_l.grid(
             row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0),
             sticky=tk.NW)
