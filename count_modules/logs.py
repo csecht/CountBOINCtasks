@@ -6,7 +6,7 @@ Class Logs, functions: analyze_logfile, plot_data, plot_data_toggle,
 Functions: close_plots
 
 """
-# Copyright (C) 2021 C. Echt under GNU General Public License'
+# Copyright (C) 2021-2022 C. Echt under GNU General Public License'
 
 
 import sys
@@ -454,11 +454,14 @@ class Logs:
             label.set(rotation=30)
 
         loc = mdates.AutoDateLocator(interval_multiples=True)
+        fmt = mdates.AutoDateFormatter(loc)
+
         ax1.xaxis.set_major_locator(loc)
-        ax1.xaxis.set_minor_locator(loc)
+        ax1.xaxis.set_minor_locator(tck.AutoMinorLocator())
+        ax1.xaxis.set_major_formatter(fmt)
 
         ax1.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-        ax1.yaxis.set_minor_locator(tck.AutoMinorLocator(10))
+        ax1.yaxis.set_minor_locator(tck.AutoMinorLocator())
 
         ax1.autoscale(True)
         ax1.grid(True)
