@@ -453,13 +453,6 @@ class Logs:
         for label in ax1.get_yticklabels(which='major'):
             label.set(rotation=30)
 
-        loc = mdates.AutoDateLocator(interval_multiples=True)
-        fmt = mdates.AutoDateFormatter(loc)
-
-        ax1.xaxis.set_major_locator(loc)
-        ax1.xaxis.set_minor_locator(tck.AutoMinorLocator())
-        ax1.xaxis.set_major_formatter(fmt)
-
         ax1.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
         ax1.yaxis.set_minor_locator(tck.AutoMinorLocator())
 

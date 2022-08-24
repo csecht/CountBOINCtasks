@@ -290,7 +290,7 @@ class CountModeler:
                         datetime.now().strftime(cfg.SHORTER_FMT))
                 summary_time = self.share.data['time_prev_cnt'].get()
 
-                if (cycle + 1) % (summary_m // interval_m) == 0 and num_running > 0:
+                if (cycle + 1) % (summary_m // interval_m) == 0:
                     # Flag used in log_it() to log summary data.
                     self.share.data['log_summary'].set(True)
                     # Need to deactivate tooltip and activate the Summary
@@ -318,18 +318,6 @@ class CountModeler:
                     ttimes_smry.clear()
                     sumry_intvl_counts.clear()
                     sumry_intvl_ttavgs.clear()
-
-                elif (cycle + 1) % (summary_m // interval_m) == 0 and num_running == 0:
-                    self.share.data['log_summary'].set(True)
-                    Tooltip(self.share.sumry_b, '', 'disabled')
-                    self.share.sumry_b.config(state=tk.NORMAL)
-
-                    self.share.data['time_prev_sumry'].set(summary_time)
-                    self.share.data['task_count_sumry'].set(0)
-                    self.share.data['tt_mean_sumry'].set('n/a')
-                    self.share.data['tt_sd_sumry'].set('n/a')
-                    self.share.data['tt_range_sumry'].set('n/a')
-                    self.share.data['tt_total_sumry'].set('n/a')
 
             # Call to log_it() needs to be outside the thread lock.
             app.update_idletasks()
