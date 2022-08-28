@@ -431,8 +431,8 @@ class CountModeler:
                             'Edit BOINC Manager Computing preferences if this is a problem.')
                     elif num_uploading + num_uploaded + num_aborted == num_tasks_all:
                         self.share.note['notice_txt'].set(
-                            'All tasks in are either Uploading, Ready to report, or Aborted.\n'
-                            'Check E@H message boards.')
+                            'All tasks are stalled Uploading, Ready to report, or Aborted.\n'
+                            'Check your Project message boards for server issues.')
                     else:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running; reason unknown\nCheck BOINC Manager.')
