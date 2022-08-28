@@ -13,7 +13,7 @@ __copyright__ = 'Copyright (C) 2021-2022 C.S. Echt'
 __license__ = 'GNU General Public License'
 __credits__ =   ['Inspired by rickslab-gpu-utils',
                  'Keith Myers - count-tasks: testing, debug']
-__version__ = '0.11.10'
+__version__ = '0.11.11'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __maintainer__ = 'cecht'

@@ -168,6 +168,12 @@ class CountModeler:
         num_activity_susp_user_req = len(
             [task for task in active_task_states if 'UNINITIALIZED' in task and
              'scheduled' in scheduler_states])
+        num_uploading = len(
+            [task for task in task_states if 'uploading' in task])
+        num_uploaded = len(
+            [task for task in task_states if 'uploaded' in task])
+        num_aborted = len(
+            [task for task in active_task_states if 'ABORT_PENDING' in task])
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.note['num_running'].set(num_running)
@@ -175,6 +181,9 @@ class CountModeler:
         self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
         self.share.note['num_activity_susp_user_req'].set(num_activity_susp_user_req)
         self.share.note['no_new_tasks'].set(no_new_tasks)
+        self.share.note['num_uploading'].set(num_uploading)
+        self.share.note['num_uploaded'].set(num_uploaded)
+        self.share.note['num_aborted'].set(num_aborted)
 
     def interval_data(self) -> None:
         """
@@ -346,6 +355,9 @@ class CountModeler:
                 num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
                 num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
                 num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
+                num_uploading = self.share.note['num_uploading'].get()
+                num_uploaded = self.share.note['num_uploaded'].get()
+                num_aborted = self.share.note['num_aborted'].get()
                 num_tasks_all = self.share.data['num_tasks_all'].get()
                 tic_nnt = self.share.note['tic_nnt'].get()
                 proj_stalled = self.share.note['proj_stalled'].get()
@@ -417,6 +429,11 @@ class CountModeler:
                             'NO TASKS running.\n'
                             'A BOINC Manager "When to suspend" condition was met.\n'
                             'Edit BOINC Manager Computing preferences if this is a problem.')
+                    elif num_uploading + num_uploaded + num_aborted == num_tasks_all:
+                        self.share.note['notice_txt'].set(
+                            'All tasks in are either Uploading, Ready to report or Aborted.\n'
+                            'Check E@H Server Status and msg boards.\n'
+                            'Consider shutting down gcount_tasks until uploads resume.')
                     else:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running; reason unknown\nCheck BOINC Manager.')
@@ -426,7 +443,6 @@ class CountModeler:
                             # Settings window Tooltip text for beep timing.
                             if notice_cycle_number % 2 == 0:
                                 Utils.beep(2)
-
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
                     if prior_note:
@@ -728,6 +744,9 @@ class CountViewer(tk.Frame):
             'num_suspended_by_user': tk.IntVar(),
             'num_suspended_by_boinc': tk.IntVar(),
             'num_activity_susp_user_req': tk.IntVar(),
+            'num_uploading': tk.IntVar(),
+            'num_uploaded': tk.IntVar(),
+            'num_aborted': tk.IntVar(),
         }
 
         # Labels for settings values; gridded in master_layout(). They are
