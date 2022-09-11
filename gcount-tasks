@@ -38,7 +38,7 @@ try:
 except (ImportError, ModuleNotFoundError) as err:
     print('Task time plots not available; Matplotlib module was not found.\n'
           'It can be installed with the command: pip install -U matplotlib\n'
-          'or python -m pip install -U matplotlib\n'
+          'or python3 -m pip install -U matplotlib\n'
           f'Error msg: {err}')
 
 # Local program imports:

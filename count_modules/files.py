@@ -9,13 +9,24 @@ Functions:
 """
 # Copyright (C) 2021 C. Echt under GNU General Public License'
 
+# Standard library import modules
 import sys
-import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from platform import node
 from shutil import copy2
-from tkinter import messagebox, filedialog
+
+# Third party imports: tkinter may not be included with some Python distributions.
+try:
+    import tkinter as tk
+    from tkinter import messagebox, ttk
+except (ImportError, ModuleNotFoundError) as error:
+    sys.exit('This program requires tkinter (tk/tcl), which is usually included with \n'
+             'Python 3.7+ distributions.\n'
+             'Install the most recent version or re-install Python and include Tk/Tcl.\n'
+             '\nOn Linux, first try: $ sudo apt-get install python3-tk\n'
+             f'See also: https://tkdocs.com/tutorial/install.html \n'
+             f'Error msg: {error}')
 
 
 def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:
