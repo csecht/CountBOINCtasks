@@ -407,6 +407,26 @@ def position_wrt_window(window: tk,
     return f'+{coord_x}+{coord_y}'
 
 
+def about_text() -> str:
+    """
+    Informational text for --about execution argument and GUI About call.
+    """
+
+    return (f'{__main__.__doc__}\n'
+            f'{"Author:".ljust(13)}{cmod.__author__}\n'
+            f'{"Credits:".ljust(13)}{cmod.__credits__}\n'
+            f'{"Program:".ljust(13)}{cmod.program_name}\n'
+            f'{"Version:".ljust(13)}{cmod.__version__}\n'
+            f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
+            f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
+            f'{"Maintainer:".ljust(13)}{cmod.__maintainer__}\n'
+            f'{"Status:".ljust(13)}{cmod.__status__}\n'
+            f'{"License:".ljust(13)}{cmod.LICENSE}\n'
+            )
+    # If have credits as a list:
+    #   print(f'{"Credits:".ljust(13)}', *[f"\n      {item}" for item in cmod.__credits__])
+
+
 def manage_args() -> None:
     """Allow handling of common command line arguments.
     """
@@ -416,19 +436,12 @@ def manage_args() -> None:
                         action='store_true',
                         default=False)
     args = parser.parse_args()
+
     if args.about:
-        print(__main__.__doc__)
-        print(f'{"Author:".ljust(13)}', cmod.__author__)
-        print(f'{"Credits:".ljust(13)}', *[f'\n      {item}' for item in cmod.__credits__])
-        print(f'{"Copyright:".ljust(13)}', cmod.__copyright__)
-        print(f'{"Program:".ljust(13)}', cmod.program_name)
-        print(f'{"Version:".ljust(13)}', cmod.__version__)
-        print(f'{"Dev Env:".ljust(13)}', cmod.__dev_environment__)
-        print(f'{"URL:".ljust(13)}', cmod.__project_url__)
-        print(f'{"Maintainer:".ljust(13)}', cmod.__maintainer__)
-        print(f'{"Status:".ljust(13)}', cmod.__status__)
-        print(f'{"License:".ljust(13)}', cmod.LICENSE)
-        print()
+        print('====================== ABOUT START ====================')
+        print(about_text())
+        print('====================== ABOUT END ====================')
+
         sys.exit(0)
 
 

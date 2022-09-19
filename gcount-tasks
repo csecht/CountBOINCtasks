@@ -1591,23 +1591,17 @@ class CountFyi:
         aboutwin.title(f'About {cmod.program_name}')
         aboutwin.focus_set()
 
-        insert_txt = (f'{__doc__}\n'
-                      f'{"Author:".ljust(13)}{cmod.__author__}\n'
-                      f'{"Credits:".ljust(13)}{cmod.__credits__}\n'
-                      f'{"Program:".ljust(13)}{cmod.program_name}\n'
-                      f'{"Version:".ljust(13)}{cmod.__version__}\n'
-                      f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
-                      f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
-                      f'{"Maintainer:".ljust(13)}{cmod.__maintainer__}\n'
-                      f'{"Status:".ljust(13)}{cmod.__status__}\n'
-                      f'{"License:".ljust(13)}{cmod.__license__}\n'
-                      )
+        insert_txt = Utils.about_text()
 
         max_line = len(max(insert_txt.splitlines(), key=len))
 
-        abouttxt = tk.Text(aboutwin, font='TkFixedFont',
-                           width=max_line, height=insert_txt.count('\n') + 2,
-                           relief='groove', borderwidth=5, padx=25)
+        abouttxt = tk.Text(aboutwin,
+                           font='TkFixedFont',
+                           width=max_line,
+                           height=insert_txt.count('\n') + 2,
+                           relief='groove',
+                           borderwidth=5,
+                           padx=25)
         abouttxt.insert(1.0, insert_txt)
         abouttxt.pack()
         # Need to not have cursor appear in Text, but allow

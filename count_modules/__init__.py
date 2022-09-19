@@ -6,13 +6,16 @@ Program exits here if Python interpreter is not minimum required version.
 Confirm that the boinccmd path exists; option to modify path if not.
 """
 
-from . import vcheck, instances, boinc_commands, platform_check
+from count_modules import (vcheck,
+                           instances,
+                           boinc_commands,
+                           platform_check)
 
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021-2022 C.S. Echt'
 __license__ = 'GNU General Public License'
-__credits__ =   ['Inspired by rickslab-gpu-utils',
-                 'Keith Myers - count-tasks: testing, debug']
+__credits__ = """Inspired by rickslab-gpu-utils,
+             Keith Myers - count-tasks: testing, debug"""
 __version__ = '0.11.11'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
@@ -22,6 +25,7 @@ __status__ = 'Development Status :: 4 - Beta'
 program_name = instances.program_name()
 
 LICENSE = """
+                    GNU General Public License
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
