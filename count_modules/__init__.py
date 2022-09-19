@@ -14,12 +14,11 @@ from count_modules import (vcheck,
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021-2022 C.S. Echt'
 __license__ = 'GNU General Public License'
-__credits__ = """Inspired by rickslab-gpu-utils,
-             Keith Myers - count-tasks: testing, debug"""
+__credits__ = ['Inspired by rickslab-gpu-utils',
+               'Testing & debug of count-tasks: Keith Myers']
 __version__ = '0.11.11'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
-__maintainer__ = 'cecht'
 __status__ = 'Development Status :: 4 - Beta'
 
 program_name = instances.program_name()

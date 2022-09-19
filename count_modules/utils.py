@@ -411,19 +411,18 @@ def about_text() -> str:
     """
     Informational text for --about execution argument and GUI About call.
     """
-
+    creds = ''.join([f"\n     {item}" for item in cmod.__credits__])
     return (f'{__main__.__doc__}\n'
             f'{"Author:".ljust(13)}{cmod.__author__}\n'
-            f'{"Credits:".ljust(13)}{cmod.__credits__}\n'
+            f'{"Credits:"}{creds}\n'
             f'{"Program:".ljust(13)}{cmod.program_name}\n'
             f'{"Version:".ljust(13)}{cmod.__version__}\n'
             f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
             f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
-            f'{"Maintainer:".ljust(13)}{cmod.__maintainer__}\n'
             f'{"Status:".ljust(13)}{cmod.__status__}\n'
             f'{"License:".ljust(13)}{cmod.LICENSE}\n'
             )
-    # If have credits as a list:
+    # To direct print:
     #   print(f'{"Credits:".ljust(13)}', *[f"\n      {item}" for item in cmod.__credits__])
 
 
