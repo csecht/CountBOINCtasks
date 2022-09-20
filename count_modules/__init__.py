@@ -12,7 +12,7 @@ from count_modules import (vcheck,
                            platform_check)
 
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021-2022 C.S. Echt'
+__copyright__ = 'Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License'
 __license__ = 'GNU General Public License'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Testing & debug of count-tasks: Keith Myers']
@@ -24,7 +24,6 @@ __status__ = 'Development Status :: 4 - Beta'
 program_name = instances.program_name()
 
 LICENSE = """
-                    GNU General Public License
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or

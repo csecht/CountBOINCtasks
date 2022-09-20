@@ -419,10 +419,11 @@ def about_text() -> str:
             f'{"Version:".ljust(13)}{cmod.__version__}\n'
             f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
             f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
-            f'{"Status:".ljust(13)}{cmod.__status__}\n'
-            f'{"License:".ljust(13)}{cmod.LICENSE}\n'
+            f'{"Status:".ljust(13)}{cmod.__status__}\n\n'
+            f'{cmod.__copyright__}'
+            f'{cmod.LICENSE}\n'
             )
-    # To direct print:
+    # To direct print credits from a list:
     #   print(f'{"Credits:".ljust(13)}', *[f"\n      {item}" for item in cmod.__credits__])
 
 
