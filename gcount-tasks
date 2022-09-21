@@ -413,17 +413,10 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             f'NO TASKS running; {num_suspended_by_user} tasks suspended by user.\n'
                             'You may want to resume them.')
-                        if self.share.setting['sound_beep'].get() and tic_nnt > 1:
-                            # Call beep() every other notice cycle. If
-                            # change the modulo, then also change the
-                            # Settings window Tooltip text for beep timing.
-                            if notice_cycle_number % 2 == 0:
-                                Utils.beep(2)
                     elif num_activity_susp_user_req > 0:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running.\n'
-                            'Activity suspended on user request. Check BOINC Manager.'
-                            )
+                            'Activity suspended on user request. Check BOINC Manager.')
                     elif num_suspended_by_boinc > 0:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running.\n'
@@ -436,12 +429,14 @@ class CountModeler:
                     else:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running; reason unknown\nCheck BOINC Manager.')
-                        if self.share.setting['sound_beep'].get() and tic_nnt > 1:
-                            # Call beep() every other notice cycle. If
-                            # change the modulo, then also change the
-                            # Settings window Tooltip text for beep timing.
-                            if notice_cycle_number % 2 == 0:
-                                Utils.beep(2)
+
+                    if self.share.setting['sound_beep'].get(): # and tic_nnt > 1:
+                        # Call beep() every other notice cycle. If
+                        # change the modulo, then also change the
+                        # Settings window Tooltip text for beep timing.
+                        if notice_cycle_number % 4 == 0:
+                            Utils.beep(2)
+
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
                     if prior_note:
@@ -1284,7 +1279,9 @@ class CountViewer(tk.Frame):
             ' is ticked. This notice also may occur under normal'
             ' conditions when only 1 or 2 tasks are queued.')
 
-        beep_interval = cfg.NOTICE_INTERVAL * 2
+        # If change the beep interval, then also change it in notice_it()
+        #   for no tasks running condition.
+        beep_interval = cfg.NOTICE_INTERVAL * 4
         beep_tip_txt = (
             f'Provide an audible notification when no tasks are running'
             ' because tasks or Project are suspended by user or because'
