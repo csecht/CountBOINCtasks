@@ -69,10 +69,10 @@ def click(click_type, click_widget) -> None:
             click_widget.bind('<Button-2>', popup_menu)
 
 
-def keyboard(func: str,
-             topwin,
-             filepath=None,
-             text=None) -> None:
+def keybind(func: str,
+            toplevel,
+            filepath=None,
+            text=None) -> None:
     """
     Bind a key to a function for the specified Toplevel() window. Use to
     add standard keyboard actions or to provide keybinding equivalents
@@ -87,7 +87,7 @@ def keyboard(func: str,
                  For 'close', the key is 'w' with OS-specific modifier.
                  For 'append' and 'saveas', the key is 's' with
                  OS-specific modifier.
-    :param topwin: Name of tk.Toplevel() window object.
+    :param toplevel: Name of tk.Toplevel() window object.
     :param filepath: A Path file object; use with *func* 'saveas' and
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
@@ -99,16 +99,20 @@ def keyboard(func: str,
         cmd_key = 'Command'
 
     if func == 'close':
-        topwin.bind(
+        toplevel.bind(
             f'<{f"{cmd_key}"}-w>',
-            lambda _: topwin.winfo_toplevel().destroy())
+            lambda _: toplevel.winfo_toplevel().destroy())
 
     elif func == 'append':
-        topwin.bind(
+        toplevel.bind(
             f'<{f"{cmd_key}"}-s>',
-            lambda _: files.append_txt(filepath, text, True, topwin))
+            lambda _: files.append_txt(dest=filepath,
+                                       savetxt=text,
+                                       showmsg=True,
+                                       parent=toplevel)
+            )
 
     elif func == 'saveas':
-        topwin.bind(
+        toplevel.bind(
             f'<{f"{cmd_key}"}-s>',
-            lambda _: files.save_as(filepath, topwin))
+            lambda _: files.save_as(filepath, toplevel))

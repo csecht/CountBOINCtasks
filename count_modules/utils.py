@@ -322,10 +322,8 @@ def boinccmd_not_found(default_path: str) -> None:
                'Edit the configuration file, countCFG.txt,\n'
                'in the CountBOINCtasks-master folder,\n'
                'then run the gcount-tasks command line from there.')
-    if okay:
-        sys.exit(0)
-    else:
-        sys.exit(0)
+
+    sys.exit(0) if okay else sys.exit(0)
 
 
 def check_boinc_tk() -> None:
@@ -461,7 +459,9 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     print(quit_txt)
 
     if Path.exists(Logs.LOGFILE):
-        Files.append_txt(Logs.LOGFILE, quit_txt, False)
+        Files.append_txt(dest=Logs.LOGFILE,
+                         savetxt=quit_txt,
+                         showmsg=False)
     # pylint: disable=broad-except
     try:
         matplotlib.pyplot.close('all')

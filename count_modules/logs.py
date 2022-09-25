@@ -670,14 +670,17 @@ class Logs:
         # Need to allow user to save annotated analysis text.
         def new_text():
             new_txt = analysistxt.get(1.0, tk.END)
-            Files.append_txt(cls.ANALYSISFILE, new_txt, True, analysiswin)
+            Files.append_txt(dest=cls.ANALYSISFILE,
+                             savetxt=new_txt,
+                             showmsg=True,
+                             parent=analysiswin)
 
         ttk.Button(analysiswin, text='Save analysis', command=new_text,
                    takefocus=False).pack(padx=4)
 
         Binds.click('right', analysistxt)
-        Binds.keyboard('close', analysiswin)
-        Binds.keyboard('append', analysiswin, cls.ANALYSISFILE, insert_txt)
+        Binds.keybind('close', analysiswin)
+        Binds.keybind('append', analysiswin, cls.ANALYSISFILE, insert_txt)
         analysiswin.bind('<Shift-Control-A>',
                          lambda _: cls.view(cls.ANALYSISFILE, tk_obj))
 
@@ -847,5 +850,5 @@ class Logs:
                          lambda _: cls.show_analysis(tk_obj))
 
         Binds.click('right', filewin)
-        Binds.keyboard('close', filewin)
-        Binds.keyboard('saveas', filewin, None, filepath)
+        Binds.keybind('close', filewin)
+        Binds.keybind('saveas', filewin, None, filepath)

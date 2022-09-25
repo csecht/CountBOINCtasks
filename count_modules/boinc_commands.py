@@ -113,10 +113,7 @@ def run_boinc(cmd_str: str) -> list:
     :return: Data from a boinc-client command specified in cmd_str.
     """
     # source: https://stackoverflow.com/questions/33560364/
-    if MY_OS == 'win':
-        cmd = cmd_str
-    else:
-        cmd = shlex.split(cmd_str)
+    cmd = cmd_str if MY_OS == 'win' else shlex.split(cmd_str)
 
     try:
         with Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True) as output:

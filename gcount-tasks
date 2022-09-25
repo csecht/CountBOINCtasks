@@ -1605,7 +1605,7 @@ class CountFyi:
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
 
-        Binds.keyboard('close', aboutwin)
+        Binds.keybind('close', aboutwin)
         Binds.click('right', abouttxt)
 
     def compliment_me(self) -> None:
@@ -1722,7 +1722,7 @@ class CountFyi:
         # pathstxt.tag_add("header", "1.0", "1.0")
         pathstxt.pack()
 
-        Binds.keyboard('close', pathswin)
+        Binds.keybind('close', toplevel=pathswin)
         Binds.click('right', pathstxt)
 
     @staticmethod
@@ -1785,7 +1785,7 @@ class CountFyi:
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
 
-        Binds.keyboard('close', infowin)
+        Binds.keybind('close', toplevel=infowin)
         Binds.click('right', infotxt)
 
 
