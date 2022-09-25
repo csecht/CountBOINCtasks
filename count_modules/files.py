@@ -19,7 +19,7 @@ from shutil import copy2
 # Third party imports: tkinter may not be included with some Python distributions.
 try:
     import tkinter as tk
-    from tkinter import messagebox, ttk
+    from tkinter import messagebox, ttk, filedialog
 except (ImportError, ModuleNotFoundError) as error:
     sys.exit('This program requires tkinter (tk/tcl), which is usually included with \n'
              'Python 3.7+ distributions.\n'
