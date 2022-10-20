@@ -226,13 +226,14 @@ class Logs:
             }
             cls.plot_data(**interval_data)
 
-        elif not found_intvls:
+        elif not found_intvls and do_plot and CAN_PLOT:
             detail = ('There are no data to plot.\n'
                       'Need at least one interval count to\n'
                       'plot task completion times over time.\n'
                       )
             messagebox.showinfo(title='No counts available',
                                 detail=detail)
+
         elif found_intvls and do_plot and not CAN_PLOT:
             detail = ('Matplotlib module needs to be installed.\n'
                       'It can be installed with the command:\n'
@@ -240,14 +241,20 @@ class Logs:
                       'or python -m pip install -U matplotlib'
                       )
             messagebox.showinfo(title='Plotting not available.',
-                                detail=detail
-                                )
+                                detail=detail)
 
         # Generate text & data to display in show_analysis(). ##########
 
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, then flag and move on.
+        if not found_intvls:
+            detail = ('There are no data to analyze.\n'
+                      'Need at least one interval count\n'
+                      'to report analysis results.')
+            messagebox.showinfo(title='No counts available',
+                                detail=detail)
+
         if found_sumrys and found_intvls:
             try:
                 # When something is off in the log file, the 'index'
@@ -277,15 +284,6 @@ class Logs:
                 return summary_text, recent_interval_text
 
         # Need to tailor report texts for various counting conditions.
-        if not found_sumrys and not found_intvls:
-            recent_interval_text = (
-                f'\nAs of {datetime.now().strftime(SHORT_STRFTIME)}\n'
-                '   There are not enough data to analyze.\n'
-                '   Need at least one summary or one\n'
-                '   interval count in the log file.\n'
-            )
-            return summary_text, recent_interval_text
-
         if not found_sumrys and found_intvls:
             summary_text = '\nNo summary counts are logged yet.\n\n'
             if num_intvl_vals == 1:
@@ -349,8 +347,6 @@ class Logs:
                     f'   {set(recent_intvl_vals)},\n'
                     '   so interpret results with caution.\n'
                 )
-        else:
-            recent_interval_text = 'No counts logged after last Summary.\n'
 
         return summary_text, recent_interval_text
 
