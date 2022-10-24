@@ -283,13 +283,13 @@ class CountModeler:
                     f"{intervaldict['tt_min']} -- {intervaldict['tt_max']}")
                 self.share.data['tt_total'].set(intervaldict['tt_total'])
 
+                # SUMMARY DATA #########################################
                 # Need to gather interval times and counts for ea. interval in
                 #   a summary segment to calc weighted mean times. This sumry
                 #   list has a different function than the ttimes_smry set.
                 sumry_intvl_counts.append(task_count_new)
                 sumry_intvl_ttavgs.append(self.share.data['tt_avg'].get())
 
-                # SUMMARY DATA #########################################
                 # NOTE: Starting data are not included in summary tabulations.
                 summary_m = T.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
@@ -302,9 +302,10 @@ class CountModeler:
                 if (cycle + 1) % (summary_m // interval_m) == 0:
                     # Flag used in log_it() to log summary data.
                     self.share.data['log_summary'].set(True)
+
                     # Need to deactivate tooltip and activate the Summary
-                    #  data button now; only need these statements for
-                    #  1st summary, but, oh well, here we go again...
+                    #   data button now; only need these statements for
+                    #   1st summary, but, oh well, here we go again...
                     Tooltip(self.share.sumry_b, '', 'disabled')
                     self.share.sumry_b.config(state=tk.NORMAL)
 
@@ -837,10 +838,11 @@ class CountViewer(tk.Frame):
         Master app menus and buttons.
         """
 
-        # Note that self.master is an internal attribute and refers to
-        #   the CountController() Tk mainloop toplevel window. May use
-        #   'app' in place of self.master for lambda functions here, but
-        #   outside CountViewer, must use 'app' to reference mainloop.
+        # Note that self.master is an internal attribute of the
+        #   BaseWidget Class in tkinter's __init__.pyi. Here it refers to
+        #   the CountController() Tk mainloop window. In CountViewer lambda
+        #   functions, MAY use 'app' in place of self.master, but outside
+        #   CountViewer, MUST use 'app' for any mainloop reference.
 
         self.master.config(menu=self.menubar)
 
@@ -856,7 +858,8 @@ class CountViewer(tk.Frame):
         file.add_separator()
         file.add_command(label='Quit', command=lambda: Utils.quit_gui(app),
                          accelerator='Ctrl+Q')
-        # ^^ Note: use Ctrl+Q for macOS also to call Utils.quit_gui; Cmd+Q still works.
+        # ^^ Note: use Ctrl+Q for macOS also to call Utils.quit_gui;
+        #    Cmd+Q still works.
 
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='View', menu=view)
