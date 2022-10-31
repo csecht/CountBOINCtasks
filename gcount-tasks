@@ -33,14 +33,6 @@ except (ImportError, ModuleNotFoundError) as error:
              f'See also: https://tkdocs.com/tutorial/install.html \n'
              f'Error msg: {error}')
 
-try:
-    import matplotlib.pyplot
-except (ImportError, ModuleNotFoundError) as err:
-    print('Task time plots not available; Matplotlib module was not found.\n'
-          'It can be installed with the command: pip install -U matplotlib\n'
-          'or python3 -m pip install -U matplotlib\n'
-          f'Error msg: {err}')
-
 # Local program imports:
 import count_modules as cmod
 from count_modules import (binds as Binds,
