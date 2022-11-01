@@ -35,14 +35,15 @@ except (ImportError, ModuleNotFoundError) as error:
 
 # Local program imports:
 import count_modules as cmod
-from count_modules import (binds as Binds,
-                           boinc_commands as BC,
+from count_modules import (binds,
+                           boinc_commands as bcmd,
                            config_constants as cfg,
-                           files as Files,
-                           instances as Instances,
+                           files,
+                           instances,
                            platform_check as chk,
                            times as T,
-                           utils as Utils)
+                           utils,
+                           vcheck)
 from count_modules.logs import Logs
 from count_modules.utils import Tooltip
 
@@ -93,10 +94,10 @@ class CountModeler:
         """
         # As with task names, task times as sec.microsec are unique.
         #   In the future, may want to inspect task names with
-        #     tnames = BC.get_reported('tasks').
-        ttimes_start = BC.get_reported('elapsed time')
+        #     tnames = bcmd.get_reported('tasks').
+        ttimes_start = bcmd.get_reported('elapsed time')
         self.share.data['task_count'].set(len(ttimes_start))
-        self.share.data['num_tasks_all'].set(len(BC.get_tasks('name')))
+        self.share.data['num_tasks_all'].set(len(bcmd.get_tasks('name')))
 
         startdict = T.boinc_ttimes_stats(ttimes_start)
         self.share.data['tt_avg'].set(startdict['tt_avg'])
@@ -123,11 +124,11 @@ class CountModeler:
         """
 
         self.share.status_time = datetime.now().strftime(cfg.LONG_FMT)
-        tasks_all = BC.get_tasks('all')
-        no_new_tasks = BC.no_new_tasks()
+        tasks_all = bcmd.get_tasks('all')
+        no_new_tasks = bcmd.no_new_tasks()
 
         # Need the literal task data tag as found in boinccmd stdout;
-        #   the format is same as tag_str in BC.get_tasks().
+        #   the format is same as tag_str in bcmd.get_tasks().
         tag = {'name': '   name: ',
                'active': '   active_task_state: ',
                'state': '   state: ',
@@ -234,7 +235,7 @@ class CountModeler:
             #    and ttimes_new is empty.
             with self.thread_lock:
                 ttimes_used.update(ttimes_new)
-                ttimes_reported = set(BC.get_reported('elapsed time'))
+                ttimes_reported = set(bcmd.get_reported('elapsed time'))
 
                 # Need to reset prior ttimes_new, then repopulate it with only
                 #   newly reported tasks.
@@ -331,16 +332,16 @@ class CountModeler:
         Notices for BOINC task state information should run on short
         time intervals. A cfg.NOTICE_INTERVAL of 15 works well.
         Is threaded as notice_thread; started in Viewer.start_threads().
-        Calls to: Utils.check_boinc_tk(), task_states(), and log_it().
+        Calls to: utils.check_boinc_tk(), task_states(), and log_it().
         """
         notice_cycle_number = 0
         while self.share.data['cycles_remain'].get() > 0:
             sleep(cfg.NOTICE_INTERVAL)
             with self.thread_lock:
                 # Need to quit app if boinc-client is no longer running.
-                Utils.check_boinc_tk()
+                utils.check_boinc_tk(app)
 
-                # Need to keep track of cycles for regulate Utils.beep() calls.
+                # Need to keep track of cycles for regulate utils.beep() calls.
                 notice_cycle_number += 1
 
                 self.task_status()
@@ -428,7 +429,7 @@ class CountModeler:
                         # change the modulo, then also change the
                         # Settings window Tooltip text for beep timing.
                         if notice_cycle_number % 4 == 0:
-                            Utils.beep(2)
+                            utils.beep(2)
 
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
@@ -818,7 +819,7 @@ class CountViewer(tk.Frame):
 
         # Need to define image as a class variable, not a local var in methods.
         self.info_button_img = tk.PhotoImage(
-            file=Utils.absolute_path_to('images/info_button20.png'))
+            file=utils.absolute_path_to('images/info_button20.png'))
 
         self.master_widgets()
         self.master_layout()
@@ -843,14 +844,14 @@ class CountViewer(tk.Frame):
         self.menubar.add_cascade(label='File', menu=file)
         file.add_command(
             label='Backup log file',
-            command=lambda: Files.save_as(Logs.LOGFILE))
+            command=lambda: files.save_as(Logs.LOGFILE))
         file.add_command(
             label='Backup analysis file',
-            command=lambda: Files.save_as(Logs.ANALYSISFILE))
+            command=lambda: files.save_as(Logs.ANALYSISFILE))
         file.add_separator()
-        file.add_command(label='Quit', command=lambda: Utils.quit_gui(app),
+        file.add_command(label='Quit', command=lambda: utils.quit_gui(app),
                          accelerator='Ctrl+Q')
-        # ^^ Note: use Ctrl+Q for macOS also to call Utils.quit_gui;
+        # ^^ Note: use Ctrl+Q for macOS also to call utils.quit_gui;
         #    Cmd+Q still works.
 
         view = tk.Menu(self.menubar, tearoff=0)
@@ -922,13 +923,13 @@ class CountViewer(tk.Frame):
                            highlightbackground='grey75'
                            )
         # Need to provide exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', lambda: Utils.quit_gui(app))
+        self.master.protocol('WM_DELETE_WINDOW', lambda: utils.quit_gui(app))
 
-        self.master.bind_all('<Escape>', lambda _: Utils.quit_gui(app))
-        self.master.bind('<Control-q>', lambda _: Utils.quit_gui(app))
-        # ^^ Note: macOS Command-q will quit program without Utils.quit_gui info msg.
+        self.master.bind_all('<Escape>', lambda _: utils.quit_gui(app))
+        self.master.bind('<Control-q>', lambda _: utils.quit_gui(app))
+        # ^^ Note: macOS Command-q will quit program without utils.quit_gui info msg.
 
-        # Note: Toplevel key bindings are set with module Binds.keyboard().
+        # Note: Toplevel key bindings are set with module binds.keyboard().
         self.master.bind('<Control-l>',
                          lambda _: Logs.view(Logs.LOGFILE, app))
         self.master.bind('<Shift-Control-P>',
@@ -1156,7 +1157,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['sumry_t_value'],
             validatecommand=(
-                self.sumry_value_entry.register(Utils.enter_only_digits), '%P', '%d'))
+                self.sumry_value_entry.register(utils.enter_only_digits), '%P', '%d'))
 
         sumry_label2 = ttk.Label(
             self.settings_win, text='time unit', style='Set.TLabel')
@@ -1179,7 +1180,7 @@ class CountViewer(tk.Frame):
             validate='key', width=4,
             textvariable=self.share.setting['cycles_max'],
             validatecommand=(
-                self.cycles_max_entry.register(Utils.enter_only_digits), '%P', '%d'))
+                self.cycles_max_entry.register(utils.enter_only_digits), '%P', '%d'))
 
         # Provide user options for logging results to file and using auto-update.
         log_label = ttk.Label(self.settings_win,
@@ -1473,7 +1474,7 @@ class CountViewer(tk.Frame):
         starting_tip_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
-            f' {cmod.program_name} started. Once the first count'
+            f' {program_name} started. Once the first count'
             ' interval time has elapsed, data for that interval will'
             ' display and this button will become "Interval data".'
         )
@@ -1578,12 +1579,12 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(Utils.position_wrt_window(app, 30, 20))
+        aboutwin.geometry(utils.position_wrt_window(app, 30, 20))
         aboutwin.resizable(False, False)
-        aboutwin.title(f'About {cmod.program_name}')
+        aboutwin.title(f'About {program_name}')
         aboutwin.focus_set()
 
-        insert_txt = Utils.about_text()
+        insert_txt = utils.about_text()
 
         max_line = len(max(insert_txt.splitlines(), key=len))
 
@@ -1600,8 +1601,8 @@ class CountFyi:
         #   rt-click edit commands to work if needed.
         abouttxt.configure(state=tk.DISABLED)
 
-        Binds.keybind('close', aboutwin)
-        Binds.click('right', abouttxt)
+        binds.keybind('close', aboutwin)
+        binds.click('right', abouttxt)
 
     def compliment_me(self) -> None:
         """A silly diversion; called from Help menu bar and keybinding.
@@ -1677,7 +1678,7 @@ class CountFyi:
                                highlightbackground='grey75')
 
         # Need to position window over the window from which it is called.
-        pathswin.geometry(Utils.position_wrt_window(window, 30, 20))
+        pathswin.geometry(utils.position_wrt_window(window, 30, 20))
         pathswin.resizable(False, False)
         pathswin.title(f'Program-generated files on {gethostname()}')
         pathswin.focus_set()
@@ -1686,7 +1687,7 @@ class CountFyi:
             'Included with GitHub project distribution:\n\n'
             f'Example log file: (file exists: {Path.exists(Logs.EXAMPLELOG)})\n'
             f'   {Logs.EXAMPLELOG}\n\n'
-            f'Created by {cmod.program_name}:\n\n'
+            f'Created by {program_name}:\n\n'
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
             '   ...do not alter this file while program is running\n'
             f'   {Logs.LOGFILE}\n\n'
@@ -1717,8 +1718,8 @@ class CountFyi:
         # pathstxt.tag_add("header", "1.0", "1.0")
         pathstxt.pack()
 
-        Binds.keybind('close', toplevel=pathswin)
-        Binds.click('right', pathstxt)
+        binds.keybind('close', toplevel=pathswin)
+        binds.click('right', pathstxt)
 
     @staticmethod
     def information() -> None:
@@ -1731,7 +1732,7 @@ class CountFyi:
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(Utils.position_wrt_window(app, 30, 20))
+        infowin.geometry(utils.position_wrt_window(app, 30, 20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
@@ -1780,8 +1781,8 @@ class CountFyi:
         #   rt-click edit commands to work if needed.
         infotxt.configure(state=tk.DISABLED)
 
-        Binds.keybind('close', toplevel=infowin)
-        Binds.click('right', infotxt)
+        binds.keybind('close', toplevel=infowin)
+        binds.click('right', infotxt)
 
 
 # ################## MVC Controller; is app mainloop ###################
@@ -1869,7 +1870,14 @@ class CountController(tk.Tk):
 
 
 if __name__ == "__main__":
-    Utils.manage_args()
+
+    # Program will exit if checks fail
+    chk.check_platform()
+    vcheck.minversion('3.6')
+
+    program_name = instances.program_name()
+    bcmd.set_boincpath()
+    utils.manage_args()
 
     # Need to set up conditions to control multiple instances.
     # Must not allow multiple instances to write to the same log file,
@@ -1878,36 +1886,36 @@ if __name__ == "__main__":
     #   for stand-alone and Terminal executions.
     # Multiple instances of Terminal executions can run when from
     #   different directories.
-    exit_msg = (f'\nNOTICE: {cmod.program_name} is already running from'
+    exit_msg = (f'\nNOTICE: {program_name} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-        exit_msg = (f'\nNOTICE: {cmod.program_name}'
+        exit_msg = (f'\nNOTICE: {program_name}'
                     ' is already running. Exiting...\n')
 
     if chk.MY_OS == 'win':
 
         # Can restrict all executions to only one instance if
         #   "with sentinel:" is replaced with these mutex module calls.
-        # winstance = Instances.OneWinstance()
+        # winstance = instances.OneWinstance()
         # winstance.exit_twinstance(exit_msg)
 
         # Using exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
         # Note: sentinel_count is not currently used in main script b/c
-        #    instance management is handled through Instances module.
-        sentinel, sentinel_count = Instances.sentinel_or_exit(
+        #    instance management is handled through instances module.
+        sentinel, sentinel_count = instances.sentinel_or_exit(
             Logs.LOGFILE.parent, exit_msg)
 
         with sentinel:
             try:
-                print(f'{cmod.program_name} now running...')
+                print(f'{program_name} now running...')
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
 
                 # Need absolute path for stand-alone app from PyInstaller.
                 img = tk.PhotoImage(
-                    file=Utils.absolute_path_to('images/count_icon_512.png'))
+                    file=utils.absolute_path_to('images/count_icon_512.png'))
                 app.iconphoto(True, img)
 
                 app.mainloop()
@@ -1927,11 +1935,11 @@ if __name__ == "__main__":
 
     else:
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
-                                 f'.{cmod.program_name}_lockfile')
+                                 f'.{program_name}_lockfile')
 
         # pylint: disable=consider-using-with
         lockfile = open(lockfile_fullpath, 'w')
-        Instances.lock_or_exit(lockfile, exit_msg)
+        instances.lock_or_exit(lockfile, exit_msg)
 
         try:
             app = CountController()
@@ -1939,10 +1947,10 @@ if __name__ == "__main__":
 
             # Need absolute path for stand-alone app from PyInstaller.
             img = tk.PhotoImage(
-                file=Utils.absolute_path_to('images/count_icon_512.png'))
+                file=utils.absolute_path_to('images/count_icon_512.png'))
             app.iconphoto(True, img)
 
-            print(f'{cmod.program_name} now running...')
+            print(f'{program_name} now running...')
 
             app.mainloop()
 

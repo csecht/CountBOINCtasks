@@ -81,7 +81,7 @@ class DataIntervals:
 
         # As with task names, task times as sec.microsec are unique.
         #   In future, may want to inspect task names with
-        #     task_names = BC.get_reported('tasks').
+        #     task_names = bcmd.get_reported('tasks').
         self.ttimes_start = BC.get_reported('elapsed time')
         tcount_start = len(self.ttimes_start)
         # Not the most robust way to get dict values, but it's concise.
@@ -147,13 +147,13 @@ class DataIntervals:
 
             self.time_now = datetime.now().strftime(self.time_fmt)
             self.counts_remain = COUNT_LIM - (loop_num + 1)
-            # self.tasks_total = len(BC.get_tasks('name'))
+            # self.tasks_total = len(bcmd.get_tasks('name'))
 
             # Do one boinccmd process call then parse tagged data from all task data
-            #   (instead of calling BC.get_tasks() multiple times in succession).
+            #   (instead of calling bcmd.get_tasks() multiple times in succession).
             tasks_all = BC.get_tasks('all')
             # Need the literal task data tags as found in boinccmd stdout;
-            #   the format is same as tag_str in BC.get_tasks().
+            #   the format is same as tag_str in bcmd.get_tasks().
             #   Use tuple order to populate variables based on index.
             tags = ('   name: ',
                     '   active_task_state: ',
@@ -167,18 +167,18 @@ class DataIntervals:
             # When communication to server is stalled, all tasks will be
             #  "Ready to report" with a state of 'uploaded', so try a
             #  Project update command to prompt clearing the stalled queue.
-            # tasks_active = BC.get_tasks('active_task_state')
+            # tasks_active = bcmd.get_tasks('active_task_state')
             self.notrunning = False
             if 'EXECUTING' not in tasks_active:
                 self.notrunning = True
-                # task_states = BC.get_tasks('state')
+                # task_states = bcmd.get_tasks('state')
                 task_states = [elem.replace(tags[2], '') for elem in tasks_all
                                if tags[2] in elem]
                 if 'uploaded' in task_states and 'downloaded' not in task_states:
                     local_boinc_urls = BC.get_project_url()
                     # I'm not sure how to handle multiple concurrent Projects.
                     # If they are all stalled, then updating the first works?
-                    # B/c of how BC.project_action is structured, here I use the
+                    # B/c of how bcmd.project_action is structured, here I use the
                     #  url to get the Project name ID which is used to get the
                     #  url needed for the project cmd.  Silly, but uses
                     #  generalized methods. Is there a better way?

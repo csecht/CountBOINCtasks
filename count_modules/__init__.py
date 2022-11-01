@@ -6,22 +6,15 @@ Program exits here if Python interpreter is not minimum required version.
 Confirm that the boinccmd path exists; option to modify path if not.
 """
 
-from count_modules import (vcheck,
-                           instances,
-                           boinc_commands,
-                           platform_check)
-
 __author__ = 'cecht, BOINC ID: 990821'
 __copyright__ = 'Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License'
 __license__ = 'GNU General Public License'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Testing & debug of count-tasks: Keith Myers']
-__version__ = '0.11.14'
+__version__ = '0.11.15'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
 __status__ = 'Development Status :: 4 - Beta'
-
-program_name = instances.program_name()
 
 LICENSE = """
     This program is free software: you can redistribute it and/or modify
@@ -37,8 +30,3 @@ LICENSE = """
     You should have received a copy of the GNU General Public License
     along with this program (the LICENCE.txt file). If not, see
     https://www.gnu.org/licenses/."""
-
-platform_check.check_platform()
-vcheck.minversion('3.6')
-
-boinc_commands.set_boincpath()

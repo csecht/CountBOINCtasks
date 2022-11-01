@@ -78,7 +78,7 @@ def set_boincpath() -> str:
                     sys.exit(errmsg)
 
     default_path = {
-        'win': Path('/Program Files/BOINC/boinccmd.exe'),
+        'win': Path('/Program files/BOINC/boinccmd.exe'),
         'lin': Path('/usr/bin/boinccmd'),
         'dar': Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
     }
@@ -160,7 +160,7 @@ def check_boinc():
     Check whether BOINC client is running; exit if not.
     """
 
-    # Note: Any BC boinccmd will return this string (as a list)
+    # Note: Any bcmd boinccmd will return this string (as a list)
     #   if boinc-client is not running; use get_version() b/c it is short.
     if "can't connect to local host" in get_version():
         print('BOINC ERROR: BOINC commands cannot be executed.\n'
@@ -289,7 +289,7 @@ def project_url() -> dict:
         'CLIMATE': 'https://www.cpdn.org/',
         'COLLATZ': 'https://boinc.thesonntags.com/collatz/',
         'COSMOL': 'http://www.cosmologyathome.org/',
-        'EINSTEIN': 'http://einstein.phys.uwm.edu/',
+        'EINSTEIN': 'https://einstein.phys.uwm.edu/',
         'GERASIM': 'http://gerasim.boinc.ru/',
         'GPUGRID': 'https://www.gpugrid.net/',
         'IBERCIVIS': 'https://boinc.ibercivis.es/ibercivis/',

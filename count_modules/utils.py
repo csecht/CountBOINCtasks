@@ -6,7 +6,7 @@ Functions:
     absolute_path_to - Get absolute path to files and directories.
     beep - Play beep on speakers.
     boinccmd_not_found - Display message for a bad boinccmd path; use
-        with standalone __main__.app.
+        with standalone program.
     check_boinc_tk - Check whether BOINC client is running, quit if not.
     enter_only_digits - Constrain tk.Entry() values to digits.
     position_wrt_window - Set coordinates of a tk.Toplevel relative
@@ -34,12 +34,13 @@ if sys.platform[:3] == 'win':
 import matplotlib.pyplot
 
 # Local program imports:
-import __main__
+from __main__ import __doc__, sentinel
 import count_modules as cmod
 from count_modules import (boinc_commands,
                            config_constants as cfg,
-                           files as Files,
+                           files,
                            platform_check as chk,
+                           instances
                            )
 from count_modules.logs import Logs
 
@@ -50,10 +51,10 @@ class Tooltip:
     text for the given widget.
 
     USAGE: Tooltip(widget, text, state, wait_time, wrap_length)
-        widget: tk.widget for which the tootltip is to __main__.appear.
+        widget: tk.widget for which the tootltip is to appear.
         text: the widget's tip; use '' for *state* of 'disabled'.
         state: 'normal' (default) or 'disabled'.
-        wait_time (ms): delay of tip __main__.appearance (default is 600),
+        wait_time (ms): delay of tip appearance (default is 600),
         wrap_length (pixels): of tip window width (default is 250).
 
         Create a standard tooltip: utils.Tooltip(mywidget, mytext)
@@ -311,13 +312,13 @@ def beep(count: int) -> None:
 def boinccmd_not_found(default_path: str) -> None:
     """
     Display a popup message for a bad boinccmd path for a
-    standalone __main__.app; exits program once user acknowledges.
+    standalone program; exits program once user acknowledges.
 
     :param default_path: The expected path for the boinccmd command.
     """
     okay = messagebox.askokcancel(
         title='BOINC ERROR: bad cmd path',
-        detail='The __main__.application boinccmd is not in its expected default path:\n'
+        detail='The application boinccmd is not in its expected default path:\n'
                f'{default_path}\n'
                'Edit the configuration file, countCFG.txt,\n'
                'in the CountBOINCtasks-master folder,\n'
@@ -326,15 +327,17 @@ def boinccmd_not_found(default_path: str) -> None:
     sys.exit(0) if okay else sys.exit(0)
 
 
-def check_boinc_tk() -> None:
+def check_boinc_tk(mainloop) -> None:
     """
-    Check whether BOINC client is running; quit __main__.app if not.
+    Check whether BOINC client is running; quit program if not.
     Called before proceeding to implement settings and begin counting,
     and at each notice interval.
+
+    :param mainloop: The name of the mainloop instance, ie, app, root, etc.
     """
-    # Note: Any BC boinccmd will return this string (in a list)
-    #   if boinc-client is not running. BC.get_version() is used b/c it
-    #   is short. A similar function is BC.check_boinc(), but only for
+    # Note: Any bcmd boinccmd will return this string (in a list)
+    #   if boinc-client is not running. bcmd.get_version() is used b/c it
+    #   is short. A similar function is bcmd.check_boinc(), but only for
     #   Terminal output; with GUI, need to use messagebox and destroy().
     if "can't connect to local host" in boinc_commands.get_version():
         okay = messagebox.askokcancel(
@@ -342,14 +345,14 @@ def check_boinc_tk() -> None:
             detail='BOINC commands cannot be executed.\n'
                    'Is the BOINC client running?\nExiting now...')
         if okay:
-            __main__.app.update_idletasks()
-            __main__.app.after(100)
-            __main__.app.destroy()
+            mainloop.update_idletasks()
+            mainloop.after(100)
+            mainloop.destroy()
             sys.exit(0)
         else:
-            __main__.app.update_idletasks()
-            __main__.app.after(100)
-            __main__.app.destroy()
+            mainloop.update_idletasks()
+            mainloop.after(100)
+            mainloop.destroy()
             sys.exit(0)
 
 
@@ -382,7 +385,7 @@ def position_wrt_window(window: tk,
                         offset_x: int = 0,
                         offset_y: int = 0) -> str:
     """
-    Get screen position of a tkinter Toplevel object and __main__.apply optional
+    Get screen position of a tkinter Toplevel object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
     with respect to the parent window.
     Example use with the geometry() method:
@@ -390,7 +393,7 @@ def position_wrt_window(window: tk,
     When used with get_toplevel(), it is expected that all the parent's
     Toplevel Button() widgets are configured for 'takefocus=False'.
 
-    :param window: The tk window object (e.g., 'root', '__main__.app',
+    :param window: The tk window object (e.g., 'root', 'app',
                    '.!toplevel2') of mainloop for which to get its
                    screen pixel coordinates.
     :param offset_x: optional pixels to add/subtract to x coordinate of
@@ -410,10 +413,10 @@ def about_text() -> str:
     Informational text for --about execution argument and GUI About call.
     """
     creds = ''.join([f"\n     {item}" for item in cmod.__credits__])
-    return (f'{__main__.__doc__}\n'
+    return (f'{__doc__}\n'
             f'{"Author:".ljust(13)}{cmod.__author__}\n'
             f'{"Credits:"}{creds}\n'
-            f'{"Program:".ljust(13)}{cmod.program_name}\n'
+            f'{"Program:".ljust(13)}{instances.program_name}\n'
             f'{"Version:".ljust(13)}{cmod.__version__}\n'
             f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
             f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
@@ -459,7 +462,7 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     print(quit_txt)
 
     if Path.exists(Logs.LOGFILE):
-        Files.append_txt(dest=Logs.LOGFILE,
+        files.append_txt(dest=Logs.LOGFILE,
                          savetxt=quit_txt,
                          showmsg=False)
     # pylint: disable=broad-except
@@ -471,7 +474,7 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     except Exception as unk:
         print(f'An error occurred: {unk}')
         if chk.MY_OS == 'win':
-            __main__.sentinel.close()
+            sentinel.close()
         sys.exit('Program exit with unexpected condition.')
 
     return keybind

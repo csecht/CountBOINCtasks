@@ -18,7 +18,7 @@
 # Example path formats using BOINC default paths found on different platforms.
 #   Use the general structure for your system, but replace the example
 #   paths with the path to your boinccmd program.
-# Windows: \Program Files\BOINC\boinccmd.exe
+# Windows: \Program files\BOINC\boinccmd.exe
 # Linux:   /usr/bin/boinccmd
 # MacOS:  $HOME/Library/Application Support/BOINC/boinccmd
 #       Note: On macOS, the equivalent Terminal command line would be:
