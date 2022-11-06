@@ -34,13 +34,13 @@ if sys.platform[:3] == 'win':
 import matplotlib.pyplot
 
 # Local program imports:
-from __main__ import __doc__, sentinel
+from __main__ import __doc__
 import count_modules as cmod
 from count_modules import (boinc_commands,
                            config_constants as cfg,
                            files,
                            platform_check as chk,
-                           instances
+                           instances,
                            )
 from count_modules.logs import Logs
 
@@ -268,27 +268,6 @@ class Tooltip:
         self.tt_win.focus_force()
 
 
-def absolute_path_to(relative_path: str) -> Path:
-    """
-    Get absolute path to files and directories.
-    A temporary folder, _MEIPASS var, is used by -onefile or --windowed
-    distributions from PyInstaller, e.g. for an 'images' directory.
-    Python execution from Terminal will use the parent folder if a file
-    name is given as the *relative_path*.
-
-    :param relative_path: File or dir name path, as string.
-    :return: Absolute path as pathlib Path object.
-    """
-    # Modified from: https://stackoverflow.com/questions/7674790/
-    #    bundling-data-files-with -pyinstaller-onefile and PyInstaller manual.
-    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
-
-        return Path(base_path) / relative_path
-
-    return Path(relative_path).resolve()
-
-
 def beep(count: int) -> None:
     """
     Play beep sound through the computer's speaker.
@@ -474,10 +453,32 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     except Exception as unk:
         print(f'An error occurred: {unk}')
         if chk.MY_OS == 'win':
-            sentinel.close()
+            mainloop.sentinel.close()
         sys.exit('Program exit with unexpected condition.')
 
     return keybind
+
+
+def valid_path_to(relative_path: str) -> Path:
+    """
+    Get correct path to program's directory/file structure
+    depending on whether program invocation is a standalone app or
+    the command line. Works with symlinks. Allows command line
+    using any path; does not need to be from parent directory.
+    _MEIPASS var is used by distribution programs from
+    PyInstaller --onefile; e.g. for images dir.
+
+    :param relative_path: Program's local dir/file name, as string.
+    :return: Absolute path as pathlib Path object.
+    """
+    # Modified from: https://stackoverflow.com/questions/7674790/
+    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
+    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
+        valid_path = Path(base_path) / relative_path
+    else:
+        valid_path = Path(Path(__file__).parent, f'../{relative_path}').resolve()
+    return valid_path
 
 
 def verify(text: str) -> int:
@@ -492,6 +493,6 @@ def verify(text: str) -> int:
     :return: An identical hash integer for identical *text* objects.
     """
     my_hash = 0
-    for ch in text:
-        my_hash = (my_hash * 281 ^ ord(ch) * 997) & 0xFFFFFFFF
+    for char in text:
+        my_hash = (my_hash * 281 ^ ord(char) * 997) & 0xFFFFFFFF
     return my_hash

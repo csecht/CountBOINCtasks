@@ -1,0 +1,6 @@
+matplotlib
+pillow
+
+# Development version used:
+# matplotlib==3.5.2
+# pillow==9.2.0

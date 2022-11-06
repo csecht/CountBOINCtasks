@@ -819,7 +819,7 @@ class CountViewer(tk.Frame):
 
         # Need to define image as a class variable, not a local var in methods.
         self.info_button_img = tk.PhotoImage(
-            file=utils.absolute_path_to('images/info_button20.png'))
+            file=utils.valid_path_to('images/info_button20.png'))
 
         self.master_widgets()
         self.master_layout()
@@ -1915,7 +1915,7 @@ if __name__ == "__main__":
 
                 # Need absolute path for stand-alone app from PyInstaller.
                 img = tk.PhotoImage(
-                    file=utils.absolute_path_to('images/count_icon_512.png'))
+                    file=utils.valid_path_to('images/count_icon_512.png'))
                 app.iconphoto(True, img)
 
                 app.mainloop()
@@ -1938,17 +1938,21 @@ if __name__ == "__main__":
                                  f'.{program_name}_lockfile')
 
         # pylint: disable=consider-using-with
-        lockfile = open(lockfile_fullpath, 'w')
+        lockfile = open(lockfile_fullpath, 'w', encoding='utf8')
         instances.lock_or_exit(lockfile, exit_msg)
 
         try:
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
 
-            # Need absolute path for stand-alone app from PyInstaller.
-            img = tk.PhotoImage(
-                file=utils.absolute_path_to('images/count_icon_512.png'))
-            app.iconphoto(True, img)
+            # Need an image to replace blank tk desktop icon.
+            #   Set correct path to the local 'images' directory and icon file.
+            try:
+                icon = tk.PhotoImage(file=utils.valid_path_to('images/count_icon_512.png'))
+                app.iconphoto(True, icon)
+            except tk.TclError as msg:
+                print('Cannot display program icon, so it will be left blank or tk default.')
+                print(f'tk error message: {msg}')
 
             print(f'{program_name} now running...')
 
