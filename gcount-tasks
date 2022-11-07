@@ -41,7 +41,7 @@ from count_modules import (binds,
                            files,
                            instances,
                            platform_check as chk,
-                           times as T,
+                           times,
                            utils,
                            vcheck)
 from count_modules.logs import Logs
@@ -99,7 +99,7 @@ class CountModeler:
         self.share.data['task_count'].set(len(ttimes_start))
         self.share.data['num_tasks_all'].set(len(bcmd.get_tasks('name')))
 
-        startdict = T.boinc_ttimes_stats(ttimes_start)
+        startdict = times.boinc_ttimes_stats(ttimes_start)
         self.share.data['tt_avg'].set(startdict['tt_avg'])
         self.share.data['tt_sd'].set(startdict['tt_sd'])
         self.share.data['tt_range'].set(
@@ -187,7 +187,7 @@ class CountModeler:
         Calls to: get_minutes(), log_it().
         """
 
-        ttimes_used = self.start_data() # The set of starting task times.
+        ttimes_used = self.start_data()  # The set of starting task times.
         ttimes_new = set()
         ttimes_smry = set()
         cycles_max = self.share.setting['cycles_max'].get()
@@ -212,7 +212,7 @@ class CountModeler:
             #   than the intended interval. Realized interval time should thus
             #   not drift by more than 1 second during count_max cycles.
             #   Without this time limit, each 1h interval would gain ~4s.
-            interval_sec = interval_m*60
+            interval_sec = interval_m * 60
             target_elapsed_time = reference_time + (interval_sec * (cycle + 1))
             for _sec in range(interval_sec):
                 if cycle == cycles_max:
@@ -223,7 +223,7 @@ class CountModeler:
                 interval_sec -= 1
                 # Need to show the time remaining in clock time format.
                 self.share.data['time_next_cnt'].set(
-                    T.sec_to_format(interval_sec, 'clock'))
+                    times.sec_to_format(interval_sec, 'clock'))
                 sleep(1.0)
 
             # NOTE: Starting tasks are not included in interval and summary
@@ -269,7 +269,7 @@ class CountModeler:
                     tic_nnt = 0
                 self.share.note['tic_nnt'].set(tic_nnt)
 
-                intervaldict = T.boinc_ttimes_stats(ttimes_new)
+                intervaldict = times.boinc_ttimes_stats(ttimes_new)
                 self.share.data['tt_avg'].set(intervaldict['tt_avg'])
                 self.share.data['tt_sd'].set(intervaldict['tt_sd'])
                 self.share.data['tt_range'].set(
@@ -284,7 +284,7 @@ class CountModeler:
                 sumry_intvl_ttavgs.append(self.share.data['tt_avg'].get())
 
                 # NOTE: Starting data are not included in summary tabulations.
-                summary_m = T.string_to_min(self.share.setting['summary_t'].get())
+                summary_m = times.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
                 #   prior summary rather than weekday, as above (%A %H:%M).
                 if summary_m >= 10080:
@@ -305,7 +305,7 @@ class CountModeler:
                     # Set time and stats of summary count.
                     self.share.data['time_prev_sumry'].set(summary_time)
                     self.share.data['task_count_sumry'].set(len(ttimes_smry))
-                    summarydict = T.boinc_ttimes_stats(ttimes_smry)
+                    summarydict = times.boinc_ttimes_stats(ttimes_smry)
                     self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
                     self.share.data['tt_range_sumry'].set(
                         f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
@@ -313,7 +313,7 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    tt_wtmean = T.logtimes_stat(
+                    tt_wtmean = times.logtimes_stat(
                         sumry_intvl_ttavgs, 'wtmean', sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
@@ -375,7 +375,7 @@ class CountModeler:
                             'BOINC client is about to run out of tasks.\n'
                             'Check BOINC Manager.')
                     elif tic_nnt > 0:
-                        nnt_time = T.sec_to_format(
+                        nnt_time = times.sec_to_format(
                             (tic_nnt * interval_m * 60), 'short')
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}\n'
@@ -424,7 +424,7 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running; reason unknown\nCheck BOINC Manager.')
 
-                    if self.share.setting['sound_beep'].get(): # and tic_nnt > 1:
+                    if self.share.setting['sound_beep'].get():
                         # Call beep() every other notice cycle. If
                         # change the modulo, then also change the
                         # Settings window Tooltip text for beep timing.
@@ -441,7 +441,8 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             f'*** All {cycles_max} count intervals have been run. ***\n')
                     print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n'
-                          'You can quit the program from the GUI, then restart from the command line.\n')
+                          'You can quit the program from the GUI,'
+                          ' then restart from the command line.\n')
 
             app.update_idletasks()
             # Call to log_it() here needs to be outside the thread lock.
@@ -970,8 +971,8 @@ class CountViewer(tk.Frame):
         self.dataframe.columnconfigure(2, weight=1)
 
         # Fill in headers for all data rows.
+        #   Row 2 needs separate configuration and grid padding.
         row_header = {
-            #'Counting since': 2,
             'Count interval, t': 3,
             '# tasks reported': 4,
             'Task times:  avg': 5,
@@ -985,24 +986,32 @@ class CountViewer(tk.Frame):
         }
 
         for header, rownum in row_header.items():
-            tk.Label(
-                text=f'{header}', bg=self.master_bg, fg=self.share.row_fg
-            ).grid(row=rownum, column=0, padx=(5, 0), pady=(0, 1), sticky=tk.NE)
+            tk.Label(text=f'{header}',
+                     bg=self.master_bg,
+                     fg=self.share.row_fg
+                     ).grid(row=rownum, column=0,
+                            padx=(5, 0), pady=(0, 1),
+                            sticky=tk.NE)
             # ^^ Grid to N or NE to prevent Notices label from shifting down
             #    when more than one row of notice_it() text appears.
             #    For all Label constructors, self.master parent is implicit.
 
         # Pady first row to better align headers with data in dataframe.
-        tk.Label(
-            text='Counting since', bg=self.master_bg, fg=self.share.row_fg
-        ).grid(row=2, column=0, padx=(5, 0), pady=(3, 0), sticky=tk.NE)
+        tk.Label(text='Counting since',
+                 bg=self.master_bg,
+                 fg=self.share.row_fg
+                 ).grid(row=2, column=0,
+                        padx=(5, 0), pady=(3, 0),
+                        sticky=tk.NE)
 
         # Need to accommodate cases of two headers in same row.
         tk.Label(text='Summary dt:',
-                 bg=self.master_bg, fg=self.share.row_fg
+                 bg=self.master_bg,
+                 fg=self.share.row_fg
                  ).grid(row=10, column=2, sticky=tk.W)
         tk.Label(text='Counts until exit:',
-                 bg=self.master_bg, fg=self.share.row_fg
+                 bg=self.master_bg,
+                 fg=self.share.row_fg
                  ).grid(row=12, column=2, sticky=tk.W)
 
         # For colored separators, use ttk.Frame instead of ttk.Separator.
@@ -1334,8 +1343,9 @@ class CountViewer(tk.Frame):
         self.share.setting['interval_m'].set(interval_m)
 
         if not self.share.setting['sumry_t_value'].get():
-            msg = "Summary value cannot be blank. A default of '1' will be used."
-            messagebox.showerror(title='Invalid entry', detail=msg,
+            _m = "Summary value cannot be blank. A default of '1' will be used."
+            messagebox.showerror(title='Invalid entry',
+                                 detail=_m,
                                  parent=self.settings_win)
             self.share.setting['sumry_t_value'].set(1)
 
@@ -1347,11 +1357,12 @@ class CountViewer(tk.Frame):
         summary_t = f"{sumry_value}{self.share.sumry_unit_choice.get()[:1]}"
         self.share.setting['summary_t'].set(summary_t)
 
-        summary_m = T.string_to_min(summary_t)
+        summary_m = times.string_to_min(summary_t)
 
         if interval_m >= summary_m or summary_m % interval_m != 0:
             info = "Summary time must be greater than, and a multiple of, interval time"
-            messagebox.showerror(title='Invalid entry', detail=info,
+            messagebox.showerror(title='Invalid entry',
+                                 detail=info,
                                  parent=self.settings_win)
             # Need to offer user valid alternatives to bad times entered.
             if self.share.setting['sumry_t_unit'].get() == 'min':
@@ -1377,8 +1388,10 @@ class CountViewer(tk.Frame):
 
         # Note: logging module is used only to lazily manage the data log file.
         if self.share.setting['do_log'].get():
-            logging.basicConfig(filename=str(Logs.LOGFILE), level=logging.INFO,
-                                filemode="a", format='%(message)s')
+            logging.basicConfig(filename=str(Logs.LOGFILE),
+                                level=logging.INFO,
+                                filemode="a",
+                                format='%(message)s')
         else:
             app.title(f'Count BOINC tasks on {gethostname()}'
                       ' (not logging data)')
@@ -1903,21 +1916,25 @@ if __name__ == "__main__":
         # Using exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
         # Note: sentinel_count is not currently used in main script b/c
-        #    instance management is handled through instances module.
+        #    instance management is handled through instances.py module.
         sentinel, sentinel_count = instances.sentinel_or_exit(
             Logs.LOGFILE.parent, exit_msg)
 
         with sentinel:
             try:
-                print(f'{program_name} now running...')
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
+
+                # Run custom handlers for unhandled system and tkinter exceptions.
+                sys.excepthook = utils.handle_exception
+                app.report_callback_exception = utils.handle_exception
 
                 # Need absolute path for stand-alone app from PyInstaller.
                 img = tk.PhotoImage(
                     file=utils.valid_path_to('images/count_icon_512.png'))
                 app.iconphoto(True, img)
 
+                print(f'{program_name} now running...')
                 app.mainloop()
 
             except KeyboardInterrupt:
@@ -1945,6 +1962,10 @@ if __name__ == "__main__":
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
 
+            # Run custom handlers for unhandled system and tkinter exceptions.
+            sys.excepthook = utils.handle_exception
+            app.report_callback_exception = utils.handle_exception
+
             # Need an image to replace blank tk desktop icon.
             #   Set correct path to the local 'images' directory and icon file.
             try:
@@ -1955,13 +1976,10 @@ if __name__ == "__main__":
                 print(f'tk error message: {msg}')
 
             print(f'{program_name} now running...')
-
             app.mainloop()
 
         except KeyboardInterrupt:
-            _msg = (f"\n{datetime.now().strftime(cfg.LONG_FMT)};"
-                    " *** Keyboard interrupt by user ***\n")
+            _msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};\n'
+                    '*** User quit the program from Terminal/Console ***\n')
             print(_msg)
             logging.info(msg=_msg)
-        except Exception as unknown:
-            print(f'\nAn unexpected error: {unknown}\n')

@@ -20,6 +20,7 @@ Functions:
 
 # Standard library imports:
 import argparse
+import logging
 import sys
 import tkinter as tk
 from datetime import datetime
@@ -39,10 +40,45 @@ import count_modules as cmod
 from count_modules import (boinc_commands,
                            config_constants as cfg,
                            files,
-                           platform_check as chk,
                            instances,
                            )
 from count_modules.logs import Logs
+
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(stream=sys.stdout)
+logger.addHandler(handler)
+
+
+def handle_exception(exc_type, exc_value, exc_traceback) -> None:
+    """
+    Changes an unhandled exception to go to stdout rather than
+    stderr. Ignores KeyboardInterrupt so a console program can exit
+    with Ctrl + C. Relies entirely on python's logging module for
+    formatting the exception. Sources:
+    https://stackoverflow.com/questions/6234405/
+    logging-uncaught-exceptions-in-python/16993115#16993115
+    https://stackoverflow.com/questions/43941276/
+    python-tkinter-and-imported-classes-logging-uncaught-exceptions/
+    44004413#44004413
+
+    Usage: in mainloop,
+     - sys.excepthook = utils.handle_exception
+     - app.report_callback_exception = utils.handle_exception
+
+    Args:
+        exc_type: The type of the BaseException class.
+        exc_value: The value of the BaseException instance.
+        exc_traceback: The traceback object.
+
+    Returns: None
+
+    """
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    logger.error("Uncaught exception:",
+                 exc_info=(exc_type, exc_value, exc_traceback))
 
 
 class Tooltip:
@@ -444,17 +480,11 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
         files.append_txt(dest=Logs.LOGFILE,
                          savetxt=quit_txt,
                          showmsg=False)
-    # pylint: disable=broad-except
-    try:
-        matplotlib.pyplot.close('all')
-        mainloop.update_idletasks()
-        mainloop.after(200)
-        mainloop.destroy()
-    except Exception as unk:
-        print(f'An error occurred: {unk}')
-        if chk.MY_OS == 'win':
-            mainloop.sentinel.close()
-        sys.exit('Program exit with unexpected condition.')
+
+    matplotlib.pyplot.close('all')
+    mainloop.update_idletasks()
+    mainloop.after(200)
+    mainloop.destroy()
 
     return keybind
 
