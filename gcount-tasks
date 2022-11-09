@@ -1925,9 +1925,9 @@ if __name__ == "__main__":
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
 
-                # Run custom handlers for unhandled system and tkinter exceptions.
-                sys.excepthook = utils.handle_exception
-                app.report_callback_exception = utils.handle_exception
+                # Developer: use custom handlers for unhandled system and tkinter exceptions.
+                # sys.excepthook = utils.handle_exception
+                # app.report_callback_exception = utils.handle_exception
 
                 # Need absolute path for stand-alone app from PyInstaller.
                 img = tk.PhotoImage(
@@ -1962,9 +1962,9 @@ if __name__ == "__main__":
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
 
-            # Run custom handlers for unhandled system and tkinter exceptions.
-            sys.excepthook = utils.handle_exception
-            app.report_callback_exception = utils.handle_exception
+            # Developer: use custom handlers for unhandled system and tkinter exceptions.
+            # sys.excepthook = utils.handle_exception
+            # app.report_callback_exception = utils.handle_exception
 
             # Need an image to replace blank tk desktop icon.
             #   Set correct path to the local 'images' directory and icon file.
