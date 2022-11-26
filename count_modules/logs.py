@@ -26,10 +26,13 @@ try:
 
     CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
-    print('Task time plots not available; Matplotlib module was not found.\n'
-          'It can be installed with the command: pip install -U matplotlib\n'
-          'or python -m pip install -U matplotlib\n'
-          f'Error msg: {err}')
+    print('Task time plots not available; A needed module was not found.\n'
+          'Try installing Matplotlib the command:\n'
+          ' python3 -m pip install -U matplotlib\n'
+          ' ...or, depending on system: python -m pip install -U matplotlib'
+          f'Error msg: {err}\n\n'
+          'If the Error message mentions PIL, then install the Pillow module:\n'
+          '   python3 -m pip install -U pillow.')
     CAN_PLOT = False
 
 import count_modules as CMod
