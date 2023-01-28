@@ -431,7 +431,7 @@ def about_text() -> str:
     return (f'{__doc__}\n'
             f'{"Author:".ljust(13)}{cmod.__author__}\n'
             f'{"Credits:"}{creds}\n'
-            f'{"Program:".ljust(13)}{instances.program_name}\n'
+            f'{"Program:".ljust(13)}{instances.program_name()}\n'
             f'{"Version:".ljust(13)}{cmod.__version__}\n'
             f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
             f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
