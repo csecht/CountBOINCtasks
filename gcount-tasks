@@ -165,8 +165,11 @@ class CountModeler:
             [task for task in task_states if 'uploading' in task])
         num_uploaded = len(
             [task for task in task_states if 'uploaded' in task])
+        num_err = len(
+            [task for task in task_states if 'compute error' in task] )
         num_aborted = len(
             [task for task in active_task_states if 'ABORT_PENDING' in task])
+
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.note['num_running'].set(num_running)
@@ -177,6 +180,7 @@ class CountModeler:
         self.share.note['num_uploading'].set(num_uploading)
         self.share.note['num_uploaded'].set(num_uploaded)
         self.share.note['num_aborted'].set(num_aborted)
+        self.share.note['num_err'].set(num_err)
 
     def interval_data(self) -> None:
         """
@@ -352,6 +356,7 @@ class CountModeler:
                 num_uploading = self.share.note['num_uploading'].get()
                 num_uploaded = self.share.note['num_uploaded'].get()
                 num_aborted = self.share.note['num_aborted'].get()
+                num_err = self.share.note['num_err'].get()
                 num_tasks_all = self.share.data['num_tasks_all'].get()
                 tic_nnt = self.share.note['tic_nnt'].get()
                 proj_stalled = self.share.note['proj_stalled'].get()
@@ -380,6 +385,11 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             f'NO TASKS reported in past {nnt_time}\n'
                             f'for the prior {tic_nnt} counting interval(s).')
+                    elif num_err > 0:
+                        self.share.note['notice_txt'].set(
+                            f'{num_err} tasks have a Computation error.\n'
+                            'Check BOINC Manager. Check the E@H msg boards.')
+
                     else:
                         # Everything is fine, remove any prior notice.
                         # Use a de-emphasized color for this non-notice status text.
@@ -420,6 +430,10 @@ class CountModeler:
                         self.share.note['notice_txt'].set(
                             'All tasks are stalled Uploading, Ready to report, or Aborted.\n'
                             'Check your Project message boards for server issues.')
+                    elif num_err > 0:
+                        self.share.note['notice_txt'].set(
+                            f'{num_err} tasks have a Computation error.\n'
+                            'Check BOINC Manager. Check the E@H msg boards.')
                     else:
                         self.share.note['notice_txt'].set(
                             'NO TASKS running; reason unknown\nCheck BOINC Manager.')
@@ -736,6 +750,7 @@ class CountViewer(tk.Frame):
             'num_uploading': tk.IntVar(),
             'num_uploaded': tk.IntVar(),
             'num_aborted': tk.IntVar(),
+            'num_err': tk.IntVar(),
         }
 
         # Labels for settings values; gridded in master_layout(). They are
