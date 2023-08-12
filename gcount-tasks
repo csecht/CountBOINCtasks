@@ -836,6 +836,7 @@ class CountViewer(tk.Frame):
         self.master_layout()
         self.share.defaultsettings()
         self.settings()
+        self.settings_tooltips()
 
     def master_widgets(self) -> None:
         """
@@ -1243,9 +1244,6 @@ class CountViewer(tk.Frame):
         self.beep_choice.grid(row=5, column=1, padx=0, pady=0, sticky=tk.W)
         self.countnow_button.grid(
             row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
-
-        # Add tooltips that explain entries and selections.
-        self.settings_tooltips()
 
     def settings_tooltips(self) -> None:
         """
