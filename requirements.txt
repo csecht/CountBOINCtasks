@@ -1,5 +1,6 @@
 matplotlib
 pillow
+packaging
 
 # Development version used:
 # matplotlib==3.5.2
