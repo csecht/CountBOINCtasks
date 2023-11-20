@@ -57,14 +57,9 @@ class CountModeler:
     the 'share' parameter.
     """
 
-    __slots__ = ('share', 'thread_lock', 'task_count_start', 'task_count_new')
-
     def __init__(self, share):
         self.share = share
         self.thread_lock = threading.Lock()
-        self.task_count_start = 0
-        self.task_count_new = 0
-        # self.master is implicit as an internal attribute.
 
     def default_settings(self) -> None:
         """
@@ -487,11 +482,9 @@ class CountModeler:
         interval_t = self.share.setting['interval_t'].get()
         summary_t = self.share.setting['summary_t'].get()
         with self.thread_lock:
+            self.task_status()
             intvl_count_t = self.share.data['intvl_count_t'].get()
-            if called_from == 'start':
-                self.task_count_start = self.share.data['task_count'].get()
-            elif called_from == 'interval':
-                self.task_count_new = self.share.data['task_count'].get()
+            task_count = self.share.data['task_count'].get()
             tt_avg = self.share.data['tt_avg'].get()
             tt_sd = self.share.data['tt_sd'].get()
             tt_range = self.share.data['tt_range'].get()
@@ -508,8 +501,7 @@ class CountModeler:
                 report = (
                     f'\n>>> START GUI TASK COUNTER v.{cmod.__version__}, SETTINGS: <<<\n'
                     f'{self.share.long_time_start};'
-                    ' Number of tasks in the most recent BOINC report:'
-                    f' {self.task_count_start}\n'
+                    f' Number of tasks in the most recent BOINC report: {task_count}\n'
                     f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
                     f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -525,8 +517,7 @@ class CountModeler:
             elif called_from == 'start' and cycles_max == 0:
                 report = (
                     f'\n{self.share.long_time_start}; STATUS REPORT\n'
-                    f'{indent}Number of tasks recently reported by BOINC:'
-                    f' {self.task_count_start}\n'
+                    f'{indent}Number of tasks recently reported by BOINC: {task_count}\n'
                     f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
                     f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -589,7 +580,7 @@ class CountModeler:
             elif called_from == 'interval' and tic_nnt == 0:
                 report = (
                     f'\n{intvl_count_t}; Tasks reported in the past {interval_t}:'
-                    f' {self.task_count_new}\n'
+                    f' {task_count}\n'
                     f'{indent}Task Time: avg {tt_avg},\n'
                     f'{bigindent}range [{tt_range}],\n'
                     f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
@@ -1495,7 +1486,7 @@ class CountViewer(tk.Frame):
         starting_tip_txt = (
             'This data column is now showing task data retrieved'
             ' from the most recent boinc-client report before'
-            f' {program_name} started. Once the first count'
+            f' {instances.program_name()} started. Once the first count'
             ' interval time has elapsed, data for that interval will'
             ' display and this button will become "Interval data".'
         )
@@ -1602,7 +1593,7 @@ class CountFyi:
                                highlightbackground='grey75')
         aboutwin.geometry(utils.position_wrt_window(app, 30, 20))
         aboutwin.resizable(False, False)
-        aboutwin.title(f'About {program_name}')
+        aboutwin.title(f'About {instances.program_name()}')
         aboutwin.focus_set()
 
         insert_txt = utils.about_text()
@@ -1708,7 +1699,7 @@ class CountFyi:
             'Included with GitHub project distribution:\n\n'
             f'Example log file: (file exists: {Path.exists(Logs.EXAMPLELOG)})\n'
             f'   {Logs.EXAMPLELOG}\n\n'
-            f'Created by {program_name}:\n\n'
+            f'Created by {instances.program_name()}:\n\n'
             f'Data log (file exists: {Path.exists(Logs.LOGFILE)})\n'
             '   ...do not alter this file while program is running\n'
             f'   {Logs.LOGFILE}\n\n'
