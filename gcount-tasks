@@ -1082,7 +1082,7 @@ class CountViewer(tk.Frame):
             row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0),
             sticky=tk.NW)
         self.share.compliment_l.grid(
-            row=14, column=1, columnspan=2, padx=5, sticky=tk.W)
+            row=13, column=1, columnspan=2, padx=5, sticky=tk.EW)
 
         # Some control variables have default or initial start values,
         #   so make labels invisible in pre-settings dataframe by matching
@@ -1815,7 +1815,7 @@ class CountController(tk.Tk):
         #    default OS text font widths.
         if chk.MY_OS == 'lin':
             self.minsize(594, 370)
-            self.maxsize(780, 400)
+            self.maxsize(780, 410)
         elif chk.MY_OS == 'win':
             self.minsize(600, 590)
             self.maxsize(962, 673)
