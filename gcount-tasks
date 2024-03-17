@@ -1815,13 +1815,10 @@ class CountController(tk.Tk):
         #    default OS text font widths.
         if chk.MY_OS == 'lin':
             self.minsize(594, 370)
-            self.maxsize(780, 410)
         elif chk.MY_OS == 'win':
             self.minsize(600, 590)
-            self.maxsize(962, 673)
         elif chk.MY_OS == 'dar':
             self.minsize(615, 390)
-            self.maxsize(780, 425)
 
         CountViewer(share=self)
 
