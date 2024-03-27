@@ -756,6 +756,7 @@ class CountViewer(tk.Frame):
 
         boinc_lbl_params = dict(
             master=self.dataframe,
+            font=cfg.LABEL_FONT,
             width=3,
             bg=self.data_bg)
 
