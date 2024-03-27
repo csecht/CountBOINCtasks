@@ -1310,11 +1310,11 @@ class CountViewer(tk.Frame):
             cycles_tip_btn.grid(row=2, column=0, padx=(110, 0), sticky=tk.W)
             update_tip_btn.grid(row=4, column=0, padx=(35, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(35, 0), sticky=tk.W)
-        elif chk.MY_OS == 'dar':
-            intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
-            cycles_tip_btn.grid(row=2, column=0, padx=(70, 0), sticky=tk.W)
-            update_tip_btn.grid(row=4, column=0, padx=(8, 0), sticky=tk.W)
-            beep_tip_btn.grid(row=5, column=0, padx=(8, 0), sticky=tk.W)
+        else:  # is 'dar'
+            intvl_tip_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
+            cycles_tip_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
+            update_tip_btn.grid(row=4, column=0, padx=(25, 0), sticky=tk.W)
+            beep_tip_btn.grid(row=5, column=0, padx=(10, 0), sticky=tk.W)
 
     def confirm_settings(self) -> bool:
         """
