@@ -3,13 +3,13 @@
 """
 GcountTasks (gcount-tasks) provides task counts and time statistics at
 timed intervals for tasks recently reported to BOINC servers. It can be
-run on Windows, Linux, or MacOS. It is the tkinter GUI version of
+run on Windows, Linux, or macOS. It is the tkinter GUI version of
 count-tasks. Its MVC architecture is modified from examples provided
 at https://stackoverflow.com/questions/32864610/ and links therein.
 
 Requires Python 3.6 or later and tkinter (tk/tcl) 8.6 or later.
 """
-# Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License
+# Copyright (C) 2021-2024 C.S. Echt, under GNU General Public License
 
 # Standard library imports:
 import logging
@@ -20,6 +20,7 @@ from pathlib import Path
 from random import choice
 from socket import gethostname
 from time import sleep, time
+from typing import Union
 
 # Third party imports (tk may not be included in some Python installations):
 try:
@@ -46,6 +47,109 @@ from count_modules import (binds,
                            vcheck)
 from count_modules.logs import Logs
 from count_modules.utils import Tooltip
+
+PROGRAM_NAME = instances.program_name()
+
+
+class Notices:
+    """
+    Attributes and methods used by CountModeler.notice_it() to provide
+    notices to the user about the status of BOINC tasks.
+    """
+
+    def __init__(self, share):
+        self.share = share
+
+        self.share.updatetaskstatus()
+
+        # Set instance attributes for use in notice_it() dispatch tables and in
+        #  the following Class methods. These attributes are set in
+        #  CountModeler.update_task_status().
+        self.num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
+        self.num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
+        self.num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
+        self.num_uploading = self.share.note['num_uploading'].get()
+        self.num_uploaded = self.share.note['num_uploaded'].get()
+        self.num_aborted = self.share.note['num_aborted'].get()
+        self.num_err = self.share.note['num_err'].get()
+        self.num_tasks_all = self.share.data['num_tasks_all'].get()
+        self.tic_nnt = self.share.note['tic_nnt'].get()
+        self.proj_stalled: bool = self.share.note['proj_stalled'].get()
+        self.no_new_tasks = self.share.note['no_new_tasks'].get()
+        interval_m = self.share.setting['interval_m'].get()
+        self.nnt_time = times.sec_to_format(secs=(self.tic_nnt * interval_m * 60),
+                                       format_type='short')
+
+    # These methods are called by the tasks_running dispatch table in
+    #  CountModeler.notice_it().
+    def suspended_by_user(self) -> str:
+        return (f'{self.num_suspended_by_user} tasks are suspended by user.\n'
+                f'BOINC will not upload while tasks are suspended.')
+
+    def running_out_of_tasks(self):
+        return 'BOINC client is about to run out of tasks.\nCheck BOINC Manager.'
+
+    def no_tasks_reported(self):
+        return (f'NO TASKS reported in past {self.nnt_time}\n'
+                f'for the prior {self.tic_nnt} counting interval(s).')
+
+    def computation_error(self):
+        """Is used in both tasks_running and no_tasks_running dispatch tables."""
+        return (f'{self.num_err} tasks have a Computation error.\n'
+                f'Check BOINC Manager. Check the E@H msg boards.')
+
+    def all_is_well(self):
+        self.share.notice_l.config(fg=self.share.row_fg)
+        return f'All is well (updates every {cfg.NOTICE_INTERVAL} seconds)'
+
+    # These methods are called by the no_tasks_running dispatch table in
+    #  CountModeler.notice_it().
+    def project_stalled(self) -> Union[bool, str]:
+        """
+        Properly evaluates a False condition by specifying the return
+        value as a Boolean instead of leaving it as None.
+        """
+        if self.share.setting['proj_update'].get(self):
+            return ('A PROJECT UPDATE may be needed.\n'
+                    'All tasks are waiting to upload.\nCheck BOINC Manager.')
+        return False
+
+    def no_tasks(self):
+        if self.no_new_tasks:
+            return ('BOINC client has no tasks to run!\n'
+                    'Project is set to receive no new tasks.\n'
+                    'Check BOINC Manager Projects.')
+        return 'BOINC client has no tasks to run!\nCheck BOINC Manager.'
+
+    def user_suspended_tasks(self):
+        return (
+            f'NO TASKS running; {self.num_suspended_by_user} tasks suspended by user.\n'
+            'You may want to resume them.')
+
+    def user_suspended_activity(self):
+        return ('NO TASKS running.\n'
+                'Activity suspended on user request. Check BOINC Manager.')
+
+    def boinc_suspended_tasks(self):
+        return ('NO TASKS running.\n'
+                'A BOINC Manager "When to suspend" condition was met.\n'
+                'Edit BOINC Manager Computing preferences if this is a problem.')
+
+    def all_stalled(self) -> Union[bool, str]:
+        """
+        Is also called as a condition in the no_tasks_running dispatch
+        table because its condition is too lengthy to use in the table.
+        Therefore, to properly evaluate a False condition, must specify
+        the return value as a Boolean instead of leaving it as None.
+        """
+        if self.num_uploading + self.num_uploaded + self.num_aborted == self.num_tasks_all:
+            return (
+                'All tasks are stalled Uploading, Ready to report, or Aborted.\n'
+                'Check your Project message boards for server issues.')
+        return False
+
+    def unknown(self):
+        return 'NO TASKS running; reason unknown\nCheck BOINC Manager.'
 
 
 # ############################ MVC Classes #############################
@@ -111,7 +215,7 @@ class CountModeler:
         #   across intervals.
         return set(ttimes_start)
 
-    def task_status(self) -> None:
+    def update_task_status(self) -> None:
         """
         Query boinc-client for status of tasks queued, running, and
         suspended; set corresponding dictionary tk control variables.
@@ -164,7 +268,6 @@ class CountModeler:
             [task for task in task_states if 'compute error' in task] )
         num_aborted = len(
             [task for task in active_task_states if 'ABORT_PENDING' in task])
-
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.note['num_running'].set(num_running)
@@ -259,7 +362,7 @@ class CountModeler:
                 # Track when no new tasks were reported in past interval;
                 #   tic_nnt used in log_it().
                 # Need to update num_running value from task_states().
-                self.task_status()
+                self.update_task_status()
                 num_running = self.share.note['num_running'].get()
 
                 if task_count_new == 0:
@@ -298,7 +401,7 @@ class CountModeler:
                     # Need to deactivate tooltip and activate the Summary
                     #   data button now; only need these statements for
                     #   1st summary, but, oh well, here we go again...
-                    Tooltip(self.share.sumry_b, '', 'disabled')
+                    Tooltip(widget=self.share.sumry_b, tt_text='', state='disabled')
                     self.share.sumry_b.config(state=tk.NORMAL)
 
                     # Set time and stats of summary count.
@@ -313,7 +416,9 @@ class CountModeler:
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
                     tt_wtmean = times.logtimes_stat(
-                        sumry_intvl_ttavgs, 'wtmean', sumry_intvl_counts)
+                        distribution=sumry_intvl_ttavgs,
+                        stat='wtmean',
+                        weights=sumry_intvl_counts)
                     self.share.data['tt_mean_sumry'].set(tt_wtmean)
 
                     # Need to reset data set for the next summary interval.
@@ -328,117 +433,80 @@ class CountModeler:
 
     def notice_it(self) -> None:
         """
-        Notices for BOINC task state information should run on short
-        time intervals. A cfg.NOTICE_INTERVAL of 15 works well.
+        Manages BOINC task state information and notifications by
+        running on short time intervals. A cfg.NOTICE_INTERVAL of 15 sec
+        works well.
         Is threaded as notice_thread; started in Viewer.start_threads().
-        Calls to: utils.check_boinc_tk(), task_states(), and log_it().
+        Calls to: Notice(), utils.check_boinc_tk(), task_states(), and
+        log_it().
         """
         notice_cycle_number = 0
+
         while self.share.data['cycles_remain'].get() > 0:
             sleep(cfg.NOTICE_INTERVAL)
             with self.thread_lock:
                 # Need to quit app if boinc-client is no longer running.
                 utils.check_boinc_tk(app)
 
-                # Need to keep track of cycles for regulate utils.beep() calls.
+                # Need to keep track of cycles to regulate utils.beep() calls.
                 notice_cycle_number += 1
 
-                self.task_status()
+                # Notices.__init__() calls update_task_status() to set
+                #  notice values for every cycle interval.
+                Note = Notices(self.share)
+
                 num_running = self.share.note['num_running'].get()
-                num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
-                num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
-                num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
-                num_uploading = self.share.note['num_uploading'].get()
-                num_uploaded = self.share.note['num_uploaded'].get()
-                num_aborted = self.share.note['num_aborted'].get()
-                num_err = self.share.note['num_err'].get()
-                num_tasks_all = self.share.data['num_tasks_all'].get()
-                tic_nnt = self.share.note['tic_nnt'].get()
-                proj_stalled = self.share.note['proj_stalled'].get()
-                no_new_tasks = self.share.note['no_new_tasks'].get()
                 cycles_max = self.share.setting['cycles_max'].get()
                 cycles_remain = self.share.data['cycles_remain'].get()
-                interval_m = self.share.setting['interval_m'].get()
 
                 # Need to change to notice fg color from "All is well" row_fg color.
                 self.share.notice_l.config(fg=self.share.highlight)
 
-                # Need notices for task status that might need user attention,
-                #   conditioned in descending priority.
+                # Here, polymorphism is used instead of serial if...elif conditions
+                #  to evaluate and report BOINC status.
+                #  Status values and notice text are from Notices() instances.
+                # Dispatch table items are in descending order of status
+                #  notification priority.
+                tasks_running_dispatch_table = {
+                    Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
+                    num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
+                    Note.tic_nnt > 0: Note.no_tasks_reported,
+                    Note.num_err > 0: Note.computation_error,
+                }
+
+                no_tasks_running_dispatch_table = {
+                    Note.proj_stalled: Note.project_stalled,
+                    Note.num_tasks_all == 0: Note.no_tasks,
+                    Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
+                    Note.num_activity_susp_user_req > 0: Note.user_suspended_activity,
+                    Note.num_suspended_by_boinc > 0: Note.boinc_suspended_tasks,
+                    Note.all_stalled(): Note.all_stalled,
+                    Note.num_err > 0: Note.computation_error,
+                }
+
+                # Notices are posted to the self.share.note['notice_txt']
+                # StringVar of the self.share.notice_l 'Notices' label.
+                # The dispatch loops end once the first notice is posted.
                 if num_running > 0:
-                    if num_suspended_by_user > 0:
-                        self.share.note['notice_txt'].set(
-                            f'{num_suspended_by_user} tasks are suspended by user.\n'
-                            'BOINC will not upload while tasks are suspended.')
-                    elif num_running >= (num_tasks_all - 1):
-                        self.share.note['notice_txt'].set(
-                            'BOINC client is about to run out of tasks.\n'
-                            'Check BOINC Manager.')
-                    elif tic_nnt > 0:
-                        nnt_time = times.sec_to_format(
-                            (tic_nnt * interval_m * 60), 'short')
-                        self.share.note['notice_txt'].set(
-                            f'NO TASKS reported in past {nnt_time}\n'
-                            f'for the prior {tic_nnt} counting interval(s).')
-                    elif num_err > 0:
-                        self.share.note['notice_txt'].set(
-                            f'{num_err} tasks have a Computation error.\n'
-                            'Check BOINC Manager. Check the E@H msg boards.')
-
-                    else:
-                        # Everything is fine, remove any prior notice.
-                        # Use a de-emphasized color for this non-notice status text.
-                        self.share.notice_l.config(fg=self.share.row_fg)
-                        self.share.note['notice_txt'].set(
-                            f'All is well (updates every {cfg.NOTICE_INTERVAL} seconds)')
-
-                if num_running == 0:
-                    if proj_stalled:
-                        if self.share.setting['proj_update'].get():
-                            self.share.note['notice_txt'].set(
-                                'A PROJECT UPDATE may be needed.\n'
-                                'All tasks are waiting to upload.\n'
-                                'Check BOINC Manager.')
-                    elif num_tasks_all == 0:
-                        self.share.note['notice_txt'].set(
-                            'BOINC client has no tasks to run!\n'
-                            'Check BOINC Manager.')
-                        if no_new_tasks:
-                            self.share.note['notice_txt'].set(
-                                'BOINC client has no tasks to run!\n'
-                                'Project is set to receive no new tasks.\n'
-                                'Check BOINC Manager Projects.')
-                    elif num_suspended_by_user > 0:
-                        self.share.note['notice_txt'].set(
-                            f'NO TASKS running; {num_suspended_by_user} tasks suspended by user.\n'
-                            'You may want to resume them.')
-                    elif num_activity_susp_user_req > 0:
-                        self.share.note['notice_txt'].set(
-                            'NO TASKS running.\n'
-                            'Activity suspended on user request. Check BOINC Manager.')
-                    elif num_suspended_by_boinc > 0:
-                        self.share.note['notice_txt'].set(
-                            'NO TASKS running.\n'
-                            'A BOINC Manager "When to suspend" condition was met.\n'
-                            'Edit BOINC Manager Computing preferences if this is a problem.')
-                    elif num_uploading + num_uploaded + num_aborted == num_tasks_all:
-                        self.share.note['notice_txt'].set(
-                            'All tasks are stalled Uploading, Ready to report, or Aborted.\n'
-                            'Check your Project message boards for server issues.')
-                    elif num_err > 0:
-                        self.share.note['notice_txt'].set(
-                            f'{num_err} tasks have a Computation error.\n'
-                            'Check BOINC Manager. Check the E@H msg boards.')
-                    else:
-                        self.share.note['notice_txt'].set(
-                            'NO TASKS running; reason unknown\nCheck BOINC Manager.')
-
-                    if self.share.setting['sound_beep'].get():
-                        # Call beep() every other notice cycle. If
-                        # change the modulo, then also change the
-                        # Settings window Tooltip text for beep timing.
-                        if notice_cycle_number % 4 == 0:
-                            utils.beep(2)
+                    force_break = False
+                    for condition, func in tasks_running_dispatch_table.items():
+                        if condition is True:
+                            self.share.note['notice_txt'].set(func())
+                            force_break = True
+                        if force_break:
+                            break
+                    if not force_break:
+                        self.share.note['notice_txt'].set(Note.all_is_well())
+                else:  # num_running == 0
+                    force_break = False
+                    for condition, func in no_tasks_running_dispatch_table.items():
+                        if condition is True:
+                            self.share.note['notice_txt'].set(func())
+                            force_break = True
+                        if force_break:
+                            break
+                    if not force_break:
+                        self.share.note['notice_txt'].set(Note.unknown())
 
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
@@ -454,7 +522,8 @@ class CountModeler:
                           ' then restart from the command line.\n')
 
             app.update_idletasks()
-            # Call to log_it() here needs to be outside the thread lock.
+
+            # Call to log_it() needs to be outside the thread lock.
             if self.share.setting['do_log'].get():
                 self.log_it('notice')
 
@@ -482,7 +551,7 @@ class CountModeler:
         interval_t = self.share.setting['interval_t'].get()
         summary_t = self.share.setting['summary_t'].get()
         with self.thread_lock:
-            self.task_status()
+            self.update_task_status()
             intvl_count_t = self.share.data['intvl_count_t'].get()
             task_count = self.share.data['task_count'].get()
             tt_avg = self.share.data['tt_avg'].get()
@@ -1101,7 +1170,7 @@ class CountViewer(tk.Frame):
         """
         # Toplevel window basics
         self.settings_win.title('Set run settings')
-        self.settings_win.resizable(False, False)
+        self.settings_win.resizable(width=False, height=False)
         self.settings_win.config(relief='raised', bg=self.master_bg,
                                  highlightthickness=3,
                                  highlightcolor=self.share.highlight,
@@ -1247,7 +1316,7 @@ class CountViewer(tk.Frame):
         #  Provides the same look on Linux, Windows, macOS. For Linux and
         #  Windows, works the same as tk.Button if configure with same options.
         _s = ttk.Style()
-        _s.configure('Tooltip.TButton',
+        _s.configure(style='Tooltip.TButton',
                      image=self.info_button_img,
                      background=self.master_bg,
                      highlightthickness=0,
@@ -1255,7 +1324,7 @@ class CountViewer(tk.Frame):
                      highlightbackground=self.master_bg,
                      activebackground=self.master_bg
                      )
-        _s.map('Tooltip.TButton',
+        _s.map(style='Tooltip.TButton',
                background=[('pressed', '!focus', self.master_bg),
                            ('active', self.master_bg)],
                relief=[('pressed', tk.FLAT),
@@ -1294,10 +1363,10 @@ class CountViewer(tk.Frame):
             ' interval cycle elapses with no tasks running; beeps then'
             f' occur every {beep_interval} seconds.')
 
-        Tooltip(intvl_tip_btn, intvl_tip_txt)
-        Tooltip(cycles_tip_btn, cycles_tip_txt)
-        Tooltip(update_tip_btn, update_tip_txt)
-        Tooltip(beep_tip_btn, beep_tip_txt)
+        Tooltip(widget=intvl_tip_btn, tt_text=intvl_tip_txt)
+        Tooltip(widget=cycles_tip_btn, tt_text=cycles_tip_txt)
+        Tooltip(widget=update_tip_btn, tt_text=update_tip_txt)
+        Tooltip(widget=beep_tip_btn, tt_text=beep_tip_txt)
 
         # Need OS-specific grids for proper padding and alignments:
         if chk.MY_OS == 'lin':
@@ -1491,14 +1560,14 @@ class CountViewer(tk.Frame):
             ' interval time has elapsed, data for that interval will'
             ' display and this button will become "Interval data".'
         )
-        Tooltip(self.share.starting_b, starting_tip_txt)
+        Tooltip(widget=self.share.starting_b, tt_text=starting_tip_txt)
 
         summary_tip_txt = (
             'This button will activate and allow switching of visual'
             ' emphasis between interval and summary data columns'
             ' once the first summary count interval time has elapsed.'
         )
-        Tooltip(self.share.sumry_b, summary_tip_txt)
+        Tooltip(widget=self.share.sumry_b, tt_text=summary_tip_txt)
 
     def emphasize_intvl_data(self) -> None:
         """
@@ -1848,6 +1917,12 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).notice_it()
 
+    def updatetaskstatus(self) -> None:
+        """
+        Is called from Viewer.update_task_status().
+        """
+        CountModeler(share=self).update_task_status()
+
     def logit(self, called_from: str) -> None:
         """Send data to log file.
         Is called from Viewer.start_threads()
@@ -1879,15 +1954,17 @@ class CountController(tk.Tk):
         CountFyi(share=self).information()
 
 
-if __name__ == "__main__":
-
-    # Program will exit if checks fail
+def run_checks():
+    """Program will exit if checks fail"""
     chk.check_platform()
     vcheck.minversion('3.6')
-
-    program_name = instances.program_name()
-    bcmd.set_boincpath()
     utils.manage_args()
+    bcmd.set_boincpath()
+    bcmd.check_boinc()
+
+if __name__ == "__main__":
+
+    run_checks()
 
     # Need to set up conditions to control multiple instances.
     # Must not allow multiple instances to write to the same log file,
@@ -1896,12 +1973,16 @@ if __name__ == "__main__":
     #   for stand-alone and Terminal executions.
     # Multiple instances of Terminal executions can run when from
     #   different directories.
-    exit_msg = (f'\nNOTICE: {program_name} is already running from'
+    exit_msg = (f'\nNOTICE: {PROGRAM_NAME} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-        exit_msg = (f'\nNOTICE: {program_name}'
+        exit_msg = (f'\nNOTICE: {PROGRAM_NAME}'
                     ' is already running. Exiting...\n')
+
+    # Developer: use custom handlers for unhandled system and tkinter exceptions.
+    # sys.excepthook = utils.handle_exception
+    # app.report_callback_exception = utils.handle_exception
 
     if chk.MY_OS == 'win':
 
@@ -1922,16 +2003,16 @@ if __name__ == "__main__":
                 app = CountController()
                 app.title(f'Counting BOINC tasks on {gethostname()}')
 
-                # Developer: use custom handlers for unhandled system and tkinter exceptions.
-                # sys.excepthook = utils.handle_exception
-                # app.report_callback_exception = utils.handle_exception
+                # Need an image to replace blank tk desktop icon.
+                #   Set correct path to the local 'images' directory and icon file.
+                try:
+                    icon = tk.PhotoImage(file=utils.valid_path_to('images/count_icon_512.png'))
+                    app.iconphoto(True, icon)
+                except tk.TclError as msg:
+                    print('Cannot display program icon, so it will be left blank or tk default.')
+                    print(f'tk error message: {msg}')
 
-                # Need absolute path for stand-alone app from PyInstaller.
-                img = tk.PhotoImage(
-                    file=utils.valid_path_to('images/count_icon_512.png'))
-                app.iconphoto(True, img)
-
-                print(f'{program_name} now running...')
+                print(f'{PROGRAM_NAME} now running...')
                 app.mainloop()
 
             except KeyboardInterrupt:
@@ -1947,9 +2028,9 @@ if __name__ == "__main__":
                       "This instance's temporary file,\n"
                       f"{sentinel.name}\nhas been deleted.\n")
 
-    else:
+    else:  # is 'lin' or 'dar'
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
-                                 f'.{program_name}_lockfile')
+                                 f'.{PROGRAM_NAME}_lockfile')
 
         # pylint: disable=consider-using-with
         lockfile = open(lockfile_fullpath, 'w', encoding='utf8')
@@ -1958,10 +2039,6 @@ if __name__ == "__main__":
         try:
             app = CountController()
             app.title(f'Counting BOINC tasks on {gethostname()}')
-
-            # Developer: use custom handlers for unhandled system and tkinter exceptions.
-            # sys.excepthook = utils.handle_exception
-            # app.report_callback_exception = utils.handle_exception
 
             # Need an image to replace blank tk desktop icon.
             #   Set correct path to the local 'images' directory and icon file.
@@ -1972,7 +2049,7 @@ if __name__ == "__main__":
                 print('Cannot display program icon, so it will be left blank or tk default.')
                 print(f'tk error message: {msg}')
 
-            print(f'{program_name} now running...')
+            print(f'{PROGRAM_NAME} now running...')
             app.mainloop()
 
         except KeyboardInterrupt:
