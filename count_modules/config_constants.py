@@ -11,11 +11,11 @@ SHORTER_FMT = '%b %d %H:%M'
 DAY_FMT = '%A %H:%M'
 NOTICE_INTERVAL = 15  # <- time.sleep() seconds
 
-# Fonts for various widgets. Make it os-specific instead of using
-#  Tkinter's default named fonts because they can change and affect spacing.
-if chk.MY_OS == 'dar':  # macOS
-    LABEL_FONT = ('SF Pro', 14)
-elif chk.MY_OS == 'lin':  # Linux (Ubuntu)
-    LABEL_FONT = ('DejaVu Sans', 10)
-else:  # platform is 'win'  # Windows (10, 11)
-    LABEL_FONT = ('Segoe UI', 10)
+FONT_MAP = {
+    'dar': ('SF Pro', 14),  # macOS
+    'lin': ('DejaVu Sans', 10),  # Linux (Ubuntu)
+    'win': ('Segoe UI', 10)  # Windows (10, 11)
+}
+
+# Defaults to generic font if OS is not recognized
+LABEL_FONT = FONT_MAP.get(chk.MY_OS, ('Arial', 10))
