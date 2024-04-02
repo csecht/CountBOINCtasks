@@ -11,7 +11,6 @@ Functions: close_plots
 
 import sys
 import tkinter as tk
-from datetime import datetime
 from pathlib import Path
 from re import search, findall, MULTILINE
 from socket import gethostname
