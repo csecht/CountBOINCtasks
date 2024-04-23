@@ -60,7 +60,7 @@ class Notices:
     def __init__(self, share):
         self.share = share
 
-        self.share.updatetaskstatus()
+        # self.share.updatetaskstatus()
 
         # Set instance attributes for use in notice_it() dispatch tables and in
         #  the following Class methods. These attributes are set in
@@ -451,8 +451,7 @@ class CountModeler:
                 # Need to keep track of cycles to regulate utils.beep() calls.
                 notice_cycle_number += 1
 
-                # Notices.__init__() calls update_task_status() to set
-                #  notice values for every cycle interval.
+                self.share.updatetaskstatus()
                 Note = Notices(self.share)
 
                 num_running = self.share.note['num_running'].get()
@@ -486,27 +485,19 @@ class CountModeler:
 
                 # Notices are posted to the self.share.note['notice_txt']
                 # StringVar of the self.share.notice_l 'Notices' label.
-                # The dispatch loops end once the first notice is posted.
+                # The dispatch loops end once the first True notice is posted.
                 if num_running > 0:
-                    force_break = False
+                    self.share.note['notice_txt'].set(Note.all_is_well())
                     for condition, func in tasks_running_dispatch_table.items():
                         if condition is True:
                             self.share.note['notice_txt'].set(func())
-                            force_break = True
-                        if force_break:
                             break
-                    if not force_break:
-                        self.share.note['notice_txt'].set(Note.all_is_well())
                 else:  # num_running == 0
-                    force_break = False
+                    self.share.note['notice_txt'].set(Note.unknown())
                     for condition, func in no_tasks_running_dispatch_table.items():
                         if condition is True:
                             self.share.note['notice_txt'].set(func())
-                            force_break = True
-                        if force_break:
                             break
-                    if not force_break:
-                        self.share.note['notice_txt'].set(Note.unknown())
 
                 if cycles_remain == 0:
                     prior_note = self.share.note['notice_txt'].get()
