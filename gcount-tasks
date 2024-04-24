@@ -109,16 +109,15 @@ class Notices:
         Properly evaluates a False condition by specifying the return
         value as a Boolean instead of leaving it as None.
         """
-        if self.share.setting['proj_update'].get(self):
+        if self.share.setting['proj_update'].get():
             return ('A PROJECT UPDATE may be needed.\n'
-                    'All tasks are waiting to upload.\nCheck BOINC Manager.')
+                    'All tasks are waiting to upload. Check BOINC Manager.')
         return False
 
     def no_tasks(self):
         if self.no_new_tasks:
             return ('BOINC client has no tasks to run!\n'
-                    'Project is set to receive no new tasks.\n'
-                    'Check BOINC Manager Projects.')
+                    'Project is set to receive no new tasks.')
         return 'BOINC client has no tasks to run!\nCheck BOINC Manager.'
 
     def user_suspended_tasks(self):
@@ -441,6 +440,7 @@ class CountModeler:
         log_it().
         """
         notice_cycle_number = 0
+        cycles_max = self.share.setting['cycles_max'].get()
 
         while self.share.data['cycles_remain'].get() > 0:
             sleep(cfg.NOTICE_INTERVAL)
@@ -455,7 +455,6 @@ class CountModeler:
                 Note = Notices(self.share)
 
                 num_running = self.share.note['num_running'].get()
-                cycles_max = self.share.setting['cycles_max'].get()
                 cycles_remain = self.share.data['cycles_remain'].get()
 
                 # Need to change to notice fg color from "All is well" row_fg color.
