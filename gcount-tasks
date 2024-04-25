@@ -610,7 +610,6 @@ class CountViewer(tk.Frame):
         'ttrange_sumry_l',
         'ttsd_sumry_l',
         'ttsum_sumry_l',
-        'update_choice',
         'view_button_style'
     )
 
