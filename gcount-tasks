@@ -60,8 +60,6 @@ class Notices:
     def __init__(self, share):
         self.share = share
 
-        # self.share.updatetaskstatus()
-
         # Set instance attributes for use in notice_it() dispatch tables and in
         #  the following Class methods. These attributes are set in
         #  CountModeler.update_task_status().
@@ -173,7 +171,6 @@ class CountModeler:
         self.share.sumry_unit_choice.select_clear()
         self.share.setting['cycles_max'].set(1008)
         self.share.setting['do_log'].set(True)
-        self.share.setting['proj_update'].set(False)
         self.share.setting['sound_beep'].set(False)
 
     def start_data(self) -> set:
@@ -445,20 +442,18 @@ class CountModeler:
                 # Need to keep track of cycles to regulate utils.beep() calls.
                 notice_cycle_number += 1
 
-                self.share.updatetaskstatus()
-                Note = Notices(self.share)
-
-                num_running = self.share.note['num_running'].get()
-                cycles_remain = self.share.data['cycles_remain'].get()
-
                 # Need to change to notice fg color from "All is well" row_fg color.
                 self.share.notice_l.config(fg=self.share.highlight)
+
+                self.share.updatetaskstatus()
+                Note = Notices(self.share)
 
                 # Here, polymorphism is used instead of serial if...elif conditions
                 #  to evaluate and report BOINC status.
                 #  Status values and notice text are from Notices() instances.
                 # Dispatch table items are in descending order of status
                 #  notification priority.
+                num_running = self.share.note['num_running'].get()
                 tasks_running_dispatch_table = {
                     Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
                     num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
@@ -478,29 +473,20 @@ class CountModeler:
 
                 # Notices are posted to the self.share.note['notice_txt']
                 # StringVar of the self.share.notice_l 'Notices' label.
-                # The dispatch loops end once the first True notice is posted.
-                if num_running > 0:
-                    self.share.note['notice_txt'].set(Note.all_is_well())
-                    for condition, func in tasks_running_dispatch_table.items():
-                        if condition is True:
-                            self.share.note['notice_txt'].set(func())
-                            break
-                else:  # num_running == 0
-                    self.share.note['notice_txt'].set(Note.unknown())
-                    for condition, func in no_tasks_running_dispatch_table.items():
-                        if condition is True:
-                            self.share.note['notice_txt'].set(func())
-                            break
-
-                if cycles_remain == 0:
-                    prior_note = self.share.note['notice_txt'].get()
-                    if prior_note:
-                        self.share.note['notice_txt'].set(
-                            f'{prior_note}\n'
-                            f'*** All {cycles_max} count intervals have been run. ***\n')
+                # A dispatch loop ends once the first True notice is posted.
+                dispatch_table = (tasks_running_dispatch_table if num_running > 0
+                                  else no_tasks_running_dispatch_table)
+                for condition, func in dispatch_table.items():
+                    if condition is True:
+                        self.share.note['notice_txt'].set(func())
+                        break
                     else:
-                        self.share.note['notice_txt'].set(
-                            f'*** All {cycles_max} count intervals have been run. ***\n')
+                        self.share.note['notice_txt'].set(Note.all_is_well())
+
+                if self.share.data['cycles_remain'].get() == 0:
+                    self.share.note['notice_txt'].set(
+                        f'{self.share.note["notice_txt"].get()}\n'
+                        f'*** All {cycles_max} count intervals have been run. ***\n')
                     print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n'
                           'You can quit the program from the GUI,'
                           ' then restart from the command line.\n')
@@ -540,8 +526,6 @@ class CountModeler:
                 f'{indent}Counts every {self.share.setting["interval_t"].get()},'
                 f' summaries every {self.share.setting["summary_t"].get()}.\n'
                 f'{indent}BOINC status evaluations every {cfg.NOTICE_INTERVAL}s.\n'
-                f'{indent}Project auto-update:'
-                f" {self.share.setting['proj_update'].get()}\n\n"
                 'Timed intervals beginning now...\n')
             logging.info(report)
 
@@ -661,7 +645,6 @@ class CountViewer(tk.Frame):
         self.cycles_max_entry = ttk.Entry(self.settings_win)
         self.countnow_button = ttk.Button(self.settings_win)
         self.log_choice = tk.Checkbutton(self.settings_win)
-        self.update_choice = tk.Checkbutton(self.settings_win)
         self.beep_choice = tk.Checkbutton(self.settings_win)
 
         # Control variables for basic run parameters/settings passed
@@ -674,7 +657,6 @@ class CountViewer(tk.Frame):
             'summary_t': tk.StringVar(),
             'cycles_max': tk.IntVar(),
             'do_log': tk.BooleanVar(),
-            'proj_update': tk.BooleanVar(),
             'sound_beep': tk.BooleanVar()
         }
 
@@ -1177,12 +1159,6 @@ class CountViewer(tk.Frame):
         self.log_choice.configure(variable=self.share.setting['do_log'],
                                   bg=self.master_bg, borderwidth=0)
 
-        update_label = ttk.Label(self.settings_win,
-                                 text='Project update notify',
-                                 style='Set.TLabel')
-        self.update_choice.configure(variable=self.share.setting['proj_update'],
-                                     bg=self.master_bg, borderwidth=0)
-
         beep_label = ttk.Label(self.settings_win,
                                text='No tasks running alarm',
                                style='Set.TLabel')
@@ -1206,8 +1182,6 @@ class CountViewer(tk.Frame):
         self.cycles_max_entry.grid(row=2, column=1)
         log_label.grid(row=3, column=0, padx=5, pady=5, sticky=tk.E)
         self.log_choice.grid(row=3, column=1, padx=0, pady=5, sticky=tk.W)
-        update_label.grid(row=4, column=0, padx=5, pady=0, sticky=tk.E)
-        self.update_choice.grid(row=4, column=1, padx=0, pady=0, sticky=tk.W)
         beep_label.grid(row=5, column=0, padx=5, pady=0, sticky=tk.E)
         self.beep_choice.grid(row=5, column=1, padx=0, pady=0, sticky=tk.W)
         self.countnow_button.grid(
@@ -1241,8 +1215,6 @@ class CountViewer(tk.Frame):
             self.settings_win, style='Tooltip.TButton', takefocus=False)
         cycles_tip_btn = ttk.Button(
             self.settings_win, style='Tooltip.TButton', takefocus=False)
-        update_tip_btn = ttk.Button(
-            self.settings_win, style='Tooltip.TButton', takefocus=False)
         beep_tip_btn = ttk.Button(
             self.settings_win, style='Tooltip.TButton', takefocus=False)
 
@@ -1254,11 +1226,6 @@ class CountViewer(tk.Frame):
         cycles_tip_txt = (
             'Interval counting stops after number of cycles'
             ' entered. Enter 0 (zero) for a one-off status report.')
-        update_tip_txt = (
-            'When all tasks in the BOINC Manager are "Ready to report",'
-            ' a notice will be posted to check BOINC Manager when this'
-            ' is ticked. This notice also may occur under normal'
-            ' conditions when only 1 or 2 tasks are queued.')
 
         # If change the beep interval, then also change it in notice_it()
         #   for no tasks running condition.
@@ -1272,24 +1239,20 @@ class CountViewer(tk.Frame):
 
         Tooltip(widget=intvl_tip_btn, tt_text=intvl_tip_txt)
         Tooltip(widget=cycles_tip_btn, tt_text=cycles_tip_txt)
-        Tooltip(widget=update_tip_btn, tt_text=update_tip_txt)
         Tooltip(widget=beep_tip_btn, tt_text=beep_tip_txt)
 
         # Need OS-specific grids for proper padding and alignments:
         if chk.MY_OS == 'lin':
             intvl_tip_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
-            update_tip_btn.grid(row=4, column=0, padx=(15, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(15, 0), sticky=tk.W)
         elif chk.MY_OS == 'win':
             intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(110, 0), sticky=tk.W)
-            update_tip_btn.grid(row=4, column=0, padx=(35, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(35, 0), sticky=tk.W)
         else:  # is 'dar'
             intvl_tip_btn.grid(row=0, column=0, padx=(35, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(60, 0), sticky=tk.W)
-            update_tip_btn.grid(row=4, column=0, padx=(25, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(10, 0), sticky=tk.W)
 
     def confirm_settings(self) -> bool:
