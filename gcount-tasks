@@ -173,13 +173,16 @@ class CountModeler:
         self.share.setting['do_log'].set(True)
         self.share.setting['sound_beep'].set(False)
 
-    def start_data(self) -> set:
+    def start_data(self, called_from: str) -> set:
         """
         Gather initial task data and times; set data dictionary
         control variables. Log data to file if so optioned.
-        Called from start_when_confirmed().
+        Called from startdata(), interval_data().
 
-        :return: The set of starting task times.
+        Args: called_from: Either 'start' to write starting data to log
+            or 'interval_data' to use the return set of tasks.
+
+        Returns: The set of starting task times.
         """
         # As with task names, task times as sec.microsec are unique.
         #   In the future, may want to inspect task names with
@@ -197,9 +200,7 @@ class CountModeler:
 
         self.share.data['time_prev_cnt'].set('Last hourly BOINC report.')
 
-        if (self.share.setting['do_log'].get() and
-                self.share.setting['cycles_max'].get() ==
-                self.share.data['cycles_remain'].get()):
+        if self.share.setting['do_log'].get() and called_from == 'start':
             self.log_it('start')
 
         # Begin keeping track of the set of used/old tasks to exclude
@@ -281,7 +282,8 @@ class CountModeler:
         Calls to: get_minutes(), log_it().
         """
 
-        ttimes_used = self.start_data()  # The set of starting task times.
+        # ttimes_used is the set of starting task times.
+        ttimes_used = self.start_data(called_from='interval_data')
         ttimes_new = set()
         ttimes_smry = set()
         cycles_max = self.share.setting['cycles_max'].get()
@@ -1386,7 +1388,7 @@ class CountViewer(tk.Frame):
                 self.start_threads()
 
             self.emphasize_start_data()
-            self.share.startdata()
+            self.share.startdata('start')
             self.settings_win.destroy()
 
     def start_threads(self) -> None:
@@ -1794,11 +1796,11 @@ class CountController(tk.Tk):
         """
         CountModeler(share=self).default_settings()
 
-    def startdata(self) -> None:
+    def startdata(self, called_from: str) -> None:
         """
         Is called from Viewer.startup().
         """
-        CountModeler(share=self).start_data()
+        CountModeler(share=self).start_data(called_from)
 
     def intervaldata(self) -> None:
         """
