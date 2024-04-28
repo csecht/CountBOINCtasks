@@ -72,11 +72,11 @@ class Notices:
         self.num_aborted = self.share.note['num_aborted'].get()
         self.num_err = self.share.note['num_err'].get()
         self.num_tasks_all = self.share.data['num_tasks_all'].get()
-        self.tic_nnt = self.share.note['tic_nnt'].get()
+        self.num_taskless_intervals = self.share.note['num_taskless_intervals'].get()
         self.proj_stalled: bool = self.share.note['proj_stalled'].get()
         self.no_new_tasks = self.share.note['no_new_tasks'].get()
         interval_m = self.share.setting['interval_m'].get()
-        self.nnt_time = times.sec_to_format(secs=(self.tic_nnt * interval_m * 60),
+        self.nnt_time = times.sec_to_format(secs=(self.num_taskless_intervals * interval_m * 60),
                                        format_type='short')
 
     # These methods are called by the tasks_running dispatch table in
@@ -85,12 +85,13 @@ class Notices:
         return (f'{self.num_suspended_by_user} tasks are suspended by user.\n'
                 f'BOINC will not upload while tasks are suspended.')
 
-    def running_out_of_tasks(self):
+    @staticmethod
+    def running_out_of_tasks():
         return 'BOINC client is about to run out of tasks.\nCheck BOINC Manager.'
 
     def no_tasks_reported(self):
         return (f'NO TASKS reported in past {self.nnt_time}\n'
-                f'for the prior {self.tic_nnt} counting interval(s).')
+                f'for the prior {self.num_taskless_intervals} counting interval(s).')
 
     def computation_error(self):
         """Is used in both tasks_running and no_tasks_running dispatch tables."""
@@ -103,7 +104,8 @@ class Notices:
 
     # These methods are called by the no_tasks_running dispatch table in
     #  CountModeler.notice_it().
-    def project_stalled(self) -> str:
+    @staticmethod
+    def project_stalled() -> str:
         return ('A PROJECT UPDATE may be needed.\n'
                     'All tasks are waiting to upload. Check BOINC Manager.')
 
@@ -118,11 +120,13 @@ class Notices:
             f'NO TASKS running; {self.num_suspended_by_user} tasks suspended by user.\n'
             'You may want to resume them.')
 
-    def user_suspended_activity(self):
+    @staticmethod
+    def user_suspended_activity():
         return ('NO TASKS running.\n'
                 'Activity suspended on user request. Check BOINC Manager.')
 
-    def boinc_suspended_tasks(self):
+    @staticmethod
+    def boinc_suspended_tasks():
         return ('NO TASKS running.\n'
                 'A BOINC Manager "When to suspend" condition was met.\n'
                 'Edit BOINC Manager Computing preferences if this is a problem.')
@@ -140,7 +144,8 @@ class Notices:
                 'Check your Project message boards for server issues.')
         return False
 
-    def unknown(self):
+    @staticmethod
+    def unknown():
         return '***NO TASKS running. Check BOINC Manager.***'
 
 
@@ -290,7 +295,7 @@ class CountModeler:
         cycles_max = self.share.setting['cycles_max'].get()
         interval_m = self.share.setting['interval_m'].get()
         reference_time = time()
-        tic_nnt = 0
+        num_taskless_intervals = 0
         sumry_intvl_counts = []
         sumry_intvl_ttavgs = []
 
@@ -355,16 +360,16 @@ class CountModeler:
                     datetime.now().strftime(cfg.LONG_FMT))
 
                 # Track when no new tasks were reported in past interval;
-                #   tic_nnt used in log_it().
+                #   num_taskless_intervals used in log_it().
                 # Need to update num_running value from task_states().
                 self.update_task_status()
                 num_running = self.share.note['num_running'].get()
 
                 if task_count_new == 0:
-                    tic_nnt += 1
+                    num_taskless_intervals += 1
                 elif task_count_new > 0 and num_running > 0:
-                    tic_nnt = 0
-                self.share.note['tic_nnt'].set(tic_nnt)
+                    num_taskless_intervals = 0
+                self.share.note['num_taskless_intervals'].set(num_taskless_intervals)
 
                 intervaldict = times.boinc_ttimes_stats(ttimes_new)
                 self.share.data['tt_avg'].set(intervaldict['tt_avg'])
@@ -462,7 +467,7 @@ class CountModeler:
                 tasks_running_dispatch_table = {
                     Note.num_suspended_by_user > 0: Note.suspended_by_user,
                     num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
-                    Note.tic_nnt > 0: Note.no_tasks_reported,
+                    Note.num_taskless_intervals > 0: Note.no_tasks_reported,
                     Note.num_err > 0: Note.computation_error,
                 }
 
@@ -568,21 +573,37 @@ class CountModeler:
                     f'\n{self.share.status_time}; {Note.unknown()}')
 
         def log_interval():
-            if self.share.note['tic_nnt'].get() > 0:
+            # Local vars either used > 1 or for formatting a shorter line.
+            interval_t = self.share.setting['interval_t'].get()
+            summary_t = self.share.setting['summary_t'].get()
+            intvl_count_t = self.share.data['intvl_count_t'].get()
+            tt_sd = self.share.data['tt_sd'].get()
+            cycles_remain = self.share.data['cycles_remain'].get()
+            num_taskless_intervals = self.share.note['num_taskless_intervals'].get()
+
+            if num_taskless_intervals > 0:
                 logging.info(
-                    f'\n{self.share.data["intvl_count_t"].get()};'
-                    f' NO TASKS reported in the past {self.share.note["tic_nnt"].get()} counting intervals.\n'
-                    f'{indent}{self.share.data["cycles_remain"].get()} counts remain.')
-            if self.share.data['log_summary'].get():
+                    f'\n{intvl_count_t}; NO TASKS reported in the past'
+                          f' {num_taskless_intervals} counting intervals.\n'
+                          f'{indent}{cycles_remain} counts remain.')
+            else:  # the number of taskless intervals is 0:
                 logging.info(
-                    f'\n{self.share.data["intvl_count_t"].get()};'
-                    f' Tasks reported in the past {self.share.setting["interval_t"].get()}:'
+                    f'\n{intvl_count_t}; Tasks reported in the past {interval_t}:'
                     f' {self.share.data["task_count"].get()}\n'
                     f'{indent}Task Time: avg {self.share.data["tt_avg"].get()},\n'
                     f'{bigindent}range [{self.share.data["tt_range"].get()}],\n'
-                    f'{bigindent}stdev {self.share.data["tt_sd"].get()}, total {self.share.data["tt_total"].get()}\n'
+                    f'{bigindent}stdev {tt_sd}, total {self.share.data["tt_total"].get()}\n'
                     f'{indent}Total tasks in queue: {self.share.data["num_tasks_all"].get()}\n'
-                    f'{indent}{self.share.data["cycles_remain"].get()} counts remain.')
+                    f'{indent}{cycles_remain} counts remain.')
+
+            if self.share.data['log_summary'].get():
+                logging.info(
+                    f'\n{intvl_count_t}; >>> SUMMARY: Count for the past'
+                    f" {summary_t}: {self.share.data['task_count_sumry'].get()}\n"
+                    f"{indent}Task Time: mean {self.share.data['tt_mean_sumry'].get()},\n"
+                    f"{bigindent}range [{self.share.data['tt_range_sumry'].get()}],\n"
+                    f"{bigindent}stdev {self.share.data['tt_sd_sumry'].get()},"
+                    f" total {self.share.data['tt_total_sumry'].get()}")
 
                 # Need to reset flag to toggle summary logging.
                 self.share.data['log_summary'].set(False)
@@ -722,7 +743,7 @@ class CountViewer(tk.Frame):
         self.share.note = {
             'notice_txt': tk.StringVar(),
             'num_running': tk.IntVar(),
-            'tic_nnt': tk.IntVar(),
+            'num_taskless_intervals': tk.IntVar(),
             'proj_stalled': tk.BooleanVar(),
             'no_new_tasks': tk.BooleanVar(),
             'num_suspended_by_user': tk.IntVar(),
