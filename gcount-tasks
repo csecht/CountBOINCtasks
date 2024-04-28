@@ -202,7 +202,7 @@ class CountModeler:
         self.share.data['time_prev_cnt'].set('Last hourly BOINC report.')
 
         if self.share.setting['do_log'].get() and called_from == 'start':
-            self.log_it('start')
+            self.share.logit('start')
 
         # Begin keeping track of the set of used/old tasks to exclude
         #   from new tasks; pass to in interval_data() to track tasks
@@ -424,7 +424,7 @@ class CountModeler:
             # Call to log_it() needs to be outside the thread lock.
             app.update_idletasks()
             if self.share.setting['do_log'].get():
-                self.log_it('interval')
+                self.share.logit('interval')
 
     def notice_it(self) -> None:
         """
@@ -500,7 +500,7 @@ class CountModeler:
 
             # Call to log_it() needs to be outside the thread lock.
             if self.share.setting['do_log'].get():
-                self.log_it('notice')
+                self.share.logit('notice')
 
     def log_it(self, called_from: str) -> None:
         """
@@ -563,7 +563,7 @@ class CountModeler:
                     logging.info(
                         f'\n{self.share.status_time};'
                         f' {Note.suspended_by_user()}')
-            else:
+            else:  # no tasks are running; no need for detailed status.
                 logging.info(
                     f'\n{self.share.status_time}; {Note.unknown()}')
 
