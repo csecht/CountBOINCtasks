@@ -415,11 +415,11 @@ class CountModeler:
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    taskt_wtmean = times.logtimes_stat(
+                    taskt_weighted_mean = times.logtimes_stat(
                         distribution=sumry_intvl_ttavgs,
-                        stat='wtmean',
+                        stat='weighted_mean',
                         weights=sumry_intvl_counts)
-                    self.share.data['taskt_mean_sumry'].set(taskt_wtmean)
+                    self.share.data['taskt_mean_sumry'].set(taskt_weighted_mean)
 
                     # Need to reset data set for the next summary interval.
                     ttimes_smry.clear()

@@ -126,18 +126,18 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
 
     :param distribution: List or tuple of times, as string format
         ('00:00:00' or '00:00'), or as seconds (floats or integers).
-    :param stat: The statistic to run: 'wtmean', 'range', 'stdev'.
-                 'wtmean' requires *distribution* and *weights* parameters
+    :param stat: The statistic to run: 'weighted_mean', 'range', 'stdev'.
+                 'weighted_mean' requires *distribution* and *weights* parameters
                   and *distribution* times are expected to be averages.
                  'range' and 'stdev' do not use *weights*.
     :param weights: List or tuple of corresponding sample numbers
                     (integers) for each element in *distribution*. Must
                     have same number of elements as *distribution*.
-                    Needed only for the 'wtmean' *stat*.
+                    Needed only for the 'weighted_mean' *stat*.
     :return: The distribution's statistic as formatted string, '00:00:00'.
              For 'range', returns as format '[00:00:00 -- 00:00:00]'.
              Returns 'cannot determine' if invalid data given for
-             'wtmean' or if *weights* sum to 0.
+             'weighted_mean' or if *weights* sum to 0.
     """
     # Algorithm sources:
     # https://towardsdatascience.com/
@@ -147,54 +147,45 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     #   contributors thafritz and Sverrir Sigmundarson
     # https://stackoverflow.com/questions/18470627/
     #   how-do-i-remove-the-microseconds-from-a-timedelta-object
-
-    error_msg = ''
-    if not stat:
-        error_msg = 'missing stat param'
-    if weights:
-        if not all(isinstance(w, int) for w in weights):
-            error_msg = 'cannot determine'
-        if len(distribution) != len(weights):
-            error_msg = 'cannot determine'
-        if sum(weights) == 0:
-            error_msg = 'cannot determine'
-    if error_msg:
-        return error_msg
+    if not stat or weights and (not all(isinstance(w, int) for w in weights)
+                                or len(distribution) != len(weights)
+                                or sum(weights) == 0):
+        return 'cannot determine'
 
     # Need to convert distribution clock time strings to integer seconds, but
     #    not if distribution times are float or integer seconds.
-    if all(isinstance(t, str) for t in distribution):
-        dist_sec = [
-            # This handles only 00:00:00 format...
-            # sum(x * int(t) for x, t in zip([3600, 60, 1], clk_fmt.split(":")))
-            # This handles either 00:00:00 or 00:00 format...
-            sum(x * int(t) for x, t in zip([1, 60, 3600], reversed(clk_fmt.split(":"))))
-            for clk_fmt in distribution]
-    else:
-        dist_sec = list(distribution)
+    # Use of the reversed() function handles either 00:00:00 or 00:00 format
+    def time_to_seconds(time_string):
+        time_units = [1, 60, 3600]  # seconds, minutes, hours
+        time_parts = map(int, reversed(time_string.split(":")))
+        return sum(unit * part for unit, part in zip(time_units, time_parts))
 
-    # Need to convert the timedelta clock fmt object to a string for display,
-    #    and remove microseconds from the clock fmt string.
-    if stat == 'wtmean':
-        numerator = sum([dist_sec[i] * weights[i] for i in range(len(dist_sec))])
+    distrib_sec: Union[list[int], list] = [time_to_seconds(time) if isinstance(time, str)
+                                           else time for time in distribution]
+
+    def weighted_mean():
+        numerator = sum(distrib_sec[i] * weights[i] for i in range(len(distrib_sec)))
         denominator = sum(weights)
-        stat_result = str(
-            timedelta(seconds=(numerator / denominator))).split(".", 1)[0]
-    elif stat == 'range':
-        shortest = str(timedelta(seconds=(min(dist_sec)))).split(".", 1)[0]
-        longest = str(timedelta(seconds=(max(dist_sec)))).split(".", 1)[0]
-        stat_result = f'[{shortest} -- {longest}]'
-    elif stat == 'stdev':
+        return str(timedelta(seconds=numerator / denominator)).split(".", maxsplit=1)[0]
+
+    def time_range():
+        shortest = str(timedelta(seconds=min(distrib_sec))).split(".", maxsplit=1)[0]
+        longest = str(timedelta(seconds=max(distrib_sec))).split(".", maxsplit=1)[0]
+        return f'[{shortest} -- {longest}]'
+
+    def time_stdev():
         try:
-            stat_result = str(
-                timedelta(seconds=(statistics.stdev(dist_sec)))).split(".", 1)[0]
+            return str(timedelta(seconds=statistics.stdev(distrib_sec))).split(".", 1)[0]
         except statistics.StatisticsError:
-            stat_result = 'stdev needs more data'
-    else:
-        stat_result = 'unexpected condition'
+            return 'stdev needs more data'
 
-    return stat_result
+    stat_functions = {
+        'weighted_mean': weighted_mean,
+        'range': time_range,
+        'stdev': time_stdev
+    }
 
+    return stat_functions.get(stat, lambda: 'unexpected condition')()
 
 def boinc_ttimes_stats(times_sec: iter) -> dict:
     """
@@ -220,9 +211,8 @@ def boinc_ttimes_stats(times_sec: iter) -> dict:
         avg = stdev = low = high = total = '00:00:00'
 
     return {
-        'tt_total': total,
-        'tt_avg': avg,
-        'tt_sd': stdev,
-        'tt_min': low,
-        'tt_max': high}
-
+        'taskt_total': total,
+        'taskt_avg': avg,
+        'taskt_sd': stdev,
+        'taskt_min': low,
+        'taskt_max': high}

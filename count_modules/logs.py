@@ -198,12 +198,17 @@ class Logs:
             num_tasks = sum(intvl_counts)
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtmean = T.logtimes_stat(found_intvl_avgt, 'wtmean', intvl_counts)
-            intvl_t_stdev = T.logtimes_stat(found_intvl_avgt, 'stdev', intvl_counts)
+            intvl_t_wtmean = T.logtimes_stat(distribution=found_intvl_avgt,
+                                             stat='weighted_mean',
+                                             weights=intvl_counts)
+            intvl_t_stdev = T.logtimes_stat(distribution=found_intvl_avgt,
+                                            stat='stdev',
+                                            weights=intvl_counts)
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
-            intvl_t_range = T.logtimes_stat(sum(found_intvl_t_range, ()), 'range')
+            intvl_t_range = T.logtimes_stat(distribution=sum(found_intvl_t_range, ()),
+                                            stat='range')
 
             # Text & data used in most count reporting conditions below:
             logged_intvl_report = (
@@ -275,7 +280,9 @@ class Logs:
                     recent_counts = list(map(int, recent_cnts))
                     num_recent_tasks = sum(recent_counts)
                     recent_t_wtmean = T.logtimes_stat(
-                        found_intvl_avgt[index_recent:], 'wtmean', recent_counts)
+                        distribution=found_intvl_avgt[index_recent:],
+                        stat='weighted_mean',
+                        weights=recent_counts)
             except IndexError:
                 summary_text = 'An error occurred. Cannot analyse log data.\n'
                 recent_interval_text = (
