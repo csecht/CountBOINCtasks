@@ -198,11 +198,11 @@ class CountModeler:
         self.share.data['num_tasks_all'].set(len(bcmd.get_tasks('name')))
 
         startdict = times.boinc_ttimes_stats(ttimes_start)
-        self.share.data['tt_avg'].set(startdict['tt_avg'])
-        self.share.data['tt_sd'].set(startdict['tt_sd'])
-        self.share.data['tt_range'].set(
-            f"{startdict['tt_min']} -- {startdict['tt_max']}")
-        self.share.data['tt_total'].set(startdict['tt_total'])
+        self.share.data['taskt_avg'].set(startdict['taskt_avg'])
+        self.share.data['taskt_sd'].set(startdict['taskt_sd'])
+        self.share.data['taskt_range'].set(
+            f"{startdict['taskt_min']} -- {startdict['taskt_max']}")
+        self.share.data['taskt_total'].set(startdict['taskt_total'])
 
         self.share.data['time_prev_cnt'].set('Last hourly BOINC report.')
 
@@ -372,18 +372,18 @@ class CountModeler:
                 self.share.note['num_taskless_intervals'].set(num_taskless_intervals)
 
                 intervaldict = times.boinc_ttimes_stats(ttimes_new)
-                self.share.data['tt_avg'].set(intervaldict['tt_avg'])
-                self.share.data['tt_sd'].set(intervaldict['tt_sd'])
-                self.share.data['tt_range'].set(
-                    f"{intervaldict['tt_min']} -- {intervaldict['tt_max']}")
-                self.share.data['tt_total'].set(intervaldict['tt_total'])
+                self.share.data['taskt_avg'].set(intervaldict['taskt_avg'])
+                self.share.data['taskt_sd'].set(intervaldict['taskt_sd'])
+                self.share.data['taskt_range'].set(
+                    f"{intervaldict['taskt_min']} -- {intervaldict['taskt_max']}")
+                self.share.data['taskt_total'].set(intervaldict['taskt_total'])
 
                 # SUMMARY DATA #########################################
                 # Need to gather interval times and counts for ea. interval in
                 #   a summary segment to calc weighted mean times. This sumry
                 #   list has a different function than the ttimes_smry set.
                 sumry_intvl_counts.append(task_count_new)
-                sumry_intvl_ttavgs.append(self.share.data['tt_avg'].get())
+                sumry_intvl_ttavgs.append(self.share.data['taskt_avg'].get())
 
                 # NOTE: Starting data are not included in summary tabulations.
                 summary_m = times.string_to_min(self.share.setting['summary_t'].get())
@@ -408,18 +408,18 @@ class CountModeler:
                     self.share.data['time_prev_sumry'].set(summary_time)
                     self.share.data['task_count_sumry'].set(len(ttimes_smry))
                     summarydict = times.boinc_ttimes_stats(ttimes_smry)
-                    self.share.data['tt_sd_sumry'].set(summarydict['tt_sd'])
-                    self.share.data['tt_range_sumry'].set(
-                        f"{summarydict['tt_min']} -- {summarydict['tt_max']}")
-                    self.share.data['tt_total_sumry'].set(summarydict['tt_total'])
+                    self.share.data['taskt_sd_sumry'].set(summarydict['taskt_sd'])
+                    self.share.data['taskt_range_sumry'].set(
+                        f"{summarydict['taskt_min']} -- {summarydict['taskt_max']}")
+                    self.share.data['taskt_total_sumry'].set(summarydict['taskt_total'])
 
                     # Need the weighted mean summary task time, not the average
                     #   (arithmetic mean) value.
-                    tt_wtmean = times.logtimes_stat(
+                    taskt_wtmean = times.logtimes_stat(
                         distribution=sumry_intvl_ttavgs,
                         stat='wtmean',
                         weights=sumry_intvl_counts)
-                    self.share.data['tt_mean_sumry'].set(tt_wtmean)
+                    self.share.data['taskt_mean_sumry'].set(taskt_wtmean)
 
                     # Need to reset data set for the next summary interval.
                     ttimes_smry.clear()
@@ -526,10 +526,10 @@ class CountModeler:
         def log_start():
             cycles_max = self.share.setting['cycles_max'].get()
             task_count = self.share.data['task_count'].get()
-            tt_avg = self.share.data['tt_avg'].get()
-            tt_sd = self.share.data['tt_sd'].get()
-            tt_range = self.share.data['tt_range'].get()
-            tt_total = self.share.data['tt_total'].get()
+            taskt_avg = self.share.data['taskt_avg'].get()
+            taskt_sd = self.share.data['taskt_sd'].get()
+            taskt_range = self.share.data['taskt_range'].get()
+            taskt_total = self.share.data['taskt_total'].get()
             num_tasks_all = self.share.data['num_tasks_all'].get()
 
             if cycles_max > 0:
@@ -537,9 +537,9 @@ class CountModeler:
                     f'\n>>> START GUI TASK COUNTER v.{cmod.__version__}, SETTINGS: <<<\n'
                     f'{self.share.long_time_start};'
                     f' Number of tasks in the most recent BOINC report: {task_count}\n'
-                    f'{indent}Task Time: avg {tt_avg},\n'
-                    f'{bigindent}range [{tt_range}],\n'
-                    f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{indent}Task Time: avg {taskt_avg},\n'
+                    f'{bigindent}range [{taskt_range}],\n'
+                    f'{bigindent}stdev {taskt_sd}, total {taskt_total}\n'
                     f'{indent}Total tasks in queue: {num_tasks_all}\n'
                     f'{indent}Number of scheduled count intervals: {cycles_max}\n'
                     f'{indent}Counts every {self.share.setting["interval_t"].get()},'
@@ -550,9 +550,9 @@ class CountModeler:
                 report = (
                     f'\n{self.share.long_time_start}; STATUS REPORT\n'
                     f'{indent}Number of tasks recently reported by BOINC: {task_count}\n'
-                    f'{indent}Task Time: avg {tt_avg},\n'
-                    f'{bigindent}range [{tt_range}],\n'
-                    f'{bigindent}stdev {tt_sd}, total {tt_total}\n'
+                    f'{indent}Task Time: avg {taskt_avg},\n'
+                    f'{bigindent}range [{taskt_range}],\n'
+                    f'{bigindent}stdev {taskt_sd}, total {taskt_total}\n'
                     f'{indent}Total tasks in queue: {num_tasks_all}\n')
 
             logging.info(report)
@@ -577,7 +577,7 @@ class CountModeler:
             interval_t = self.share.setting['interval_t'].get()
             summary_t = self.share.setting['summary_t'].get()
             intvl_count_t = self.share.data['intvl_count_t'].get()
-            tt_sd = self.share.data['tt_sd'].get()
+            taskt_sd = self.share.data['taskt_sd'].get()
             cycles_remain = self.share.data['cycles_remain'].get()
             num_taskless_intervals = self.share.note['num_taskless_intervals'].get()
 
@@ -590,9 +590,9 @@ class CountModeler:
                 logging.info(
                     f'\n{intvl_count_t}; Tasks reported in the past {interval_t}:'
                     f' {self.share.data["task_count"].get()}\n'
-                    f'{indent}Task Time: avg {self.share.data["tt_avg"].get()},\n'
-                    f'{bigindent}range [{self.share.data["tt_range"].get()}],\n'
-                    f'{bigindent}stdev {tt_sd}, total {self.share.data["tt_total"].get()}\n'
+                    f'{indent}Task Time: avg {self.share.data["taskt_avg"].get()},\n'
+                    f'{bigindent}range [{self.share.data["taskt_range"].get()}],\n'
+                    f'{bigindent}stdev {taskt_sd}, total {self.share.data["taskt_total"].get()}\n'
                     f'{indent}Total tasks in queue: {self.share.data["num_tasks_all"].get()}\n'
                     f'{indent}{cycles_remain} counts remain.')
 
@@ -600,10 +600,10 @@ class CountModeler:
                 logging.info(
                     f'\n{intvl_count_t}; >>> SUMMARY: Count for the past'
                     f" {summary_t}: {self.share.data['task_count_sumry'].get()}\n"
-                    f"{indent}Task Time: mean {self.share.data['tt_mean_sumry'].get()},\n"
-                    f"{bigindent}range [{self.share.data['tt_range_sumry'].get()}],\n"
-                    f"{bigindent}stdev {self.share.data['tt_sd_sumry'].get()},"
-                    f" total {self.share.data['tt_total_sumry'].get()}")
+                    f"{indent}Task Time: mean {self.share.data['taskt_mean_sumry'].get()},\n"
+                    f"{bigindent}range [{self.share.data['taskt_range_sumry'].get()}],\n"
+                    f"{bigindent}stdev {self.share.data['taskt_sd_sumry'].get()},"
+                    f" total {self.share.data['taskt_total_sumry'].get()}")
 
                 # Need to reset flag to toggle summary logging.
                 self.share.data['log_summary'].set(False)
@@ -618,8 +618,12 @@ class CountModeler:
             self.update_task_status()
             # Need this condition to avoid key error from the threading arg
             #  of None used for CountController.logit() in start_threads().
-            if called_from:
-                log_functions[called_from]()
+            try:
+                if called_from:
+                    log_functions[called_from]()
+            except KeyError as err:
+                print('The called_from param in logit() is expected to be'
+                      '"start", "notice", "interval" or None.\n', err)
 
 # ###### MVC Viewer: the tkinter GUI engine; runs in main thread. ######
 class CountViewer(tk.Frame):
@@ -656,14 +660,14 @@ class CountViewer(tk.Frame):
         'time_prev_cnt_l',
         'time_prev_sumry_l',
         'time_start_l',
-        'tt_avg_l',
-        'tt_range_l',
-        'tt_sd_l',
-        'tt_total_l',
-        'tt_mean_sumry_l',
-        'tt_range_sumry_l',
-        'tt_sd_sumry_l',
-        'tt_total_sumry_l',
+        'taskt_avg_l',
+        'taskt_range_l',
+        'taskt_sd_l',
+        'taskt_total_l',
+        'taskt_mean_sumry_l',
+        'taskt_range_sumry_l',
+        'taskt_sd_sumry_l',
+        'taskt_total_sumry_l',
         'view_button_style'
     )
 
@@ -718,10 +722,10 @@ class CountViewer(tk.Frame):
         self.share.data = {
             # Start and Interval data
             'task_count': tk.IntVar(),
-            'tt_avg': tk.StringVar(),
-            'tt_sd': tk.StringVar(),
-            'tt_range': tk.StringVar(),
-            'tt_total': tk.StringVar(),
+            'taskt_avg': tk.StringVar(),
+            'taskt_sd': tk.StringVar(),
+            'taskt_range': tk.StringVar(),
+            'taskt_total': tk.StringVar(),
             'intvl_count_t': tk.StringVar(),
             # General data
             'time_prev_cnt': tk.StringVar(),
@@ -731,10 +735,10 @@ class CountViewer(tk.Frame):
             # Summary data
             'time_prev_sumry': tk.StringVar(),
             'task_count_sumry': tk.IntVar(),
-            'tt_mean_sumry': tk.StringVar(),
-            'tt_sd_sumry': tk.StringVar(),
-            'tt_range_sumry': tk.StringVar(),
-            'tt_total_sumry': tk.StringVar(),
+            'taskt_mean_sumry': tk.StringVar(),
+            'taskt_sd_sumry': tk.StringVar(),
+            'taskt_range_sumry': tk.StringVar(),
+            'taskt_total_sumry': tk.StringVar(),
             'log_summary': tk.BooleanVar(),
         }
 
@@ -790,24 +794,24 @@ class CountViewer(tk.Frame):
         # Labels for BOINC data.
         self.task_count_l = tk.Label(**boinc_lbl_params,
             textvariable=self.share.data['task_count'])
-        self.tt_avg_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_avg'])
-        self.tt_sd_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_sd'])
-        self.tt_range_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_range'])
-        self.tt_total_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_total'])
+        self.taskt_avg_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_avg'])
+        self.taskt_sd_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_sd'])
+        self.taskt_range_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_range'])
+        self.taskt_total_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_total'])
         self.task_count_sumry_l = tk.Label(**boinc_lbl_params,
             textvariable=self.share.data['task_count_sumry'])
-        self.tt_mean_sumry_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_mean_sumry'])
-        self.tt_sd_sumry_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_sd_sumry'])
-        self.tt_range_sumry_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_range_sumry'])
-        self.tt_total_sumry_l = tk.Label(**boinc_lbl_params,
-            textvariable=self.share.data['tt_total_sumry'])
+        self.taskt_mean_sumry_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_mean_sumry'])
+        self.taskt_sd_sumry_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_sd_sumry'])
+        self.taskt_range_sumry_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_range_sumry'])
+        self.taskt_total_sumry_l = tk.Label(**boinc_lbl_params,
+            textvariable=self.share.data['taskt_total_sumry'])
 
         # Master data labels (self.master is implicit as the parent).
         self.time_prev_cnt_l = tk.Label(**master_row_params,
@@ -1055,21 +1059,21 @@ class CountViewer(tk.Frame):
             row=4, column=1, padx=12, sticky=tk.EW)
         self.task_count_sumry_l.grid(
             row=4, column=2, padx=(0, 12), sticky=tk.EW)
-        self.tt_avg_l.grid(
+        self.taskt_avg_l.grid(
             row=5, column=1, padx=12, sticky=tk.EW)
-        self.tt_mean_sumry_l.grid(
+        self.taskt_mean_sumry_l.grid(
             row=5, column=2, padx=(0, 12), sticky=tk.EW)
-        self.tt_sd_l.grid(
+        self.taskt_sd_l.grid(
             row=6, column=1, padx=12, sticky=tk.EW)
-        self.tt_sd_sumry_l.grid(
+        self.taskt_sd_sumry_l.grid(
             row=6, column=2, padx=(0, 12), sticky=tk.EW)
-        self.tt_range_l.grid(
+        self.taskt_range_l.grid(
             row=7, column=1, padx=12, sticky=tk.EW)
-        self.tt_range_sumry_l.grid(
+        self.taskt_range_sumry_l.grid(
             row=7, column=2, padx=(0, 12), sticky=tk.EW)
-        self.tt_total_l.grid(
+        self.taskt_total_l.grid(
             row=8, column=1, padx=12, sticky=tk.EW)
-        self.tt_total_sumry_l.grid(
+        self.taskt_total_sumry_l.grid(
             row=8, column=2, padx=(0, 12), sticky=tk.EW)
         sep2.grid(
             row=9, column=0, columnspan=5, padx=5, pady=(6, 6), sticky=tk.EW)
@@ -1454,16 +1458,16 @@ class CountViewer(tk.Frame):
         self.summary_t_l.config(foreground=self.deemphasize)
         self.task_count_l.config(foreground=self.share.highlight)
 
-        self.tt_avg_l.configure(foreground=self.share.highlight)
-        self.tt_sd_l.configure(foreground=self.emphasize)
-        self.tt_range_l.configure(foreground=self.emphasize)
-        self.tt_total_l.configure(foreground=self.emphasize)
+        self.taskt_avg_l.configure(foreground=self.share.highlight)
+        self.taskt_sd_l.configure(foreground=self.emphasize)
+        self.taskt_range_l.configure(foreground=self.emphasize)
+        self.taskt_total_l.configure(foreground=self.emphasize)
 
         self.task_count_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_mean_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_sd_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_range_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_total_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_mean_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_sd_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_range_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_total_sumry_l.configure(foreground=self.deemphasize)
 
         if not self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
@@ -1504,17 +1508,17 @@ class CountViewer(tk.Frame):
 
         # Interval data, column1
         self.task_count_l.configure(foreground=self.share.highlight)
-        self.tt_avg_l.configure(foreground=self.share.highlight)
-        self.tt_sd_l.configure(foreground=self.emphasize)
-        self.tt_range_l.configure(foreground=self.emphasize)
-        self.tt_total_l.configure(foreground=self.emphasize)
+        self.taskt_avg_l.configure(foreground=self.share.highlight)
+        self.taskt_sd_l.configure(foreground=self.emphasize)
+        self.taskt_range_l.configure(foreground=self.emphasize)
+        self.taskt_total_l.configure(foreground=self.emphasize)
 
         # Summary data, column2, de-emphasize font color
         self.task_count_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_mean_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_sd_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_range_sumry_l.configure(foreground=self.deemphasize)
-        self.tt_total_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_mean_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_sd_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_range_sumry_l.configure(foreground=self.deemphasize)
+        self.taskt_total_sumry_l.configure(foreground=self.deemphasize)
 
     def emphasize_sumry_data(self) -> None:
         """
@@ -1526,18 +1530,18 @@ class CountViewer(tk.Frame):
 
         # Interval data, column1, de-emphasize font color
         self.task_count_l.configure(foreground=self.deemphasize)
-        self.tt_avg_l.configure(foreground=self.deemphasize)
-        self.tt_sd_l.configure(foreground=self.deemphasize)
-        self.tt_range_l.configure(foreground=self.deemphasize)
-        self.tt_total_l.configure(foreground=self.deemphasize)
+        self.taskt_avg_l.configure(foreground=self.deemphasize)
+        self.taskt_sd_l.configure(foreground=self.deemphasize)
+        self.taskt_range_l.configure(foreground=self.deemphasize)
+        self.taskt_total_l.configure(foreground=self.deemphasize)
 
         # Summary data, column2, emphasize font color
         self.task_count_sumry_l.configure(foreground=self.share.highlight)
-        self.tt_mean_sumry_l.configure(foreground=self.share.highlight)
-        self.tt_sd_sumry_l.configure(foreground=self.emphasize)
-        self.tt_range_sumry_l.configure(text=self.share.data['tt_range'].get(),
+        self.taskt_mean_sumry_l.configure(foreground=self.share.highlight)
+        self.taskt_sd_sumry_l.configure(foreground=self.emphasize)
+        self.taskt_range_sumry_l.configure(text=self.share.data['taskt_range'].get(),
                                        foreground=self.emphasize)
-        self.tt_total_sumry_l.configure(foreground=self.emphasize)
+        self.taskt_total_sumry_l.configure(foreground=self.emphasize)
 
     def app_got_focus(self, focus_event) -> None:
         """Give menu bar headings normal color when app has focus.
