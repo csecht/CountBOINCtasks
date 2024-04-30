@@ -80,7 +80,7 @@ class Logs:
     # Need to write log files to current working directory unless program
     #   is run from a PyInstaller frozen executable, then write to Home
     #   directory. Frozen executable paths need to be absolute paths.
-    do_test = False
+    DO_TEST = False
     EXAMPLELOG = Path(Path.cwd(), 'example_log.txt')
     LOGFILE = Path(Path.cwd(),
                    f'{__program_name__}_log.txt').resolve()
@@ -107,7 +107,7 @@ class Logs:
             provided, via the Project repository, in example_log.txt.
         :return: Text strings to display in show_analysis() Toplevel.
         """
-        cls.do_test = do_test
+        cls.DO_TEST = do_test
         sumry_dates = []
         sumry_intvl_vals = []
         num_sumry_intvl_vals = 0
@@ -135,7 +135,7 @@ class Logs:
         recent_interval_text = ''
 
         try:
-            logtext = Path(cls.LOGFILE).read_text(encoding='utf-8')
+            logtext: str = Path(cls.LOGFILE).read_text(encoding='utf-8')
         except FileNotFoundError:
             info = (f'On {gethostname()}, missing necessary file:\n{cls.LOGFILE}\n'
                     'Was the settings "log results" option used?\n'
@@ -144,10 +144,10 @@ class Logs:
 
             return summary_text, recent_interval_text  # <- Empty strings.
 
-        if cls.do_test:
+        if cls.DO_TEST:
             try:
-                logtext = Path(cls.EXAMPLELOG).read_text(encoding='utf-8')
-                texthash = Utils.verify(logtext)
+                logtext: str = Path(cls.EXAMPLELOG).read_text(encoding='utf-8')
+                texthash: int = Utils.verify(logtext)
                 if texthash != 4006408145:  # As of 06:41 4 June 2022.
                     msg = (f'Content of {cls.EXAMPLELOG} has changed, so'
                            ' the test may not work. If not working, reinstall'
@@ -174,15 +174,18 @@ class Logs:
                                          range [00:16:03 -- 00:22:33],
                                          stdev 00:00:42, total 5d 23:54:05
         """
-        found_sumrys = findall(
-            r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        found_intvls = findall(
-            r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)', logtext, MULTILINE)
-        found_intvl_avgt = findall(
-            r'Tasks reported .+\n.+ avg (\d{2}:\d{2}:\d{2})', logtext, MULTILINE)
-        found_intvl_t_range = findall(
+        found_sumrys: list = findall(
+            r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)',
+            string=logtext, flags=MULTILINE)
+        found_intvls: list = findall(
+            r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)',
+            string=logtext, flags=MULTILINE)
+        found_intvl_avgt: list = findall(
+            r'Tasks reported .+\n.+ avg (\d{2}:\d{2}:\d{2})',
+            string=logtext, flags=MULTILINE)
+        found_intvl_t_range: list = findall(
             r'Tasks reported .+\n.+\n.+ range \[(\d{2}:\d{2}:\d{2}) -- (\d{2}:\d{2}:\d{2})]',
-            logtext, MULTILINE)
+            string=logtext, flags=MULTILINE)
 
         if found_sumrys:
             sumry_dates, sumry_intvl_vals, sumry_cnts = zip(*found_sumrys)
@@ -198,17 +201,17 @@ class Logs:
             num_tasks = sum(intvl_counts)
             intvl_cnt_avg = round(sum(intvl_counts) / len(intvl_counts), 1)
             intvl_cnt_range = f'[{min(intvl_counts)} -- {max(intvl_counts)}]'
-            intvl_t_wtmean = T.logtimes_stat(distribution=found_intvl_avgt,
-                                             stat='weighted_mean',
-                                             weights=intvl_counts)
-            intvl_t_stdev = T.logtimes_stat(distribution=found_intvl_avgt,
-                                            stat='stdev',
-                                            weights=intvl_counts)
+            intvl_t_wtmean: str = T.logtimes_stat(distribution=found_intvl_avgt,
+                                                  stat='weighted_mean',
+                                                  weights=intvl_counts)
+            intvl_t_stdev: str = T.logtimes_stat(distribution=found_intvl_avgt,
+                                                 stat='stdev',
+                                                 weights=intvl_counts)
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
-            intvl_t_range = T.logtimes_stat(distribution=sum(found_intvl_t_range, ()),
-                                            stat='range')
+            intvl_t_range: str = T.logtimes_stat(distribution=sum(found_intvl_t_range, ()),
+                                                 stat='range')
 
             # Text & data used in most count reporting conditions below:
             logged_intvl_report = (
@@ -223,38 +226,28 @@ class Logs:
             )
 
         # Need to check whether plotting is available and possible.
-        if found_intvls and do_plot and CAN_PLOT:
-            interval_data = {
-                'intvl_dates': intvl_dates,
-                'found_intvl_avgt': found_intvl_avgt,
-                'found_intvl_t_range': found_intvl_t_range,
-                'intvl_counts': intvl_counts,
-                'intvl_vals': intvl_vals
-            }
-            cls.plot_data(**interval_data)
-
-        elif not found_intvls and do_plot and CAN_PLOT:
-            detail = ('There are no data to plot.\n'
-                      'Need at least one interval count to\n'
-                      'plot task completion times over time.\n'
-                      )
-            messagebox.showinfo(title='No counts available',
-                                detail=detail)
-
-        elif found_intvls and do_plot and not CAN_PLOT:
-            detail = ('Matplotlib module needs to be installed.\n'
-                      'It can be installed with the command:\n'
-                      'pip install -U matplotlib\n'
-                      'or python -m pip install -U matplotlib'
-                      )
-            messagebox.showinfo(title='Plotting not available.',
-                                detail=detail)
+        if found_intvls and do_plot:
+            if CAN_PLOT:
+                cls.plot_data(
+                    intvl_dates=intvl_dates,
+                    found_intvl_avgt=found_intvl_avgt,
+                    found_intvl_t_range=found_intvl_t_range,
+                    intvl_counts=intvl_counts,
+                    intvl_vals=intvl_vals
+                )
+            else:
+                messagebox.showinfo(
+                    title='Plotting not available.',
+                    detail='Install Matplotlib with: pip install -U matplotlib'
+                )
+        elif do_plot and CAN_PLOT:
+            messagebox.showinfo(
+                title='No counts available',
+                detail='Need at least one interval count to plot task completion times.'
+            )
 
         # Generate text & data to display in show_analysis(). ##########
 
-        # Need 'recent' vars when there are interval counts following last summary.
-        #   So find the list index for first interval count after the last summary.
-        #   If there are no intervals after last summary, then flag and move on.
         if not found_intvls:
             detail = ('There are no data to analyze.\n'
                       'Need at least one interval count\n'
@@ -262,6 +255,9 @@ class Logs:
             messagebox.showinfo(title='No counts available',
                                 detail=detail)
 
+        # Need 'recent' vars when there are interval counts following last summary.
+        #   So find the list index for first interval count after the last summary.
+        #   If there are no intervals after last summary, then flag and move on.
         if found_sumrys and found_intvls:
             try:
                 # When something is off in the log file, the 'index'
@@ -360,7 +356,11 @@ class Logs:
         return summary_text, recent_interval_text
 
     @classmethod
-    def plot_data(cls, **interval_data: dict) -> None:
+    def plot_data(cls, intvl_dates: list,
+                  found_intvl_avgt: list,
+                  found_intvl_t_range: list,
+                  intvl_counts: list,
+                  intvl_vals: list) -> None:
 
         """
         Draw plot window of task times and counts (optional) for
@@ -368,23 +368,17 @@ class Logs:
         The plot will be navigable via toolbar buttons on Linux and
         Windows platforms, not on macOS.
         Parameter lists of data distributions need to be same length.
+        Called from analyze_logfile() when do_plot=True.
 
-        :param interval_data: Dictionary of interval task data lists.
-        Keys:
-            intvl_dates: Datetimes (strings) when task count intervals
-                were logged.
-            found_intvl_avgt: Average task times (strings).
-            found_intvl_t_range: Minimum and maximum task times (string tuples).
-            intvl_counts: Number of task counts (integers) per interval.
-            intvl_vals: Interval time durations (strings).
+        :param intvl_dates: List of datetime strings for interval counts.
+        :param found_intvl_avgt: List of task completion times for intervals.
+        :param found_intvl_t_range: List of min and max task times for intervals.
+        :param intvl_counts: List of task counts for intervals.
+        :param intvl_vals: List of unique time durations of intervals.
 
         :return: None
         """
-        tdate_list = interval_data['intvl_dates']
-        ttime_list = interval_data['found_intvl_avgt']
-        trange_list = interval_data['found_intvl_t_range']
-        tcount_list = [c for c in interval_data['intvl_counts']]
-        intvl_length = ', '.join(set(interval_data['intvl_vals']))
+        intvl_length: str = ', '.join(set(intvl_vals))
 
         # Font sizing adapted from Duarte's answer at:
         # https://stackoverflow.com/questions/3899980/
@@ -406,7 +400,7 @@ class Logs:
         elif MY_OS == 'dar':
             fig, ax1 = plt.subplots(figsize=(6.5, 5), constrained_layout=True)
 
-        if cls.do_test:
+        if cls.DO_TEST:
             ax1.set_title('-- TEST PLOTS of EXAMPLE LOG DATA --',
                           fontsize=bigger_font)
         else:
@@ -426,15 +420,15 @@ class Logs:
         ax1.tick_params(axis='x', which='both', colors=LIGHT_COLOR)
         ax1.tick_params(axis='y', which='both', colors=LIGHT_COLOR)
 
-        # Need to convert tdate_list and ttime_list strings to Matplotlib dates;
+        # Need to convert intvl_dates and found_intvl_avgt strings to Matplotlib dates;
         #   this greatly speeds up plotting when axes are date objects.
         ax1.xaxis.axis_date()
         ax1.yaxis.axis_date()
 
-        tdates = [mdates.datestr2num(d) for d in tdate_list]
-        ttimes = [mdates.datestr2num(t) for t in ttime_list]
+        tdates = [mdates.datestr2num(d) for d in intvl_dates]
+        ttimes = [mdates.datestr2num(t) for t in found_intvl_avgt]
 
-        mins, maxs = zip(*trange_list)
+        mins, maxs = zip(*found_intvl_t_range)
         mintimes = [mdates.datestr2num(m) for m in mins]
         maxtimes = [mdates.datestr2num(m) for m in maxs]
 
@@ -477,9 +471,12 @@ class Logs:
         ax2.xaxis.set_minor_locator(mdates.DayLocator())
         ax2.set_zorder(-1)
         # Count markers become 'hidden' because color becomes transparent.
-        ax2.scatter(tdates, tcount_list, alpha=0)
+        ax2.scatter(tdates, intvl_counts, alpha=0)
 
-        cls.plot_display(fig, ax2, tdates, tcount_list, intvl_length)
+        cls.plot_display(fig=fig, ax2=ax2,
+                         tdates=tdates,
+                         tcounts=intvl_counts,
+                         intvl_length=intvl_length)
 
     @staticmethod
     def plot_data_toggle(button: tk.Button,
@@ -638,7 +635,7 @@ class Logs:
 
         # Have bg match self.master_bg of the app main window.
         analysiswin = tk.Toplevel(bg='SteelBlue4')
-        if cls.do_test:
+        if cls.DO_TEST:
             analysiswin.title('-- TEST ANALYSIS of EXAMPLE LOG DATA --')
         else:
             analysiswin.title('Analysis of logged data')
