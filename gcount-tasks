@@ -877,17 +877,17 @@ class CountViewer(tk.Frame):
         view = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='View', menu=view)
         view.add_command(label='Log file',
-                         command=lambda: Logs.view(Logs.LOGFILE, app),
+                         command=lambda: Logs.view(filepath=Logs.LOGFILE, tk_obj=app),
                          # MacOS: can't display 'Cmd+L' b/c won't override native cmd.
                          accelerator='Ctrl+L')
         view.add_command(label='Plot of log data',
                          command=lambda: Logs.analyze_logfile(do_plot=True),
                          accelerator='Ctrl+Shift+P')
         view.add_command(label='Analysis of log data',
-                         command=lambda: Logs.show_analysis(app),
+                         command=lambda: Logs.show_analysis(tk_obj=app),
                          accelerator='Ctrl+Shift+L')
         view.add_command(label='Saved Analyses',
-                         command=lambda: Logs.view(Logs.ANALYSISFILE, app),
+                         command=lambda: Logs.view(Logs.ANALYSISFILE, tk_obj=app),
                          accelerator='Ctrl+Shift+A')
 
         help_menu = tk.Menu(self.menubar, tearoff=0)
@@ -898,9 +898,9 @@ class CountViewer(tk.Frame):
                               command=self.share.compliment,
                               accelerator='Ctrl+Shift+C')
         help_menu.add_command(label='File paths',
-                              command=lambda: self.share.filepaths(app))
+                              command=lambda: self.share.filepaths(window=app))
         help_menu.add_command(label='Test example data',
-                              command=lambda: Logs.show_analysis(app, do_test=True))
+                              command=lambda: Logs.show_analysis(tk_obj=app, do_test=True))
 
         help_menu.add_command(label='About',
                               command=self.share.about)
@@ -908,7 +908,7 @@ class CountViewer(tk.Frame):
         # For Button constructors, self.master is implicit as the parent.
         self.share.viewlog_b = ttk.Button(
             text='View log file',
-            command=lambda: Logs.view(Logs.LOGFILE, app),
+            command=lambda: Logs.view(Logs.LOGFILE, tk_obj=app),
             takefocus=False)
         # Set interval & summary focus button attributes with *.share.* b/c need
         #   to reconfigure them in Modeler.
@@ -943,21 +943,21 @@ class CountViewer(tk.Frame):
                            highlightbackground='grey75'
                            )
         # Need to provide exit info to Terminal and log.
-        self.master.protocol('WM_DELETE_WINDOW', lambda: utils.quit_gui(app))
+        self.master.protocol('WM_DELETE_WINDOW', lambda: utils.quit_gui(mainloop=app))
 
-        self.master.bind_all('<Escape>', lambda _: utils.quit_gui(app))
-        self.master.bind('<Control-q>', lambda _: utils.quit_gui(app))
+        self.master.bind_all('<Escape>', lambda _: utils.quit_gui(mainloop=app))
+        self.master.bind('<Control-q>', lambda _: utils.quit_gui(mainloop=app))
         # ^^ Note: macOS Command-q will quit program without utils.quit_gui info msg.
 
         # Note: Toplevel key bindings are set with module binds.keyboard().
         self.master.bind('<Control-l>',
-                         lambda _: Logs.view(Logs.LOGFILE, app))
+                         lambda _: Logs.view(filepath=Logs.LOGFILE, tk_obj=app))
         self.master.bind('<Shift-Control-P>',
                          lambda _: Logs.analyze_logfile(do_plot=True))
         self.master.bind('<Shift-Control-L>',
-                         lambda _: Logs.show_analysis(app))
+                         lambda _: Logs.show_analysis(tk_obj=app))
         self.master.bind('<Shift-Control-A>',
-                         lambda _: Logs.view(Logs.ANALYSISFILE, app))
+                         lambda _: Logs.view(filepath=Logs.ANALYSISFILE, tk_obj=app))
         self.master.bind('<Shift-Control-C>', lambda _: self.share.compliment())
 
         # Need to specify Ctrl-a for Linux b/c in tkinter that key is
@@ -1036,7 +1036,7 @@ class CountViewer(tk.Frame):
         # For colored separators, use ttk.Frame instead of ttk.Separator.
         # Initialize then configure style for separator color.
         style_sep = ttk.Style()
-        style_sep.configure('Sep.TFrame', background=self.master_bg)
+        style_sep.configure(style='Sep.TFrame', background=self.master_bg)
         sep1 = ttk.Frame(style='Sep.TFrame', relief="raised", height=6)
         sep2 = ttk.Frame(style='Sep.TFrame', relief="raised", height=6)
 
@@ -1589,8 +1589,8 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(utils.position_wrt_window(app, 30, 20))
-        aboutwin.resizable(False, False)
+        aboutwin.geometry(utils.position_wrt_window(window=app, offset_x=30, offset_y=20))
+        aboutwin.resizable(width=False, height=False)
         aboutwin.title(f'About {instances.program_name()}')
         aboutwin.focus_set()
 
@@ -1742,7 +1742,7 @@ class CountFyi:
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(utils.position_wrt_window(app, 30, 20))
+        infowin.geometry(utils.position_wrt_window(window=app, offset_x=30, offset_y=20))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
