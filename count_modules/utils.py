@@ -343,32 +343,15 @@ def boinccmd_not_found(default_path: str) -> None:
 
 
 def check_boinc_tk(mainloop) -> None:
-    """
-    Check whether BOINC client is running; quit program if not.
-    Called before proceeding to implement settings and begin counting,
-    and at each notice interval.
-
-    :param mainloop: The name of the mainloop instance, ie, app, root, etc.
-    """
-    # Note: Any bcmd boinccmd will return this string (in a list)
-    #   if boinc-client is not running. bcmd.get_version() is used b/c it
-    #   is short. A similar function is bcmd.check_boinc(), but only for
-    #   Terminal output; with GUI, need to use messagebox and destroy().
     if "can't connect to local host" in boinc_commands.get_version():
-        okay = messagebox.askokcancel(
+        messagebox.askokcancel(
             title='BOINC ERROR',
             detail='BOINC commands cannot be executed.\n'
                    'Is the BOINC client running?\nExiting now...')
-        if okay:
-            mainloop.update_idletasks()
-            mainloop.after(100)
-            mainloop.destroy()
-            sys.exit(0)
-        else:
-            mainloop.update_idletasks()
-            mainloop.after(100)
-            mainloop.destroy()
-            sys.exit(0)
+        mainloop.update_idletasks()
+        mainloop.after(100)
+        mainloop.destroy()
+        sys.exit(0)
 
 
 def enter_only_digits(entry, action_type) -> bool:
