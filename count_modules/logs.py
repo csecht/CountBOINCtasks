@@ -735,15 +735,7 @@ class Logs:
         # There is no need for condition of no logged interval hours b/c
         #    this is only called from analyze_logfile() when there are hrs.
         for i, _hr in enumerate(start2intvls):
-            if len(start2intvls) == 1:
-                intvl_duration.append(_hr)
-            elif i == 0:
-                pass
-            elif i < len(start2intvls) - 1:
-                after = start2intvls[i + 1]
-                if after < _hr:
-                    intvl_duration.append(_hr)
-            elif i == len(start2intvls) - 1:
+            if len(start2intvls) == 1 or i == len(start2intvls) - 1 or start2intvls[i + 1] < _hr:
                 intvl_duration.append(_hr)
 
         return str(round(sum(intvl_duration), 1))

@@ -92,27 +92,21 @@ def keybind(func: str,
                      'append'.
     :param text: Text to append to *filepath*; use with *func* 'append'.
     """
-    cmd_key = ''
     if MY_OS in 'lin, win':
         cmd_key = 'Control'
-    elif MY_OS == 'dar':
+    else:  # MY_OS == 'dar':
         cmd_key = 'Command'
 
+    key = 'w' if func == 'close' else 's' if func in ['append', 'saveas'] else ''
+
     if func == 'close':
-        toplevel.bind(
-            f'<{f"{cmd_key}"}-w>',
-            lambda _: toplevel.winfo_toplevel().destroy())
-
+        action = lambda _: toplevel.winfo_toplevel().destroy()
     elif func == 'append':
-        toplevel.bind(
-            f'<{f"{cmd_key}"}-s>',
-            lambda _: files.append_txt(dest=filepath,
-                                       savetxt=text,
-                                       showmsg=True,
-                                       parent=toplevel)
-            )
-
+        action = lambda _: files.append_txt(dest=filepath, savetxt=text, showmsg=True, parent=toplevel)
     elif func == 'saveas':
-        toplevel.bind(
-            f'<{f"{cmd_key}"}-s>',
-            lambda _: files.save_as(filepath, toplevel))
+        action = lambda _: files.save_as(filepath, toplevel)
+    else:
+        print(f'Function {func} not found in binds.py.')
+        return
+
+    toplevel.bind(f'<{cmd_key}-{key}>', action)

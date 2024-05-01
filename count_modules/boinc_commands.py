@@ -66,16 +66,11 @@ def set_boincpath() -> str:
         cfg_text = Path(CFGFILE).read_text()
         for line in cfg_text.splitlines():
             if '#' not in line and 'custom_path' in line:
-                parts = line.split()
-                del parts[0]
-                custom_path = " ".join(parts)
-
-                if Path.is_file(Path(custom_path)):
-                    return custom_path
-                else:
-                    errmsg = f"The custom path, {custom_path}, is not" \
-                             f" a recognized file or path.\n"
-                    sys.exit(errmsg)
+                custom_path = " ".join(line.split()[1:])
+                if not Path.is_file(Path(custom_path)):
+                    sys.exit(f'The custom path: {custom_path}\n'
+                             'is not a recognized file or path.\n')
+                return f'"{custom_path}"'
 
     default_path = {
         'win': Path('/Program files/BOINC/boinccmd.exe'),
@@ -85,24 +80,14 @@ def set_boincpath() -> str:
     # Note: On macOS, the Terminal command line would be entered as:
     # /Users/youtheuser/Library/Application\ Support/BOINC/boinccmd
 
-    if MY_OS in default_path:
+    if MY_OS not in default_path or not Path.is_file(default_path[MY_OS]):
+        sys.exit(
+            f'Error: The application boinccmd is not in its expected default path: '
+            f'{default_path.get(MY_OS, "Unknown OS")}\n'
+            'Please enter your custom path for boinccmd in the configuration file:\n'
+            f'{CFGFILE}.')
 
-        # Need to exit program if boinccmd not in default path.
-        if not Path.is_file(default_path[MY_OS]):
-            badpath_msg = (
-                '\nThe application boinccmd is not in its expected default path: '
-                f'{default_path[MY_OS]}\n'
-                'You should enter your custom path for boinccmd in the'
-                f" the CountBOINCtasks-master folder's configuration file, {CFGFILE.name}.")
-            sys.exit(badpath_msg)
-        else:
-            boincpath = f'"{default_path[MY_OS]}"'
-
-        return boincpath
-
-    print(f'Platform <{MY_OS}> is not recognized.\n'
-          'Expecting win (Win32 or Win64), lin (Linux) or dar (Darwin =>Mac OS).')
-    sys.exit(1)
+    return f'"{default_path[MY_OS]}"'
 
 
 def run_boinc(cmd_str: str) -> list:
@@ -115,31 +100,20 @@ def run_boinc(cmd_str: str) -> list:
     # source: https://stackoverflow.com/questions/33560364/
     cmd = cmd_str if MY_OS == 'win' else shlex.split(cmd_str)
 
-    try:
-        with Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True) as output:
-            data_list = output.communicate()[0].split('\n')
+    with Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True) as output:
+        data_list = output.communicate()[0].split('\n')
 
-        # When boinc-client is running, the specified cmd option from a get_ method
-        #   will fill the first element of the text list with its output. When not
-        #   running, boinccmd stderr will fill the first list element.
-        #   Is stderr "can't connect to local host" exclusive to BOINC not running?
-        if "can't connect to local host" in data_list:
-            print(f"\nOOPS! There is a boinccmd error: {data_list[0]}\n"
-                  f"The BOINC client associated with {cmd[0]} is not running.\n"
-                  "You need to quit now and get BOINC running.")
+    # When boinc-client is running, the specified cmd option from a get_ method
+    #   will fill the first element of the text list with its output. When not
+    #   running, boinccmd stderr will fill the first list element.
+    #   Is stderr "can't connect to local host" exclusive to BOINC not running?
+    if "can't connect to local host" in data_list:
+        print(f"\nOOPS! There is a boinccmd error: {data_list[0]}\n"
+              f"The BOINC client associated with {cmd[0]} is not running.\n"
+              "You need to quit now and get the client running.")
 
-            # If boinc not running, then text will be a null list.
-            return data_list
-
-        return data_list
-
-    # This exception will only be raised by bad code calling one of the get_ methods.
-    except CalledProcessError as cpe:
-        msg = ('If the boinccmd usage message is displayed, then'
-               ' boinccmd has a bad command argument.')
-        print(f'\n{msg}\n{cpe}\nExiting now...')
-        # NOTE: exit works in count-tasks, not in gcount-tasks.
-        sys.exit(1)
+    # If boinc not running, then text will be a null list.
+    return data_list
 
 
 def get_version(cmd=' --client_version') -> list:
@@ -163,9 +137,8 @@ def check_boinc():
     # Note: Any bcmd boinccmd will return this string (as a list)
     #   if boinc-client is not running; use get_version() b/c it is short.
     if "can't connect to local host" in get_version():
-        print('BOINC ERROR: BOINC commands cannot be executed.\n'
-              'Is the BOINC client running?   Exiting now...')
-        sys.exit(1)
+        sys.exit('BOINC ERROR: BOINC commands cannot be executed.\n'
+                 'Is the BOINC client running?   Exiting now...')
 
 
 def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
@@ -180,30 +153,19 @@ def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
     """
 
     output = run_boinc(set_boincpath() + cmd)
+    tag_str = f'{" " * 3}{tag}: ' if tag != 'task' else 'task '
 
-    try:
-        if tag == 'all':
+    if tag == 'all':
+        return output
 
-            return output
+    data = [line.replace(tag_str, '') for line in output if tag in line]
 
-        elif tag == 'elapsed time':
-            tag_str = f'{" " * 3}{tag}: '
-            data = [line.replace(tag_str, '') for line in output if tag in line]
-            data = [float(e_time.replace(' sec', '')) for e_time in data]
+    if tag == 'elapsed time':
+        data = [float(e_time.replace(' sec', '')) for e_time in data]
+    elif tag == 'task':
+        data = [name.rstrip(':') for name in data]
 
-            return data
-
-        elif tag == 'task':
-            tag_str = 'task '
-            data = [line.replace(tag_str, '') for line in output if tag in line]
-            data = [name.rstrip(':') for name in data]
-
-            return data
-
-    except ValueError:
-        print(f'Unrecognized data tag: {tag}. Expecting one of these: \n'
-              f'{TASK_TAGS}')
-
+    return data if data else print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
 
 def get_tasks(tag: str, cmd=' --get_tasks') -> list:
     """
@@ -219,20 +181,14 @@ def get_tasks(tag: str, cmd=' --get_tasks') -> list:
     output = run_boinc(set_boincpath() + cmd)
     tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
 
-    try:
-        if tag == 'all':
+    if tag == 'all':
+        return output
 
-            return output
+    if tag in TASK_TAGS:
+        data = [line.replace(tag_str, '') for line in output if tag_str in line]
+        return data
 
-        elif tag in TASK_TAGS:
-            data = [line.replace(tag_str, '') for line in output if tag_str in line]
-
-            return data
-
-    except ValueError:
-        print(f'Unrecognized data tag: {tag}. Expecting one of these: \n'
-              f'{TASK_TAGS}')
-
+    print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
 
 def get_runningtasks(tag: str, app_type: str,
                      cmd=' --get_simple_gui_info') -> list:
@@ -254,28 +210,20 @@ def get_runningtasks(tag: str, app_type: str,
     task_name = None
     data = []
 
-    try:
-        if tag == 'all':
+    if tag == 'all':
+        return output
 
-            return output
-
-        # Need to determine whether a task's task state line following its name line
-        #    specifies that it is a running task (active_task_state: EXECUTING).
-        # Each loop, need to clear task name to ensure target task name is paired
-        #    with its active state and not that of a prior non-EXECUTING task.
-        for line in output:
-            if app_type in line and tag_str in line:
-                task_name = line.replace(tag_str, '')
-                continue
-
-            if task_name is not None and 'EXECUTING' in line:
+    # Need to determine whether a task's task state line following its name line
+    #    specifies that it is a running task (active_task_state: EXECUTING).
+    # Each loop, need to clear task name to ensure target task name is paired
+    #    with its active state and not that of a prior non-EXECUTING task.
+    for line in output:
+        if app_type in line and tag_str in line:
+            task_name = line.replace(tag_str, '')
+            if 'EXECUTING' in output[output.index(line) + 1]:
                 data.append(task_name)
-                task_name = None
 
-        return data
-
-    except ValueError as err:
-        print(err)
+    return data
 
 
 def project_url() -> dict:
@@ -328,20 +276,14 @@ def get_project_url(tag='master URL', cmd=' --get_project_status') -> list:
     """
 
     output = run_boinc(set_boincpath() + cmd)
-
-    data = ['stub_boinc_data']
     tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
 
-    try:
-        if tag in TASK_TAGS:
-            data = [line.replace(tag_str, '') for line in output if tag in line]
+    if tag in TASK_TAGS:
+        data = [line.replace(tag_str, '') for line in output if tag in line]
+        return data
 
-            return data
-
-    except ValueError:
-        print(f'Unrecognized data tag: {tag}. Expecting one of these: \n'
-              f'{TASK_TAGS}')
-
+    print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
+    return []
 
 def project_action(project: str, action: str) -> list:
     """
@@ -353,16 +295,11 @@ def project_action(project: str, action: str) -> list:
     """
 
     # Project commands require the Project URL, others commands don't
-    try:
-        if action in PROJECT_CMD:
-            cmd_str = f'{set_boincpath()} --project {project_url()[project]} {action}'
-
-            return run_boinc(cmd_str)
-
-    except ValueError:
-        print(f'Unrecognized action: {action}. Expecting one of these: \n'
-              f'{PROJECT_CMD}')
-
+    if action in PROJECT_CMD:
+        cmd_str = f'{set_boincpath()} --project {project_url()[project]} {action}'
+        return run_boinc(cmd_str)
+    else:
+        print(f'Unrecognized action: {action}. Expecting one of these: \n{PROJECT_CMD}')
 
 def no_new_tasks(cmd=' --get_project_status') -> bool:
     """
@@ -382,4 +319,3 @@ def no_new_tasks(cmd=' --get_project_status') -> bool:
         return True
 
     return False
-
