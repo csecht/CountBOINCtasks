@@ -22,8 +22,6 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.ticker as tck
     import matplotlib.backends.backend_tkagg as backend
-
-    CAN_PLOT = True
 except (ImportError, ModuleNotFoundError) as err:
     print('Task time plots not available; A needed module was not found.\n'
           'Try installing Matplotlib the command:\n'
@@ -32,7 +30,6 @@ except (ImportError, ModuleNotFoundError) as err:
           f'Error msg: {err}\n\n'
           'If the Error message mentions PIL, then install the Pillow module:\n'
           '   python3 -m pip install -U pillow.')
-    CAN_PLOT = False
 
 import count_modules as CMod
 from count_modules import (binds as Binds,
@@ -107,6 +104,7 @@ class Logs:
             provided, via the Project repository, in example_log.txt.
         :return: Text strings to display in show_analysis() Toplevel.
         """
+
         cls.DO_TEST = do_test
         sumry_dates = []
         sumry_intvl_vals = []
@@ -142,7 +140,7 @@ class Logs:
                     'Was the log file deleted, moved or renamed?')
             messagebox.showerror(title='FILE NOT FOUND', detail=info)
 
-            return summary_text, recent_interval_text  # <- Empty strings.
+            return '', ''
 
         if cls.DO_TEST:
             try:
@@ -207,6 +205,7 @@ class Logs:
             intvl_t_stdev: str = T.logtimes_stat(distribution=found_intvl_avgt,
                                                  stat='stdev',
                                                  weights=intvl_counts)
+
             # https://www.geeksforgeeks.org/python-convert-list-of-tuples-into-list/
             # Note: using an empty tuple as a sum() starting value flattens the
             #    list of string tuples into one tuple of strings.
@@ -224,37 +223,22 @@ class Logs:
                 f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
                 f'   {intvl_t_range} range of task times\n\n'
             )
-
-        # Need to check whether plotting is available and possible.
-        if found_intvls and do_plot:
-            if CAN_PLOT:
-                cls.plot_data(
-                    intvl_dates=intvl_dates,
-                    found_intvl_avgt=found_intvl_avgt,
-                    found_intvl_t_range=found_intvl_t_range,
-                    intvl_counts=intvl_counts,
-                    intvl_vals=intvl_vals
-                )
-            else:
-                messagebox.showinfo(
-                    title='Plotting not available.',
-                    detail='Install Matplotlib with: pip install -U matplotlib'
-                )
-        elif do_plot and CAN_PLOT:
+        else:  # No interval counts found.
             messagebox.showinfo(
                 title='No counts available',
-                detail='Need at least one interval count to plot task completion times.'
+                detail='There are no data to analyze.\n'
+                       'Need at least one interval count\n'
+                       'to analyze results in log file.'
             )
 
-        # Generate text & data to display in show_analysis(). ##########
+        # Need to check whether plotting is available and possible.
+        plot_data = (intvl_dates, found_intvl_avgt, found_intvl_t_range,
+                     intvl_counts, intvl_vals)
+        cls.check_for_plotting(do_plot=do_plot,
+                               intervals=found_intvls,
+                               args=plot_data)
 
-        if not found_intvls:
-            detail = ('There are no data to analyze.\n'
-                      'Need at least one interval count\n'
-                      'to report analysis results.')
-            messagebox.showinfo(title='No counts available',
-                                detail=detail)
-
+        ######## Generate text & data to display in show_analysis(). ##########
         # Need 'recent' vars when there are interval counts following last summary.
         #   So find the list index for first interval count after the last summary.
         #   If there are no intervals after last summary, then flag and move on.
@@ -265,12 +249,10 @@ class Logs:
 
                 # When there are no intervals after last summary,
                 #   the last intvl date is last summary date.
-                if intvl_dates[-1] == sumry_dates[-1]:
-                    recent_intervals = False
-                else:
-                    index = [
-                        i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
-                    index_recent = index[0] + 1  # <- The interval after the last summary.
+                if intvl_dates[-1] != sumry_dates[-1]:
+                    # Index for the interval following the last summary.
+                    index_recent = ([i for i, date in enumerate(intvl_dates)
+                                     if date == sumry_dates[-1]][0] + 1)
                     recent_dates, recent_intvl_vals, recent_cnts = zip(*found_intvls[index_recent:])
                     num_recent_intvl_vals = len(set(recent_intvl_vals))
                     recent_counts = list(map(int, recent_cnts))
@@ -283,7 +265,7 @@ class Logs:
                 summary_text = 'An error occurred. Cannot analyse log data.\n'
                 recent_interval_text = (
                     'Quick fix: backup then delete the log file; restart program.\n'
-                    'See menu bar Help > "File paths" log file location.\n'
+                    'See menu bar Help > "File paths" for log file location.\n'
                 )
 
                 return summary_text, recent_interval_text
@@ -305,7 +287,6 @@ class Logs:
                     f'logged: {", ".join(set(intvl_vals))},\n'
                     'so interpret results with caution.\n\n'
                 )
-            return summary_text, recent_interval_text
 
         if found_sumrys:
             if num_sumry_intvl_vals == 1:
@@ -354,6 +335,33 @@ class Logs:
                 )
 
         return summary_text, recent_interval_text
+
+    @classmethod
+    def check_for_plotting(cls, do_plot: bool, intervals: list, args: tuple) -> None:
+        """
+        Check for availability of Matplotlib and data to plot.
+        Called from analyze_logfile().
+        Calls plot_data() when Matplotlib is available and data is present.
+
+        :param do_plot: When True, call plot_data().
+        :param intervals: List of interval counts found in log file.
+        :param args: Tuple of interval data lists to plot; a passthrough
+                     to plot_data().
+        :return: None
+        """
+        if do_plot and 'matplotlib' in sys.modules:
+            if intervals:
+                cls.plot_data(*args)
+            else:
+                messagebox.showinfo(
+                    title='No counts available',
+                    detail='Need at least one interval count to plot task completion times.'
+                )
+        elif do_plot:
+            messagebox.showinfo(
+                title='Plotting not available.',
+                detail='Install Matplotlib with: pip install -U matplotlib'
+            )
 
     @classmethod
     def plot_data(cls, intvl_dates: list,
