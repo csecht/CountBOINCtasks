@@ -170,6 +170,15 @@ class CountModeler:
     Counting, statistical analysis, and formatting of BOINC task data.
     Communication with the Viewer Class for data display occurs via
     the 'share' parameter.
+
+    Modules:
+        default_settings
+        start_data
+        update_task_status
+        interval_data
+        get_dispatch_table
+        notice_it
+        log_it
     """
 
     def __init__(self, share):
@@ -445,6 +454,44 @@ class CountModeler:
             if self.share.setting['do_log'].get():
                 self.share.logit('interval')
 
+    @staticmethod
+    def get_dispatch_table(Note, num_running: int) -> dict:
+        """ Returns a dispatch table for notice_it() based on whether
+         tasks running or not. Called from notice_it(). Calls Notices()
+
+        Args:
+            Note: An attribute of the Notices class that is used to
+                obtain current task status values and text relevant to
+                task status.
+            num_running: The number of tasks currently running, used to
+                determine which dispatch table to use: tasks running or no.
+        Returns:
+            A dispatch table to post relevant GUI notices based on
+            current task status conditions.
+        """
+
+        # Status values and notice text are from Notices() instances.
+        # Dispatch table items are in descending order of status
+        #  notification priority.
+        tasks_running= {
+            Note.num_suspended_by_user > 0: Note.suspended_by_user,
+            num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
+            Note.num_taskless_intervals > 0: Note.no_tasks_reported,
+            Note.num_err > 0: Note.computation_error,
+        }
+
+        no_tasks_running = {
+            Note.proj_stalled: Note.project_stalled,
+            Note.num_tasks_all == 0: Note.no_tasks,
+            Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
+            Note.num_activity_susp_user_req > 0: Note.user_suspended_activity,
+            Note.num_suspended_by_boinc > 0: Note.boinc_suspended_tasks,
+            Note.all_stalled(): Note.all_stalled,
+            Note.num_err > 0: Note.computation_error,
+        }
+
+        return tasks_running if num_running > 0 else no_tasks_running
+
     def notice_it(self) -> None:
         """
         Manages BOINC task state information and notifications by
@@ -459,53 +506,28 @@ class CountModeler:
 
         while self.share.data['cycles_remain'].get() > 0:
             sleep(cfg.NOTICE_INTERVAL)
+
+            # Need to quit app if boinc-client is no longer running.
+            utils.check_boinc_tk(app)
+
+            # Need to keep track of cycles to regulate utils.beep() calls.
+            notice_cycle_number += 1
+
+            # Need to change to notice fg color from "All is well" row_fg color.
+            self.share.notice_l.config(fg=self.share.highlight)
+
+            self.share.updatetaskstatus()
+            note = Notices(self.share)
+            num_running = self.share.note['num_running'].get()
+            dispatch_table = self.get_dispatch_table(note, num_running)
+
             with self.thread_lock:
-                # Need to quit app if boinc-client is no longer running.
-                utils.check_boinc_tk(app)
-
-                # Need to keep track of cycles to regulate utils.beep() calls.
-                notice_cycle_number += 1
-
-                # Need to change to notice fg color from "All is well" row_fg color.
-                self.share.notice_l.config(fg=self.share.highlight)
-
-                self.share.updatetaskstatus()
-                Note = Notices(self.share)
-
-                # Here, polymorphism is used instead of serial if...elif conditions
-                #  to evaluate and report BOINC status.
-                #  Status values and notice text are from Notices() instances.
-                # Dispatch table items are in descending order of status
-                #  notification priority.
-                num_running = self.share.note['num_running'].get()
-                tasks_running_dispatch_table = {
-                    Note.num_suspended_by_user > 0: Note.suspended_by_user,
-                    num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
-                    Note.num_taskless_intervals > 0: Note.no_tasks_reported,
-                    Note.num_err > 0: Note.computation_error,
-                }
-
-                no_tasks_running_dispatch_table = {
-                    Note.proj_stalled: Note.project_stalled,
-                    Note.num_tasks_all == 0: Note.no_tasks,
-                    Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
-                    Note.num_activity_susp_user_req > 0: Note.user_suspended_activity,
-                    Note.num_suspended_by_boinc > 0: Note.boinc_suspended_tasks,
-                    Note.all_stalled(): Note.all_stalled,
-                    Note.num_err > 0: Note.computation_error,
-                }
-
-                # Notices are posted to the self.share.note['notice_txt']
-                # StringVar of the self.share.notice_l 'Notices' label.
-                # A dispatch loop ends once the first True notice is posted.
-                dispatch_table = (tasks_running_dispatch_table if num_running > 0
-                                  else no_tasks_running_dispatch_table)
                 for condition, func in dispatch_table.items():
                     if condition is True:
                         self.share.note['notice_txt'].set(func())
                         break
                     else:
-                        self.share.note['notice_txt'].set(Note.all_is_well())
+                        self.share.note['notice_txt'].set(note.all_is_well())
 
                 if self.share.data['cycles_remain'].get() == 0:
                     self.share.note['notice_txt'].set(
@@ -536,9 +558,9 @@ class CountModeler:
         # Var used for log text formatting:
         indent = ' ' * 22
         bigindent = ' ' * 33
+        cycles_max = self.share.setting['cycles_max'].get()
 
         def log_start():
-            cycles_max = self.share.setting['cycles_max'].get()
             task_count = self.share.data['task_count'].get()
             taskt_avg = self.share.data['taskt_avg'].get()
             taskt_sd = self.share.data['taskt_sd'].get()
@@ -618,6 +640,11 @@ class CountModeler:
                     logging.info(
                         f'\n{self.share.status_time};'
                         f' {Note.suspended_by_user(called_by="log")}')
+                if self.share.data['cycles_remain'].get() == 0:
+                    logging.info(
+                        f'\n*** All {cycles_max} count intervals have been run. ***\n'
+                        ' Counting has ended.\n')
+
             else:  # no tasks are running; no need for detailed status.
                 logging.info(
                     f'\n{self.share.status_time}; {Note.unknown()}')
