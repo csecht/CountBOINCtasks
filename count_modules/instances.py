@@ -37,11 +37,8 @@ def program_name() -> str:
     :return: Context-specific name of the main program, as string.
     """
     if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-        _program_name = Path(sys.executable).stem
-    else:
-        _program_name = Path(sys.modules['__main__'].__file__).stem
-
-    return _program_name
+        return Path(sys.executable).stem
+    return Path(sys.modules['__main__'].__file__).stem
 
 
 class OneWinstance:
@@ -196,4 +193,3 @@ def sentinel_or_exit(working_dir: Path, exit_msg=None) -> tuple:
         exit_popup(exit_msg)
 
     return sentinel, sentinel_count
-
