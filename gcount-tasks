@@ -81,7 +81,21 @@ class Notices:
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.notice_it().
-    def suspended_by_user(self) -> str:
+    def suspended_by_user(self, called_by=None) -> str:
+        """
+        Is used to provide context-specific text for log_it() and
+        notice_it() methods.
+
+        Args: called_by: Either 'log' or None. If 'log', then the
+            method is called from log_it() and the return value is
+            formatted for logging. If None, then the return value is
+            formatted for GUI display via notice_it() dispatch table.
+        Returns: A string with the appropriate notice text.
+        """
+        if called_by == 'log':
+            return f'{self.num_suspended_by_user} tasks were suspended by user.\n'
+
+        # The other called_by value is from the notice_it() dispatch table.
         return (f'{self.num_suspended_by_user} tasks are suspended by user.\n'
                 f'BOINC will not upload while tasks are suspended.')
 
@@ -557,21 +571,6 @@ class CountModeler:
 
             logging.info(report)
 
-        def log_notice():
-            Note = Notices(self.share)
-
-            if self.share.note['num_running'].get() > 0:
-                if self.share.note['num_running'].get() >= self.share.data['num_tasks_all'].get() - 1:
-                    logging.info(
-                        f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
-                if Note.num_suspended_by_user > 0:
-                    logging.info(
-                        f'\n{self.share.status_time};'
-                        f' {Note.suspended_by_user()}')
-            else:  # no tasks are running; no need for detailed status.
-                logging.info(
-                    f'\n{self.share.status_time}; {Note.unknown()}')
-
         def log_interval():
             # Local vars either used > 1 or for formatting a shorter line.
             interval_t = self.share.setting['interval_t'].get()
@@ -608,10 +607,25 @@ class CountModeler:
                 # Need to reset flag to toggle summary logging.
                 self.share.data['log_summary'].set(False)
 
-        log_functions = {
+        def log_notice():
+            Note = Notices(self.share)
+
+            if self.share.note['num_running'].get() > 0:
+                if self.share.note['num_running'].get() >= self.share.data['num_tasks_all'].get() - 1:
+                    logging.info(
+                        f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
+                if Note.num_suspended_by_user > 0:
+                    logging.info(
+                        f'\n{self.share.status_time};'
+                        f' {Note.suspended_by_user(called_by="log")}')
+            else:  # no tasks are running; no need for detailed status.
+                logging.info(
+                    f'\n{self.share.status_time}; {Note.unknown()}')
+
+        logging_functions = {
             'start': log_start,
-            'notice': log_notice,
             'interval': log_interval,
+            'notice': log_notice,
         }
 
         with self.thread_lock:
@@ -620,7 +634,7 @@ class CountModeler:
             #  of None used for CountController.logit() in start_threads().
             try:
                 if called_from:
-                    log_functions[called_from]()
+                    logging_functions[called_from]()
             except KeyError as err:
                 print('The called_from param in logit() is expected to be'
                       '"start", "notice", "interval" or None.\n', err)
