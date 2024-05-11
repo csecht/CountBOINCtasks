@@ -172,13 +172,15 @@ class CountModeler:
     the 'share' parameter.
 
     Modules:
-        default_settings
-        start_data
-        update_task_status
-        interval_data
-        get_dispatch_table
-        notice_it
-        log_it
+    default_settings
+    start_data
+    update_task_status
+    interval_data
+    manage_notices
+    get_dispatch_table
+    update_notice_text
+    post_final_notice
+    log_it
     """
 
     def __init__(self, share):
@@ -454,8 +456,37 @@ class CountModeler:
             if self.share.setting['do_log'].get():
                 self.share.logit('interval')
 
+    def manage_notices(self):
+        """
+        Manages BOINC task state information and notifications by
+        running on short time intervals. A cfg.NOTICE_INTERVAL of 15 sec
+        works well.
+        Is threaded as notice_thread; started in Viewer.start_threads().
+        Calls to: Notice(), utils.check_boinc_tk(), utils.beep(),
+        update_notice_text() and post_final_notice().
+        """
+
+        while self.share.data['cycles_remain'].get() > 0:
+            sleep(cfg.NOTICE_INTERVAL)
+            utils.check_boinc_tk(app)
+            if (Notices(self.share).num_running == 0
+                    and self.share.setting['sound_beep'].get()):
+                utils.beep(repeats=2)
+
+            with self.thread_lock:
+                self.update_notice_text()
+
+            if self.share.data['cycles_remain'].get() == 0:
+                self.post_final_notice()
+
+            app.update_idletasks()
+
+            # Call to log_it() needs to be outside the thread lock.
+            if self.share.setting['do_log'].get():
+                self.share.logit('notice')
+
     @staticmethod
-    def get_dispatch_table(Note, num_running: int) -> dict:
+    def get_dispatch_table(Note) -> dict:
         """ Returns a dispatch table for notice_it() based on whether
          tasks running or not. Called from notice_it(). Calls Notices()
 
@@ -463,8 +494,6 @@ class CountModeler:
             Note: An attribute of the Notices class that is used to
                 obtain current task status values and text relevant to
                 task status.
-            num_running: The number of tasks currently running, used to
-                determine which dispatch table to use: tasks running or no.
         Returns:
             A dispatch table to post relevant GUI notices based on
             current task status conditions.
@@ -475,7 +504,7 @@ class CountModeler:
         #  notification priority.
         tasks_running= {
             Note.num_suspended_by_user > 0: Note.suspended_by_user,
-            num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
+            Note.num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
             Note.num_taskless_intervals > 0: Note.no_tasks_reported,
             Note.num_err > 0: Note.computation_error,
         }
@@ -490,58 +519,27 @@ class CountModeler:
             Note.num_err > 0: Note.computation_error,
         }
 
-        return tasks_running if num_running > 0 else no_tasks_running
+        return tasks_running if Note.num_running > 0 else no_tasks_running
 
-    def notice_it(self) -> None:
-        """
-        Manages BOINC task state information and notifications by
-        running on short time intervals. A cfg.NOTICE_INTERVAL of 15 sec
-        works well.
-        Is threaded as notice_thread; started in Viewer.start_threads().
-        Calls to: Notice(), utils.check_boinc_tk(), task_states(), and
-        log_it().
-        """
-        notice_cycle_number = 0
+    def update_notice_text(self):
+        self.share.updatetaskstatus()
+        Note = Notices(self.share)
+        dispatch_table = self.get_dispatch_table(Note)
+        for condition, func in dispatch_table.items():
+            if condition is True:
+                self.share.notice_l.config(fg=self.share.highlight)
+                self.share.note['notice_txt'].set(func())
+                return
+
+        self.share.note['notice_txt'].set(Note.all_is_well())
+
+    def post_final_notice(self):
         cycles_max = self.share.setting['cycles_max'].get()
-
-        while self.share.data['cycles_remain'].get() > 0:
-            sleep(cfg.NOTICE_INTERVAL)
-
-            # Need to quit app if boinc-client is no longer running.
-            utils.check_boinc_tk(app)
-
-            # Need to keep track of cycles to regulate utils.beep() calls.
-            notice_cycle_number += 1
-
-            # Need to change to notice fg color from "All is well" row_fg color.
-            self.share.notice_l.config(fg=self.share.highlight)
-
-            self.share.updatetaskstatus()
-            note = Notices(self.share)
-            num_running = self.share.note['num_running'].get()
-            dispatch_table = self.get_dispatch_table(note, num_running)
-
-            with self.thread_lock:
-                for condition, func in dispatch_table.items():
-                    if condition is True:
-                        self.share.note['notice_txt'].set(func())
-                        break
-                    else:
-                        self.share.note['notice_txt'].set(note.all_is_well())
-
-                if self.share.data['cycles_remain'].get() == 0:
-                    self.share.note['notice_txt'].set(
-                        f'{self.share.note["notice_txt"].get()}\n'
-                        f'*** All {cycles_max} count intervals have been run. ***\n')
-                    print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n'
-                          'You can quit the program from the GUI,'
-                          ' then restart from the command line.\n')
-
-            app.update_idletasks()
-
-            # Call to log_it() needs to be outside the thread lock.
-            if self.share.setting['do_log'].get():
-                self.share.logit('notice')
+        self.share.note['notice_txt'].set(
+            f'{self.share.note["notice_txt"].get()}\n'
+            f'*** All {cycles_max} count intervals have been run. ***\n')
+        print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n'
+            'You can quit the program from the GUI, then restart from the command line.\n')
 
     def log_it(self, called_from: str) -> None:
         """
@@ -1884,7 +1882,8 @@ class CountController(tk.Tk):
         """
         Is called from Viewer.start_threads().
         """
-        CountModeler(share=self).notice_it()
+        # CountModeler(share=self).notice_it()
+        CountModeler(share=self).manage_notices()
 
     def updatetaskstatus(self) -> None:
         """

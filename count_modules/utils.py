@@ -4,7 +4,7 @@ General utility functions in gcount-tasks.
 Class: Tooltip - Bind mouse hover events to create a tooltip.
 Functions:
     absolute_path_to - Get absolute path to files and directories.
-    beep - Play beep on speakers.
+    do_beep - Play do_beep on speakers.
     boinccmd_not_found - Display message for a bad boinccmd path; use
         with standalone program.
     check_boinc_tk - Check whether BOINC client is running, quit if not.
@@ -304,15 +304,16 @@ class Tooltip:
         self.tt_win.focus_force()
 
 
-def beep(count: int) -> None:
+def beep(repeats: int) -> None:
     """
-    Play beep sound through the computer's speaker.
+    Play do_beep sound through the computer's speaker.
 
-    :param count: Number of times to repeat the beep.
+    :param repeats: Number of times to repeat the do_beep.
+    :return: None
     """
 
     # Cannot repeat a sleep interval shorter than the sound play duration.
-    for _ in range(count):
+    for _ in range(repeats):
         if 'win' in sys.platform:
             freq = 500
             dur = 200
