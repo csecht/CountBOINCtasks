@@ -6,7 +6,7 @@ Class Logs, functions: analyze_logfile, plot_data, plot_data_toggle,
 Functions: close_plots
 
 """
-# Copyright (C) 2021-2022 C. Echt under GNU General Public License'
+# Copyright (C) 2021-2024 C. Echt under GNU General Public License'
 
 
 import sys
@@ -249,10 +249,11 @@ class Logs:
 
                 # When there are no intervals after last summary,
                 #   the last intvl date is last summary date.
-                if intvl_dates[-1] != sumry_dates[-1]:
-                    # Index for the interval following the last summary.
-                    index_recent = ([i for i, date in enumerate(intvl_dates)
-                                     if date == sumry_dates[-1]][0] + 1)
+                if intvl_dates[-1] == sumry_dates[-1]:
+                    recent_intervals = False
+                else:
+                    index = [i for i, date in enumerate(intvl_dates) if date == sumry_dates[-1]]
+                    index_recent = index[0] + 1  # <- The interval after the last summary.
                     recent_dates, recent_intvl_vals, recent_cnts = zip(*found_intvls[index_recent:])
                     num_recent_intvl_vals = len(set(recent_intvl_vals))
                     recent_counts = list(map(int, recent_cnts))
