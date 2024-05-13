@@ -33,7 +33,7 @@ TASK_TAGS = ('name', 'WU name', 'project URL', 'received',
              'report deadline', 'ready to report', 'state',
              'scheduler state', 'active_task_state',
              'app version num', 'resources', 'final CPU time',
-             'final elapsed time', 'final elapsed time',
+             'final elapsed time',
              'exit status', 'signal', 'estimated CPU time remaining',
              'slot', 'PID', 'current CPU time',
              'CPU time at time_now checkpoint', 'fraction done',
@@ -45,8 +45,8 @@ PROJECT_CMD = ('reset', 'detach', 'update', 'suspend', 'resume',
                'dont_detach_when_done'
                )
 
-# REPORTED_TAGS = ('task', 'project URL', 'app name', 'exit status',
-#                 'elapsed time', 'completed time', 'get_reported time')
+REPORTED_TAGS = ('task', 'project URL', 'app name', 'exit status',
+                'elapsed time', 'completed time', 'get_reported time')
 
 # GETTASKS_TAGS = ('name', 'state', 'scheduler state',  'fraction done',
 #                'active_task_state')
@@ -153,19 +153,24 @@ def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
     """
 
     output = run_boinc(set_boincpath() + cmd)
-    tag_str = f'{" " * 3}{tag}: ' if tag != 'task' else 'task '
-
-    if tag == 'all':
-        return output
-
+    tag_str = f'{" " * 3}{tag}: ' if tag == 'elapsed time' else 'task '
     data = [line.replace(tag_str, '') for line in output if tag in line]
 
-    if tag == 'elapsed time':
-        data = [float(e_time.replace(' sec', '')) for e_time in data]
-    elif tag == 'task':
-        data = [name.rstrip(':') for name in data]
+    try:
+        if tag == 'all':
+            return output
 
-    return data if data else print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
+        if tag == 'elapsed time':
+            data = [float(e_time.replace(' sec', '')) for e_time in data]
+        elif tag == 'task':
+            data = [name.rstrip(':') for name in data]
+
+        return data
+
+    except ValueError:
+        print(f'Unrecognized data tag: {tag}. Expecting one of these: \n'
+              f'{REPORTED_TAGS}')
+        return []
 
 def get_tasks(tag: str, cmd=' --get_tasks') -> list:
     """
