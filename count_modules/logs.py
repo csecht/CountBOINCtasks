@@ -167,7 +167,7 @@ class Logs:
                                          stdev 00:00:11, total 06:28:45
                               Total tasks in queue: 53
                               984 counts remain.
-        2021-Dec-21 06:27:18; >>> SUMMARY: Count for the past 1d: 402
+        2021-Dec-21 06:27:18; >>> SUMMARY: Task count for the past 1d: 402
                               Task Time: mean 0:21:28,
                                          range [00:16:03 -- 00:22:33],
                                          stdev 00:00:42, total 5d 23:54:05
@@ -175,6 +175,7 @@ class Logs:
         found_sumrys: list = findall(
             r'^(.*); >>> SUMMARY: .+ (\d+[mhd]): (\d+$)',
             string=logtext, flags=MULTILINE)
+
         found_intvls: list = findall(
             r'^(.*); Tasks reported .+ (\d+[mhd]): (\d+$)',
             string=logtext, flags=MULTILINE)
@@ -244,11 +245,8 @@ class Logs:
         #   If there are no intervals after last summary, then flag and move on.
         if found_sumrys and found_intvls:
             try:
-                # When something is off in the log file, the 'index'
-                #   statement will throw a "list index out of range" exception.
-
-                # When there are no intervals after last summary,
-                #   the last intvl date is last summary date.
+                # When there are no intervals after last summary, the last
+                #  intvl date is last summary date. Times and formats must match.
                 if intvl_dates[-1] == sumry_dates[-1]:
                     recent_intervals = False
                 else:
@@ -263,12 +261,11 @@ class Logs:
                         stat='weighted_mean',
                         weights=recent_counts)
             except IndexError:
-                summary_text = 'An error occurred. Cannot analyse log data.\n'
+                summary_text = 'An index error occurred. Cannot analyse log data.\n'
                 recent_interval_text = (
                     'Quick fix: backup then delete the log file; restart program.\n'
                     'See menu bar Help > "File paths" for log file location.\n'
                 )
-
                 return summary_text, recent_interval_text
 
         # Need to tailor report texts for various counting conditions.
