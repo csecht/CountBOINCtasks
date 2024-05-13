@@ -309,7 +309,7 @@ class CountModeler:
         Run timer and countdown clock to update and analyze regular and
         summary data for task status and times. Set control variables
         for data and notice dictionaries.
-        Is threaded as interval_thread; started in Viewer.start_threads()
+        Is threaded as interval_thread; started in Viewer.start_threads().
         Calls to: get_minutes(), log_it().
         """
 
@@ -371,17 +371,16 @@ class CountModeler:
 
                 task_count_new = len(ttimes_new)
                 self.share.data['task_count'].set(task_count_new)
-                # Add new tasks to summary set for later analysis.
-                ttimes_smry.update(ttimes_new)
 
                 cycles_remain = int(self.share.data['cycles_remain'].get()) - 1
                 self.share.data['cycles_remain'].set(cycles_remain)
+
                 # Display weekday with time of previous interval to aid the user.
                 self.share.data['time_prev_cnt'].set(
                     datetime.now().strftime(cfg.DAY_FMT))
                 # Capture full ending time here, instead of in log_it(),
                 #   so that the logged time matches displayed time.
-                self.share.data['intvl_count_t'].set(
+                self.share.data['time_intvl_count'].set(
                     datetime.now().strftime(cfg.LONG_FMT))
 
                 # Track when no new tasks were reported in past interval;
@@ -389,7 +388,6 @@ class CountModeler:
                 # Need to update num_running value from task_states().
                 self.update_task_status()
                 num_running = self.share.note['num_running'].get()
-
                 if task_count_new == 0:
                     num_taskless_intervals += 1
                 elif task_count_new > 0 and num_running > 0:
@@ -404,57 +402,83 @@ class CountModeler:
                 self.share.data['taskt_total'].set(intervaldict['taskt_total'])
 
                 # SUMMARY DATA #########################################
+                # NOTE: Starting data are not included in summary tabulations.
                 # Need to gather interval times and counts for ea. interval in
                 #   a summary segment to calc weighted mean times. This sumry
                 #   list has a different function than the ttimes_smry set.
                 sumry_intvl_counts.append(task_count_new)
                 sumry_intvl_ttavgs.append(self.share.data['taskt_avg'].get())
+                ttimes_smry.update(ttimes_new)
 
-                # NOTE: Starting data are not included in summary tabulations.
                 summary_m = times.string_to_min(self.share.setting['summary_t'].get())
                 # When summary interval is >= 1 week, need to provide date of
                 #   prior summary rather than weekday, as above (%A %H:%M).
+                # Take care that the summary time_now exactly matches the
+                #   time of the last interval in the summary period.
                 if summary_m >= 10080:
                     self.share.data['time_prev_cnt'].set(
                         datetime.now().strftime(cfg.SHORTER_FMT))
-                summary_time = self.share.data['time_prev_cnt'].get()
-
                 if (cycle + 1) % (summary_m // interval_m) == 0:
-                    # Flag used in log_it() to log summary data.
-                    self.share.data['log_summary'].set(True)
+                    self.update_summary_data(
+                        time_prev=self.share.data['time_prev_cnt'].get(),
+                        tasks=ttimes_smry,
+                        averages=sumry_intvl_ttavgs,
+                        counts=sumry_intvl_counts
+                    )
 
-                    # Need to deactivate tooltip and activate the Summary
-                    #   data button now; only need these statements for
-                    #   1st summary, but, oh well, here we go again...
-                    Tooltip(widget=self.share.sumry_b, tt_text='', state='disabled')
-                    self.share.sumry_b.config(state=tk.NORMAL)
-
-                    # Set time and stats of summary count.
-                    self.share.data['time_prev_sumry'].set(summary_time)
-                    self.share.data['task_count_sumry'].set(len(ttimes_smry))
-                    summarydict = times.boinc_ttimes_stats(ttimes_smry)
-                    self.share.data['taskt_sd_sumry'].set(summarydict['taskt_sd'])
-                    self.share.data['taskt_range_sumry'].set(
-                        f"{summarydict['taskt_min']} -- {summarydict['taskt_max']}")
-                    self.share.data['taskt_total_sumry'].set(summarydict['taskt_total'])
-
-                    # Need the weighted mean summary task time, not the average
-                    #   (arithmetic mean) value.
-                    taskt_weighted_mean = times.logtimes_stat(
-                        distribution=sumry_intvl_ttavgs,
-                        stat='weighted_mean',
-                        weights=sumry_intvl_counts)
-                    self.share.data['taskt_mean_sumry'].set(taskt_weighted_mean)
-
-                    # Need to reset data set for the next summary interval.
+                    # Need to reset data for the next summary interval.
                     ttimes_smry.clear()
-                    sumry_intvl_counts.clear()
                     sumry_intvl_ttavgs.clear()
+                    sumry_intvl_counts.clear()
 
             # Call to log_it() needs to be outside the thread lock.
             app.update_idletasks()
             if self.share.setting['do_log'].get():
                 self.share.logit('interval')
+
+    def update_summary_data(self,
+                            time_prev: str,
+                            tasks: set,
+                            averages: list,
+                            counts: list) -> None:
+        """
+        Set summary data for the most recent interval.
+        Called from CountModeler.interval_data().
+        Calls times.logtimes_stat() and times.boinc_ttimes_stats().
+
+        Args:
+            time_prev: The time of the previous summary interval.
+            tasks: A set of task times for the most recent interval.
+            averages: A list of average task times for each interval.
+            counts: A list of new task counts since previous interval.
+        Returns:
+             None
+        """
+        # Flag used in log_it() to log summary data.
+        self.share.data['log_summary'].set(True)
+
+        # Need to deactivate tooltip and activate the Summary
+        #   data button now; only need this for the first Summary
+        #   but, oh well, here we go again...
+        Tooltip(widget=self.share.sumry_b, tt_text='', state='disabled')
+        self.share.sumry_b.config(state=tk.NORMAL)
+
+        # Set time and stats of summary count.
+        self.share.data['time_prev_sumry'].set(time_prev)
+        self.share.data['task_count_sumry'].set(len(tasks))
+        summarydict = times.boinc_ttimes_stats(tasks)
+        self.share.data['taskt_sd_sumry'].set(summarydict['taskt_sd'])
+        self.share.data['taskt_range_sumry'].set(
+            f"{summarydict['taskt_min']} -- {summarydict['taskt_max']}")
+        self.share.data['taskt_total_sumry'].set(summarydict['taskt_total'])
+
+        # Need the weighted mean summary task time, not the average
+        #   (arithmetic mean) value.
+        taskt_weighted_mean: str = times.logtimes_stat(
+            distribution=averages,
+            stat='weighted_mean',
+            weights=counts)
+        self.share.data['taskt_mean_sumry'].set(taskt_weighted_mean)
 
     def manage_notices(self):
         """
@@ -522,6 +546,7 @@ class CountModeler:
         return tasks_running if Note.num_running > 0 else no_tasks_running
 
     def update_notice_text(self):
+        """Called from manage_notices(). Calls Notices() and get_dispatch_table()."""
         self.share.updatetaskstatus()
         Note = Notices(self.share)
         dispatch_table = self.get_dispatch_table(Note)
@@ -534,6 +559,7 @@ class CountModeler:
         self.share.note['notice_txt'].set(Note.all_is_well())
 
     def post_final_notice(self):
+        """Called from manage_notices()."""
         cycles_max = self.share.setting['cycles_max'].get()
         self.share.note['notice_txt'].set(
             f'{self.share.note["notice_txt"].get()}\n'
@@ -595,19 +621,20 @@ class CountModeler:
             # Local vars either used > 1 or for formatting a shorter line.
             interval_t = self.share.setting['interval_t'].get()
             summary_t = self.share.setting['summary_t'].get()
-            intvl_count_t = self.share.data['intvl_count_t'].get()
+            time_intvl_count = self.share.data['time_intvl_count'].get()
             taskt_sd = self.share.data['taskt_sd'].get()
             cycles_remain = self.share.data['cycles_remain'].get()
             num_taskless_intervals = self.share.note['num_taskless_intervals'].get()
 
             if num_taskless_intervals > 0:
                 logging.info(
-                    f'\n{intvl_count_t}; NO TASKS reported in the past'
-                          f' {num_taskless_intervals} counting intervals.\n'
-                          f'{indent}{cycles_remain} counts remain.')
-            else:  # the number of taskless intervals is 0:
+                    f'\n{time_intvl_count}; Tasks reported in the past {interval_t}:'
+                    f' {self.share.data["task_count"].get()}\n'
+                    f'{indent}Total tasks in queue: {self.share.data["num_tasks_all"].get()}\n'
+                    f'{indent}{cycles_remain} counts remain.')
+            else:  # tasks were reported in the past interval.
                 logging.info(
-                    f'\n{intvl_count_t}; Tasks reported in the past {interval_t}:'
+                    f'\n{time_intvl_count}; Tasks reported in the past {interval_t}:'
                     f' {self.share.data["task_count"].get()}\n'
                     f'{indent}Task Time: avg {self.share.data["taskt_avg"].get()},\n'
                     f'{bigindent}range [{self.share.data["taskt_range"].get()}],\n'
@@ -617,7 +644,7 @@ class CountModeler:
 
             if self.share.data['log_summary'].get():
                 logging.info(
-                    f'\n{intvl_count_t}; >>> SUMMARY: Count for the past'
+                    f'\n{time_intvl_count}; >>> SUMMARY: Task count for the past'
                     f" {summary_t}: {self.share.data['task_count_sumry'].get()}\n"
                     f"{indent}Task Time: mean {self.share.data['taskt_mean_sumry'].get()},\n"
                     f"{bigindent}range [{self.share.data['taskt_range_sumry'].get()}],\n"
@@ -765,7 +792,7 @@ class CountViewer(tk.Frame):
             'taskt_sd': tk.StringVar(),
             'taskt_range': tk.StringVar(),
             'taskt_total': tk.StringVar(),
-            'intvl_count_t': tk.StringVar(),
+            'time_intvl_count': tk.StringVar(),
             # General data
             'time_prev_cnt': tk.StringVar(),
             'cycles_remain': tk.IntVar(),
@@ -1135,10 +1162,9 @@ class CountViewer(tk.Frame):
 
         # Need pady for alignment with the row header.
         self.share.notice_l.grid(
-            row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0),
-            sticky=tk.NW)
+            row=13, column=1, columnspan=2, rowspan=2, padx=5, pady=(1, 0), sticky=tk.NW)
         self.share.compliment_l.grid(
-            row=13, column=1, columnspan=2, padx=5, sticky=tk.EW)
+            row=14, column=1, columnspan=2, padx=5, sticky=tk.EW)
 
         # Some control variables have default or initial start values,
         #   so make labels invisible in pre-settings dataframe by matching
@@ -1706,7 +1732,7 @@ class CountFyi:
             self.share.notice_l.grid()
             app.update_idletasks()
 
-        self.share.compliment_l.after(3333, refresh)
+        self.share.compliment_l.after(4444, refresh)
 
     @staticmethod
     def file_paths(window: tk.Toplevel) -> None:
@@ -2021,7 +2047,7 @@ if __name__ == "__main__":
             app.mainloop()
 
         except KeyboardInterrupt:
-            _msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};\n'
-                    '*** User quit the program from Terminal/Console ***\n')
+            _msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};'
+                    '*** User quit the program from Terminal/Console ***')
             print(_msg)
             logging.info(msg=_msg)
