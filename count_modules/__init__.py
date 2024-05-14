@@ -7,7 +7,7 @@ Confirm that the boinccmd path exists; option to modify path if not.
 """
 
 __author__ = 'cecht, BOINC ID: 990821'
-__copyright__ = 'Copyright (C) 2021-2022 C.S. Echt, under GNU General Public License'
+__copyright__ = 'Copyright (C) 2021-2024 C.S. Echt, under GNU General Public License'
 __license__ = 'GNU General Public License'
 __credits__ = ['Inspired by rickslab-gpu-utils',
                'Testing & debug of count-tasks: Keith Myers']
