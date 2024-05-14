@@ -17,7 +17,7 @@ def check_platform():
               'Windows, Linux, and MacOS (darwin) are supported.')
         sys.exit(1)
 
-    # Need to account for scaling in Windows10 and earlier releases.
+    # Need to account for scaling in different Windows releases.
     if MY_OS == 'win':
         from ctypes import windll
 
@@ -25,6 +25,3 @@ def check_platform():
             windll.user32.SetProcessDPIAware()
         else:
             windll.shcore.SetProcessDpiAwareness(1)
-
-
-

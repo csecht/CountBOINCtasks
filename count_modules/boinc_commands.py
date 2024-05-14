@@ -7,10 +7,11 @@ set_boinc_path - Return OS-specific path for BOINC's boinccmd binary.
 run_boinc - Execute a boinc-client command line; returns output.
 get_version - Get version number of boinc client; return list of one.
 check_boinc - Check whether BOINC client is running; exit if not.
+boinccmd_not_found - Display message for a bad boinccmd path; for standalone app.
+check_boinc_tk - Check whether BOINC client is running, quit if not.
 get_reported - Get data for reported boinc-client tasks.
 get_tasks - Get data for current boinc-client tasks.
-get_runningtasks - Get names of running boinc-client tasks for a
-    specified app.
+get_runningtasks - Get names of running boinc-client tasks for a specified app.
 project_url - Return dictionary of BOINC project NAMES and server urls.
 get_project_url - Return current local host boinc-client Project URLs.
 project_action - Execute a boinc-client action for a specified Project.
@@ -21,7 +22,8 @@ no_new_tasks - Get Project status for "Don't request more work".
 import shlex
 import sys
 from pathlib import Path
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from subprocess import Popen, PIPE, STDOUT
+from tkinter import messagebox
 
 CFGFILE = Path('countCFG.txt').resolve()
 
@@ -98,22 +100,40 @@ def run_boinc(cmd_str: str) -> list:
     :return: Data from a boinc-client command specified in cmd_str.
     """
     # source: https://stackoverflow.com/questions/33560364/
-    cmd = cmd_str if MY_OS == 'win' else shlex.split(cmd_str)
+    cmd: str = cmd_str if MY_OS == 'win' else shlex.split(cmd_str)
 
     with Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True) as output:
-        data_list = output.communicate()[0].split('\n')
+        data_output: list = output.communicate()[0].split('\n')
 
     # When boinc-client is running, the specified cmd option from a get_ method
     #   will fill the first element of the text list with its output. When not
     #   running, boinccmd stderr will fill the first list element.
     #   Is stderr "can't connect to local host" exclusive to BOINC not running?
-    if "can't connect to local host" in data_list:
-        print(f"\nOOPS! There is a boinccmd error: {data_list[0]}\n"
+    if "can't connect to local host" in data_output:
+        print(f"\nOOPS! There is a boinccmd error: {data_output[0]}\n"
               f"The BOINC client associated with {cmd[0]} is not running.\n"
               "You need to quit now and get the client running.")
 
     # If boinc not running, then text will be a null list.
-    return data_list
+    return data_output
+
+
+def boinccmd_not_found(default_path: str) -> None:
+    """
+    Display a popup message for a bad boinccmd path for a
+    standalone program; exits program once user acknowledges.
+
+    :param default_path: The expected path for the boinccmd command.
+    """
+    okay = messagebox.askokcancel(
+        title='BOINC ERROR: bad cmd path',
+        detail='The application boinccmd is not in its expected default path:\n'
+               f'{default_path}\n'
+               'Edit the configuration file, countCFG.txt,\n'
+               'in the CountBOINCtasks-main folder.\n'
+               'Exit now.')
+
+    sys.exit(0) if okay else sys.exit(0)
 
 
 def get_version(cmd=' --client_version') -> list:
@@ -131,7 +151,8 @@ def get_version(cmd=' --client_version') -> list:
 
 def check_boinc():
     """
-    Check whether BOINC client is running; exit if not.
+    Check whether BOINC client is running at startup;
+    exit if not running.
     """
 
     # Note: Any bcmd boinccmd will return this string (as a list)
@@ -140,6 +161,21 @@ def check_boinc():
         sys.exit('BOINC ERROR: BOINC commands cannot be executed.\n'
                  'Is the BOINC client running?   Exiting now...')
 
+
+def check_boinc_tk(mainloop) -> None:
+    """
+    Check whether BOINC client has stopped during Tk mainloop;
+    exit if not running.
+    """
+    if "can't connect to local host" in get_version():
+        messagebox.askokcancel(
+            title='BOINC ERROR',
+            detail='BOINC commands cannot be executed.\n'
+                   'Is the BOINC client running?\nExiting now...')
+        mainloop.update_idletasks()
+        mainloop.after(100)
+        mainloop.destroy()
+        sys.exit(0)
 
 def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
     """
@@ -185,15 +221,16 @@ def get_tasks(tag: str, cmd=' --get_tasks') -> list:
 
     output = run_boinc(set_boincpath() + cmd)
     tag_str = f'{" " * 3}{tag}: '  # boinccmd output format for a data tag.
+    data = [line.replace(tag_str, '') for line in output if tag_str in line]
 
     if tag == 'all':
         return output
 
     if tag in TASK_TAGS:
-        data = [line.replace(tag_str, '') for line in output if tag_str in line]
         return data
 
     print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
+    return []
 
 def get_runningtasks(tag: str, app_type: str,
                      cmd=' --get_simple_gui_info') -> list:

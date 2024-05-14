@@ -3,11 +3,7 @@
 General utility functions in gcount-tasks.
 Class: Tooltip - Bind mouse hover events to create a tooltip.
 Functions:
-    absolute_path_to - Get absolute path to files and directories.
     do_beep - Play do_beep on speakers.
-    boinccmd_not_found - Display message for a bad boinccmd path; use
-        with standalone program.
-    check_boinc_tk - Check whether BOINC client is running, quit if not.
     enter_only_digits - Constrain tk.Entry() values to digits.
     position_wrt_window - Set coordinates of a tk.Toplevel relative
         to another window position.
@@ -325,36 +321,6 @@ def beep(repeats: int) -> None:
         sleep(0.6)
 
 
-def boinccmd_not_found(default_path: str) -> None:
-    """
-    Display a popup message for a bad boinccmd path for a
-    standalone program; exits program once user acknowledges.
-
-    :param default_path: The expected path for the boinccmd command.
-    """
-    okay = messagebox.askokcancel(
-        title='BOINC ERROR: bad cmd path',
-        detail='The application boinccmd is not in its expected default path:\n'
-               f'{default_path}\n'
-               'Edit the configuration file, countCFG.txt,\n'
-               'in the CountBOINCtasks-master folder,\n'
-               'then run the gcount-tasks command line from there.')
-
-    sys.exit(0) if okay else sys.exit(0)
-
-
-def check_boinc_tk(mainloop) -> None:
-    if "can't connect to local host" in boinc_commands.get_version():
-        messagebox.askokcancel(
-            title='BOINC ERROR',
-            detail='BOINC commands cannot be executed.\n'
-                   'Is the BOINC client running?\nExiting now...')
-        mainloop.update_idletasks()
-        mainloop.after(100)
-        mainloop.destroy()
-        sys.exit(0)
-
-
 def enter_only_digits(entry, action_type) -> bool:
     """
     Only digits are accepted and displayed in Entry field.
@@ -471,28 +437,6 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     mainloop.destroy()
 
     return keybind
-
-
-def valid_path_to(relative_path: str) -> Path:
-    """
-    Get correct path to program's directory/file structure
-    depending on whether program invocation is a standalone app or
-    the command line. Works with symlinks. Allows command line
-    using any path; does not need to be from parent directory.
-    _MEIPASS var is used by distribution programs from
-    PyInstaller --onefile; e.g. for images dir.
-
-    :param relative_path: Program's local dir/file name, as string.
-    :return: Absolute path as pathlib Path object.
-    """
-    # Modified from: https://stackoverflow.com/questions/7674790/
-    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
-    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
-        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
-        valid_path = Path(base_path) / relative_path
-    else:
-        valid_path = Path(Path(__file__).parent, f'../{relative_path}').resolve()
-    return valid_path
 
 
 def verify(text: str) -> int:

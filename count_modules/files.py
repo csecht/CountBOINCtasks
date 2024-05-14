@@ -2,6 +2,7 @@
 """
 Basic tkinter file handling functions.
 Functions:
+    valid_path_to - Get absolute path to files and directories.
     append_txt - Append text_obj to the destination file.
     save_as - Copy source file to destination of choice.
     erase - Delete file content and the displayed window text_obj.
@@ -27,6 +28,27 @@ except (ImportError, ModuleNotFoundError) as error:
              '\nOn Linux, first try: $ sudo apt-get install python3-tk\n'
              f'See also: https://tkdocs.com/tutorial/install.html \n'
              f'Error msg: {error}')
+
+
+def valid_path_to(relative_path: str) -> Path:
+    """
+    Get correct path to program's directory/file structure
+    depending on whether program invocation is a standalone app or
+    the command line. Works with symlinks. Allows command line
+    using any path; does not need to be from parent directory.
+    _MEIPASS var is used by distribution programs from
+    PyInstaller --onefile; e.g. for images dir.
+
+    :param relative_path: Program's local dir/file name, as string.
+    :return: Absolute path as pathlib Path object.
+    """
+    # Modified from: https://stackoverflow.com/questions/7674790/
+    #    bundling-data-files-with-pyinstaller-onefile and PyInstaller manual.
+    if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
+        base_path = getattr(sys, '_MEIPASS', Path(Path(__file__).resolve()).parent)
+        return Path(base_path) / relative_path
+
+    return Path(Path(__file__).parent, f'../{relative_path}').resolve()
 
 
 def append_txt(dest: Path, savetxt: str, showmsg=True, parent=None) -> None:

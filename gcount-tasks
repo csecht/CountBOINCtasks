@@ -160,7 +160,7 @@ class Notices:
 
     @staticmethod
     def unknown():
-        return '***NO TASKS running. Check BOINC Manager.***'
+        return '15 sec status update: NO TASKS RUNNING, reason unknown.'
 
 
 # ############################ MVC Classes #############################
@@ -248,7 +248,6 @@ class CountModeler:
 
         self.share.status_time = datetime.now().strftime(cfg.LONG_FMT)
         tasks_all = bcmd.get_tasks('all')
-        no_new_tasks = bcmd.no_new_tasks()
 
         # Need the literal task data tag as found in boinccmd stdout;
         #   the format is same as tag_str in bcmd.get_tasks().
@@ -298,7 +297,7 @@ class CountModeler:
         self.share.note['num_suspended_by_boinc'].set(num_suspended_by_boinc)
         self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
         self.share.note['num_activity_susp_user_req'].set(num_activity_susp_user_req)
-        self.share.note['no_new_tasks'].set(no_new_tasks)
+        self.share.note['no_new_tasks'].set(bcmd.no_new_tasks())
         self.share.note['num_uploading'].set(num_uploading)
         self.share.note['num_uploaded'].set(num_uploaded)
         self.share.note['num_aborted'].set(num_aborted)
@@ -486,13 +485,13 @@ class CountModeler:
         running on short time intervals. A cfg.NOTICE_INTERVAL of 15 sec
         works well.
         Is threaded as notice_thread; started in Viewer.start_threads().
-        Calls to: Notice(), utils.check_boinc_tk(), utils.beep(),
+        Calls to: Notice(), bcmd.check_boinc_tk(), utils.beep(),
         update_notice_text() and post_final_notice().
         """
 
         while self.share.data['cycles_remain'].get() > 0:
             sleep(cfg.NOTICE_INTERVAL)
-            utils.check_boinc_tk(app)
+            bcmd.check_boinc_tk(app)
             if (Notices(self.share).num_running == 0
                     and self.share.setting['sound_beep'].get()):
                 utils.beep(repeats=2)
@@ -624,9 +623,8 @@ class CountModeler:
             time_intvl_count = self.share.data['time_intvl_count'].get()
             taskt_sd = self.share.data['taskt_sd'].get()
             cycles_remain = self.share.data['cycles_remain'].get()
-            num_taskless_intervals = self.share.note['num_taskless_intervals'].get()
 
-            if num_taskless_intervals > 0:
+            if self.share.note['num_taskless_intervals'].get() > 0:
                 logging.info(
                     f'\n{time_intvl_count}; Tasks reported in the past {interval_t}:'
                     f' {self.share.data["task_count"].get()}\n'
@@ -904,7 +902,7 @@ class CountViewer(tk.Frame):
 
         # Need to define image as a class variable, not a local var in methods.
         self.info_button_img = tk.PhotoImage(
-            file=utils.valid_path_to('images/info_button20.png'))
+            file=files.valid_path_to('images/info_button20.png'))
 
         self.master_widgets()
         self.master_layout()
@@ -2000,7 +1998,7 @@ if __name__ == "__main__":
                 # Need an image to replace blank tk desktop icon.
                 #   Set correct path to the local 'images' directory and icon file.
                 try:
-                    icon = tk.PhotoImage(file=utils.valid_path_to('images/count_icon_512.png'))
+                    icon = tk.PhotoImage(file=files.valid_path_to('images/count_icon_512.png'))
                     app.iconphoto(True, icon)
                 except tk.TclError as msg:
                     print('Cannot display program icon, so it will be left blank or tk default.')
@@ -2037,7 +2035,7 @@ if __name__ == "__main__":
             # Need an image to replace blank tk desktop icon.
             #   Set correct path to the local 'images' directory and icon file.
             try:
-                icon = tk.PhotoImage(file=utils.valid_path_to('images/count_icon_512.png'))
+                icon = tk.PhotoImage(file=files.valid_path_to('images/count_icon_512.png'))
                 app.iconphoto(True, icon)
             except tk.TclError as msg:
                 print('Cannot display program icon, so it will be left blank or tk default.')
