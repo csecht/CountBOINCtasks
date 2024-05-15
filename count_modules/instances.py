@@ -187,7 +187,7 @@ def sentinel_or_exit(working_dir: Path, exit_msg=None) -> tuple:
     # The first instance from a logfile dir will return variables
     #   to the main script. Subsequent instances, when this function
     #   is called with a *message*, will exit here via popup window.
-    #   If not called with a *message*, then the main script can handle
+    #   If not called with a *exit_msg*, then the main script can handle
     #   the returned sentinel variables as needed.
     if sentinel_count > 1 and exit_msg:
         exit_popup(exit_msg)

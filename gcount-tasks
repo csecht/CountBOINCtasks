@@ -1954,98 +1954,111 @@ def run_checks():
     bcmd.set_boincpath()
     bcmd.check_boinc()
 
+
+def use_app_icon():
+    """
+    Use custom image to replace blank tk default desktop icon.
+    Set correct path to the local 'images' directory and icon file.
+    """
+    try:
+        app_icon = tk.PhotoImage(file=files.valid_path_to('images/count_icon_512.png'))
+        app.iconphoto(True, app_icon)
+    except tk.TclError:
+        print('Cannot display program icon, so it will be left blank or tk default.')
+
+
+def start_app():
+    """Start the tkinter mainloop. app is the main window, set in __main__. """
+    app.title(f'Counting BOINC tasks on {gethostname()}')
+    use_app_icon()
+    print(f'{PROGRAM_NAME} now running...')
+    app.mainloop()
+
+
+def handle_windows_keyboard_interrupt(sentinel_name):
+    msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};'
+           ' *** Keyboard interrupt by user ***\n'
+           f'This instance\'s temporary file {sentinel_name} has been deleted.\n')
+    print(msg)
+    logging.info(msg=msg)
+
+
+def handle_windows_unexpected_error(err_msg, sentinel_name):
+    msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};'
+           f'An unexpected error: {err_msg}\n'
+           f'This instance\'s temporary file {sentinel_name} has been deleted.\n')
+    print(msg)
+    logging.info(msg=msg)
+
+
+def handle_nix_exit():
+    _msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};'
+            '*** User quit the program from Terminal ***')
+    print(_msg)
+    logging.info(msg=_msg)
+
+
 if __name__ == "__main__":
 
     run_checks()
 
     # Need to set up conditions to control multiple instances.
-    # Must not allow multiple instances to write to the same log file,
-    #   so best to exit program to prevent that.
+    # Prevent multiple instances writing to the same log file.
     # In Class Logs, LOGFILE path constants are different
-    #   for stand-alone and Terminal executions.
-    # Multiple instances of Terminal executions can run when from
-    #   different directories.
-    exit_msg = (f'\nNOTICE: {PROGRAM_NAME} is already running from'
+    #  for stand-alone and Terminal executions.
+    # Multiple instances of Terminal executions may run if launched from
+    #  different directories.
+    exit_text = (f'\nNOTICE: {PROGRAM_NAME} is already running from'
                 f' {Path.cwd()}. Exiting...\n')
 
     if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
-        exit_msg = (f'\nNOTICE: {PROGRAM_NAME}'
+        exit_text = (f'\nNOTICE: {PROGRAM_NAME}'
                     ' is already running. Exiting...\n')
 
-    # Developer: use custom handlers for unhandled system and tkinter exceptions.
-    # sys.excepthook = utils.handle_exception
-    # app.report_callback_exception = utils.handle_exception
-
+    # Tkinter main window is created in CountController() class and
+    #  its mainloop is called in start_app() function.
     if chk.MY_OS == 'win':
 
-        # Can restrict all executions to only one instance if
+        # Can restrict all Windows executions to one instance if
         #   "with sentinel:" is replaced with these mutex module calls.
         # winstance = instances.OneWinstance()
-        # winstance.exit_twinstance(exit_msg)
+        # winstance.exit_twinstance(exit_text)
 
-        # Using exit_msg in this call will exit program here if
+        # Using an exit_msg in this call will exit program here if
         #   another instance is running from the LOGFILE directory.
         # Note: sentinel_count is not currently used in main script b/c
         #    instance management is handled through instances.py module.
         sentinel, sentinel_count = instances.sentinel_or_exit(
-            Logs.LOGFILE.parent, exit_msg)
+            working_dir=Logs.LOGFILE.parent, exit_msg=exit_text)
 
         with sentinel:
             try:
                 app = CountController()
-                app.title(f'Counting BOINC tasks on {gethostname()}')
-
-                # Need an image to replace blank tk desktop icon.
-                #   Set correct path to the local 'images' directory and icon file.
-                try:
-                    icon = tk.PhotoImage(file=files.valid_path_to('images/count_icon_512.png'))
-                    app.iconphoto(True, icon)
-                except tk.TclError as msg:
-                    print('Cannot display program icon, so it will be left blank or tk default.')
-                    print(f'tk error message: {msg}')
-
-                print(f'{PROGRAM_NAME} now running...')
-                app.mainloop()
-
+                start_app()
             except KeyboardInterrupt:
-                _msg = (f"\n{datetime.now().strftime(cfg.LONG_FMT)};"
-                        " *** Keyboard interrupt by user ***\n"
-                        "This instance's temporary file,\n"
-                        f"{sentinel.name}\nhas been deleted.\n")
-                print(_msg)
-                logging.info(msg=_msg)
+                handle_windows_keyboard_interrupt(sentinel.name)
             except Exception as unknown:
-                print(f'An unexpected error: {unknown}\n'
-                      " *** Keyboard interrupt by user ***\n"
-                      "This instance's temporary file,\n"
-                      f"{sentinel.name}\nhas been deleted.\n")
-
+                handle_windows_unexpected_error(err_msg=unknown,
+                                                sentinel_name=sentinel.name)
     else:  # is 'lin' or 'dar'
         lockfile_fullpath = Path(Logs.LOGFILE.parent,
                                  f'.{PROGRAM_NAME}_lockfile')
 
-        # pylint: disable=consider-using-with
+        # Program will exit here if another instance is running from the
+        #  LOGFILE directory.
+        # Do not open using a 'with' statement; it will not work as expected.
         lockfile = open(lockfile_fullpath, 'w', encoding='utf8')
-        instances.lock_or_exit(lockfile, exit_msg)
+        instances.lock_or_exit(lockfile, exit_text)
 
         try:
             app = CountController()
-            app.title(f'Counting BOINC tasks on {gethostname()}')
-
-            # Need an image to replace blank tk desktop icon.
-            #   Set correct path to the local 'images' directory and icon file.
-            try:
-                icon = tk.PhotoImage(file=files.valid_path_to('images/count_icon_512.png'))
-                app.iconphoto(True, icon)
-            except tk.TclError as msg:
-                print('Cannot display program icon, so it will be left blank or tk default.')
-                print(f'tk error message: {msg}')
-
-            print(f'{PROGRAM_NAME} now running...')
-            app.mainloop()
-
+            start_app()
         except KeyboardInterrupt:
-            _msg = (f'\n{datetime.now().strftime(cfg.LONG_FMT)};'
-                    '*** User quit the program from Terminal/Console ***')
-            print(_msg)
-            logging.info(msg=_msg)
+            handle_nix_exit()
+        except Exception as unknown:
+            print(f'An unexpected error: {unknown}\n')
+            logging.info(unknown)
+        finally:
+            lockfile.close()
+            lockfile_fullpath.unlink()
+            sys.exit(0)
