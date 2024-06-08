@@ -67,6 +67,7 @@ class Notices:
         self.num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
         self.num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
         self.num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
+        self.num_gpu_suspended = self.share.note['num_gpu_suspended'].get()
         self.num_uploading = self.share.note['num_uploading'].get()
         self.num_uploaded = self.share.note['num_uploaded'].get()
         self.num_aborted = self.share.note['num_aborted'].get()
@@ -77,7 +78,7 @@ class Notices:
         self.no_new_tasks = self.share.note['no_new_tasks'].get()
         interval_m = self.share.setting['interval_m'].get()
         self.nnt_time = times.sec_to_format(secs=(self.num_taskless_intervals * interval_m * 60),
-                                       format_type='short')
+                                            format_type='short')
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.notice_it().
@@ -98,6 +99,10 @@ class Notices:
         # The other called_by value is from the notice_it() dispatch table.
         return (f'{self.num_suspended_by_user} tasks are suspended by user.\n'
                 f'BOINC will not upload while tasks are suspended.')
+
+    def gpu_suspended(self):
+        return (f'{self.num_gpu_suspended} GPU tasks are suspended by user.\n'
+                'BOINC will not upload while tasks are GPU suspended.')
 
     @staticmethod
     def running_out_of_tasks():
@@ -121,7 +126,7 @@ class Notices:
     @staticmethod
     def project_stalled() -> str:
         return ('A PROJECT UPDATE may be needed.\n'
-                    'All tasks are waiting to upload. Check BOINC Manager.')
+                'All tasks are waiting to upload. Check BOINC Manager.')
 
     def no_tasks(self):
         if self.no_new_tasks:
@@ -291,6 +296,9 @@ class CountModeler:
             [task for task in task_states if 'compute error' in task] )
         num_aborted = len(
             [task for task in active_task_states if 'ABORT_PENDING' in task])
+        num_gpu_suspended = len(
+            [task for task in scheduler_states if 'preempted' in task and
+             'UNINITIALIZED' in active_task_states])
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.note['num_running'].set(num_running)
@@ -302,6 +310,7 @@ class CountModeler:
         self.share.note['num_uploaded'].set(num_uploaded)
         self.share.note['num_aborted'].set(num_aborted)
         self.share.note['num_err'].set(num_err)
+        self.share.note['num_gpu_suspended'].set(num_gpu_suspended)
 
     def interval_data(self) -> None:
         """
@@ -525,11 +534,12 @@ class CountModeler:
         # Status values and notice text are from Notices() instances.
         # Dispatch table items are in descending order of status
         #  notification priority.
-        tasks_running= {
+        tasks_running = {
             Note.num_suspended_by_user > 0: Note.suspended_by_user,
             Note.num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
             Note.num_taskless_intervals > 0: Note.no_tasks_reported,
             Note.num_err > 0: Note.computation_error,
+            Note.num_gpu_suspended > 0: Note.gpu_suspended,
         }
 
         no_tasks_running = {
@@ -540,12 +550,18 @@ class CountModeler:
             Note.num_suspended_by_boinc > 0: Note.boinc_suspended_tasks,
             Note.all_stalled(): Note.all_stalled,
             Note.num_err > 0: Note.computation_error,
+            Note.num_gpu_suspended > 0: Note.gpu_suspended,
         }
 
         return tasks_running if Note.num_running > 0 else no_tasks_running
 
     def update_notice_text(self):
-        """Called from manage_notices(). Calls Notices() and get_dispatch_table()."""
+        """
+        Grabs the most recent task status data.
+        Called from manage_notices().
+        Calls Notices() and get_dispatch_table().
+        """
+
         self.share.updatetaskstatus()
         Note = Notices(self.share)
         dispatch_table = self.get_dispatch_table(Note)
@@ -617,7 +633,7 @@ class CountModeler:
             logging.info(report)
 
         def log_interval():
-            # Local vars either used > 1 or for formatting a shorter line.
+            # Local vars that are either used more than once or to shorten f-strings.
             interval_t = self.share.setting['interval_t'].get()
             summary_t = self.share.setting['summary_t'].get()
             time_intvl_count = self.share.data['time_intvl_count'].get()
@@ -653,6 +669,7 @@ class CountModeler:
                 self.share.data['log_summary'].set(False)
 
         def log_notice():
+            """Need to grab the most recent task status data."""
             Note = Notices(self.share)
 
             if self.share.note['num_running'].get() > 0:
@@ -668,9 +685,13 @@ class CountModeler:
                         f'\n*** All {cycles_max} count intervals have been run. ***\n'
                         ' Counting has ended.\n')
 
-            else:  # no tasks are running; no need for detailed status.
-                logging.info(
-                    f'\n{self.share.status_time}; {Note.unknown()}')
+            else:  # no tasks are running; post detailed status.
+                dispatch_table = self.get_dispatch_table(Note)
+                for condition, func in dispatch_table.items():
+                    if condition is True:
+                        logging.info(
+                            f'\n{self.share.status_time}; {func()}')
+                        return
 
         logging_functions = {
             'start': log_start,
@@ -688,6 +709,7 @@ class CountModeler:
             except KeyError as err:
                 print('The called_from param in logit() is expected to be'
                       '"start", "notice", "interval" or None.\n', err)
+
 
 # ###### MVC Viewer: the tkinter GUI engine; runs in main thread. ######
 class CountViewer(tk.Frame):
@@ -817,6 +839,7 @@ class CountViewer(tk.Frame):
             'num_suspended_by_user': tk.IntVar(),
             'num_suspended_by_boinc': tk.IntVar(),
             'num_activity_susp_user_req': tk.IntVar(),
+            'num_gpu_suspended': tk.IntVar(),
             'num_uploading': tk.IntVar(),
             'num_uploaded': tk.IntVar(),
             'num_aborted': tk.IntVar(),
