@@ -160,22 +160,24 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
         time_parts = map(int, reversed(time_string.split(":")))
         return sum(unit * part for unit, part in zip(time_units, time_parts))
 
-    distrib_sec: Union[list[int], list] = [time_to_seconds(time) if isinstance(time, str)
+    distrib_secs: Union[list[int], list] = [time_to_seconds(time) if isinstance(time, str)
                                            else time for time in distribution]
 
     def weighted_mean():
-        numerator = sum(distrib_sec[i] * weights[i] for i in range(len(distrib_sec)))
+        numerator = sum(distrib_secs[i] * weights[i] for i in range(len(distrib_secs)))
         denominator = sum(weights)
         return str(timedelta(seconds=numerator / denominator)).split(".", maxsplit=1)[0]
 
     def time_range():
-        shortest = str(timedelta(seconds=min(distrib_sec))).split(".", maxsplit=1)[0]
-        longest = str(timedelta(seconds=max(distrib_sec))).split(".", maxsplit=1)[0]
+        """Do not include task times of 0:00:00 for intervals with no tasks."""
+        nonzero_secs = [time for time in distrib_secs if time > 0]
+        shortest = str(timedelta(seconds=min(nonzero_secs))).split(".", maxsplit=1)[0]
+        longest = str(timedelta(seconds=max(nonzero_secs))).split(".", maxsplit=1)[0]
         return f'[{shortest} -- {longest}]'
 
     def time_stdev():
         try:
-            return str(timedelta(seconds=statistics.stdev(distrib_sec))).split(".", 1)[0]
+            return str(timedelta(seconds=statistics.stdev(distrib_secs))).split(".", 1)[0]
         except statistics.StatisticsError:
             return 'stdev needs more data'
 
@@ -186,6 +188,7 @@ def logtimes_stat(distribution: iter, stat: str, weights=None) -> str:
     }
 
     return stat_functions.get(stat, lambda: 'unexpected condition')()
+
 
 def boinc_ttimes_stats(times_sec: iter) -> dict:
     """

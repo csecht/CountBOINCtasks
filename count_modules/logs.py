@@ -214,16 +214,31 @@ class Logs:
                                                  stat='range')
 
             # Text & data used in most count reporting conditions below:
-            logged_intvl_report = (
-                'Analysis of reported tasks logged from\n'
-                f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
-                f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
-                f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
-                f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
-                f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
-                f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
-                f'   {intvl_t_range} range of task times\n\n'
-            )
+            if len(set(intvl_vals)) == 1:
+                logged_intvl_report = (
+                    'Analysis of reported tasks logged from\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
+                    f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
+                    f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {str(intvl_cnt_avg).ljust(11)} tasks per {intvl_vals[0]} count interval\n'
+                    f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
+                    f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
+                    f'   {intvl_t_range} range of task times\n\n'
+                )
+            else:
+                logged_intvl_report = (
+                    'Analysis of reported tasks logged from\n'
+                    f'{intvl_dates[0]} to {intvl_dates[-1]}\n'
+                    f'   {cls.uptime(logtext).ljust(11)} hours counting tasks\n'
+                    f'   {str(num_tasks).ljust(11)} tasks in {len(intvl_counts)} count intervals\n'
+                    f'   {str(intvl_cnt_avg).ljust(11)} tasks per various length count interval\n'
+                    f'   {intvl_t_wtmean.ljust(11)} weighted mean task time\n'
+                    f'   {intvl_t_stdev.ljust(11)} std deviation task time\n'
+                    f'   {intvl_t_range} range of task times\n\n'
+                    f'{len(set(intvl_vals))} different interval lengths are logged:\n'
+                    f'   {set(intvl_vals)},\n'
+                    '   so interpret results with caution.\n')
+
         else:  # No interval counts found.
             messagebox.showinfo(
                 title='No counts available',
@@ -327,7 +342,7 @@ class Logs:
                     f'   {str(num_recent_tasks).ljust(11)} '
                     f'tasks in {len(recent_counts)} intervals of {recent_intvl_vals[0]}\n'
                     f'   {recent_t_wtmean.ljust(11)} weighted mean task time\n'
-                    f'There are {num_recent_intvl_vals} different interval times,\n'
+                    f'There are {num_recent_intvl_vals} different interval lengths,\n'
                     f'   {set(recent_intvl_vals)},\n'
                     '   so interpret results with caution.\n'
                 )
