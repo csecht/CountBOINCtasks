@@ -298,7 +298,7 @@ class CountModeler:
             [task for task in active_task_states if 'ABORT_PENDING' in task])
         num_gpu_suspended = len(
             [task for task in scheduler_states if 'preempted' in task and
-             'UNINITIALIZED' in active_task_states])
+             'fraction done:' in tasks_all])
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.note['num_running'].set(num_running)
@@ -392,7 +392,7 @@ class CountModeler:
                     datetime.now().strftime(cfg.LONG_FMT))
 
                 # Track when no new tasks were reported in past interval;
-                #   num_taskless_intervals used in log_it().
+                #   num_taskless_intervals used in get_dispatch_table().
                 # Need to update num_running value from task_states().
                 self.update_task_status()
                 num_running = self.share.note['num_running'].get()
@@ -640,21 +640,14 @@ class CountModeler:
             taskt_sd = self.share.data['taskt_sd'].get()
             cycles_remain = self.share.data['cycles_remain'].get()
 
-            if self.share.note['num_taskless_intervals'].get() > 0:
-                logging.info(
-                    f'\n{time_intvl_count}; Tasks reported in the past {interval_t}:'
-                    f' {self.share.data["task_count"].get()}\n'
-                    f'{indent}Total tasks in queue: {self.share.data["num_tasks_all"].get()}\n'
-                    f'{indent}{cycles_remain} counts remain.')
-            else:  # tasks were reported in the past interval.
-                logging.info(
-                    f'\n{time_intvl_count}; Tasks reported in the past {interval_t}:'
-                    f' {self.share.data["task_count"].get()}\n'
-                    f'{indent}Task Time: avg {self.share.data["taskt_avg"].get()},\n'
-                    f'{bigindent}range [{self.share.data["taskt_range"].get()}],\n'
-                    f'{bigindent}stdev {taskt_sd}, total {self.share.data["taskt_total"].get()}\n'
-                    f'{indent}Total tasks in queue: {self.share.data["num_tasks_all"].get()}\n'
-                    f'{indent}{cycles_remain} counts remain.')
+            logging.info(
+                f'\n{time_intvl_count}; Tasks reported in the past {interval_t}:'
+                f' {self.share.data["task_count"].get()}\n'
+                f'{indent}Task Time: avg {self.share.data["taskt_avg"].get()},\n'
+                f'{bigindent}range [{self.share.data["taskt_range"].get()}],\n'
+                f'{bigindent}stdev {taskt_sd}, total {self.share.data["taskt_total"].get()}\n'
+                f'{indent}Total tasks in queue: {self.share.data["num_tasks_all"].get()}\n'
+                f'{indent}{cycles_remain} counts remain.')
 
             if self.share.data['log_summary'].get():
                 logging.info(
@@ -670,6 +663,7 @@ class CountModeler:
 
         def log_notice():
             """Need to grab the most recent task status data."""
+            self.share.updatetaskstatus()
             Note = Notices(self.share)
 
             if self.share.note['num_running'].get() > 0:
