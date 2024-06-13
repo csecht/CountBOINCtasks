@@ -63,22 +63,21 @@ class Notices:
         # Set instance attributes for use in notice_it() dispatch tables and in
         #  the following Class methods. These attributes are set in
         #  CountModeler.update_task_status().
-        self.num_running = self.share.note['num_running'].get()
-        self.num_suspended_by_user = self.share.note['num_suspended_by_user'].get()
-        self.num_suspended_by_boinc = self.share.note['num_suspended_by_boinc'].get()
-        self.num_activity_susp_user_req = self.share.note['num_activity_susp_user_req'].get()
-        self.num_gpu_suspended = self.share.note['num_gpu_suspended'].get()
-        self.num_uploading = self.share.note['num_uploading'].get()
-        self.num_uploaded = self.share.note['num_uploaded'].get()
-        self.num_aborted = self.share.note['num_aborted'].get()
-        self.num_err = self.share.note['num_err'].get()
+        self.num_running = self.share.notice['num_running'].get()
+        self.num_suspended_by_user = self.share.notice['num_suspended_by_user'].get()
+        self.num_suspended_cpu_busy = self.share.notice['num_suspended_cpu_busy'].get()
+        self.num_activity_suspended = self.share.notice['num_activity_suspended'].get()
+        self.num_uploading = self.share.notice['num_uploading'].get()
+        self.num_uploaded = self.share.notice['num_uploaded'].get()
+        self.num_aborted = self.share.notice['num_aborted'].get()
+        self.num_err = self.share.notice['num_err'].get()
         self.num_tasks_all = self.share.data['num_tasks_all'].get()
-        self.num_taskless_intervals = self.share.note['num_taskless_intervals'].get()
-        self.proj_stalled: bool = self.share.note['proj_stalled'].get()
-        self.no_new_tasks = self.share.note['no_new_tasks'].get()
+        self.num_taskless_intervals = self.share.notice['num_taskless_intervals'].get()
+        self.no_new_tasks = self.share.notice['no_new_tasks'].get()
         interval_m = self.share.setting['interval_m'].get()
         self.nnt_time = times.sec_to_format(secs=(self.num_taskless_intervals * interval_m * 60),
                                             format_type='short')
+        self.project_suspended_by_user = self.share.notice['project_suspended_by_user'].get()
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.notice_it().
@@ -100,17 +99,17 @@ class Notices:
         return (f'{self.num_suspended_by_user} tasks are suspended by user.\n'
                 f'BOINC will not upload while tasks are suspended.')
 
-    def gpu_suspended(self):
-        return (f'{self.num_gpu_suspended} GPU tasks are suspended by user.\n'
-                'BOINC will not upload while tasks are GPU suspended.')
+    # def gpu_suspended(self):
+    #     return (f'{self.num_gpu_suspended} GPU tasks are suspended by user.\n'
+    #             'BOINC will not upload while any tasks are suspended.')
 
     @staticmethod
     def running_out_of_tasks():
         return 'BOINC client is about to run out of tasks.\nCheck BOINC Manager.'
 
     def no_tasks_reported(self):
-        return (f'NO TASKS reported in past {self.nnt_time}\n'
-                f'for the prior {self.num_taskless_intervals} counting interval(s).')
+        return ('NO TASKS reported for the prior'
+                f' {self.num_taskless_intervals} counting interval(s).')
 
     def computation_error(self):
         """Is used in both tasks_running and no_tasks_running dispatch tables."""
@@ -123,10 +122,6 @@ class Notices:
 
     # These methods are called by the no_tasks_running dispatch table in
     #  CountModeler.notice_it().
-    @staticmethod
-    def project_stalled() -> str:
-        return ('A PROJECT UPDATE may be needed.\n'
-                'All tasks are waiting to upload. Check BOINC Manager.')
 
     def no_tasks(self):
         if self.no_new_tasks:
@@ -142,7 +137,12 @@ class Notices:
     @staticmethod
     def user_suspended_activity():
         return ('NO TASKS running.\n'
-                'Activity suspended on user request. Check BOINC Manager.')
+                'Activity suspended by user request or Computing preferences.')
+
+    @staticmethod
+    def user_suspended_project():
+        return ('NO TASKS running.\n'
+                'Project suspended by user request or Computing preferences.')
 
     @staticmethod
     def boinc_suspended_tasks():
@@ -253,6 +253,7 @@ class CountModeler:
 
         self.share.status_time = datetime.now().strftime(cfg.LONG_FMT)
         tasks_all = bcmd.get_tasks('all')
+        state_all = bcmd.get_state()
 
         # Need the literal task data tag as found in boinccmd stdout;
         #   the format is same as tag_str in bcmd.get_tasks().
@@ -269,23 +270,23 @@ class CountModeler:
         scheduler_states = [elem.replace(tag['sched state'], '') for elem in tasks_all
                             if tag['sched state'] in elem]
 
-        # When communication to server is stalled, all tasks will be
-        #  "Ready to report" with a state of 'uploaded', so a forced
-        #   Project update in notice_it() may prompt finalizing
-        #   the task upload. Note that when app-config.xml is set to
-        #   keep just one or two tasks in queue, then this condition
-        #   will often hold true, thus posting an errant
-        #   "A PROJECT UPDATE may be needed" notice.
-        if 'uploaded' in task_states and 'downloaded' not in task_states:
-            self.share.note['proj_stalled'].set(True)
-
         num_running = len(
             [task for task in active_task_states if 'EXECUTING' in task])
-        num_suspended_by_boinc = len(
+
+        # Condition when activity is suspended BOINC Manager based on
+        #  Computing preferences for CPU in use.
+        num_suspended_cpu_busy = len(
             [task for task in active_task_states if 'SUSPENDED' in task])
         num_suspended_by_user = len(
             [task for task in tasks_all if 'suspended via GUI: yes' in task])
-        num_activity_susp_user_req = len(
+
+        # Use as a Boolean variable expressed as 0 or 1.
+        project_suspended_by_user = len(
+            [item for item in state_all if 'suspended via GUI: yes' in item])
+
+        # Condition when activity is suspended either by user or by BOINC Manager
+        #  based on Computing preferences for "Computer in use" or the time of day.
+        num_activity_suspended = len(
             [task for task in active_task_states if 'UNINITIALIZED' in task and
              'scheduled' in scheduler_states])
         num_uploading = len(
@@ -296,21 +297,18 @@ class CountModeler:
             [task for task in task_states if 'compute error' in task] )
         num_aborted = len(
             [task for task in active_task_states if 'ABORT_PENDING' in task])
-        num_gpu_suspended = len(
-            [task for task in scheduler_states if 'preempted' in task and
-             'fraction done:' in tasks_all])
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
-        self.share.note['num_running'].set(num_running)
-        self.share.note['num_suspended_by_boinc'].set(num_suspended_by_boinc)
-        self.share.note['num_suspended_by_user'].set(num_suspended_by_user)
-        self.share.note['num_activity_susp_user_req'].set(num_activity_susp_user_req)
-        self.share.note['no_new_tasks'].set(bcmd.no_new_tasks())
-        self.share.note['num_uploading'].set(num_uploading)
-        self.share.note['num_uploaded'].set(num_uploaded)
-        self.share.note['num_aborted'].set(num_aborted)
-        self.share.note['num_err'].set(num_err)
-        self.share.note['num_gpu_suspended'].set(num_gpu_suspended)
+        self.share.notice['num_running'].set(num_running)
+        self.share.notice['num_suspended_cpu_busy'].set(num_suspended_cpu_busy)
+        self.share.notice['num_suspended_by_user'].set(num_suspended_by_user)
+        self.share.notice['project_suspended_by_user'].set(project_suspended_by_user)
+        self.share.notice['num_activity_suspended'].set(num_activity_suspended)
+        self.share.notice['no_new_tasks'].set(bcmd.no_new_tasks())
+        self.share.notice['num_uploading'].set(num_uploading)
+        self.share.notice['num_uploaded'].set(num_uploaded)
+        self.share.notice['num_aborted'].set(num_aborted)
+        self.share.notice['num_err'].set(num_err)
 
     def interval_data(self) -> None:
         """
@@ -395,12 +393,12 @@ class CountModeler:
                 #   num_taskless_intervals used in get_dispatch_table().
                 # Need to update num_running value from task_states().
                 self.update_task_status()
-                num_running = self.share.note['num_running'].get()
+                num_running = self.share.notice['num_running'].get()
                 if task_count_new == 0:
                     num_taskless_intervals += 1
                 elif task_count_new > 0 and num_running > 0:
                     num_taskless_intervals = 0
-                self.share.note['num_taskless_intervals'].set(num_taskless_intervals)
+                self.share.notice['num_taskless_intervals'].set(num_taskless_intervals)
 
                 intervaldict = times.boinc_ttimes_stats(ttimes_new)
                 self.share.data['taskt_avg'].set(intervaldict['taskt_avg'])
@@ -493,20 +491,21 @@ class CountModeler:
         Manages BOINC task state information and notifications by
         running on short time intervals. A cfg.NOTICE_INTERVAL of 15 sec
         works well.
-        Is threaded as notice_thread; started in Viewer.start_threads().
+        Is threaded as notice_thread in CountViewer.start_threads() with
+        target of Countcontroller.taskstatenotices().
         Calls to: Notice(), bcmd.check_boinc_tk(), utils.beep(),
-        update_notice_text() and post_final_notice().
+            update_notice_text(), and post_final_notice().
         """
 
         while self.share.data['cycles_remain'].get() > 0:
             sleep(cfg.NOTICE_INTERVAL)
             bcmd.check_boinc_tk(app)
-            if (Notices(self.share).num_running == 0
-                    and self.share.setting['sound_beep'].get()):
-                utils.beep(repeats=2)
 
             with self.thread_lock:
-                self.update_notice_text()
+                self.update_notice_text()  # also calls update_task_status().
+                if (self.share.notice["num_running"].get() == 0
+                        and self.share.setting['sound_beep'].get()):
+                    utils.beep(repeats=2)
 
             if self.share.data['cycles_remain'].get() == 0:
                 self.post_final_notice()
@@ -539,18 +538,16 @@ class CountModeler:
             Note.num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
             Note.num_taskless_intervals > 0: Note.no_tasks_reported,
             Note.num_err > 0: Note.computation_error,
-            Note.num_gpu_suspended > 0: Note.gpu_suspended,
         }
 
         no_tasks_running = {
-            Note.proj_stalled: Note.project_stalled,
             Note.num_tasks_all == 0: Note.no_tasks,
             Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
-            Note.num_activity_susp_user_req > 0: Note.user_suspended_activity,
-            Note.num_suspended_by_boinc > 0: Note.boinc_suspended_tasks,
+            Note.num_suspended_cpu_busy > 0: Note.boinc_suspended_tasks,
+            Note.num_activity_suspended > 0: Note.user_suspended_activity,
+            Note.project_suspended_by_user: Note.user_suspended_project,
             Note.all_stalled(): Note.all_stalled,
             Note.num_err > 0: Note.computation_error,
-            Note.num_gpu_suspended > 0: Note.gpu_suspended,
         }
 
         return tasks_running if Note.num_running > 0 else no_tasks_running
@@ -568,16 +565,16 @@ class CountModeler:
         for condition, func in dispatch_table.items():
             if condition is True:
                 self.share.notice_l.config(fg=self.share.highlight)
-                self.share.note['notice_txt'].set(func())
+                self.share.notice['notice_txt'].set(func())
                 return
 
-        self.share.note['notice_txt'].set(Note.all_is_well())
+        self.share.notice['notice_txt'].set(Note.all_is_well())
 
     def post_final_notice(self):
         """Called from manage_notices()."""
         cycles_max = self.share.setting['cycles_max'].get()
-        self.share.note['notice_txt'].set(
-            f'{self.share.note["notice_txt"].get()}\n'
+        self.share.notice['notice_txt'].set(
+            f'{self.share.notice["notice_txt"].get()}\n'
             f'*** All {cycles_max} count intervals have been run. ***\n')
         print(f'\n*** {cycles_max} of {cycles_max} counting cycles have ended. ***\n'
             'You can quit the program from the GUI, then restart from the command line.\n')
@@ -666,8 +663,8 @@ class CountModeler:
             self.share.updatetaskstatus()
             Note = Notices(self.share)
 
-            if self.share.note['num_running'].get() > 0:
-                if self.share.note['num_running'].get() >= self.share.data['num_tasks_all'].get() - 1:
+            if self.share.notice['num_running'].get() > 0:
+                if self.share.notice['num_running'].get() >= self.share.data['num_tasks_all'].get() - 1:
                     logging.info(
                         f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
                 if Note.num_suspended_by_user > 0:
@@ -679,13 +676,12 @@ class CountModeler:
                         f'\n*** All {cycles_max} count intervals have been run. ***\n'
                         ' Counting has ended.\n')
 
-            else:  # no tasks are running; post detailed status.
+            else:  # no tasks are running; post detailed status for all true conditions.
                 dispatch_table = self.get_dispatch_table(Note)
                 for condition, func in dispatch_table.items():
                     if condition is True:
                         logging.info(
                             f'\n{self.share.status_time}; {func()}')
-                        return
 
         logging_functions = {
             'start': log_start,
@@ -824,16 +820,15 @@ class CountViewer(tk.Frame):
 
         # Control variables for notices and logging passed between
         #   Viewer and Modeler and between Modeler threads.
-        self.share.note = {
+        self.share.notice = {
             'notice_txt': tk.StringVar(),
             'num_running': tk.IntVar(),
             'num_taskless_intervals': tk.IntVar(),
-            'proj_stalled': tk.BooleanVar(),
+            'project_suspended_by_user': tk.BooleanVar(),
             'no_new_tasks': tk.BooleanVar(),
             'num_suspended_by_user': tk.IntVar(),
-            'num_suspended_by_boinc': tk.IntVar(),
-            'num_activity_susp_user_req': tk.IntVar(),
-            'num_gpu_suspended': tk.IntVar(),
+            'num_suspended_cpu_busy': tk.IntVar(),
+            'num_activity_suspended': tk.IntVar(),
             'num_uploading': tk.IntVar(),
             'num_uploaded': tk.IntVar(),
             'num_aborted': tk.IntVar(),
@@ -909,7 +904,7 @@ class CountViewer(tk.Frame):
         # Text for compliment_l is configured in compliment_me()
         self.share.compliment_l = tk.Label(**master_highlight_params,)
         self.share.notice_l = tk.Label(**master_highlight_params,
-            textvariable=self.share.note['notice_txt'],
+            textvariable=self.share.notice['notice_txt'],
             relief='flat', border=0)
 
         # This style is used only to configure viewlog_b color in
@@ -1494,7 +1489,7 @@ class CountViewer(tk.Frame):
                 self.share.data['cycles_remain'].set(0)
                 self.share.setting['interval_t'].set('DISABLED')
                 self.share.setting['summary_t'].set('DISABLED')
-                self.share.note['notice_txt'].set('STATUS REPORT ONLY')
+                self.share.notice['notice_txt'].set('STATUS REPORT ONLY')
             else:
                 self.start_threads()
 
@@ -1923,7 +1918,6 @@ class CountController(tk.Tk):
         """
         Is called from Viewer.start_threads().
         """
-        # CountModeler(share=self).notice_it()
         CountModeler(share=self).manage_notices()
 
     def updatetaskstatus(self) -> None:

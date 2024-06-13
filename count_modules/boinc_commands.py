@@ -11,6 +11,7 @@ boinccmd_not_found - Display message for a bad boinccmd path; for standalone app
 check_boinc_tk - Check whether BOINC client is running, quit if not.
 get_reported - Get data for reported boinc-client tasks.
 get_tasks - Get data for current boinc-client tasks.
+get_state - Get state of all boinc-client Projects and tasks.
 get_runningtasks - Get names of running boinc-client tasks for a specified app.
 project_url - Return dictionary of BOINC project NAMES and server urls.
 get_project_url - Return current local host boinc-client Project URLs.
@@ -177,6 +178,7 @@ def check_boinc_tk(mainloop) -> None:
         mainloop.destroy()
         sys.exit(0)
 
+
 def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
     """
     Get data from reported boinc-client tasks.
@@ -208,6 +210,7 @@ def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
               f'{REPORTED_TAGS}')
         return []
 
+
 def get_tasks(tag: str, cmd=' --get_tasks') -> list:
     """
     Get data from current boinc-client tasks.
@@ -231,6 +234,18 @@ def get_tasks(tag: str, cmd=' --get_tasks') -> list:
 
     print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
     return []
+
+
+def get_state(cmd=' --get_state') -> list:
+    """
+    Get the state of all boinc-client Projects, apps, and tasks.
+
+    :param cmd: The boinccmd command to get full status output.
+    :return: The full state output, as a list.
+    """
+
+    return run_boinc(set_boincpath() + cmd)
+
 
 def get_runningtasks(tag: str, app_type: str,
                      cmd=' --get_simple_gui_info') -> list:
@@ -327,6 +342,7 @@ def get_project_url(tag='master URL', cmd=' --get_project_status') -> list:
     print(f'Unrecognized data tag: {tag}. Expecting one of these: \n{TASK_TAGS}')
     return []
 
+
 def project_action(project: str, action: str) -> list:
     """
     Execute a boinc-client action for a specified Project.
@@ -342,6 +358,7 @@ def project_action(project: str, action: str) -> list:
         return run_boinc(cmd_str)
     else:
         print(f'Unrecognized action: {action}. Expecting one of these: \n{PROJECT_CMD}')
+
 
 def no_new_tasks(cmd=' --get_project_status') -> bool:
     """
