@@ -14,6 +14,7 @@ __credits__ = ['Inspired by rickslab-gpu-utils',
 __version__ = '0.11.40'
 __dev_environment__ = "Python 3.8 - 3.9"
 __project_url__ = 'https://github.com/csecht/CountBOINCtasks'
+__maintainer__ = 'Craig Echt'
 __status__ = 'Development Status :: 4 - Beta'
 
 LICENSE = """
