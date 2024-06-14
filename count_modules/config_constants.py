@@ -1,8 +1,10 @@
 """
 Constants used in __main__.
 """
+import sys
 
-import count_modules.platform_check as chk
+# MY_OS is used throughout the main program and local modules.
+MY_OS = sys.platform[:3]
 
 # strftime formats:
 LONG_FMT = '%Y-%b-%d %H:%M:%S'
@@ -18,4 +20,4 @@ FONT_MAP = {
 }
 
 # Defaults to generic font if OS is not recognized
-LABEL_FONT = FONT_MAP.get(chk.MY_OS, ('Arial', 10))
+LABEL_FONT = FONT_MAP.get(MY_OS, ('Arial', 10))

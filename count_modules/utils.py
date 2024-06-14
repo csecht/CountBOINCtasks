@@ -3,26 +3,39 @@
 General utility functions in gcount-tasks.
 Class: Tooltip - Bind mouse hover events to create a tooltip.
 Functions:
-    do_beep - Play do_beep on speakers.
-    enter_only_digits - Constrain tk.Entry() values to digits.
-    position_wrt_window - Set coordinates of a tk.Toplevel relative
-        to another window position.
-    manage_args - Handles command line arguments.
-    quit_gui - Error-free and informative exit from the program.
-    verify - Generate a hash value for to verify distribution
-        text file content.
+    check_platform
+    run_checks
+    manage_args
+    use_app_icon
+    handle_windows_keyboard_interrupt
+    handle_windows_unexpected_error
+    handle_nix_exit
+    handle_exception
+    Tooltip.cancel_wait
+    Tooltip.on_enter
+    Tooltip.on_leave
+    Tooltip.close_now
+    Tooltip.tip_pos_calculator
+    Tooltip.show_tt
+    beep
+    enter_only_digits
+    position_wrt_window
+    about_text
+    quit_gui
+    exit_text
+    verify
 """
-# Copyright (C) 2021 C. Echt under GNU General Public License'
+# Copyright (C) 2021-2024 C. Echt under GNU General Public License'
 
 # Standard library imports:
 import argparse
 import logging
+import platform
 import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from tkinter import messagebox
 
 if sys.platform[:3] == 'win':
     import winsound
@@ -34,15 +47,115 @@ import matplotlib.pyplot
 from __main__ import __doc__
 import count_modules as cmod
 from count_modules import (boinc_commands,
-                           config_constants as cfg,
+                           config_constants as const,
                            files,
                            instances,
+                           vcheck,
                            )
 from count_modules.logs import Logs
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(stream=sys.stdout)
 logger.addHandler(handler)
+
+MY_OS = sys.platform[:3]
+
+
+def check_platform():
+    if MY_OS not in 'lin, win, dar':
+        print(f'Platform <{sys.platform}> is not supported.\n'
+              'Windows, Linux, and MacOS (darwin) are supported.')
+        sys.exit(1)
+
+    # Need to account for scaling in different Windows releases.
+    if MY_OS == 'win':
+        from ctypes import windll
+
+        if platform.release() < '10':
+            windll.user32.SetProcessDPIAware()
+        else:
+            windll.shcore.SetProcessDpiAwareness(1)
+
+def run_checks():
+    """Program will exit if checks fail"""
+    check_platform()
+    vcheck.minversion('3.6')
+    manage_args()
+    boinc_commands.set_boincpath()
+    boinc_commands.check_boinc()
+
+
+def about_text() -> str:
+    """
+    Informational text for --about execution argument and GUI About call.
+    """
+    creds = ''.join([f"\n     {item}" for item in cmod.__credits__])
+    return (f'{__doc__}\n'
+            f'{"Author:".ljust(13)}{cmod.__author__}\n'
+            f'{"Credits:"}{creds}\n'
+            f'{"Program:".ljust(13)}{instances.program_name()}\n'
+            f'{"Version:".ljust(13)}{cmod.__version__}\n'
+            f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
+            f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
+            f'{"Status:".ljust(13)}{cmod.__status__}\n\n'
+            f'{cmod.__copyright__}'
+            f'{cmod.LICENSE}\n'
+            )
+    # To direct print credits from a list:
+    #   print(f'{"Credits:".ljust(13)}', *[f"\n      {item}" for item in cmod.__credits__])
+
+
+def manage_args() -> None:
+    """Allow handling of common command line arguments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--about',
+                        help='Provides description, version, GNU license',
+                        action='store_true',
+                        default=False)
+    args = parser.parse_args()
+
+    if args.about:
+        print('====================== ABOUT START ====================')
+        print(about_text())
+        print('====================== ABOUT END ====================')
+
+        sys.exit(0)
+
+
+def use_app_icon(mainloop: tk.Tk) -> None:
+    """
+    Use custom image to replace blank tk default desktop icon.
+    Set correct path to the local 'images' directory and icon file.
+    """
+    try:
+        app_icon = tk.PhotoImage(file=files.valid_path_to('images/count_icon_512.png'))
+        mainloop.iconphoto(True, app_icon)
+    except tk.TclError:
+        print('Cannot display program icon, so it will be left blank or tk default.')
+
+
+def handle_windows_keyboard_interrupt(sentinel_name) -> None:
+    msg = (f"\n{datetime.now().strftime(const.LONG_FMT)};"
+           " *** User quit the program from Terminal ***\n"
+           f"This instance's temporary file {sentinel_name} has been deleted.\n")
+    print(msg)
+    logging.info(msg=msg)
+
+
+def handle_windows_unexpected_error(err_msg, sentinel_name) -> None:
+    msg = (f'\n{datetime.now().strftime(const.LONG_FMT)};'
+           f'An unexpected error: {err_msg}\n'
+           f'This instance\'s temporary file {sentinel_name} has been deleted.\n')
+    print(msg)
+    logging.info(msg=msg)
+
+
+def handle_nix_exit() -> None:
+    _msg = (f'\n{datetime.now().strftime(const.LONG_FMT)};'
+            ' *** User quit the program from Terminal ***')
+    print(_msg)
+    logging.info(msg=_msg)
 
 
 def handle_exception(exc_type, exc_value, exc_traceback) -> None:
@@ -373,44 +486,6 @@ def position_wrt_window(window: tk,
     return f'+{coord_x}+{coord_y}'
 
 
-def about_text() -> str:
-    """
-    Informational text for --about execution argument and GUI About call.
-    """
-    creds = ''.join([f"\n     {item}" for item in cmod.__credits__])
-    return (f'{__doc__}\n'
-            f'{"Author:".ljust(13)}{cmod.__author__}\n'
-            f'{"Credits:"}{creds}\n'
-            f'{"Program:".ljust(13)}{instances.program_name()}\n'
-            f'{"Version:".ljust(13)}{cmod.__version__}\n'
-            f'{"Dev. Env.:".ljust(13)}{cmod.__dev_environment__}\n'
-            f'{"URL:".ljust(13)}{cmod.__project_url__}\n'
-            f'{"Status:".ljust(13)}{cmod.__status__}\n\n'
-            f'{cmod.__copyright__}'
-            f'{cmod.LICENSE}\n'
-            )
-    # To direct print credits from a list:
-    #   print(f'{"Credits:".ljust(13)}', *[f"\n      {item}" for item in cmod.__credits__])
-
-
-def manage_args() -> None:
-    """Allow handling of common command line arguments.
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--about',
-                        help='Provides description, version, GNU license',
-                        action='store_true',
-                        default=False)
-    args = parser.parse_args()
-
-    if args.about:
-        print('====================== ABOUT START ====================')
-        print(about_text())
-        print('====================== ABOUT END ====================')
-
-        sys.exit(0)
-
-
 def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     """
     Error-free and informative exit from the program.
@@ -422,7 +497,7 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
 
     # Write exit message to an existing log file, even if the setting
     #   "log to file" was not selected, BUT not for additional instances.
-    time_now = datetime.now().strftime(cfg.LONG_FMT)
+    time_now = datetime.now().strftime(const.LONG_FMT)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
     print(quit_txt)
 
@@ -437,6 +512,17 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     mainloop.destroy()
 
     return keybind
+
+
+def exit_text() -> str:
+    """Return a string to be used in the exit message."""
+    text = (f'\nNOTICE: {instances.program_name()} is already running from'
+            f' {Path.cwd()}. Exiting...\n')
+
+    if getattr(sys, 'frozen', False):  # Is PyInstaller stand-alone app.
+        text = f'\nNOTICE: {instances.program_name()} is already running. Exiting...\n'
+
+    return text
 
 
 def verify(text: str) -> int:
