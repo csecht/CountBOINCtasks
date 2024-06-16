@@ -13,117 +13,106 @@ It may be useful for comparing task productivity between different computers or 
 <p>Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and macOS 10.13. Unless running one of the standalones, you
  may need to download or update to Python 3.6 or later. Recent Python
   packages can be downloaded from <a href="https://www.python.org/downloads/">https://www.python.org/downloads/</a>.</p>
-<h3 id="usage-">Usage:</h3>
+<h3 id="usage-for-the-gui-version-gcount-tasks">Usage for The GUI version: gcount-tasks</h3>
 <p>Download the .zip package from the Code download button and extract to your
- favorite folder. From within the resulting countBOINCtasks-main folder
- , open a Terminal or Command Prompt window and call up the utility&#39;s help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.</p>
+ favorite folder. From within the resulting countBOINCtasks-main folder, open a Terminal or Command Prompt window. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set. As with any downloaded Python program, it is recommended that it be run in a virtual environment to avoid conflicts with other Python programs.</p>
+<p>Download and run as described under Usage, but launch the program with these Terminal or Command Prompt commands from within the parent folder:</p>
 <ul>
-<li>Linux or Mac OS: <code>./count-tasks --help</code>  or <code>python3 count-tasks</code></li>
-<li>Windows: <code>python count-tasks</code> --help</li>
+<li>Linux or Mac OS: <code>python3 -m gcount-tasks</code>
+<li>Windows: <code>python -m gcount-tasks</code> or <code>py -m gcount-tasks</code>
 </ul>
-Depending on your Python path settings in Windows, double-clicking on
-the count-tasks file icon may automatically launch the program, with its
-default settings, in a Terminal window.
 
-Default settings assume a default location of the BOINC folder from the
+<p>For a brief description and version number, use the <code>--about</code> command line option.</p>
+<p>Features in the GUI version:</p>
+<ul>
+<li>View the log file in a pop-up window.
+<li>Backup the log file.
+<li>Analysis and plotting of data recorded in the log file.
+<li>Archive the log and analysis files from File menu.
+<li>Pop-up Help menu.
+</ul>
+
+<p><img src="images/gcount-tasks_scrnshot.png" alt="gcount-tasks main window">
+<p><img src="images/gcount-tasks_analysis.png" alt="log-analysis"></p>
+<p>Iniitial plot of task time data in the log file.
+<p><img src="images/gcount-tasks_plot.png" alt="time-plot"></p>
+<p>Use of magnifier tool to zoom in on average task times.
+<p><img src="images/gcount-tasks_plot_Yzoom.png" alt="zoom-plot"></p>
+<p>Zoom in again for two weeks of task time data.
+<p><img src="images/gcount-tasks_plot_XYzoom.png" alt="zoom-plot"></p>
+<p>Initial view showing all logged task count data.
+<p><img src="images/gcount-tasks_plot_counts.png" alt="zoom-plot"></p>
+<p>If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select &quot;Test example data&quot; to produce this plot window:
+<p><img src="images/gcount-tasks_testplot.png" alt="example-plot"></p>
+<h3 id="usage-for-the-command-line-version-count-tasks">Usage for the command line version: count-tasks</h3>
+<p>From the downloaded main folder, described above, open a Terminal and call up the help option with the following command:</p>
+<p><ul>
+<p><li>Linux or Mac OS: <code>./count-tasks --help</code> -or- <code>python3 count-tasks --help</code>
+<p><li>Windows: <code>python count-tasks --help</code> -or- <code>py count-tasks --help</code>
+</ul>
+<p>Depending on your Python path settings in Windows, double-clicking on
+the count-tasks file icon may automatically launch the program, with its default settings, in a Terminal window.</p>
+<p>Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
   then there will be a command line option to enter that custom path to run
    boinc-client&#39;s boinccmd (or boinccmd.exe) executable. A custom command
     path can also be added to the countCFG.txt configuration file to avoid
-     entering the path on the command line.
-<pre><code>~/countBOINCtasks-main$ ./count-tasks --help
-usage: count-tasks [-h] [--about] [--log {yes,no}] [--interval M] [--summary TIMEunit] [--count_lim N]
+     entering the path on the command line.</p>
+<pre><code>~/countBOINCtasks-main$ ./<span class="hljs-keyword">count</span>-tasks --<span class="hljs-keyword">help</span>
+usage: <span class="hljs-keyword">count</span>-tasks [-<span class="hljs-keyword">h</span>] [--<span class="hljs-keyword">about</span>] [--<span class="hljs-keyword">log</span> {yes,<span class="hljs-keyword">no</span>}] [--interval <span class="hljs-keyword">M</span>] [--summary TIMEunit] [--count_lim <span class="hljs-keyword">N</span>]
 
 optional arguments:
-  -h, --help          show this help message and exit
-  --about             Author, copyright, and GNU license
-  --log {yes,no}      Create log file of results or append to existing log (default: yes)
-  --interval M        Specify minutes between task counts (default: 60)
-  --summary TIMEunit  Specify time between count summaries, e.g., 12h, 7d (default: 1d)
-    --count_lim N       Specify number of count reports until program exits (default: 1008); 0 provides current data</code></pre>
-Options can be abbreviated, e.g., <code>./count-tasks --l --i 15 --s 1h --c 12</code>
-
-Running the default settings (no optional arguments), will count the
+  -<span class="hljs-keyword">h</span>, --<span class="hljs-keyword">help</span>          show this <span class="hljs-keyword">help</span> message and <span class="hljs-keyword">exit</span>
+  --<span class="hljs-keyword">about</span>             Author, <span class="hljs-keyword">copyright</span>, and GNU license
+  --<span class="hljs-keyword">log</span> {yes,<span class="hljs-keyword">no</span>}      Create <span class="hljs-keyword">log</span> <span class="hljs-keyword">file</span> of results or <span class="hljs-keyword">append</span> to existing <span class="hljs-keyword">log</span> (default: yes)
+  --interval <span class="hljs-keyword">M</span>        Specify minutes between task counts (default: 60)
+  --summary TIMEunit  Specify time between <span class="hljs-keyword">count</span> summaries, <span class="hljs-keyword">e</span>.<span class="hljs-keyword">g</span>., 12h, 7d (default: 1d)
+  --count_lim <span class="hljs-keyword">N</span>       Specify number of <span class="hljs-keyword">count</span> reports until <span class="hljs-keyword">program</span> exits (default: 1008); 0 provides current data
+</code></pre><p>Options can be abbreviated, e.g., <code>./count-tasks --l --i 15 --s 1h --c 12</code></p>
+<p>Running the default settings (no optional arguments), will count the
  number of tasks reported to the BOINC Project server on a repeating
   interval of 1 hour, with summaries provided every 24 hr. Basic statistics
    for task times are also provided for each count interval. The initial
     data report provided immediately upon program launch is for the most recent
      tasks reported by boinc-client during the past hour. Repeating
-      counts intervals begin after the initial report (see TIP, below).
-
-Example report results, using default settings:
-
-<pre><code>~/CountBOINCtasks-main$ ./count-tasks
-2021-Jul-21 06:14:14; Number of tasks in the most recent BOINC report: 11
-                      Task Time: mean 00:19:25, range [00:13:14 - 00:21:05],
-                                 stdev 00:02:11, total 03:33:43
-                      Total tasks in queue: 35
-                      Number of scheduled count intervals: 1008
-                      Counts every 60m, summaries every 1d
+      counts intervals begin after the initial report (see TIP, below).</p>
+<p>Example report results, using default settings:</p>
+<pre><code><span class="hljs-symbol">:~/CountBOINCtasks-main</span>$ ./count-tasks
+<span class="hljs-number">2021</span>-Jul-<span class="hljs-number">21</span> <span class="hljs-number">06</span><span class="hljs-symbol">:</span><span class="hljs-number">14</span><span class="hljs-symbol">:</span><span class="hljs-number">14</span>; Number of tasks <span class="hljs-keyword">in</span> the most recent BOINC <span class="hljs-symbol">report:</span> <span class="hljs-number">11</span>
+                      Task <span class="hljs-symbol">Time:</span> mean <span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">19</span><span class="hljs-symbol">:</span><span class="hljs-number">25</span>, range [<span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">13</span><span class="hljs-symbol">:</span><span class="hljs-number">14</span> - <span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">05</span>],
+                                 stdev <span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">02</span><span class="hljs-symbol">:</span><span class="hljs-number">11</span>, total <span class="hljs-number">03</span><span class="hljs-symbol">:</span><span class="hljs-number">33</span><span class="hljs-symbol">:</span><span class="hljs-number">43</span>
+                      Total tasks <span class="hljs-keyword">in</span> <span class="hljs-symbol">queue:</span> <span class="hljs-number">35</span>
+                      Number of scheduled count <span class="hljs-symbol">intervals:</span> <span class="hljs-number">1008</span>
+                      Counts every <span class="hljs-number">60</span>m, summaries every <span class="hljs-number">1</span>d
 Timed intervals beginning now...
 
-2021-Jul-21 07:14:18; Tasks reported in the past 60m: 12
-                      Task Time: mean 00:20:29, range [00:18:47 - 00:24:41],
-                                 stdev 00:01:33, total 04:05:48
-                      Total tasks in queue: 30
+<span class="hljs-number">2021</span>-Jul-<span class="hljs-number">21</span> <span class="hljs-number">07</span><span class="hljs-symbol">:</span><span class="hljs-number">14</span><span class="hljs-symbol">:</span><span class="hljs-number">18</span>; Tasks reported <span class="hljs-keyword">in</span> the past <span class="hljs-number">60</span><span class="hljs-symbol">m:</span> <span class="hljs-number">12</span>
+                      Task <span class="hljs-symbol">Time:</span> mean <span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">20</span><span class="hljs-symbol">:</span><span class="hljs-number">29</span>, range [<span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">18</span><span class="hljs-symbol">:</span><span class="hljs-number">47</span> - <span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">24</span><span class="hljs-symbol">:</span><span class="hljs-number">41</span>],
+                                 stdev <span class="hljs-number">00</span><span class="hljs-symbol">:</span><span class="hljs-number">01</span><span class="hljs-symbol">:</span><span class="hljs-number">33</span>, total <span class="hljs-number">04</span><span class="hljs-symbol">:</span><span class="hljs-number">05</span><span class="hljs-symbol">:</span><span class="hljs-number">48</span>
+                      Total tasks <span class="hljs-keyword">in</span> <span class="hljs-symbol">queue:</span> <span class="hljs-number">30</span>
 
-1007 counts remaining until exit.
-    13m ||||||||||&lt; ~time to next count</code></pre>
-
-A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.
-
-Running with the <code>--log</code> option will save data to the log file in the
+<span class="hljs-number">1007</span> counts remaining <span class="hljs-keyword">until</span> exit.
+<span class="hljs-number">13</span>m <span class="hljs-params">||</span><span class="hljs-params">||</span><span class="hljs-params">||</span><span class="hljs-params">||</span><span class="hljs-params">||</span>&lt; ~time to <span class="hljs-keyword">next</span> count
+</code></pre><p>A countdown timer displays, in a colored bar, the approximate time remaining until the next task count.</p>
+<p>Running with the <code>--log</code> option will save data to the log file in the
  working folder. This file is appended to or created when the program is
-  launched.
-
-You can let <code>count-tasks</code> run in an open terminal window with negligible
+  launched.</p>
+<p>You can let <code>count-tasks</code> run in an open terminal window with negligible
  impact on system resources. Stop it with <em>Ctrl-C</em> or let it stop
   automatically.  With default settings, it will stop after 6 weeks (1008
    1hr count cycles). A different count cycle limit can be set with the
-    <code>--count_lim</code> option.
-
-NOTE: Summary counts may be less than the sum of individual counts because
+    <code>--count_lim</code> option.</p>
+<p>NOTE: Summary counts may be less than the sum of individual counts because
  of persistence of reported tasks between count intervals. This can be
   expected when the <code>--interval</code>option is set to less than the default 60
    (minutes). The boinc-client command that provides reported task data
    , <code>boinccmd  --get_old_tasks</code>, retrieves tasks reported for the past hour
    , independent of the utility&#39;s count interval. To avoid missing any
     reported tasks, the <code>--interval</code> option has a 60 minutes maximum count
-     interval.
+     interval.</p>
+<p>TIP: To get only the most recent task count and time metrics without
+ running count intervals, run:  <code>count-tasks --c 0</code></p>
 
-TIP: To get only the most recent task count and time metrics without
- running count intervals, run:  <code>count-tasks --c 0</code>
-
-<h2 id="gcount-tasks">gcount-tasks</h2>
-The GUI version of count-tasks.
-Download and run as described under Usage, but launch the program with these Terminal
- or Command Prompt commands from within the parent folder:
-<ul>
-<li>Linux or Mac OS: <code>./gcount-tasks</code> -or- <code>python3 gcount-tasks</code></li>
-<li>Windows: <code>python gcount-tasks</code></li>
-</ul>
-
-<p>For a brief description and version number, use the <code>--about</code> command line option.</p>
-<p>Added features in the GUI version:</p>
-<ul>
-<li>View the log file in a pop-up window.</li>
-<li>Backup the log file.</li>
-<li>Analysis and plotting of data recorded in the log file.</li>
-<li>Pop-up Help menus.</li>
-</ul>
-
-<p><img src="images/gcount-tasks_scrnshot.png" alt="gcount-tasks main window"></p>
-<p><img src="images/gcount-tasks_analysis.png" alt="log analysis"></p>
-<p>Iniitial plot of task time data in the log file.</p>
-<p><img src="images/gcount-tasks_plot.png" alt="time-plot"></p>
-<p>Use of magnifier tool to zoom in on average task times.</p>
-<p><img src="images/gcount-tasks_plot_Yzoom.png" alt="zoom-plot"></p>
-<p>Zoom in again for two weeks of task time data.</p>
-<p><img src="images/gcount-tasks_plot_XYzoom.png" alt="zoom-plot"></p>
-<p>Initial view showing all logged task count data.</p>
-<p><img src="images/gcount-tasks_plot_counts.png" alt="zoom-plot"></p>
-<p>If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select "Test example data" to produce this plot window:</p>
-<p><img src="images/gcount-tasks_testplot.png" alt="example-plot"></p>
 <h2 id="GcountTasks-standalones">Stand-alone versions: GcountTasks (no Python installation needed)</h2>
 <p>Note that these stand-alone programs will only run with the boinccmd binary in its default install location. If you launch a GcountTasks stand-alone and get an error message, you can still run gcount-tasks from the command line once you set up a valid boinccmd path in the countCFG.txt configuration file.</p>
 <h4 id="gcount_tasks-exe-windows">GcountTasks.exe - Windows</h4>

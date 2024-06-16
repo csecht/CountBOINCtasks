@@ -8,15 +8,53 @@ It may be useful for comparing task productivity between different computers or 
 
 Developed with Python 3.8, under Ubuntu 20.04, Windows 10 and macOS 10.13. Unless running one of the standalones, you may need to download or update to Python 3.6 or later. Recent Python packages can be downloaded from https://www.python.org/downloads/.
 
-### Usage:  
+### Usage for The GUI version: gcount-tasks
 Download the .zip package from the Code download button and extract to your
- favorite folder. From within the resulting countBOINCtasks-main folder, open a Terminal or Command Prompt window and call up the utility's help menu. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set.
+ favorite folder. From within the resulting countBOINCtasks-main folder, open a Terminal or Command Prompt window. The exact invocation on the command line may slightly differ depending on how your PATH environment variable is set. As with any downloaded Python program, it is recommended that it be run in a virtual environment to avoid conflicts with other Python programs.
+
+Download and run as described under Usage, but launch the program with these Terminal or Command Prompt commands from within the parent folder:
 <ul>
-<li>Linux or Mac OS: <code>./count-tasks --help</code> -or- <code>python3 count-tasks --help</code></li>
-<li>Windows: <code>python count-tasks --help</code></li>
+<li>Linux or Mac OS: <code>python3 -m gcount-tasks</code>
+<li>Windows: <code>python -m gcount-tasks</code> or <code>py -m gcount-tasks</code>
+</ul>
+
+For a brief description and version number, use the `--about` command line option.
+
+Features in the GUI version:
+<ul>
+<li>View the log file in a pop-up window.
+<li>Backup the log file.
+<li>Analysis and plotting of data recorded in the log file.
+<li>Archive the log and analysis files from File menu.
+<li>Pop-up Help menu.
+</ul>
+
+![gcount-tasks main window](images/gcount-tasks_scrnshot.png)
+![log-analysis](images/gcount-tasks_analysis.png)
+
+Iniitial plot of task time data in the log file.
+![time-plot](images/gcount-tasks_plot.png)
+
+Use of magnifier tool to zoom in on average task times.
+![zoom-plot](images/gcount-tasks_plot_Yzoom.png)
+
+Zoom in again for two weeks of task time data.
+![zoom-plot](images/gcount-tasks_plot_XYzoom.png)
+
+Initial view showing all logged task count data.
+![zoom-plot](images/gcount-tasks_plot_counts.png)
+
+If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select "Test example data" to produce this plot window:
+![example-plot](images/gcount-tasks_testplot.png)
+
+### Usage for the command line version: count-tasks
+From the downloaded main folder, described above, open a Terminal and call up the help option with the following command:
+<ul>
+<li>Linux or Mac OS: <code>./count-tasks --help</code> -or- <code>python3 count-tasks --help</code>
+<li>Windows: <code>python count-tasks --help</code> -or- <code>py count-tasks --help</code>
 </ul>
 Depending on your Python path settings in Windows, double-clicking on 
-the count-tasks file icon may automatically launch the program, with its default settings, in a console window.
+the count-tasks file icon may automatically launch the program, with its default settings, in a Terminal window.
 
 Default settings assume a default location of the BOINC folder from the
  BOINC installer. If you have put the BOINC folder in a different location,
@@ -91,41 +129,6 @@ NOTE: Summary counts may be less than the sum of individual counts because
 
 TIP: To get only the most recent task count and time metrics without
  running count intervals, run:  `count-tasks --c 0`
-
-### The GUI version: gcount-tasks
-Download and run as described under Usage, but launch the program with these Terminal or Command Prompt commands from within the parent folder:
-<ul>
-<li>Linux or Mac OS: <code>./gcount-tasks</code> -or- <code>python3 gcount-tasks</code></li>
-<li>Windows: <code>python gcount-tasks</code></li>
-</ul>
-
-For a brief description and version number, use the `--about` command line option.
-
-Added features in the GUI version:
-<ul>
-<li>View the log file in a pop-up window.</li>
-<li>Backup the log file.</li>
-<li>Analysis and plotting of data recorded in the log file.</li>
-<li>Pop-up Help menu.</li>
-</ul>
-
-![gcount-tasks main window](images/gcount-tasks_scrnshot.png)
-![log-analysis](images/gcount-tasks_analysis.png)
-
-Iniitial plot of task time data in the log file.
-![time-plot](images/gcount-tasks_plot.png)
-
-Use of magnifier tool to zoom in on average task times.
-![zoom-plot](images/gcount-tasks_plot_Yzoom.png)
-
-Zoom in again for two weeks of task time data.
-![zoom-plot](images/gcount-tasks_plot_XYzoom.png)
-
-Initial view showing all logged task count data.
-![zoom-plot](images/gcount-tasks_plot_counts.png)
-
-If the plotting function does not seem to be working, it can be tested with example log data provided with this distribution. From the Help menu, select "Test example data" to produce this plot window:
-![example-plot](images/gcount-tasks_testplot.png)
 
 ### Stand-alone versions: GcountTasks (no Python installation needed)
 Note that these stand-alone programs will only run with the boinccmd binary in its default install location. If you launch a GcountTasks stand-alone and get an error message, you can still run gcount-tasks from the command line once you set up a valid boinccmd path in the countCFG.txt configuration file.
