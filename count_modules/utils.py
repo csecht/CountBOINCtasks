@@ -459,26 +459,24 @@ def enter_only_digits(entry, action_type) -> bool:
     return True
 
 
-def position_wrt_window(window: tk,
-                        offset_x: int = 0,
-                        offset_y: int = 0) -> str:
+def position_wrt_window(window: tk.Tk,
+                        offset_x: int = 30,
+                        offset_y: int = 20) -> str:
     """
-    Get screen position of a tkinter Toplevel object and apply optional
+    Get screen position of a tkinter object and apply optional
     coordinate offsets. Used to set screen position of a child Toplevel
-    with respect to the parent window.
+    with respect to the parent window, but can be used for any widget.
     Example use with the geometry() method:
       mytopwin.geometry(utils.position_wrt_window(root, 15, -15))
-    When used with get_toplevel(), it is expected that all the parent's
-    Toplevel Button() widgets are configured for 'takefocus=False'.
 
-    :param window: The tk window object (e.g., 'root', 'app',
-                   '.!toplevel2') of mainloop for which to get its
-                   screen pixel coordinates.
-    :param offset_x: optional pixels to add/subtract to x coordinate of
-                     *window*.
-    :param offset_y: optional pixels to add/subtract to x coordinate of
-                     *window*.
-    :return: x and y screen pixel coordinates as string, f'+{x}+{y}'
+    Args:
+        window: The tk object (e.g., 'root', 'app', '.!toplevel2')
+            of mainloop for which to get its screen pixel coordinates.
+        offset_x: optional pixels to add/subtract to x coordinate of
+            *window*.
+        offset_y: optional pixels to add/subtract to y coordinate of
+            *window*.
+    Returns: x and y screen pixel coordinates as string, f'+{x}+{y}'
     """
     coord_x = window.winfo_x() + offset_x
     coord_y = window.winfo_y() + offset_y

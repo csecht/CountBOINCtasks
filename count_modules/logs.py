@@ -661,8 +661,8 @@ class Logs:
         else:
             analysiswin.title('Analysis of logged data')
         # Need to position window over the window from which it is called.
-        analysiswin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
-        analysiswin.minsize(520, 320)
+        analysiswin.geometry(Utils.position_wrt_window(window=tk_obj))
+        analysiswin.minsize(width=520, height=320)
 
         # topmost helps position the window when user calls Help option
         #   to test with example log data.
@@ -856,7 +856,7 @@ class Logs:
             #              lambda _: cls.analyze_logfile(plot=True))
 
         elif filepath == cls.ANALYSISFILE:
-            filewin.geometry(Utils.position_wrt_window(tk_obj, 30, 20))
+            filewin.geometry(Utils.position_wrt_window(window=tk_obj))
             ttk.Button(
                 filewin, text='Erase',
                 command=lambda: Files.erase(filetext, cls.ANALYSISFILE, filewin),

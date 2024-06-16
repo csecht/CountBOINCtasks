@@ -1658,7 +1658,7 @@ class CountFyi:
         aboutwin = tk.Toplevel(highlightthickness=5,
                                highlightcolor='SteelBlue4',
                                highlightbackground='grey75')
-        aboutwin.geometry(utils.position_wrt_window(window=app, offset_x=30, offset_y=20))
+        aboutwin.geometry(utils.position_wrt_window(window=app))
         aboutwin.resizable(width=False, height=False)
         aboutwin.title(f'About {PROGRAM_NAME}')
         aboutwin.focus_set()
@@ -1757,7 +1757,7 @@ class CountFyi:
                                highlightbackground='grey75')
 
         # Need to position window over the window from which it is called.
-        pathswin.geometry(utils.position_wrt_window(window, 30, 20))
+        pathswin.geometry(utils.position_wrt_window(window=window))
         pathswin.resizable(False, False)
         pathswin.title(f'Program-generated files on {gethostname()}')
         pathswin.focus_set()
@@ -1811,7 +1811,7 @@ class CountFyi:
         infowin = tk.Toplevel(highlightthickness=5,
                               highlightcolor='SteelBlue4',
                               highlightbackground='grey75')
-        infowin.geometry(utils.position_wrt_window(window=app, offset_x=30, offset_y=20))
+        infowin.geometry(utils.position_wrt_window(window=app))
         infowin.resizable(False, False)
         infowin.title('Usage information')
         infowin.focus_set()
