@@ -1721,6 +1721,16 @@ class CountFyi:
             'The President seeks your council.', 'Thank you so much!',
             'The Prime Minister seeks your council.', 'Crunchers rule!',
             'Crunchers are the best sort of people.',
+            'What you did takes an incredible amount of courage.',
+            'Your ability to accomplish your goals is impressive.',
+            'You are incredibly talented.',
+            'You are so passionate and full of energy.',
+            'You are the best role model.',
+            'You have an incredible sense of humor.',
+            'You have a beautiful smile.',
+            'You are an excellent problem solver.',
+            'You have a unique sense of style.',
+            'You always know how to put together the perfect outfit.',
             "I can't think of anything to say. Sorry.",
         ]
         self.share.compliment_l.config(text=choice(compliments))
