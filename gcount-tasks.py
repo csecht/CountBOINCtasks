@@ -164,7 +164,7 @@ class CountModeler:
     Communication with the Viewer Class for data display occurs via
     the 'share' parameter.
 
-    Modules:
+    Methods:
     default_settings
     start_data
     update_task_status
@@ -651,7 +651,6 @@ class CountModeler:
 
         def log_notice():
             """Need to grab the most recent task status data."""
-            self.update_task_status()
             Note = Notices(self.share)
             num_running = self.share.notice['num_running'].get()
 
@@ -1921,12 +1920,6 @@ class CountController(tk.Tk):
         Is called from Viewer.start_threads().
         """
         CountModeler(share=self).manage_notices()
-
-    def updatetaskstatus(self) -> None:
-        """
-        Is called from Viewer.update_task_status().
-        """
-        CountModeler(share=self).update_task_status()
 
     def logit(self, called_from: str) -> None:
         """Send data to log file.
