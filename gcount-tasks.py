@@ -68,9 +68,7 @@ class Notices:
         self.num_err = self.share.notice['num_err'].get()
         self.num_tasks_all = self.share.data['num_tasks_all'].get()
         self.num_taskless_intervals = self.share.notice['num_taskless_intervals'].get()
-        interval_m = self.share.setting['interval_m'].get()
-        self.nnt_time = times.sec_to_format(secs=(self.num_taskless_intervals * interval_m * 60),
-                                            format_type='short')
+        self.num_running = self.share.notice['num_running'].get()
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.update_notice_text().
@@ -120,7 +118,8 @@ class Notices:
     def user_suspended_tasks(self):
         return (
             f'NO TASKS running; {self.num_suspended_by_user} tasks suspended by user.\n'
-            'You may want to resume them.')
+            'You may want to resume them.'
+        )
 
     @staticmethod
     def user_suspended_activity():
@@ -491,7 +490,7 @@ class CountModeler:
 
             with self.thread_lock:
                 self.update_notice_text()  # also calls update_task_status().
-                if (self.share.notice["num_running"].get() == 0
+                if (self.share.notice['num_running'].get() == 0
                         and self.share.setting['sound_beep'].get()):
                     utils.beep(repeats=2)
 
@@ -519,14 +518,13 @@ class CountModeler:
         num_suspended_cpu_busy = self.share.notice['num_suspended_cpu_busy'].get()
         num_activity_suspended = self.share.notice['num_activity_suspended'].get()
         project_suspended_by_user = self.share.notice['project_suspended_by_user'].get()
-        num_running = self.share.notice['num_running'].get()
 
         # Status values and notice text are from Notices() instances.
         # Dispatch table items are in descending order of status
         #  notification priority.
         tasks_running = {
             Note.num_suspended_by_user > 0: Note.suspended_by_user,
-            num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
+            Note.num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
             Note.num_taskless_intervals > 0: Note.no_tasks_reported,
             Note.num_err > 0: Note.computation_error,
         }
@@ -541,7 +539,7 @@ class CountModeler:
             Note.num_err > 0: Note.computation_error,
         }
 
-        return tasks_running if num_running > 0 else no_tasks_running
+        return tasks_running if Note.num_running > 0 else no_tasks_running
 
     def update_notice_text(self):
         """
@@ -559,7 +557,13 @@ class CountModeler:
                 self.share.notice['notice_txt'].set(func())
                 return
 
-        self.share.notice['notice_txt'].set(Note.all_is_well())
+        # If no known problem is found when no tasks are running,
+        #  then post "reason unknown" notice. Otherwise, post "all is well".
+        status = 'unknown' if Note.num_running == 0 else 'all is well'
+        self.share.notice_l.config(
+            fg=self.share.highlight if status == 'unknown' else self.share.row_fg)
+        self.share.notice['notice_txt'].set(
+            Note.unknown() if status == 'unknown' else Note.all_is_well())
 
     def post_final_notice(self):
         """Called from manage_notices()."""
@@ -652,10 +656,9 @@ class CountModeler:
         def log_notice():
             """Need to grab the most recent task status data."""
             Note = Notices(self.share)
-            num_running = self.share.notice['num_running'].get()
 
-            if num_running > 0:
-                if num_running >= self.share.data['num_tasks_all'].get() - 1:
+            if Note.num_running > 0:
+                if Note.num_running >= self.share.data['num_tasks_all'].get() - 1:
                     logging.info(
                         f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
                 if Note.num_suspended_by_user > 0:
@@ -667,12 +670,20 @@ class CountModeler:
                         f'\n*** All {cycles_max} count intervals have been run. ***\n'
                         ' Counting has ended.\n')
 
-            else:  # no tasks are running; post detailed status for all true conditions.
+            else:  # no tasks are running
+                # Log detailed status for all true conditions.
+                # With Note.unknown() as last value in the not_tasks_running dispatch
+                #  dict, log "reason unknown" only when a known problem is not found.
                 dispatch_table = self.get_dispatch_table(Note)
+                known_problem = False
                 for condition, func in dispatch_table.items():
                     if condition is True:
                         logging.info(
                             f'\n{self.share.status_time}; {func()}')
+                        known_problem = True
+                if known_problem is False:
+                    logging.info(
+                        f'\n{self.share.status_time}; {Note.unknown()}')
 
         logging_functions = {
             'start': log_start,
@@ -1886,7 +1897,7 @@ class CountController(tk.Tk):
         # Need window sizes to provide room for multi-line notices,
         #    but not get minimized enough to exclude notices row.
         # Main window sizes need to be OS-specific b/c of different
-        #    default OS text font widths.
+        #    default OS text font widths set in config_constants.LABEL_FONT.
         if const.MY_OS == 'lin':
             self.minsize(594, 370)
         elif const.MY_OS == 'win':
