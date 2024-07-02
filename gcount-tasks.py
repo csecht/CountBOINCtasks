@@ -61,21 +61,16 @@ class Notices:
         # Set instance attributes for use in update_notice_text() dispatch tables and in
         #  the following Class methods. These attributes are set in
         #  CountModeler.update_task_status().
-        self.num_running = self.share.notice['num_running'].get()
         self.num_suspended_by_user = self.share.notice['num_suspended_by_user'].get()
-        self.num_suspended_cpu_busy = self.share.notice['num_suspended_cpu_busy'].get()
-        self.num_activity_suspended = self.share.notice['num_activity_suspended'].get()
         self.num_uploading = self.share.notice['num_uploading'].get()
         self.num_uploaded = self.share.notice['num_uploaded'].get()
         self.num_aborted = self.share.notice['num_aborted'].get()
         self.num_err = self.share.notice['num_err'].get()
         self.num_tasks_all = self.share.data['num_tasks_all'].get()
         self.num_taskless_intervals = self.share.notice['num_taskless_intervals'].get()
-        self.no_new_tasks = self.share.notice['no_new_tasks'].get()
         interval_m = self.share.setting['interval_m'].get()
         self.nnt_time = times.sec_to_format(secs=(self.num_taskless_intervals * interval_m * 60),
                                             format_type='short')
-        self.project_suspended_by_user = self.share.notice['project_suspended_by_user'].get()
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.update_notice_text().
@@ -117,7 +112,7 @@ class Notices:
     # These methods are called by the no_tasks_running dispatch table in
     #  CountModeler.update_notice_text().
     def no_tasks(self):
-        if self.no_new_tasks:
+        if self.share.notice['no_new_tasks'].get():
             return ('BOINC client has no tasks to run!\n'
                     'Project is set to receive no new tasks.')
         return 'BOINC client has no tasks to run!\nCheck BOINC Manager.'
@@ -509,8 +504,7 @@ class CountModeler:
             if self.share.setting['do_log'].get():
                 self.share.logit('notice')
 
-    @staticmethod
-    def get_dispatch_table(Note) -> dict:
+    def get_dispatch_table(self, Note) -> dict:
         """ Returns a dispatch table for update_notice_text() based on whether
          tasks running or not. Called from update_notice_text(). Calls Notices()
 
@@ -522,13 +516,17 @@ class CountModeler:
             A dispatch table to post relevant GUI notices based on
             current task status conditions.
         """
+        num_suspended_cpu_busy = self.share.notice['num_suspended_cpu_busy'].get()
+        num_activity_suspended = self.share.notice['num_activity_suspended'].get()
+        project_suspended_by_user = self.share.notice['project_suspended_by_user'].get()
+        num_running = self.share.notice['num_running'].get()
 
         # Status values and notice text are from Notices() instances.
         # Dispatch table items are in descending order of status
         #  notification priority.
         tasks_running = {
             Note.num_suspended_by_user > 0: Note.suspended_by_user,
-            Note.num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
+            num_running >= (Note.num_tasks_all - 1): Note.running_out_of_tasks,
             Note.num_taskless_intervals > 0: Note.no_tasks_reported,
             Note.num_err > 0: Note.computation_error,
         }
@@ -536,14 +534,14 @@ class CountModeler:
         no_tasks_running = {
             Note.num_tasks_all == 0: Note.no_tasks,
             Note.num_suspended_by_user > 0: Note.user_suspended_tasks,
-            Note.num_suspended_cpu_busy > 0: Note.boinc_suspended_tasks,
-            Note.num_activity_suspended > 0: Note.user_suspended_activity,
-            Note.project_suspended_by_user: Note.user_suspended_project,
+            num_suspended_cpu_busy > 0: Note.boinc_suspended_tasks,
+            num_activity_suspended > 0: Note.user_suspended_activity,
+            project_suspended_by_user: Note.user_suspended_project,
             Note.all_stalled(): Note.all_stalled,
             Note.num_err > 0: Note.computation_error,
         }
 
-        return tasks_running if Note.num_running > 0 else no_tasks_running
+        return tasks_running if num_running > 0 else no_tasks_running
 
     def update_notice_text(self):
         """
@@ -552,7 +550,7 @@ class CountModeler:
         Calls Notices() and get_dispatch_table().
         """
 
-        self.share.updatetaskstatus()
+        self.update_task_status()
         Note = Notices(self.share)
         dispatch_table = self.get_dispatch_table(Note)
         for condition, func in dispatch_table.items():
@@ -653,12 +651,12 @@ class CountModeler:
 
         def log_notice():
             """Need to grab the most recent task status data."""
-            self.share.updatetaskstatus()
+            self.update_task_status()
             Note = Notices(self.share)
+            num_running = self.share.notice['num_running'].get()
 
-            if self.share.notice['num_running'].get() > 0:
-                if self.share.notice['num_running'].get() >= self.share.data[
-                    'num_tasks_all'].get() - 1:
+            if num_running > 0:
+                if num_running >= self.share.data['num_tasks_all'].get() - 1:
                     logging.info(
                         f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
                 if Note.num_suspended_by_user > 0:

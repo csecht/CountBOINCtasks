@@ -36,6 +36,7 @@ import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from time import sleep
+from typing import Union
 
 if sys.platform[:3] == 'win':
     import winsound
@@ -459,7 +460,7 @@ def enter_only_digits(entry, action_type) -> bool:
     return True
 
 
-def position_wrt_window(window: tk.Tk,
+def position_wrt_window(window: Union[tk.Tk, tk.Toplevel, tk.Widget],
                         offset_x: int = 30,
                         offset_y: int = 20) -> str:
     """
