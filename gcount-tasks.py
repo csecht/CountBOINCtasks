@@ -69,6 +69,7 @@ class Notices:
         self.num_tasks_all = self.share.data['num_tasks_all'].get()
         self.num_taskless_intervals = self.share.notice['num_taskless_intervals'].get()
         self.num_running = self.share.notice['num_running'].get()
+        self.num_ready_to_report = self.share.notice['num_ready_to_report'].get()
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.update_notice_text().
@@ -144,7 +145,11 @@ class Notices:
         Therefore, to properly evaluate a False condition, must specify
         the return value as a Boolean instead of leaving it as None.
         """
-        if self.num_uploading + self.num_uploaded + self.num_aborted == self.num_tasks_all:
+        if (self.num_uploading +
+                self.num_uploaded +
+                self.num_aborted +
+                self.num_ready_to_report ==
+                self.num_tasks_all):
             return (
                 'All tasks are stalled Uploading, Ready to report, or Aborted.\n'
                 'Check your Project message boards for server issues.')
@@ -284,6 +289,8 @@ class CountModeler:
             [task for task in task_states if 'compute error' in task])
         num_aborted = len(
             [task for task in active_task_states if 'ABORT_PENDING' in task])
+        num_ready_to_report = len(
+            [task for task in tasks_all if 'ready to report: yes' in task])
 
         self.share.data['num_tasks_all'].set(num_tasks_all)
         self.share.notice['num_running'].set(num_running)
@@ -296,6 +303,7 @@ class CountModeler:
         self.share.notice['num_uploaded'].set(num_uploaded)
         self.share.notice['num_aborted'].set(num_aborted)
         self.share.notice['num_err'].set(num_err)
+        self.share.notice['num_ready_to_report'].set(num_ready_to_report)
 
     def interval_data(self) -> None:
         """
@@ -835,6 +843,7 @@ class CountViewer(tk.Frame):
             'num_uploaded': tk.IntVar(),
             'num_aborted': tk.IntVar(),
             'num_err': tk.IntVar(),
+            'num_ready_to_report': tk.IntVar(),
         }
 
         boinc_lbl_params = dict(
