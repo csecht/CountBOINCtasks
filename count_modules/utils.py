@@ -498,19 +498,22 @@ def quit_gui(mainloop: tk.Tk, keybind=None) -> None:
     #   "log to file" was not selected, BUT not for additional instances.
     time_now = datetime.now().strftime(const.LONG_FMT)
     quit_txt = f'\n{time_now}; *** User quit the program. ***\n'
-    print(quit_txt)
 
     if Path.exists(Logs.LOGFILE):
         files.append_txt(dest=Logs.LOGFILE,
                          savetxt=quit_txt,
                          showmsg=False)
-
-    matplotlib.pyplot.close('all')
-    mainloop.update_idletasks()
-    mainloop.after(200)
-    mainloop.destroy()
-
-    return keybind
+    try:
+        # Close all matplotlib figures to prevent memory leaks.
+        matplotlib.pyplot.close('all')
+        mainloop.update()
+        print(quit_txt)
+        mainloop.after(200,mainloop.destroy)
+        # Need explicit exit if for some reason a tk window isn't destroyed.
+        sys.exit(0)
+    except Exception as unk:
+        print('An unknown error occurred:', unk)
+        sys.exit(0)
 
 
 def exit_text() -> str:
