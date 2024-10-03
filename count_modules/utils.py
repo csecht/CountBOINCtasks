@@ -45,7 +45,6 @@ if sys.platform[:3] == 'win':
 import matplotlib.pyplot
 
 # Local program imports:
-from __main__ import __doc__
 import count_modules as cmod
 from count_modules import (boinc_commands,
                            config_constants as const,
@@ -91,7 +90,7 @@ def about_text() -> str:
     Informational text for --about execution argument and GUI About call.
     """
     creds = ''.join([f"\n     {item}" for item in cmod.__credits__])
-    return (f'{__doc__}\n'
+    return (f'{sys.modules["__main__"].__doc__}\n'
             f'{"Author:".ljust(13)}{cmod.__author__}\n'
             f'{"Credits:"}{creds}\n'
             f'{"Program:".ljust(13)}{instances.program_name()}\n'
