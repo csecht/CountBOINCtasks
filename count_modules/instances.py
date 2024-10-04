@@ -19,7 +19,7 @@ from tempfile import gettempdir, NamedTemporaryFile
 from time import sleep
 from typing import TextIO
 
-from count_modules import binds
+from count_modules import bind_this
 
 if sys.platform[:3] == 'win':
     from win32event import CreateMutex

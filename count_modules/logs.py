@@ -32,7 +32,7 @@ except (ImportError, ModuleNotFoundError) as err:
           '   python3 -m pip install -U pillow.')
 
 import count_modules as CMod
-from count_modules import (binds as Binds,
+from count_modules import (bind_this as Binds,
                            files as Files,
                            instances,
                            times as T,

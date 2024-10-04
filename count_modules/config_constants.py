@@ -21,3 +21,12 @@ FONT_MAP = {
 
 # Defaults to generic font if OS is not recognized
 LABEL_FONT = FONT_MAP.get(MY_OS, ('Arial', 10))
+
+# Set colors for row labels and data display.
+# These colors are compatible with red-green color-blindness.
+ROW_FG = 'LightYellow'  # Row header label fg.
+MASTER_BG = 'SteelBlue4'  # app and header label bg.
+DATA_BG = 'grey40'  # Data labels and data frame bg.
+HIGHLIGHT = 'gold1'  # Notices, compliments, highlight fg.
+EMPHASIZE = 'grey90'  # Lighter data label fg, use for grey-out.
+DEEMPHASIZE = 'grey60'  # Darker data label fg.
