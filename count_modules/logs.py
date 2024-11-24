@@ -678,7 +678,7 @@ class Logs:
         # print(ord("═")) -> 9552
         #   unicodedata.name(chr(9552)) -> 'BOX DRAWINGS DOUBLE HORIZONTAL'.
         sep = f'\n{"─" * max_line}\n'
-        insert_txt = insert_txt + sep
+        insert_txt += sep
         num_lines = insert_txt.count('\n')
 
         analysistxt = tk.Text(analysiswin, font='TkFixedFont',
