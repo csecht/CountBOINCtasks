@@ -992,9 +992,11 @@ class CountViewer(tk.Frame):
         #   to reconfigure them in Modeler.
         # starting_b will be replaced with an active ttk intvl_b after first
         #   interval completes; it is re-gridded in interval_data().
+        #  Need to distinguish system start from program start after 1st BOINC report.
         # starting_b is tk.B b/c ttk.B doesn't use disabledforeground keyword.
+        start_txt = 'Starting data'if bcmd.get_reported('elapsed time') else 'Waiting for data'
         self.share.starting_b = tk.Button(
-            text='Starting data', width=18,
+            text=start_txt, width=18,
             disabledforeground='grey10', state=tk.DISABLED,
             takefocus=False)
         self.share.intvl_b = ttk.Button(
@@ -1065,6 +1067,7 @@ class CountViewer(tk.Frame):
         if const.MY_OS in 'lin':
             def select_all(event=None):
                 app.focus_get().event_generate('<<SelectAll>>')
+
             def select_none(event=None):
                 app.focus_get().event_generate('<<SelectNone>>')
 
@@ -1247,11 +1250,14 @@ class CountViewer(tk.Frame):
 
         self.settings_win.protocol('WM_DELETE_WINDOW', no_exit_on_x)
 
-        def update_intvl():
+        def update_sumry_unit(event=None):
+            self.share.sumry_unit_choice['values'] = interval_t[self.share.intvl_choice.get()]
+
+        def update_intvl(event=None):
             self.share.intvl_choice['values'] = sumry_unit[self.share.sumry_unit_choice.get()]
 
-        def update_sumry_unit():
-            self.share.sumry_unit_choice['values'] = interval_t[self.share.intvl_choice.get()]
+        self.share.intvl_choice.bind('<<ComboboxSelected>>', update_sumry_unit)
+        self.share.sumry_unit_choice.bind('<<ComboboxSelected>>', update_intvl)
 
         # Settings widget construction and configurations.
         intvl_label = ttk.Label(self.settings_win, text='Count time interval',
@@ -1266,8 +1272,6 @@ class CountViewer(tk.Frame):
             state='readonly', width=4, height=5,
             textvariable=self.share.setting['interval_t'],
             values=tuple(interval_t.keys()))
-        self.share.intvl_choice.bind(
-            '<<ComboboxSelected>>', lambda _: update_sumry_unit())
         self.share.setting['interval_t'].set(self.share.intvl_choice.get())
 
         sumry_label1 = ttk.Label(
@@ -1289,8 +1293,6 @@ class CountViewer(tk.Frame):
             state='readonly', width=4,
             textvariable=self.share.setting['sumry_t_unit'],
             values=tuple(sumry_unit.keys()))
-        self.share.sumry_unit_choice.bind(
-            '<<ComboboxSelected>>', lambda _: update_intvl())
         self.share.setting['sumry_t_unit'].set(self.share.sumry_unit_choice.get())
 
         # Specify number limit of counting cycles to run.
@@ -1320,7 +1322,7 @@ class CountViewer(tk.Frame):
         self.countnow_button.configure(text='Count now',
                                        command=self.start_when_confirmed)
 
-        # Grid settings widgets; generally sorted by row.
+        # Grid settings widgets; sorted by row.
         intvl_label.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
         self.share.intvl_choice.grid(row=0, column=1)
         default_button.grid(row=0, column=3, padx=10, pady=(10, 0), sticky=tk.E)
@@ -1334,8 +1336,7 @@ class CountViewer(tk.Frame):
         self.log_choice.grid(row=3, column=1, padx=0, pady=5, sticky=tk.W)
         beep_label.grid(row=5, column=0, padx=5, pady=0, sticky=tk.E)
         self.beep_choice.grid(row=5, column=1, padx=0, pady=0, sticky=tk.W)
-        self.countnow_button.grid(
-            row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
+        self.countnow_button.grid(row=5, column=3, padx=10, pady=(0, 10), sticky=tk.E)
 
     def settings_tooltips(self) -> None:
         """
@@ -1462,16 +1463,15 @@ class CountViewer(tk.Frame):
         elif interval_m < summary_m and summary_m % interval_m == 0:
             good_settings = True
 
-        # Need to remove leading zeros, but allow a zero entry.
-        #   Replace empty Entry with default values.
         cycles_max = self.cycles_max_entry.get()
+        default_value = 1008
+
         if cycles_max == '':
-            self.share.setting['cycles_max'].set(1008)
-        elif cycles_max != '0':
-            self.share.setting['cycles_max'].set(int(cycles_max.lstrip('0')))
-        # Allow zero entry for 1-off status report of task data.
-        elif cycles_max == '0':
-            self.share.setting['cycles_max'].set(0)
+            cycles_max = default_value
+        else:
+            cycles_max = int(cycles_max.lstrip('0') or 0)
+
+        self.share.setting['cycles_max'].set(cycles_max)
 
         # Need to set initial cycles_remain to cycles_max.
         self.share.data['cycles_remain'].set(self.share.setting['cycles_max'].get())
@@ -1486,7 +1486,8 @@ class CountViewer(tk.Frame):
             app.title(f'Count BOINC tasks on {gethostname()}'
                       ' (not logging data)')
 
-        # Need to provide a unique name of app window for concurrent instances.
+        # Need to provide a unique name of app window for concurrent instances
+        #  on different hosts.
         if good_settings and not self.share.setting['do_log'].get():
             app.title(f'Count BOINC tasks on {gethostname()}'
                       f' (Not logging data)')
@@ -1573,13 +1574,22 @@ class CountViewer(tk.Frame):
         Tips will not be active once the first interval posts.
         """
 
-        starting_tip_txt = (
-            'This data column is now showing task data retrieved'
-            ' from the most recent boinc-client report before'
-            f' {PROGRAM_NAME} started. Once the first count'
-            ' interval time has elapsed, data for that interval will'
-            ' display and this button will become "Interval data".'
-        )
+        # Need different messages for system start, when 'boinccmd --get_old_tasks'
+        #  is blank because no tasks are yet reported, and a program start
+        #  once after the first interval count has been reported.
+        if bcmd.get_reported('elapsed time'):
+            starting_tip_txt = (
+                'This data column is now showing task data retrieved'
+                ' from the most recent boinc-client report prior to'
+                f' {PROGRAM_NAME} starting. Once the first count'
+                ' interval time has elapsed, data for that interval will'
+                ' display and this button will become "Interval data".'
+            )
+        else:  # no tasks reported yet
+            starting_tip_txt = (
+                'Task data will display below once the first tasks'
+                ' have been reported by the BOINC client.'
+            )
         utils.Tooltip(widget=self.share.starting_b, tt_text=starting_tip_txt)
 
         summary_tip_txt = (

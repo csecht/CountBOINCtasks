@@ -181,7 +181,8 @@ def check_boinc_tk(mainloop) -> None:
 
 def get_reported(tag: str, cmd=' --get_old_tasks') -> list:
     """
-    Get data from reported boinc-client tasks.
+    Get data from reported boinc-client tasks. Returns empty list if
+    *tag* is not recognized or if boinc-client has not yet reported tasks.
 
     :param tag: e.g., 'task' returns reported task names.
                 'elapsed time' returns final task times, sec.000000.
