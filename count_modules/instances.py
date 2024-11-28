@@ -38,7 +38,7 @@ def program_name() -> str:
     """
     if getattr(sys, 'frozen', False):  # hasattr(sys, '_MEIPASS'):
         return Path(sys.executable).stem
-    return Path(sys.modules['__main__'].__name__).stem
+    return Path(sys.modules['__main__'].__file__).stem
 
 
 class OneWinstance:
