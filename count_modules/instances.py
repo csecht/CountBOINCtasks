@@ -100,7 +100,7 @@ def exit_popup(message: str) -> None:
     pox_y = popup.winfo_screenheight() // 2
     popup.geometry(f'+{pos_x}+{pox_y}')
 
-    binds.keybind('close', toplevel=popup)
+    bind_this.keybind('close', toplevel=popup)
 
     tk.Label(text=message,
              font=('TkTextFont', 12),
