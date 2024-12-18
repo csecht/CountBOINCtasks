@@ -38,8 +38,7 @@ from count_modules import (bind_this as Binds,
                            times as T,
                            utils as Utils)
 
-__program_name__ = instances.program_name()
-
+PROGRAM_NAME = instances.program_name()
 MY_OS = sys.platform[:3]
 
 # Datetime string formats used in logging and analysis reporting.
@@ -79,16 +78,12 @@ class Logs:
     #   directory. Frozen executable paths need to be absolute paths.
     DO_TEST = False
     EXAMPLELOG = Path(Path.cwd(), 'example_log.txt')
-    LOGFILE = Path(Path.cwd(),
-                   f'{__program_name__}_log.txt').resolve()
-    ANALYSISFILE = Path(Path.cwd(),
-                        f'{__program_name__}_analysis.txt').resolve()
+    LOGFILE = Path(Path.cwd(), f'{PROGRAM_NAME}_log.txt').resolve()
+    ANALYSISFILE = Path(Path.cwd(), f'{PROGRAM_NAME}_analysis.txt').resolve()
 
     if getattr(sys, 'frozen', False):
-        LOGFILE = Path(Path.home(),
-                       f'{__program_name__}_log.txt').resolve()
-        ANALYSISFILE = Path(Path.home(),
-                            f'{__program_name__}_analysis.txt').resolve()
+        LOGFILE = Path(Path.home(), f'{PROGRAM_NAME}_log.txt').resolve()
+        ANALYSISFILE = Path(Path.home(), f'{PROGRAM_NAME}_analysis.txt').resolve()
 
     @classmethod
     def analyze_logfile(cls, do_plot=False, do_test=False) -> tuple:
@@ -348,6 +343,21 @@ class Logs:
                 )
 
         return summary_text, recent_interval_text
+
+    @ classmethod
+    def check_log_size(cls) -> None:
+        """
+        Check size of log file and alert user if it exceeds 20 MB.
+        Called from main CountModeler.log_it.log_start at startup.
+        """
+        log_file = Path(cls.LOGFILE)
+        if log_file.stat().st_size > 20_000_000:
+            print(f'\nThe log file {log_file} exceeds 20 MB.\n'
+                  'Consider backing it up and deleting it before the next program restart.\n'
+                  'From the main menu, do: File > Backup log file.\n'
+                  'The backup file will be saved in the same directory as the original file\n'
+                  '  with a timestamp appended to the filename.\n'
+                  'Do not delete the log file while the program is running.\n')
 
     @classmethod
     def check_for_plotting(cls, do_plot: bool, intervals: list, args: tuple) -> None:

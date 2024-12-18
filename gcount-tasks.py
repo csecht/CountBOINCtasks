@@ -614,6 +614,7 @@ class CountModeler:
         cycles_max = self.share.setting['cycles_max'].get()
 
         def log_start():
+            Logs.check_log_size()
             task_count = self.share.data['task_count'].get()
             taskt_avg = self.share.data['taskt_avg'].get()
             taskt_sd = self.share.data['taskt_sd'].get()
