@@ -1396,11 +1396,11 @@ class CountViewer(tk.Frame):
 
         # Need OS-specific grids for proper padding and alignments:
         if const.MY_OS == 'lin':
-            intvl_tip_btn.grid(row=0, column=0, padx=(50, 0), sticky=tk.W)
+            intvl_tip_btn.grid(row=0, column=0, padx=(40, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(75, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(15, 0), sticky=tk.W)
         elif const.MY_OS == 'win':
-            intvl_tip_btn.grid(row=0, column=0, padx=(45, 0), sticky=tk.W)
+            intvl_tip_btn.grid(row=0, column=0, padx=(40, 0), sticky=tk.W)
             cycles_tip_btn.grid(row=2, column=0, padx=(110, 0), sticky=tk.W)
             beep_tip_btn.grid(row=5, column=0, padx=(35, 0), sticky=tk.W)
         else:  # is 'dar'

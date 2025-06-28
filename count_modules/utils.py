@@ -389,10 +389,10 @@ class Tooltip:
             tt_frame,
             text=self.tt_text,
             font='TkTooltipFont',
-            justify=tk.LEFT,
+            justify='left',
             background=tt_bg,
             foreground=tt_fg,
-            relief=tk.SOLID,
+            relief='solid',
             borderwidth=0,
             wraplength=self.wrap_len)
         tt_frame.grid()
