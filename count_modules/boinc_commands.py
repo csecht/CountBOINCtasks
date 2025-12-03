@@ -77,7 +77,7 @@ def set_boincpath() -> str:
 
     default_path = {
         'win': Path('/Program files/BOINC/boinccmd.exe'),
-        'lin': Path('/usr/bin/boinccmd'),
+        'lin': Path('/usr/local/bin/boinccmd'), # or /usr/bin/boinccmd on older versions.
         'dar': Path.home() / 'Library' / 'Application Support' / 'BOINC' / 'boinccmd'
     }
     # Note: On macOS, the Terminal command line would be entered as:

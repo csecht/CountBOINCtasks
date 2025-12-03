@@ -681,9 +681,9 @@ class CountModeler:
             Note = Notices(self.share)
 
             if Note.num_running > 0:
-                if Note.num_running >= self.share.data['num_tasks_all'].get() - 1:
-                    logging.info(
-                        f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
+                # if Note.num_running >= self.share.data['num_tasks_all'].get() - 1:
+                #     logging.info(
+                #         f'\n{self.share.status_time}; {Note.running_out_of_tasks()}.')
                 if Note.num_suspended_by_user > 0:
                     logging.info(
                         f'\n{self.share.status_time};'
@@ -704,7 +704,7 @@ class CountModeler:
                         logging.info(
                             f'\n{self.share.status_time}; {func()}')
                         known_problem = True
-                if known_problem is False:
+                if not known_problem:
                     logging.info(
                         f'\n{self.share.status_time}; {Note.unknown()}')
 
@@ -829,6 +829,34 @@ class CountViewer(tk.Frame):
             'num_ready_to_report': tk.IntVar(),
         }
 
+        # self.share.setting_labels = {
+        #     'time_start_l': tk.Label(self.dataframe),
+        #     'interval_t_l': tk.Label(self.dataframe),
+        #     'summary_t_l': tk.Label(self.dataframe),
+        # }
+        # self.share.boinc_data_labels = {
+        #     'task_count_l': tk.Label(self.dataframe),
+        #     'task_count_sumry_l': tk.Label(self.dataframe),
+        #     'taskt_avg_l': tk.Label(self.dataframe),
+        #     'taskt_mean_sumry_l': tk.Label(self.dataframe),
+        #     'taskt_sd_l': tk.Label(self.dataframe),
+        #     'taskt_sd_sumry_l': tk.Label(self.dataframe),
+        #     'taskt_range_l': tk.Label(self.dataframe),
+        #     'taskt_range_sumry_l': tk.Label(self.dataframe),
+        #     'taskt_total_l': tk.Label(self.dataframe),
+        #     'taskt_total_sumry_l': tk.Label(self.dataframe),
+        # }
+        # self.share.data_labels = {
+        #     'time_prev_cnt_l': tk.Label(),
+        #     'time_prev_sumry_l': tk.Label(),
+        #     'cycles_remain_l': tk.Label(),
+        #     'num_tasks_all_l': tk.Label(),
+        #     'time_next_cnt_l': tk.Label(),
+        #     'cycles_max_l': tk.Label(),
+        # }
+        # self.share.compliment_l = tk.Label()
+        # self.share.notice_l = tk.Label(textvariable=self.share.notice['notice_txt'])
+
         # This style is used only to configure viewlog_b color in
         #   app_got_focus() and app_lost_focus().
         #   self.master is implicit as the parent.
@@ -858,6 +886,10 @@ class CountViewer(tk.Frame):
         Configure all labels for the main window. Called from setup_widgets().
         Returns: None
         """
+
+        # Labels for settings values; gridded in master_layout(). They are
+        #   fully configured here, instead of in __init__, based on data widget
+        #   names in self.share.data, using setattr() to keep things tidy.
         start_params = dict(
             master=self.dataframe,
             bg=const.DATA_BG)
@@ -998,7 +1030,7 @@ class CountViewer(tk.Frame):
         start_txt = 'Starting data'if bcmd.get_reported('elapsed time') else 'Waiting for data'
         self.share.starting_b = tk.Button(
             text=start_txt, width=18,
-            disabledforeground='grey10', state=tk.DISABLED,
+            disabledforeground='grey10', state='disabled',
             takefocus=False)
         self.share.intvl_b = ttk.Button(
             text='Interval data', width=18,
@@ -1718,7 +1750,7 @@ class CountFyi:
         abouttxt.pack()
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
-        abouttxt.configure(state=tk.DISABLED)
+        abouttxt.configure(state='disabled')
 
         bind_this.keybind(func='close', toplevel=aboutwin)
         bind_this.click(click_type='right', click_widget=abouttxt)
@@ -2017,6 +2049,7 @@ def main():
 if __name__ == "__main__":
 
     utils.run_checks()
+    app = CountController()
 
     # Need to set up conditions to control multiple instances.
     # Prevent multiple instances writing to the same log file.
@@ -2043,7 +2076,7 @@ if __name__ == "__main__":
 
         with sentinel:
             try:
-                app = CountController()
+                # app = CountController()
                 main()
             except KeyboardInterrupt:
                 utils.handle_windows_keyboard_interrupt(sentinel.name)
@@ -2061,7 +2094,7 @@ if __name__ == "__main__":
         instances.lock_or_exit(lockfile, utils.exit_text())
 
         try:
-            app = CountController()
+            # app = CountController()
             main()
         except KeyboardInterrupt:
             utils.handle_nix_exit()
