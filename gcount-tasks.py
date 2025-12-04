@@ -829,33 +829,28 @@ class CountViewer(tk.Frame):
             'num_ready_to_report': tk.IntVar(),
         }
 
-        # self.share.setting_labels = {
-        #     'time_start_l': tk.Label(self.dataframe),
-        #     'interval_t_l': tk.Label(self.dataframe),
-        #     'summary_t_l': tk.Label(self.dataframe),
-        # }
-        # self.share.boinc_data_labels = {
-        #     'task_count_l': tk.Label(self.dataframe),
-        #     'task_count_sumry_l': tk.Label(self.dataframe),
-        #     'taskt_avg_l': tk.Label(self.dataframe),
-        #     'taskt_mean_sumry_l': tk.Label(self.dataframe),
-        #     'taskt_sd_l': tk.Label(self.dataframe),
-        #     'taskt_sd_sumry_l': tk.Label(self.dataframe),
-        #     'taskt_range_l': tk.Label(self.dataframe),
-        #     'taskt_range_sumry_l': tk.Label(self.dataframe),
-        #     'taskt_total_l': tk.Label(self.dataframe),
-        #     'taskt_total_sumry_l': tk.Label(self.dataframe),
-        # }
-        # self.share.data_labels = {
-        #     'time_prev_cnt_l': tk.Label(),
-        #     'time_prev_sumry_l': tk.Label(),
-        #     'cycles_remain_l': tk.Label(),
-        #     'num_tasks_all_l': tk.Label(),
-        #     'time_next_cnt_l': tk.Label(),
-        #     'cycles_max_l': tk.Label(),
-        # }
-        # self.share.compliment_l = tk.Label()
-        # self.share.notice_l = tk.Label(textvariable=self.share.notice['notice_txt'])
+        # These attributes may be flagged as "Unresolved attribute reference"
+        #  in PyCharm because they are created with the setattr() function
+        #  in master_labels().
+        #    self.time_start_l,
+        #    self.interval_t_l,
+        #    self.summary_t_l,
+        #    self.task_count_l,
+        #    self.task_count_sumry_l,
+        #    self.taskt_avg_l,
+        #    self.taskt_mean_sumry_l,
+        #    self.taskt_sd_l,
+        #    self.taskt_sd_sumry_l,
+        #    self.taskt_range_l,
+        #    self.taskt_range_sumry_l,
+        #    self.taskt_total_l,
+        #    self.taskt_total_sumry_l,
+        #    self.time_prev_cnt_l,
+        #    self.time_prev_sumry_l,
+        #    self.cycles_remain_l,
+        #    self.num_tasks_all_l,
+        #    self.time_next_cnt_l,
+        #    self.cycles_max_l
 
         # This style is used only to configure viewlog_b color in
         #   app_got_focus() and app_lost_focus().
@@ -1146,7 +1141,7 @@ class CountViewer(tk.Frame):
                      bg=const.MASTER_BG,
                      fg=const.ROW_FG
                      ).grid(row=rownum, column=0,
-                            padx=(5, 0), pady=(0, 1),
+                            padx=(5, 0), pady=(0, 0),
                             sticky=tk.NE)
             # ^^ Grid to N or NE to prevent Notices label from shifting down
             #    when more than one row of update_notice_text() text appears.
@@ -1188,9 +1183,9 @@ class CountViewer(tk.Frame):
         self.time_start_l.grid(  # No padx + sticky EW = centered.
             row=2, column=1, columnspan=2, sticky=tk.EW)
         self.interval_t_l.grid(
-            row=3, column=1, padx=(10, 8), sticky=tk.EW)
+            row=3, column=1, padx=(10, 8), pady=(0, 4), sticky=tk.EW)
         self.summary_t_l.grid(
-            row=3, column=2, padx=(0, 12), sticky=tk.EW)
+            row=3, column=2, padx=(0, 12), pady=(0, 4), sticky=tk.EW)
         self.task_count_l.grid(
             row=4, column=1, padx=12, sticky=tk.EW)
         self.task_count_sumry_l.grid(
