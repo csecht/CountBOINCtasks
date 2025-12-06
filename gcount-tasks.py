@@ -575,7 +575,7 @@ class CountModeler:
         dispatch_table = self.get_dispatch_table(Note)
         for condition, func in dispatch_table.items():
             if condition is True:
-                self.share.notice_l.config(fg=const.HIGHLIGHT)
+                self.share.notice_l.config(fg=const.HIGHLIGHT_COLOR)
                 self.share.notice['notice_txt'].set(func())
                 return
 
@@ -583,7 +583,7 @@ class CountModeler:
         #  then post "reason unknown" notice. Otherwise, post "all is well".
         status = 'unknown' if Note.num_running == 0 else 'all is well'
         self.share.notice_l.config(
-            fg=const.HIGHLIGHT if status == 'unknown' else const.ROW_FG)
+            fg=const.HIGHLIGHT_COLOR if status == 'unknown' else const.ROW_FG)
         self.share.notice['notice_txt'].set(
             Note.unknown() if status == 'unknown' else Note.all_is_well())
 
@@ -887,7 +887,12 @@ class CountViewer(tk.Frame):
         #   names in self.share.data, using setattr() to keep things tidy.
         start_params = dict(
             master=self.dataframe,
-            bg=const.DATA_BG)
+            fg=const.EMPHASIZE_COLOR,
+            bg=const.DATA_BG,
+            width=21,
+            borderwidth=2,
+            relief='groove'
+        )
 
         boinc_lbl_params = dict(
             master=self.dataframe,
@@ -901,50 +906,47 @@ class CountViewer(tk.Frame):
 
         master_highlight_params = dict(
             bg=const.MASTER_BG,
-            fg=const.HIGHLIGHT)
-
-        start_labels = (
-            'time_start', 'interval_t', 'summary_t', 'cycles_max'
-        )
-        start_params = (
-            start_params, start_params, start_params, master_row_params
-        )
-        for label, param in zip(start_labels, start_params):
-            setattr(self, f'{label}_l',
-                    tk.Label(**param, textvariable=self.share.setting[label]))
+            fg=const.HIGHLIGHT_COLOR)
 
         # Labels for settings values; gridded in master_layout(). They are
-        #   fully configured here simply to reduce number of lines in code.
+        #   fully configured here with setattr() for simplicity.
+        start_lbl_param = {
+            'time_start_l': start_params,
+            'interval_t_l': start_params,
+            'summary_t_l':  start_params,
+            'cycles_max_l': master_row_params
+        }
+        for label, param in start_lbl_param.items():
+            setattr(self, label,
+                    tk.Label(**param,
+                             textvariable=self.share.setting[label[:-2]]))
+
         # NOTE: self.time_start_l label is initially configured with text to
-        #   show a startup message, then reconfigured in emphasize_start_data()
-        #   to show the time_start.
-        self.time_start_l.config(fg=const.EMPHASIZE)
-        self.interval_t_l.config(width=21, borderwidth=2,
-                                 relief='groove')
-        self.summary_t_l.config(width=21, borderwidth=2,
-                                relief='groove')
+        #   show a startup message. Looks better with a border.
+        self.time_start_l.config(borderwidth=0, relief='flat')
 
         # Labels for BOINC data.
         boinc_data_labels = (
-            'task_count', 'taskt_avg', 'taskt_sd', 'taskt_range', 'taskt_total',
-            'task_count_sumry', 'taskt_mean_sumry', 'taskt_sd_sumry',
-            'taskt_range_sumry', 'taskt_total_sumry'
+            'task_count_l', 'taskt_avg_l', 'taskt_sd_l', 'taskt_range_l',
+            'taskt_total_l', 'task_count_sumry_l', 'taskt_mean_sumry_l',
+            'taskt_sd_sumry_l', 'taskt_range_sumry_l', 'taskt_total_sumry_l'
         )
         for label in boinc_data_labels:
-            setattr(self, f'{label}_l',
-                    tk.Label(**boinc_lbl_params, textvariable=self.share.data[label]))
+            setattr(self, label,
+                    tk.Label(**boinc_lbl_params,
+                             textvariable=self.share.data[label[:-2]]))
 
-        master_data_labels = (
-            'time_prev_cnt', 'time_prev_sumry', 'cycles_remain',
-            'num_tasks_all', 'time_next_cnt'
-        )
-        master_params = (
-            master_row_params, master_row_params, master_row_params,
-            master_row_params, master_highlight_params
-        )
-        for label, param in zip(master_data_labels, master_params):
-            setattr(self, f'{label}_l',
-                    tk.Label(**param, textvariable=self.share.data[label]))
+        data_lbl_param = {
+            'time_prev_cnt_l': master_row_params,
+            'time_prev_sumry_l': master_row_params,
+            'cycles_remain_l': master_row_params,
+            'num_tasks_all_l': master_row_params,
+            'time_next_cnt_l': master_highlight_params
+        }
+        for label, param in data_lbl_param.items():
+            setattr(self, label,
+                    tk.Label(**param,
+                             textvariable=self.share.data[label[:-2]]))
 
         # Text for compliment_l is configured in compliment_me()
         self.share.compliment_l = tk.Label(**master_highlight_params, )
@@ -963,7 +965,7 @@ class CountViewer(tk.Frame):
         #   functions, MAY use 'app' in place of self.master, but outside
         #   CountViewer, MUST use 'app' for any mainloop reference.
 
-        self.master.config(menu=self.menubar)
+        self.master['menu'] = self.menubar
 
         # Add pull-down menus
         file = tk.Menu(self.menubar, tearoff=0)
@@ -1243,8 +1245,8 @@ class CountViewer(tk.Frame):
         self.settings_win.resizable(width=False, height=False)
         self.settings_win.config(relief='raised', bg=const.MASTER_BG,
                                  highlightthickness=3,
-                                 highlightcolor=const.HIGHLIGHT,
-                                 highlightbackground=const.DEEMPHASIZE)
+                                 highlightcolor=const.HIGHLIGHT_COLOR,
+                                 highlightbackground=const.DEEMPHASIZE_COLOR)
 
         # Need to make settings window topmost to place it above the
         #   app window.
@@ -1575,20 +1577,20 @@ class CountViewer(tk.Frame):
         # Need to keep sumry_b button disabled until after 1st summary interval.
         self.share.sumry_b.config(state=tk.DISABLED)
 
-        self.interval_t_l.config(foreground=const.EMPHASIZE)
-        self.summary_t_l.config(foreground=const.DEEMPHASIZE)
-        self.task_count_l.config(foreground=const.HIGHLIGHT)
+        self.interval_t_l.config(foreground=const.EMPHASIZE_COLOR)
+        self.summary_t_l.config(foreground=const.DEEMPHASIZE_COLOR)
+        self.task_count_l.config(foreground=const.HIGHLIGHT_COLOR)
 
-        self.taskt_avg_l.configure(foreground=const.HIGHLIGHT)
-        self.taskt_sd_l.configure(foreground=const.EMPHASIZE)
-        self.taskt_range_l.configure(foreground=const.EMPHASIZE)
-        self.taskt_total_l.configure(foreground=const.EMPHASIZE)
+        self.taskt_avg_l.configure(foreground=const.HIGHLIGHT_COLOR)
+        self.taskt_sd_l.configure(foreground=const.EMPHASIZE_COLOR)
+        self.taskt_range_l.configure(foreground=const.EMPHASIZE_COLOR)
+        self.taskt_total_l.configure(foreground=const.EMPHASIZE_COLOR)
 
-        self.task_count_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_mean_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_sd_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_range_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_total_sumry_l.configure(foreground=const.DEEMPHASIZE)
+        self.task_count_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_mean_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_sd_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_range_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_total_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
 
         if not self.share.setting['do_log'].get():
             self.share.viewlog_b.configure(style='View.TButton', state=tk.DISABLED)
@@ -1633,45 +1635,45 @@ class CountViewer(tk.Frame):
         Called from 'Interval data' button.
         """
 
-        self.interval_t_l.config(foreground=const.EMPHASIZE)
-        self.summary_t_l.config(foreground=const.DEEMPHASIZE)
+        self.interval_t_l.config(foreground=const.EMPHASIZE_COLOR)
+        self.summary_t_l.config(foreground=const.DEEMPHASIZE_COLOR)
 
         # Interval data, column1
-        self.task_count_l.configure(foreground=const.HIGHLIGHT)
-        self.taskt_avg_l.configure(foreground=const.HIGHLIGHT)
-        self.taskt_sd_l.configure(foreground=const.EMPHASIZE)
-        self.taskt_range_l.configure(foreground=const.EMPHASIZE)
-        self.taskt_total_l.configure(foreground=const.EMPHASIZE)
+        self.task_count_l.configure(foreground=const.HIGHLIGHT_COLOR)
+        self.taskt_avg_l.configure(foreground=const.HIGHLIGHT_COLOR)
+        self.taskt_sd_l.configure(foreground=const.EMPHASIZE_COLOR)
+        self.taskt_range_l.configure(foreground=const.EMPHASIZE_COLOR)
+        self.taskt_total_l.configure(foreground=const.EMPHASIZE_COLOR)
 
         # Summary data, column2, de-emphasize font color
-        self.task_count_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_mean_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_sd_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_range_sumry_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_total_sumry_l.configure(foreground=const.DEEMPHASIZE)
+        self.task_count_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_mean_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_sd_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_range_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_total_sumry_l.configure(foreground=const.DEEMPHASIZE_COLOR)
 
     def emphasize_sumry_data(self) -> None:
         """
         Switches font emphasis from Interval data to Summary data.
         Called from 'Summary data' button.
         """
-        self.interval_t_l.config(foreground=const.DEEMPHASIZE)
-        self.summary_t_l.config(foreground=const.EMPHASIZE)
+        self.interval_t_l.config(foreground=const.DEEMPHASIZE_COLOR)
+        self.summary_t_l.config(foreground=const.EMPHASIZE_COLOR)
 
         # Interval data, column1, de-emphasize font color
-        self.task_count_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_avg_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_sd_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_range_l.configure(foreground=const.DEEMPHASIZE)
-        self.taskt_total_l.configure(foreground=const.DEEMPHASIZE)
+        self.task_count_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_avg_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_sd_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_range_l.configure(foreground=const.DEEMPHASIZE_COLOR)
+        self.taskt_total_l.configure(foreground=const.DEEMPHASIZE_COLOR)
 
         # Summary data, column2, emphasize font color
-        self.task_count_sumry_l.configure(foreground=const.HIGHLIGHT)
-        self.taskt_mean_sumry_l.configure(foreground=const.HIGHLIGHT)
-        self.taskt_sd_sumry_l.configure(foreground=const.EMPHASIZE)
+        self.task_count_sumry_l.configure(foreground=const.HIGHLIGHT_COLOR)
+        self.taskt_mean_sumry_l.configure(foreground=const.HIGHLIGHT_COLOR)
+        self.taskt_sd_sumry_l.configure(foreground=const.EMPHASIZE_COLOR)
         self.taskt_range_sumry_l.configure(text=self.share.data['taskt_range'].get(),
-                                           foreground=const.EMPHASIZE)
-        self.taskt_total_sumry_l.configure(foreground=const.EMPHASIZE)
+                                           foreground=const.EMPHASIZE_COLOR)
+        self.taskt_total_sumry_l.configure(foreground=const.EMPHASIZE_COLOR)
 
     def app_got_focus(self, focus_event) -> None:
         """Give menu bar headings normal color when app has focus.
@@ -1935,7 +1937,7 @@ class CountFyi:
 
         # Need to not have cursor appear in Text, but allow
         #   rt-click edit commands to work if needed.
-        infotxt.configure(state=tk.DISABLED)
+        infotxt.configure(state='disabled')
 
         bind_this.keybind(func='close', toplevel=infowin)
         bind_this.click(click_type='right', click_widget=infotxt)
