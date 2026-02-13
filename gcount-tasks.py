@@ -87,7 +87,7 @@ class Notices:
 
     # These methods are called by the tasks_running dispatch table in
     #  CountModeler.update_notice_text().
-    def suspended_by_user(self, called_by=None) -> str:
+    def suspended_by_user(self) -> str:
         """
         Is used to provide context-specific text for log_it() and
         update_notice_text() methods.
@@ -98,12 +98,7 @@ class Notices:
             formatted for GUI display via update_notice_text() dispatch table.
         Returns: A string with the appropriate notice text.
         """
-        if called_by == 'log':
-            return f'{self.num_suspended_by_user} tasks were suspended by user.\n'
-
-        # The other called_by value is from the update_notice_text() dispatch table.
-        return (f'{self.num_suspended_by_user} tasks are suspended by user.\n'
-                f'BOINC will not upload while tasks are suspended.')
+        return f'{self.num_suspended_by_user} tasks were suspended by user.\n'
 
     @staticmethod
     def running_out_of_tasks():
@@ -687,7 +682,7 @@ class CountModeler:
                 if Note.num_suspended_by_user > 0:
                     logging.info(
                         f'\n{self.share.status_time};'
-                        f' {Note.suspended_by_user(called_by="log")}')
+                        f' {Note.suspended_by_user()}')
                 if self.share.data['cycles_remain'].get() == 0:
                     logging.info(
                         f'\n*** All {cycles_max} count intervals have been run. ***\n'
