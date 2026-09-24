@@ -199,19 +199,19 @@ def boinc_ttimes_stats(times_sec: iter) -> dict:
     :param times_sec: A list, tuple, or set of times, in seconds, as
                       integers or floats.
     :return: Dict keys: 'tt_total', 'tt_avg', 'tt_sd', 'tt_min', 'tt_max'.
-             Dict values format: 00:00:00.
+             Dict values format: 00:00:00 or int seconds for total.
     """
     numtimes = len(times_sec)
-    total = sec_to_format(int(sum(times_sec)), 'std')
+    total = f'{int(sum(times_sec))} seconds'
     if numtimes > 1:
         avg = sec_to_format(int(statistics.fmean(times_sec)), 'std')
         stdev = sec_to_format(int(statistics.stdev(times_sec)), 'std')
         low = sec_to_format(int(min(times_sec)), 'std')
         high = sec_to_format(int(max(times_sec)), 'std')
     elif numtimes == 1:
-        avg = stdev = low = high = total
+        avg = stdev = low = high = sec_to_format(int(sum(times_sec)), 'std')
     else:  # is 0.
-        avg = stdev = low = high = total = '00:00:00'
+        avg = stdev = low = high = '00:00:00'
 
     return {
         'taskt_total': total,
