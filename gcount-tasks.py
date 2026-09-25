@@ -885,8 +885,8 @@ class CountViewer(tk.Frame):
             fg=const.EMPHASIZE_COLOR,
             bg=const.DATA_BG,
             width=21,
-            borderwidth=2,
-            relief='groove'
+            borderwidth=4,
+            relief='ridge'
         )
 
         boinc_lbl_params = dict(
@@ -1040,7 +1040,7 @@ class CountViewer(tk.Frame):
         """
 
         # Theme controls entire window theme, but only for ttk.Style objects.
-        # Options: classic, alt, clam, default, aqua(MacOS only)
+        # Options: classic, alt, clam, default, aqua(macOS only)
         ttk.Style().theme_use('alt')
 
         # OS-specific window size ranges set in Controller __init__
@@ -1050,7 +1050,7 @@ class CountViewer(tk.Frame):
         self.master.config(bg=const.MASTER_BG,
                            highlightthickness=3,
                            highlightcolor='grey95',
-                           highlightbackground='grey75'
+                           highlightbackground='grey75',
                            )
 
         # Need to provide exit info to Terminal and log.
@@ -1134,7 +1134,7 @@ class CountViewer(tk.Frame):
         }
 
         for header, rownum in row_header.items():
-            tk.Label(text=f'{header}',
+            tk.Label(text=header,
                      bg=const.MASTER_BG,
                      fg=const.ROW_FG
                      ).grid(row=rownum, column=0,

@@ -19,8 +19,8 @@ def click(click_type, click_widget) -> None:
     """
     Mouse button bindings for the named tk widget.
     Creates pop-up menu of commands for the clicked object.
-    Example: from count_modules import binds
-             binds.click('right', mywidget, root)
+    Example: from count_modules import bind_this
+             bind_this.click('right', mywidget, root)
 
     :param click_type: Example mouse button or button modifiers;
         left', 'right', 'shift', 'ctrl', 'shiftctrl', etc.
