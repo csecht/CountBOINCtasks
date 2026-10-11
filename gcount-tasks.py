@@ -46,7 +46,7 @@ from count_modules import (bind_this,
                            )
 from count_modules.logs import Logs
 
-PROGRAM_NAME = instances.program_name()
+PROGRAM_NAME = 'gcount-tasks'
 
 
 class Notices:
@@ -2068,7 +2068,6 @@ if __name__ == "__main__":
 
         with sentinel:
             try:
-                # app = CountController()
                 main()
             except KeyboardInterrupt:
                 utils.handle_windows_keyboard_interrupt(sentinel.name)
@@ -2086,7 +2085,6 @@ if __name__ == "__main__":
         instances.lock_or_exit(lockfile, utils.exit_text())
 
         try:
-            # app = CountController()
             main()
         except KeyboardInterrupt:
             utils.handle_nix_exit()

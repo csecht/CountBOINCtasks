@@ -28,7 +28,7 @@ if sys.platform[:3] == 'win':
 else:
     import fcntl
 
-
+# Using sys.modules['__main__'] many not work for all Python instances.
 def program_name() -> str:
     """
     Returns the script name or, if called from a PyInstaller stand-alone,
